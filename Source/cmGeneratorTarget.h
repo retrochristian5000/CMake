@@ -459,6 +459,11 @@ public:
                             const std::string& config,
                             const std::string& language) const;
 
+  std::string GetPchHeader(const std::string& config,
+                           const std::string& language) const;
+  std::string GetPchSource(const std::string& config,
+                           const std::string& language) const;
+
   bool IsSystemIncludeDirectory(const std::string& dir,
                                 const std::string& config,
                                 const std::string& language) const;
@@ -874,6 +879,8 @@ private:
   std::vector<TargetPropertyEntry*> PrecompileHeadersEntries;
   std::vector<TargetPropertyEntry*> SourceEntries;
   mutable std::set<std::string> LinkImplicitNullProperties;
+  mutable std::map<std::string, std::string> PchHeaders;
+  mutable std::map<std::string, std::string> PchSources;
 
   void ExpandLinkItems(std::string const& prop, std::string const& value,
                        std::string const& config,
