@@ -455,6 +455,10 @@ public:
   std::vector<BT<std::string>> GetLinkDepends(
     std::string const& config, std::string const& language) const;
 
+  void GetPrecompileHeaders(std::vector<std::string>& result,
+                            const std::string& config,
+                            const std::string& language) const;
+
   bool IsSystemIncludeDirectory(const std::string& dir,
                                 const std::string& config,
                                 const std::string& language) const;
@@ -867,6 +871,7 @@ private:
   std::vector<TargetPropertyEntry*> CompileDefinitionsEntries;
   std::vector<TargetPropertyEntry*> LinkOptionsEntries;
   std::vector<TargetPropertyEntry*> LinkDirectoriesEntries;
+  std::vector<TargetPropertyEntry*> PrecompileHeadersEntries;
   std::vector<TargetPropertyEntry*> SourceEntries;
   mutable std::set<std::string> LinkImplicitNullProperties;
 
@@ -922,6 +927,7 @@ private:
   mutable bool DebugCompileDefinitionsDone;
   mutable bool DebugLinkOptionsDone;
   mutable bool DebugLinkDirectoriesDone;
+  mutable bool DebugPrecompileHeadersDone;
   mutable bool DebugSourcesDone;
   mutable bool LinkImplementationLanguageIsContextDependent;
   mutable bool UtilityItemsDone;

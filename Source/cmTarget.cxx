@@ -191,6 +191,8 @@ public:
   std::vector<cmListFileBacktrace> CompileFeaturesBacktraces;
   std::vector<std::string> CompileDefinitionsEntries;
   std::vector<cmListFileBacktrace> CompileDefinitionsBacktraces;
+  std::vector<std::string> PrecompileHeadersEntries;
+  std::vector<cmListFileBacktrace> PrecompileHeadersBacktraces;
   std::vector<std::string> SourceEntries;
   std::vector<cmListFileBacktrace> SourceBacktraces;
   std::vector<std::string> LinkOptionsEntries;
@@ -1023,6 +1025,16 @@ cmBacktraceRange cmTarget::GetCompileDefinitionsBacktraces() const
   return cmMakeRange(impl->CompileDefinitionsBacktraces);
 }
 
+cmStringRange cmTarget::GetPrecompileHeadersEntries() const
+{
+  return cmMakeRange(this->Internal->PrecompileHeadersEntries);
+}
+
+cmBacktraceRange cmTarget::GetPrecompileHeadersBacktraces() const
+{
+  return cmMakeRange(this->Internal->PrecompileHeadersBacktraces);
+}
+
 cmStringRange cmTarget::GetSourceEntries() const
 {
   return cmMakeRange(impl->SourceEntries);
@@ -1174,6 +1186,12 @@ void cmTarget::SetProperty(const std::string& prop, const char* value)
       cmListFileBacktrace lfbt = impl->Makefile->GetBacktrace();
       impl->LinkDirectoriesBacktraces.push_back(lfbt);
     }
+  } else if (prop == "PRECOMPILE_HEADERS") {
+    if (value && *value) {
+      this->Internal->PrecompileHeadersEntries.push_back(value);
+      cmListFileBacktrace lfbt = this->Makefile->GetBacktrace();
+      this->Internal->PrecompileHeadersBacktraces.push_back(lfbt);
+    }
   } else if (prop == propLINK_LIBRARIES) {
     impl->LinkImplementationPropertyEntries.clear();
     impl->LinkImplementationPropertyBacktraces.clear();
@@ -1291,6 +1309,14 @@ void cmTarget::AppendProperty(const std::string& prop, const char* value,
       cmListFileBacktrace lfbt = impl->Makefile->GetBacktrace();
       impl->LinkDirectoriesBacktraces.push_back(lfbt);
     }
+  } else if (prop == "PRECOMPILE_HEADERS") {
+    this->Internal->PrecompileHeadersEntries.clear();
+    this->Internal->PrecompileHeadersBacktraces.clear();
+    if (value) {
+      this->Internal->PrecompileHeadersEntries.push_back(value);
+      cmListFileBacktrace lfbt = this->Makefile->GetBacktrace();
+      this->Internal->PrecompileHeadersBacktraces.push_back(lfbt);
+    }
   } else if (prop == "LINK_LIBRARIES") {
     if (value && *value) {
       cmListFileBacktrace lfbt = impl->Makefile->GetBacktrace();
@@ -1400,6 +1426,13 @@ void cmTarget::InsertLinkDirectory(std::string const& entry,
 
   impl->LinkDirectoriesEntries.insert(position, entry);
   impl->LinkDirectoriesBacktraces.insert(btPosition, bt);
+}
+
+void cmTarget::InsertPrecompileHeader(std::string const& entry,
+                                      cmListFileBacktrace const& bt)
+{
+  this->Internal->PrecompileHeadersEntries.push_back(entry);
+  this->Internal->PrecompileHeadersBacktraces.push_back(bt);
 }
 
 static void cmTargetCheckLINK_INTERFACE_LIBRARIES(const std::string& prop,
@@ -1522,6 +1555,7 @@ const char* cmTarget::GetProperty(const std::string& prop) const
   MAKE_STATIC_PROP(COMPILE_DEFINITIONS);
   MAKE_STATIC_PROP(LINK_OPTIONS);
   MAKE_STATIC_PROP(LINK_DIRECTORIES);
+  MAKE_STATIC_PROP(PRECOMPILE_HEADERS);
   MAKE_STATIC_PROP(IMPORTED);
   MAKE_STATIC_PROP(IMPORTED_GLOBAL);
   MAKE_STATIC_PROP(MANUALLY_ADDED_DEPENDENCIES);
@@ -1623,6 +1657,15 @@ const char* cmTarget::GetProperty(const std::string& prop) const
 
       static std::string output;
       output = cmJoin(impl->Utilities, ";");
+      return output.c_str();
+    }
+    if (prop == propPRECOMPILE_HEADERS) {
+      if (this->Internal->PrecompileHeadersEntries.empty()) {
+        return CM_NULLPTR;
+      }
+
+      static std::string output;
+      output = cmJoin(this->Internal->PrecompileHeadersEntries, ";");
       return output.c_str();
     }
     if (prop == propIMPORTED) {
