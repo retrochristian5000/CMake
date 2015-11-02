@@ -2159,6 +2159,20 @@ void cmVisualStudio10TargetGenerator::WriteAllSources(Elem& e0)
   if (this->IsMissingFiles) {
     this->WriteMissingFiles(e1);
   }
+
+  // Precompile Headers
+  const std::string& linkLanguage = this->GeneratorTarget->GetLinkerLanguage();
+  std::string pchSource =
+    this->GeneratorTarget->GetPchSource("", linkLanguage);
+  if (!pchSource.empty()) {
+    this->ConvertToWindowsSlash(pchSource);
+    this->WriteString("<ClCompile Include=\"", 2);
+    (*this->BuildFileStream) << cmVS10EscapeXML(pchSource) << "\">\n";
+    this->WriteString("<PrecompiledHeader>Create</PrecompiledHeader>\n", 3);
+    this->WriteString("</ClCompile>\n", 2);
+  }
+
+  this->WriteString("</ItemGroup>\n", 1);
 }
 
 void cmVisualStudio10TargetGenerator::OutputSourceSpecificFlags(
@@ -2634,6 +2648,18 @@ bool cmVisualStudio10TargetGenerator::ComputeClOptions(
   // Put the IPO enabled configurations into a set.
   if (this->GeneratorTarget->IsIPOEnabled(linkLanguage, configName)) {
     this->IPOEnabledConfigurations.insert(configName);
+  }
+
+  // Precompile Headers
+  std::string pchHeader =
+    this->GeneratorTarget->GetPchHeader(configName, linkLanguage);
+  if (!pchHeader.empty()) {
+    this->ConvertToWindowsSlash(pchHeader);
+    clOptions.AddFlag("PrecompiledHeader", "Use");
+    clOptions.AddFlag("PrecompiledHeaderFile", pchHeader.c_str());
+    clOptions.AddFlag("ForcedIncludeFiles", pchHeader.c_str());
+  } else if (this->MSTools && vcxproj == this->ProjectType) {
+    clOptions.AddFlag("PrecompiledHeader", "NotUsing");
   }
 
   // Get preprocessor definitions for this directory.
