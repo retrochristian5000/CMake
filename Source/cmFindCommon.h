@@ -105,7 +105,6 @@ protected:
 
   bool CheckCommonArgument(std::string const& arg);
   void AddPathSuffix(std::string const& arg);
-  void SetMakefile(cmMakefile* makefile);
 
   bool NoDefaultPath;
   bool NoCMakePath;
