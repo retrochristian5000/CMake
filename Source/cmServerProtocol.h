@@ -47,7 +47,7 @@ private:
   Json::Value m_Data;
 };
 
-class cmConnection;
+class cmEventBasedConnection;
 class cmServerRequest
 {
 public:

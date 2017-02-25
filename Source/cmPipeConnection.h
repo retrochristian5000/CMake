@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-class cmPipeConnection : public cmConnection
+class cmPipeConnection : public cmEventBasedConnection
 {
 public:
   cmPipeConnection(const std::string& name,
