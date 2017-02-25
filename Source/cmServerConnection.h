@@ -35,7 +35,7 @@ private:
 /***
  * Generic connection over std io interfaces -- tty
  */
-class cmStdIoConnection : public cmConnection
+class cmStdIoConnection : public cmEventBasedConnection
 {
 public:
   cmStdIoConnection(cmConnectionBufferStrategy* bufferStrategy);

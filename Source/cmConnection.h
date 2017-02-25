@@ -44,51 +44,61 @@ public:
   // TODO: There should be a callback / flag set for errors
 };
 
-/***
- * Abstraction of a connection; ties in event callbacks from libuv and notifies
- * the server when appropriate
- */
 class cmConnection
 {
 public:
+  virtual void WriteData(const std::string& data) = 0;
+
   virtual ~cmConnection();
-
-  /***
-   * @param bufferStrategy If no strategy is given, it will process the raw
-   * chunks as they come in. The connection
-   * owns the pointer given.
-   */
-  cmConnection(cmConnectionBufferStrategy* bufferStrategy = 0);
-
-  virtual void Connect(uv_stream_t* server);
-
-  virtual void ReadData(const std::string& data);
-
-  virtual bool OnServeStart(std::string* errString);
 
   virtual bool OnServerShuttingDown();
 
-  virtual bool IsOpen() const;
-
-  virtual void WriteData(const std::string& data);
-
-  virtual void QueueRequest(const std::string& request);
+  virtual bool IsOpen() const = 0;
 
   virtual void ProcessNextRequest();
 
   virtual void SetServer(cmServerBase* s);
 
+  virtual void QueueRequest(const std::string& request);
+
+  virtual bool OnServeStart(std::string* pString);
+
+protected:
+  std::deque<std::string> Queue;
+
+  cmServerBase* Server = 0;
+};
+
+/***
+ * Abstraction of a connection; ties in event callbacks from libuv and notifies
+ * the server when appropriate
+ */
+class cmEventBasedConnection : public cmConnection
+{
+public:
+  /***
+   * @param bufferStrategy If no strategy is given, it will process the raw
+   * chunks as they come in. The connection
+   * owns the pointer given.
+   */
+  cmEventBasedConnection(cmConnectionBufferStrategy* bufferStrategy = 0);
+
+  virtual void Connect(uv_stream_t* server);
+
+  virtual void ReadData(const std::string& data);
+
+  virtual bool IsOpen() const override;
+
+  virtual void WriteData(const std::string& data) override;
+
   virtual void OnDisconnect(int errorCode);
   uv_stream_t* ReadStream = nullptr;
-  cmServerBase* Server = 0;
   uv_stream_t* WriteStream = nullptr;
 
   static void on_close(uv_handle_t* handle);
   static void on_close_delete(uv_handle_t* handle);
 
 protected:
-  std::deque<std::string> Queue;
-
   std::string RawReadBuffer;
 
   std::unique_ptr<cmConnectionBufferStrategy> BufferStrategy;

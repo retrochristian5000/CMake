@@ -10,7 +10,7 @@
 
 cmStdIoConnection::cmStdIoConnection(
   cmConnectionBufferStrategy* bufferStrategy)
-  : cmConnection(bufferStrategy)
+  : cmEventBasedConnection(bufferStrategy)
 {
 }
 
@@ -22,23 +22,23 @@ void cmStdIoConnection::SetServer(cmServerBase* s)
     usesTty = true;
     uv_tty_init(this->Server->GetLoop(), &this->Input.tty, 0, 1);
     uv_tty_set_mode(&this->Input.tty, UV_TTY_MODE_NORMAL);
-    Input.tty.data = static_cast<cmConnection*>(this);
+    Input.tty.data = static_cast<cmEventBasedConnection*>(this);
     this->ReadStream = reinterpret_cast<uv_stream_t*>(&this->Input.tty);
 
     uv_tty_init(this->Server->GetLoop(), &this->Output.tty, 1, 0);
     uv_tty_set_mode(&this->Output.tty, UV_TTY_MODE_NORMAL);
-    Output.tty.data = static_cast<cmConnection*>(this);
+    Output.tty.data = static_cast<cmEventBasedConnection*>(this);
     this->WriteStream = reinterpret_cast<uv_stream_t*>(&this->Output.tty);
   } else {
     usesTty = false;
     uv_pipe_init(this->Server->GetLoop(), &this->Input.pipe, 0);
     uv_pipe_open(&this->Input.pipe, 0);
-    Input.pipe.data = static_cast<cmConnection*>(this);
+    Input.pipe.data = static_cast<cmEventBasedConnection*>(this);
     this->ReadStream = reinterpret_cast<uv_stream_t*>(&this->Input.pipe);
 
     uv_pipe_init(this->Server->GetLoop(), &this->Output.pipe, 0);
     uv_pipe_open(&this->Output.pipe, 1);
-    Output.pipe.data = static_cast<cmConnection*>(this);
+    Output.pipe.data = static_cast<cmEventBasedConnection*>(this);
     this->WriteStream = reinterpret_cast<uv_stream_t*>(&this->Output.pipe);
   }
 }
