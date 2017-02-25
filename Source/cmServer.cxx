@@ -35,7 +35,7 @@ static void on_walk_to_shutdown(uv_handle_t* handle, void* arg)
 {
   (void)arg;
   if (!uv_is_closing(handle)) {
-    uv_close(handle, &cmConnection::on_close);
+    uv_close(handle, &cmEventBasedConnection::on_close);
   }
 }
 
@@ -497,7 +497,7 @@ void cmServerBase::StartShutDown()
   uv_check_stop(&cbHandle);
 
   for (auto& connection : Connections) {
-    connection->OnServerShuttingDown();
+    connection->OnConnectionShuttingDown();
   }
   Connections.clear();
 
