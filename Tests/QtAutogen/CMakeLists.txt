@@ -155,6 +155,7 @@ set(timeformat "%Y%j%H%M%S")
 file(TIMESTAMP "${binFile}" timeBegin "${timeformat}")
 
 # Change file content and rebuild
+execute_process(COMMAND "${CMAKE_COMMAND}" -E sleep 1)
 configure_file(mocRerun/test1b.h.in mocRerun/test1.h COPYONLY)
 execute_process(COMMAND "${CMAKE_COMMAND}" --build .
   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/mocRerun"
@@ -167,7 +168,7 @@ endif()
 # Compare timestamps
 file(TIMESTAMP "${binFile}" timeStep1 "${timeformat}")
 if (NOT timeStep1 GREATER timeBegin)
-  message(SEND_ERROR "file1 (${binFile}) should have changed in the first step!")
+  message(SEND_ERROR "File (${binFile}) should have changed in the first step!")
 endif()
 
 # -- Test
@@ -289,16 +290,16 @@ if (NOT QT_TEST_VERSION STREQUAL 4)
   file(TIMESTAMP "${plDFile}" plDAfter "${timeformat}")
 
   if (plAAfter GREATER plABefore)
-    message(SEND_ERROR "file (${plAFile}) should not have changed!")
+    message(SEND_ERROR "File (${plAFile}) should not have changed!")
   endif()
   if (plBAfter GREATER plBBefore)
-    message(SEND_ERROR "file (${plBFile}) should not have changed!")
+    message(SEND_ERROR "File (${plBFile}) should not have changed!")
   endif()
   if (NOT plCAfter GREATER plCBefore)
-    message(SEND_ERROR "file (${plCFile}) should have changed!")
+    message(SEND_ERROR "File (${plCFile}) should have changed!")
   endif()
   if (NOT plDAfter GREATER plDBefore)
-    message(SEND_ERROR "file (${plDFile}) should have changed!")
+    message(SEND_ERROR "File (${plDFile}) should have changed!")
   endif()
 
   # Test custom macro
@@ -311,10 +312,10 @@ if (NOT QT_TEST_VERSION STREQUAL 4)
   file(TIMESTAMP "${plCFile}" plCAfter "${timeformat}")
   file(TIMESTAMP "${plDFile}" plDAfter "${timeformat}")
   if (NOT plCAfter GREATER plCBefore)
-    message(SEND_ERROR "file (${plCFile}) should have changed!")
+    message(SEND_ERROR "File (${plCFile}) should have changed!")
   endif()
   if (NOT plDAfter GREATER plDBefore)
-    message(SEND_ERROR "file (${plDFile}) should have changed!")
+    message(SEND_ERROR "File (${plDFile}) should have changed!")
   endif()
 
 endif()
