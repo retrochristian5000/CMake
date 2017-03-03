@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.7)
-project(automoc_rerun CXX)
+project(mocRerun CXX)
 
 if (QT_TEST_VERSION STREQUAL 4)
   find_package(Qt4 REQUIRED)
@@ -16,12 +16,20 @@ endif()
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-configure_file(test1.h.in1 test1.h COPYONLY)
+configure_file(test1a.h.in test1.h COPYONLY)
+# Generated source file
+add_custom_command(OUTPUT main.cpp
+                   COMMAND ${CMAKE_COMMAND} -E sleep 3
+                   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/main.cpp
+                   )
 
 add_executable(test1
   ${CMAKE_CURRENT_BINARY_DIR}/test1.h
-  test1.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/main.cpp
   res1.qrc
   )
 target_include_directories(test1 PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(test1 ${QT_CORE_TARGET})
+# Write target name to text file
+add_custom_command(TARGET test1 POST_BUILD COMMAND
+  ${CMAKE_COMMAND} -E echo "$<TARGET_FILE:test1>" > target1.txt)
