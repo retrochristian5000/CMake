@@ -57,8 +57,19 @@ bool cmIfFunctionBlocker::IsFunctionBlocked(const cmListFileFunction& lff,
         // watch for our state change
         if (scopeDepth == 0 &&
             !cmSystemTools::Strucmp(this->Functions[c].Name.c_str(), "else")) {
+
+          if (this->ElseSeen) {
+            cmListFileBacktrace bt = mf.GetBacktrace(this->Functions[c]);
+            mf.GetCMakeInstance()->IssueMessage(
+              cmake::FATAL_ERROR,
+              "A duplicate ELSE command was found inside an IF block.", bt);
+            cmSystemTools::SetFatalErrorOccured();
+            return true;
+          }
+
           this->IsBlocking = this->HasRun;
           this->HasRun = true;
+          this->ElseSeen = true;
 
           // if trace is enabled, print a (trivially) evaluated "else"
           // statement
@@ -68,7 +79,14 @@ bool cmIfFunctionBlocker::IsFunctionBlocked(const cmListFileFunction& lff,
         } else if (scopeDepth == 0 &&
                    !cmSystemTools::Strucmp(this->Functions[c].Name.c_str(),
                                            "elseif")) {
-          if (this->HasRun) {
+          if (this->ElseSeen) {
+            cmListFileBacktrace bt = mf.GetBacktrace(this->Functions[c]);
+            mf.GetCMakeInstance()->IssueMessage(
+              cmake::FATAL_ERROR,
+              "An ELSEIF command was found after an ELSE command.", bt);
+            cmSystemTools::SetFatalErrorOccured();
+            return true;
+          } else if (this->HasRun) {
             this->IsBlocking = true;
           } else {
             // if trace is enabled, print the evaluated "elseif" statement
