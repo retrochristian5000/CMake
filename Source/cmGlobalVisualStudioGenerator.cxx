@@ -734,6 +734,25 @@ bool cmGlobalVisualStudioGenerator::TargetIsFortranOnly(
     if (*languages.begin() == "Fortran") {
       return true;
     }
+  } else if (languages.empty()) {
+    // For "language-less" targets (e.g. ALL_BUILD), check if Fortran is the
+    // only language enabled for this project (other than RC).
+    if (!this->GetLanguageEnabled("Fortran")) {
+      return false;
+    }
+
+    std::vector<std::string> enabled, accepted;
+    accepted.push_back("Fortran");
+    accepted.push_back("RC"); // Note: add in sorted order!
+
+    this->GetEnabledLanguages(enabled);
+    std::sort(enabled.begin(), enabled.end());
+    // True if accepted includes enabled, that is, if the set of enabled
+    // languages has no other elements than the accepted ones.
+    if (std::includes(accepted.begin(), accepted.end(), enabled.begin(),
+                      enabled.end())) {
+      return true;
+    }
   }
   return false;
 }
