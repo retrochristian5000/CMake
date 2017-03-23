@@ -131,8 +131,8 @@ this step and must contain
         parts that are already populated by default but can always be
         overwritten if needed:
   - EXPECTED_FILE_<file_number_starting_with_1>_NAME is the name component of
-    the file (by default it is set to package name that is same as test name
-    in lowercase)
+    the file (by default it is set to PACKAGES_FILE_NAME or if not set to
+    package name that is same as test name in lowercase)
   - EXPECTED_FILE_<file_number_starting_with_1>_VERSION is the version of the
     package (by default it is set to '0.1.1')
   - EXPECTED_FILE_<file_number_starting_with_1>_REVISION is the revision of the
