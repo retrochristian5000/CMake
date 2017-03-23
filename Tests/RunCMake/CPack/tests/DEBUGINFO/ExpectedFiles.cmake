@@ -3,11 +3,13 @@ set(whitespaces_ "[\t\n\r ]*")
 set(EXPECTED_FILES_COUNT "5")
 set(EXPECTED_FILES_NAME_GENERATOR_SPECIFIC_FORMAT TRUE)
 
+set(PACKAGES_FILE_NAME "Debuginfo")
+
 set(EXPECTED_FILE_1_COMPONENT "applications")
 set(EXPECTED_FILE_CONTENT_1_LIST "/usr;/usr/foo;/usr/foo/test_prog")
-set(EXPECTED_FILE_2 "debuginfo*-headers.rpm")
+set(EXPECTED_FILE_2 "TestDinfo-pkg*-headers.rpm")
 set(EXPECTED_FILE_CONTENT_2_LIST "/usr;/usr/bar;/usr/bar/CMakeLists.txt")
-set(EXPECTED_FILE_3 "debuginfo*-libs.rpm")
+set(EXPECTED_FILE_3 "TestDinfo-pkg*-libs.rpm")
 set(EXPECTED_FILE_CONTENT_3_LIST "/usr;/usr/bas;/usr/bas/libtest_lib.so")
 
 set(EXPECTED_FILE_4_COMPONENT "applications-debuginfo")
