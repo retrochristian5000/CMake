@@ -13,8 +13,6 @@
 #include "cm_jsoncpp_value.h"
 #include "cm_uv.h"
 
-#include <thread>
-
 class cmFileMonitor;
 class cmConnection;
 class cmServerProtocol;
@@ -79,7 +77,8 @@ public:
 protected:
   std::vector<std::unique_ptr<cmConnection> > Connections;
 
-  std::thread ServeThread;
+  bool ServeThreadRunning = false;
+  uv_thread_t ServeThread;
 
   uv_loop_t Loop;
 

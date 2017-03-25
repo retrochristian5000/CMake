@@ -39,8 +39,9 @@ void on_signal(uv_signal_t* signal, int signum)
 static void on_walk_to_shutdown(uv_handle_t* handle, void* arg)
 {
   (void)arg;
-  if (!uv_is_closing(handle))
+  if (!uv_is_closing(handle)) {
     uv_close(handle, &cmConnection::on_close);
+  }
 }
 
 class cmServer::DebugInfo
@@ -94,7 +95,7 @@ void cmServer::ProcessRequest(cmConnection* connection,
     debug->PrintStatistics = debugValue["showStats"].asBool();
   }
 
-  const cmServerRequest request(this, value[kTYPE_KEY].asString(),
+  const cmServerRequest request(this, connection, value[kTYPE_KEY].asString(),
                                 value[kCOOKIE_KEY].asString(), value);
 
   if (request.Type == "") {
@@ -336,7 +337,7 @@ void cmServer::WriteProgress(const cmServerRequest& request, int min,
   obj[kPROGRESS_MAXIMUM_KEY] = max;
   obj[kPROGRESS_CURRENT_KEY] = current;
 
-  this->WriteJsonObject(obj, nullptr);
+  this->WriteJsonObject(request.Connection, obj, nullptr);
 }
 
 void cmServer::WriteMessage(const cmServerRequest& request,
@@ -356,7 +357,7 @@ void cmServer::WriteMessage(const cmServerRequest& request,
     obj[kTITLE_KEY] = title;
   }
 
-  WriteJsonObject(obj, nullptr);
+  WriteJsonObject(request.Connection, obj, nullptr);
 }
 
 void cmServer::WriteParseError(cmConnection* connection,
@@ -421,12 +422,17 @@ void cmServer::StartShutDown()
   }
 }
 
+static void __start_thread(void* arg)
+{
+  auto server = reinterpret_cast<cmServerBase*>(arg);
+  std::string error;
+  server->Serve(&error);
+}
+
 bool cmServerBase::StartServeThread()
 {
-  ServeThread = std::thread([&] {
-    std::string error;
-    Serve(&error);
-  });
+  ServeThreadRunning = true;
+  uv_thread_create(&ServeThread, __start_thread, this);
   return true;
 }
 
@@ -454,8 +460,9 @@ bool cmServerBase::Serve(std::string* errorMessage)
   OnServeStart();
 
   for (auto& connection : Connections) {
-    if (!connection->OnServeStart(errorMessage))
+    if (!connection->OnServeStart(errorMessage)) {
       return false;
+    }
   }
 
   if (uv_run(&Loop, UV_RUN_DEFAULT) != 0) {
@@ -485,19 +492,24 @@ void cmServerBase::OnServeStart()
 
 void cmServerBase::StartShutDown()
 {
-  if (!uv_is_closing((const uv_handle_t*)&this->SIGINTHandler))
+  if (!uv_is_closing((const uv_handle_t*)&this->SIGINTHandler)) {
     uv_signal_stop(&this->SIGINTHandler);
-  if (!uv_is_closing((const uv_handle_t*)&this->SIGHUPHandler))
+  }
+
+  if (!uv_is_closing((const uv_handle_t*)&this->SIGHUPHandler)) {
     uv_signal_stop(&this->SIGHUPHandler);
+  }
   uv_prepare_stop(&cbPrepareHandle);
   uv_check_stop(&cbHandle);
 
-  for (auto& connection : Connections)
+  for (auto& connection : Connections) {
     connection->OnServerShuttingDown();
+  }
 
   uv_stop(&Loop);
-  if (!uv_is_closing((const uv_handle_t*)&WakeupLoop))
+  if (!uv_is_closing((const uv_handle_t*)&WakeupLoop)) {
     uv_async_send(&WakeupLoop);
+  }
   uv_walk(&Loop, on_walk_to_shutdown, CM_NULLPTR);
 }
 
@@ -534,8 +546,11 @@ cmServerBase::~cmServerBase()
 
   StartShutDown();
 
-  if (ServeThread.joinable())
-    ServeThread.join();
+  if (ServeThreadRunning) {
+    uv_thread_join(&ServeThread);
+  }
+
+  uv_loop_close(&Loop);
 }
 
 void cmServerBase::AddNewConnection(cmConnection* ownedConnection)
@@ -546,8 +561,9 @@ void cmServerBase::AddNewConnection(cmConnection* ownedConnection)
 
 void cmServerBase::ProcessOneRequestPerConnection()
 {
-  for (auto& connection : Connections)
+  for (auto& connection : Connections) {
     connection->ProcessNextRequest();
+  }
 }
 
 uv_loop_t* cmServerBase::GetLoop()
@@ -563,8 +579,9 @@ void cmServerBase::OnDisconnect(cmConnection* pConnection)
   Connections.erase(
     std::remove_if(Connections.begin(), Connections.end(), pred),
     Connections.end());
-  if (Connections.empty())
+  if (Connections.empty()) {
     StartShutDown();
+  }
 }
 
 void cmServerBase::NotifyDataQueued()

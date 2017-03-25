@@ -106,9 +106,9 @@ std::string cmServerBufferStrategy::BufferMessage(std::string& RawReadBuffer)
       std::string rtn;
       rtn.swap(this->RequestBuffer);
       return rtn;
-    } else {
-      this->RequestBuffer += line;
-      this->RequestBuffer += "\n";
     }
+
+    this->RequestBuffer += line;
+    this->RequestBuffer += "\n";
   }
 }

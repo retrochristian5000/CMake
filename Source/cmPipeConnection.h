@@ -14,7 +14,7 @@ class cmPipeConnection : public cmConnection
 {
 public:
   cmPipeConnection(const std::string& name,
-                   cmConnectionBufferStrategy* bufferStrategy = 0);
+                   cmConnectionBufferStrategy* bufferStrategy = nullptr);
 
   bool OnServeStart(std::string* pString) override;
 
@@ -24,6 +24,6 @@ public:
 
 private:
   const std::string PipeName;
-  uv_pipe_t* ServerPipe = 0;
-  uv_pipe_t* ClientPipe = 0;
+  uv_pipe_t* ServerPipe = nullptr;
+  uv_pipe_t* ClientPipe = nullptr;
 };

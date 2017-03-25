@@ -6,11 +6,12 @@
 #include "cmake.h"
 
 #if defined(CMAKE_BUILD_WITH_CMAKE)
+#include "cmConnection.h"
 #include "cm_jsoncpp_writer.h"
+
 #endif
 
 #include <memory>
-#include <string>
 
 class cmake;
 class cmFileMonitor;
@@ -46,6 +47,7 @@ private:
   Json::Value m_Data;
 };
 
+class cmConnection;
 class cmServerRequest
 {
 public:
@@ -55,9 +57,11 @@ public:
   const std::string Type;
   const std::string Cookie;
   const Json::Value Data;
+  cmConnection* Connection;
 
 private:
-  cmServerRequest(cmServer* server, const std::string& t, const std::string& c,
+  cmServerRequest(cmServer* server, cmConnection* connection,
+                  const std::string& t, const std::string& c,
                   const Json::Value& d);
 
   void ReportProgress(int min, int current, int max,
