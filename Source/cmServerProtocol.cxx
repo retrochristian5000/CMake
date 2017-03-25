@@ -19,14 +19,15 @@
 #include "cmServerDictionary.h"
 
 #if defined(CMAKE_BUILD_WITH_CMAKE)
+#include "cmConnection.h"
 #include "cm_jsoncpp_reader.h"
 #include "cm_jsoncpp_value.h"
+
 #endif
 
 #include <algorithm>
+#include <fstream>
 #include <string>
-#include <vector>
-
 // Get rid of some windows macros:
 #undef max
 
@@ -121,11 +122,13 @@ void getCMakeInputs(const cmGlobalGenerator* gg, const std::string& sourceDir,
 
 } // namespace
 
-cmServerRequest::cmServerRequest(cmServer* server, const std::string& t,
-                                 const std::string& c, const Json::Value& d)
+cmServerRequest::cmServerRequest(cmServer* server, cmConnection* connection,
+                                 const std::string& t, const std::string& c,
+                                 const Json::Value& d)
   : Type(t)
   , Cookie(c)
   , Data(d)
+  , Connection(connection)
   , m_Server(server)
 {
 }
@@ -1052,7 +1055,6 @@ cmServerResponse cmServerProtocol1_0::ProcessGlobalSettings(
   // Currently used generator:
   obj[kGENERATOR_KEY] = this->GeneratorInfo.GeneratorName;
   obj[kEXTRA_GENERATOR_KEY] = this->GeneratorInfo.ExtraGeneratorName;
-
   return request.Reply(obj);
 }
 
