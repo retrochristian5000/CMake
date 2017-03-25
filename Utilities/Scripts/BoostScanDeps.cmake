@@ -35,19 +35,31 @@ function(_Boost_FIND_COMPONENT_DEPENDENCIES component includedir _ret_libs)
   # _boost_processed_headers - headers already parsed (or currently being parsed)
   # _boost_new_headers - new headers discovered for future processing
 
+  message(STATUS "  Processing component ${component}")
+
   set(library_component FALSE)
 
   # Start by finding all headers for the component; header
   # dependencies via #include will be solved by future passes
 
-  # Special-case since it is part of mpi; look only in boost/mpi/python*
+  # Special-case sub-component headers
+  file(GLOB_RECURSE _mpi_python_unprocessed_headers
+       RELATIVE "${includedir}"
+       "${includedir}/boost/mpi/python.hpp"
+       "${includedir}/boost/mpi/python/*")
+  file(GLOB_RECURSE _python_numpy_unprocessed_headers
+       RELATIVE "${includedir}"
+       "${includedir}/boost/python/numpy.hpp"
+       "${includedir}/boost/python/numpy/*")
+
   if(component STREQUAL "mpi_python")
     set(_boost_DEPS "python")
     set(library_component TRUE)
-    file(GLOB_RECURSE _boost_unprocessed_headers
-         RELATIVE "${includedir}"
-         "${includedir}/boost/mpi/python/*")
-    list(INSERT _boost_unprocessed_headers 0 "${includedir}/boost/mpi/python.hpp")
+    set(_boost_unprocessed_headers "${_mpi_python_unprocessed_headers}")
+  elseif(component STREQUAL "numpy")
+    set(_boost_DEPS "python")
+    set(library_component TRUE)
+    set(_boost_unprocessed_headers "${_python_numpy_unprocessed_headers}")
   # Special-case since it is a serialization variant; look in boost/serialization
   elseif(component STREQUAL "wserialization")
     set(library_component TRUE)
@@ -80,6 +92,12 @@ function(_Boost_FIND_COMPONENT_DEPENDENCIES component includedir _ret_libs)
          RELATIVE "${includedir}"
          "${includedir}/boost/${component}/*")
     list(INSERT _boost_unprocessed_headers 0 "${includedir}/boost/${component}.hpp")
+    if(component STREQUAL "mpi")
+      list(REMOVE_ITEM _boost_unprocessed_headers ${_mpi_python_unprocessed_headers})
+    endif()
+    if(component STREQUAL "python")
+      list(REMOVE_ITEM _boost_unprocessed_headers ${_python_numpy_unprocessed_headers})
+    endif()
   endif()
 
   while(_boost_unprocessed_headers)
@@ -168,22 +186,26 @@ if(IS_DIRECTORY "${BOOST_DIR}/boost/mpi" AND
    IS_DIRECTORY "${BOOST_DIR}/boost/python")
  list(APPEND boost_components "mpi_python")
 endif()
+# Special-case numpy, since it's a part of python
+if(EXISTS "${BOOST_DIR}/boost/python/numpy.hpp")
+  list(APPEND boost_components "numpy")
+endif()
 # Special-case wserialization, which is a variant of serialization
 if(IS_DIRECTORY "${BOOST_DIR}/boost/serialization")
- list(APPEND boost_components "wserialization")
+  list(APPEND boost_components "wserialization")
 endif()
 # Special-case math* since there are six libraries, but no actual math
 # library component.  Handle specially when scanning above.
 #
 # Special-case separate test libraries, which are all part of test
 if(EXISTS "${BOOST_DIR}/test/unit_test.hpp")
- list(APPEND boost_components "unit_test_framework")
+  list(APPEND boost_components "unit_test_framework")
 endif()
 if(EXISTS "${BOOST_DIR}/test/prg_exec_monitor.hpp")
- list(APPEND boost_components "prg_exec_monitor")
+  list(APPEND boost_components "prg_exec_monitor")
 endif()
 if(EXISTS "${BOOST_DIR}/test/test_exec_monitor.hpp")
- list(APPEND boost_components "test_exec_monitor")
+  list(APPEND boost_components "test_exec_monitor")
 endif()
 
 if(boost_components)
