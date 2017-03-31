@@ -53,10 +53,7 @@ set(EndStuff_PreArgs
   )
 AddCMakeTest(EndStuff "${EndStuff_PreArgs}")
 
-set(GetPrerequisites_PreArgs
-  "-DCTEST_CONFIGURATION_TYPE:STRING=\\\${CTEST_CONFIGURATION_TYPE}"
-  )
-AddCMakeTest(GetPrerequisites "${GetPrerequisites_PreArgs}")
+AddCMakeTest(GetPrerequisites "-DConfiguration:STRING=$<CONFIG>")
 
 if(GIT_EXECUTABLE)
   set(PolicyCheck_PreArgs
