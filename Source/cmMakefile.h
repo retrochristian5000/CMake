@@ -406,6 +406,8 @@ public:
   cmSourceFile* GetOrCreateSource(const std::string& sourceName,
                                   bool generated = false);
 
+  void AddTargetObject(std::string const& tgtName, std::string const& objFile);
+
   /**
    * Given a variable name, return its value (as a string).
    * If the variable is not found in this makefile instance, the
@@ -817,6 +819,7 @@ protected:
 
 #if defined(CMAKE_BUILD_WITH_CMAKE)
   std::vector<cmSourceGroup> SourceGroups;
+  size_t ObjectLibrariesSourceGroupIndex;
 #endif
 
   std::vector<cmCommand*> FinalPassCommands;
