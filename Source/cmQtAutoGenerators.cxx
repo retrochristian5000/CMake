@@ -581,6 +581,12 @@ void cmQtAutoGenerators::Init(cmMakefile* makefile)
 
   this->MocCppFilenameAbs = this->CurrentBinaryDir + this->MocCppFilenameRel;
 
+  // Moc predefs file
+  if (!this->MocPredefsCmd.empty()) {
+    this->MocPredefsFileRel = this->AutogenBuildSubDir + "moc_predefs.h";
+    this->MocPredefsFileAbs = this->CurrentBinaryDir + this->MocPredefsFileRel;
+  }
+
   // Init file path checksum generator
   fpathCheckSum.setupParentDirs(this->CurrentSourceDir, this->CurrentBinaryDir,
                                 this->ProjectSourceDir,
@@ -1146,13 +1152,12 @@ bool cmQtAutoGenerators::MocGenerateAll(
 
   // Generate moc_predefs
   if (!this->MocPredefsCmd.empty()) {
-    const std::string mocPredefsFile =
-      this->AutogenBuildSubDir + "moc_predefs.h";
-    if (!this->MakeParentDirectory(mocPredefsFile)) {
-      this->LogError("AutoMoc: Error creating directory for" + mocPredefsFile);
+    if (!this->MakeParentDirectory(this->MocPredefsFileAbs)) {
+      this->LogError("AutoMoc: Error creating directory for " +
+                     this->MocPredefsFileRel);
       return false;
     }
-    this->LogBold("Generating " + mocPredefsFile);
+    this->LogBold("Generating MOC predefs " + this->MocPredefsFileRel);
 
     std::vector<std::string> cmd = this->MocPredefsCmd;
     cmd.insert(cmd.end(), this->MocIncludes.cbegin(),
@@ -1171,16 +1176,16 @@ bool cmQtAutoGenerators::MocGenerateAll(
 
     // actually write the file
     cmsys::ofstream outfile;
-    outfile.open(mocPredefsFile.c_str(), std::ios::trunc);
+    outfile.open(this->MocPredefsFileAbs.c_str(), std::ios::trunc);
     if (!outfile) {
       moc_predefsGenerated = false;
-      this->LogError("AutoMoc: Error opening " + mocPredefsFile);
+      this->LogError("AutoMoc: Error opening " + this->MocPredefsFileRel);
     } else {
       outfile << output;
       // Check for write errors
       if (!outfile.good()) {
         moc_predefsGenerated = false;
-        this->LogError("AutoMoc: Error writing " + mocPredefsFile);
+        this->LogError("AutoMoc: Error writing " + this->MocPredefsFileRel);
       }
     }
 
@@ -1351,9 +1356,9 @@ bool cmQtAutoGenerators::MocGenerateFile(
         cmd.push_back("-D" + (*it));
       }
       cmd.insert(cmd.end(), this->MocOptions.begin(), this->MocOptions.end());
-      if (!this->MocPredefsCmd.empty()) {
+      if (!this->MocPredefsFileAbs.empty()) {
         cmd.push_back("--include");
-        cmd.push_back(this->AutogenBuildSubDir + "moc_predefs.h");
+        cmd.push_back(this->MocPredefsFileAbs);
       }
 #ifdef _WIN32
       cmd.push_back("-DWIN32");
