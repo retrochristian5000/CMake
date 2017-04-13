@@ -176,6 +176,8 @@ private:
   // - Moc
   std::string MocCppFilenameRel;
   std::string MocCppFilenameAbs;
+  std::string MocPredefsFileRel;
+  std::string MocPredefsFileAbs;
   std::vector<std::string> MocSkipList;
   std::vector<std::string> MocIncludePaths;
   std::vector<std::string> MocIncludes;
