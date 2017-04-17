@@ -4,7 +4,8 @@
     \$<TARGET_OBJECTS:NoTarget>
 
   The evaluation of the TARGET_OBJECTS generator expression is only suitable
-  for consumption by CMake.  It is not suitable for writing out elsewhere.
+  for consumption by CMake \(limited under Xcode with multiple architectures\).
+  It is not suitable for writing out elsewhere.
 Call Stack \(most recent call first\):
   CMakeLists.txt:3 \(include\)
 *)+
@@ -14,7 +15,8 @@ Call Stack \(most recent call first\):
     \$<TARGET_OBJECTS:NoTarget>
 
   The evaluation of the TARGET_OBJECTS generator expression is only suitable
-  for consumption by CMake.  It is not suitable for writing out elsewhere.
+  for consumption by CMake \(limited under Xcode with multiple architectures\).
+  It is not suitable for writing out elsewhere.
 Call Stack \(most recent call first\):
   CMakeLists.txt:3 \(include\)
 *)+
@@ -24,4 +26,5 @@ CMake Error:
     \$<TARGET_OBJECTS:NoTarget>
 
   The evaluation of the TARGET_OBJECTS generator expression is only suitable
-  for consumption by CMake.  It is not suitable for writing out elsewhere.
+  for consumption by CMake \(limited under Xcode with multiple architectures\).
+  It is not suitable for writing out elsewhere.
