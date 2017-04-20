@@ -81,15 +81,23 @@ public:
   /** \brief Describes the working modes of cmake */
   enum WorkingMode
   {
-    NORMAL_MODE, ///< Cmake runs to create project files
-                 /** \brief Script mode (started by using -P).
-                  *
-                  * In script mode there is no generator and no cache. Also,
-                  * languages are not enabled, so add_executable and things do
-                  * nothing.
-                  */
+    /**
+     * CMake runs to create project files.
+     *
+     * In this mode, all generators and all commands are registered.
+     */
+    NORMAL_MODE,
+
+    /**
+     * Script mode (eg. started by using -P).
+     *
+     * In script mode, there is no generator and no cache.
+     * Also, project commands are not available.
+     */
     SCRIPT_MODE,
-    /** \brief A pkg-config like mode
+
+    /**
+     * A pkg-config like mode.
      *
      * In this mode cmake just searches for a package and prints the results to
      * stdout. This is similar to SCRIPT_MODE, but commands like add_library()
