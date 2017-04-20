@@ -175,7 +175,9 @@ cmake::cmake(WorkingMode mode)
   this->AddDefaultGenerators();
   this->AddDefaultExtraGenerators();
   this->AddScriptingCommands();
-  this->AddProjectCommands();
+  if (mode != SCRIPT_MODE) {
+    this->AddProjectCommands();
+  }
 
   // Make sure we can capture the build tool output.
   cmSystemTools::EnableVSConsoleOutput();
