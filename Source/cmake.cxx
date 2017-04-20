@@ -136,7 +136,8 @@ void cmWarnUnusedCliWarning(const std::string& variable, int /*unused*/,
   cm->MarkCliAsUsed(variable);
 }
 
-cmake::cmake()
+cmake::cmake(WorkingMode mode)
+  : CurrentWorkingMode(mode)
 {
   this->Trace = false;
   this->TraceExpand = false;
@@ -166,7 +167,6 @@ cmake::cmake()
   this->GlobalGenerator = CM_NULLPTR;
   this->ProgressCallback = CM_NULLPTR;
   this->ProgressCallbackClientData = CM_NULLPTR;
-  this->CurrentWorkingMode = NORMAL_MODE;
 
 #ifdef CMAKE_BUILD_WITH_CMAKE
   this->VariableWatch = new cmVariableWatch;
@@ -1888,7 +1888,7 @@ int cmake::CheckBuildSystem()
 
   // Read the rerun check file and use it to decide whether to do the
   // global generate.
-  cmake cm;
+  cmake cm(cmake::NORMAL_MODE);
   cm.SetHomeDirectory("");
   cm.SetHomeOutputDirectory("");
   cm.GetCurrentSnapshot().SetDefaultDefinitions();

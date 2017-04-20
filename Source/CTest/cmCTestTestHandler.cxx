@@ -1568,7 +1568,7 @@ void cmCTestTestHandler::GetListOfTests()
   }
   cmCTestOptionalLog(this->CTest, HANDLER_VERBOSE_OUTPUT,
                      "Constructing a list of tests" << std::endl, this->Quiet);
-  cmake cm;
+  cmake cm(cmake::NORMAL_MODE);
   cm.SetHomeDirectory("");
   cm.SetHomeOutputDirectory("");
   cm.GetCurrentSnapshot().SetDefaultDefinitions();

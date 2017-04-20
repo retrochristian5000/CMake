@@ -201,7 +201,7 @@ int do_cmake(int ac, char const* const* av)
   doc.addCMakeStandardDocSections();
   if (doc.CheckOptions(ac, av)) {
     // Construct and print requested documentation.
-    cmake hcm;
+    cmake hcm(cmake::NORMAL_MODE);
     hcm.SetHomeDirectory("");
     hcm.SetHomeOutputDirectory("");
     hcm.AddCMakePaths();
@@ -283,18 +283,17 @@ int do_cmake(int ac, char const* const* av)
     }
   }
   if (sysinfo) {
-    cmake cm;
+    cmake cm(cmake::NORMAL_MODE);
     cm.SetHomeDirectory("");
     cm.SetHomeOutputDirectory("");
     int ret = cm.GetSystemInformation(args);
     return ret;
   }
-  cmake cm;
+  cmake cm(workingMode);
   cm.SetHomeDirectory("");
   cm.SetHomeOutputDirectory("");
   cmSystemTools::SetMessageCallback(cmakemainMessageCallback, (void*)&cm);
   cm.SetProgressCallback(cmakemainProgressCallback, (void*)&cm);
-  cm.SetWorkingMode(workingMode);
 
   int res = cm.Run(args, view_only);
   if (list_cached || list_all_cached) {
@@ -407,7 +406,7 @@ static int do_build(int ac, char const* const* av)
     return 1;
   }
 
-  cmake cm;
+  cmake cm(cmake::NORMAL_MODE);
   cmSystemTools::SetMessageCallback(cmakemainMessageCallback, (void*)&cm);
   cm.SetProgressCallback(cmakemainProgressCallback, (void*)&cm);
   return cm.Build(dir, target, config, nativeOptions, clean);

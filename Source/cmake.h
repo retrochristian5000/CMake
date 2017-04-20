@@ -112,7 +112,7 @@ public:
   typedef std::map<std::string, cmInstalledFile> InstalledFilesMap;
 
   /// Default constructor
-  cmake();
+  cmake(WorkingMode mode);
   /// Destructor
   ~cmake();
 
@@ -293,8 +293,7 @@ public:
   ///! Do all the checks before running configure
   int DoPreConfigureChecks();
 
-  void SetWorkingMode(WorkingMode mode) { this->CurrentWorkingMode = mode; }
-  WorkingMode GetWorkingMode() { return this->CurrentWorkingMode; }
+  WorkingMode GetWorkingMode() const { return this->CurrentWorkingMode; }
 
   ///! Debug the try compile stuff by not deleting the files
   bool GetDebugTryCompile() { return this->DebugTryCompile; }

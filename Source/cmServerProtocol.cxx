@@ -211,7 +211,7 @@ bool cmServerProtocol::Activate(cmServer* server,
 {
   assert(server);
   this->m_Server = server;
-  this->m_CMakeInstance = std::make_unique<cmake>();
+  this->m_CMakeInstance = std::make_unique<cmake>(cmake::NORMAL_MODE);
   const bool result = this->DoActivate(request, errorMessage);
   if (!result) {
     this->m_CMakeInstance = CM_NULLPTR;
