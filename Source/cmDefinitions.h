@@ -64,12 +64,6 @@ private:
       , Used(false)
     {
     }
-    Def(Def const& d)
-      : std_string(d)
-      , Exists(d.Exists)
-      , Used(d.Used)
-    {
-    }
     bool Exists;
     bool Used;
   };

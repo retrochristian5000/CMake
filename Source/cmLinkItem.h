@@ -31,11 +31,6 @@ public:
     , Target(t)
   {
   }
-  cmLinkItem(cmLinkItem const& r)
-    : std_string(r)
-    , Target(r.Target)
-  {
-  }
   cmGeneratorTarget const* Target;
 };
 
@@ -51,12 +46,6 @@ public:
     : cmLinkItem(n, t)
     , Backtrace(bt)
     , FromGenex(fromGenex)
-  {
-  }
-  cmLinkImplItem(cmLinkImplItem const& r)
-    : cmLinkItem(r)
-    , Backtrace(r.Backtrace)
-    , FromGenex(r.FromGenex)
   {
   }
   cmListFileBacktrace Backtrace;
