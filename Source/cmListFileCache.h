@@ -43,12 +43,6 @@ struct cmListFileArgument
     , Line(0)
   {
   }
-  cmListFileArgument(const cmListFileArgument& r)
-    : Value(r.Value)
-    , Delim(r.Delim)
-    , Line(r.Line)
-  {
-  }
   cmListFileArgument(const std::string& v, Delimiter d, long line)
     : Value(v)
     , Delim(d)
