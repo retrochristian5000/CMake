@@ -273,7 +273,6 @@ private:
     std::string Language;
     LocalObjectEntry()
       : Target(CM_NULLPTR)
-      , Language()
     {
     }
     LocalObjectEntry(cmGeneratorTarget* t, const std::string& lang)

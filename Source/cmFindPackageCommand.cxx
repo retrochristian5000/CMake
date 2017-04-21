@@ -1593,8 +1593,7 @@ class cmFileList
 {
 public:
   cmFileList()
-    : First()
-    , Last(CM_NULLPTR)
+    : Last(CM_NULLPTR)
   {
   }
   virtual ~cmFileList() {}
@@ -1627,8 +1626,7 @@ class cmFindPackageFileList : public cmFileList
 {
 public:
   cmFindPackageFileList(cmFindPackageCommand* fpc, bool use_suffixes = true)
-    : cmFileList()
-    , FPC(fpc)
+    : FPC(fpc)
     , UseSuffixes(use_suffixes)
   {
   }
@@ -1670,8 +1668,7 @@ class cmFileListGeneratorFixed : public cmFileListGeneratorBase
 {
 public:
   cmFileListGeneratorFixed(std::string const& str)
-    : cmFileListGeneratorBase()
-    , String(str)
+    : String(str)
   {
   }
 
@@ -1693,8 +1690,7 @@ class cmFileListGeneratorEnumerate : public cmFileListGeneratorBase
 {
 public:
   cmFileListGeneratorEnumerate(std::vector<std::string> const& v)
-    : cmFileListGeneratorBase()
-    , Vector(v)
+    : Vector(v)
   {
   }
 
@@ -1723,8 +1719,7 @@ public:
   cmFileListGeneratorProject(std::vector<std::string> const& names,
                              cmFindPackageCommand::SortOrderType so,
                              cmFindPackageCommand::SortDirectionType sd)
-    : cmFileListGeneratorBase()
-    , Names(names)
+    : Names(names)
     , SortOrder(so)
     , SortDirection(sd)
   {
@@ -1781,8 +1776,7 @@ class cmFileListGeneratorMacProject : public cmFileListGeneratorBase
 public:
   cmFileListGeneratorMacProject(std::vector<std::string> const& names,
                                 std::string const& ext)
-    : cmFileListGeneratorBase()
-    , Names(names)
+    : Names(names)
     , Extension(ext)
   {
   }
@@ -1830,8 +1824,7 @@ class cmFileListGeneratorCaseInsensitive : public cmFileListGeneratorBase
 {
 public:
   cmFileListGeneratorCaseInsensitive(std::string const& str)
-    : cmFileListGeneratorBase()
-    , String(str)
+    : String(str)
   {
   }
 
@@ -1867,8 +1860,7 @@ class cmFileListGeneratorGlob : public cmFileListGeneratorBase
 {
 public:
   cmFileListGeneratorGlob(std::string const& str)
-    : cmFileListGeneratorBase()
-    , Pattern(str)
+    : Pattern(str)
   {
   }
 

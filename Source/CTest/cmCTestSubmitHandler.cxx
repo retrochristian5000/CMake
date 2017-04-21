@@ -122,8 +122,6 @@ static size_t cmCTestSubmitHandlerCurlDebugCallback(CURL* /*unused*/,
 }
 
 cmCTestSubmitHandler::cmCTestSubmitHandler()
-  : HTTPProxy()
-  , FTPProxy()
 {
   this->Initialize();
 }
