@@ -326,8 +326,7 @@ cmListFileBacktrace::cmListFileBacktrace(cmStateSnapshot bottom, Entry* cur)
 }
 
 cmListFileBacktrace::cmListFileBacktrace()
-  : Bottom()
-  , Cur(CM_NULLPTR)
+  : Cur(CM_NULLPTR)
 {
 }
 

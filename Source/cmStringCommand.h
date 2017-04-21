@@ -80,7 +80,6 @@ protected:
     }
     RegexReplacement(int n)
       : number(n)
-      , value()
     {
     }
     RegexReplacement() {}

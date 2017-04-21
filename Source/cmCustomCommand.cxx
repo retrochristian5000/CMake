@@ -7,7 +7,6 @@
 #include "cmConfigure.h"
 
 cmCustomCommand::cmCustomCommand()
-  : Backtrace()
 {
   this->HaveComment = false;
   this->EscapeOldStyle = true;
@@ -27,7 +26,6 @@ cmCustomCommand::cmCustomCommand(cmMakefile const* mf,
   , Byproducts(byproducts)
   , Depends(depends)
   , CommandLines(commandLines)
-  , Backtrace()
   , Comment(comment ? comment : "")
   , WorkingDirectory(workingDirectory ? workingDirectory : "")
   , HaveComment(comment != CM_NULLPTR)
