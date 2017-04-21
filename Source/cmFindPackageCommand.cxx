@@ -1588,8 +1588,7 @@ class cmFileList
 {
 public:
   cmFileList()
-    : First()
-    , Last(CM_NULLPTR)
+    : Last(CM_NULLPTR)
   {
   }
   virtual ~cmFileList() {}
@@ -1622,8 +1621,7 @@ class cmFindPackageFileList : public cmFileList
 {
 public:
   cmFindPackageFileList(cmFindPackageCommand* fpc, bool use_suffixes = true)
-    : cmFileList()
-    , FPC(fpc)
+    : FPC(fpc)
     , UseSuffixes(use_suffixes)
   {
   }
@@ -1665,13 +1663,11 @@ class cmFileListGeneratorFixed : public cmFileListGeneratorBase
 {
 public:
   cmFileListGeneratorFixed(std::string const& str)
-    : cmFileListGeneratorBase()
-    , String(str)
+    : String(str)
   {
   }
   cmFileListGeneratorFixed(cmFileListGeneratorFixed const& r)
-    : cmFileListGeneratorBase()
-    , String(r.String)
+    : String(r.String)
   {
   }
 
@@ -1694,13 +1690,11 @@ class cmFileListGeneratorEnumerate : public cmFileListGeneratorBase
 {
 public:
   cmFileListGeneratorEnumerate(std::vector<std::string> const& v)
-    : cmFileListGeneratorBase()
-    , Vector(v)
+    : Vector(v)
   {
   }
   cmFileListGeneratorEnumerate(cmFileListGeneratorEnumerate const& r)
-    : cmFileListGeneratorBase()
-    , Vector(r.Vector)
+    : Vector(r.Vector)
   {
   }
 
@@ -1730,14 +1724,12 @@ public:
   cmFileListGeneratorProject(std::vector<std::string> const& names,
                              cmFindPackageCommand::SortOrderType so,
                              cmFindPackageCommand::SortDirectionType sd)
-    : cmFileListGeneratorBase()
-    , Names(names)
+    : Names(names)
   {
     this->SetSort(so, sd);
   }
   cmFileListGeneratorProject(cmFileListGeneratorProject const& r)
-    : cmFileListGeneratorBase()
-    , Names(r.Names)
+    : Names(r.Names)
   {
     this->SetSort(r.SortOrder, r.SortDirection);
   }
@@ -1803,14 +1795,12 @@ class cmFileListGeneratorMacProject : public cmFileListGeneratorBase
 public:
   cmFileListGeneratorMacProject(std::vector<std::string> const& names,
                                 const char* ext)
-    : cmFileListGeneratorBase()
-    , Names(names)
+    : Names(names)
     , Extension(ext)
   {
   }
   cmFileListGeneratorMacProject(cmFileListGeneratorMacProject const& r)
-    : cmFileListGeneratorBase()
-    , Names(r.Names)
+    : Names(r.Names)
     , Extension(r.Extension)
   {
   }
@@ -1859,14 +1849,12 @@ class cmFileListGeneratorCaseInsensitive : public cmFileListGeneratorBase
 {
 public:
   cmFileListGeneratorCaseInsensitive(std::string const& str)
-    : cmFileListGeneratorBase()
-    , String(str)
+    : String(str)
   {
   }
   cmFileListGeneratorCaseInsensitive(
     cmFileListGeneratorCaseInsensitive const& r)
-    : cmFileListGeneratorBase()
-    , String(r.String)
+    : String(r.String)
   {
   }
 
@@ -1903,13 +1891,11 @@ class cmFileListGeneratorGlob : public cmFileListGeneratorBase
 {
 public:
   cmFileListGeneratorGlob(std::string const& str)
-    : cmFileListGeneratorBase()
-    , Pattern(str)
+    : Pattern(str)
   {
   }
   cmFileListGeneratorGlob(cmFileListGeneratorGlob const& r)
-    : cmFileListGeneratorBase()
-    , Pattern(r.Pattern)
+    : Pattern(r.Pattern)
   {
   }
 

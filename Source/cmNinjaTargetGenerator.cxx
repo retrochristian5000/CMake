@@ -55,10 +55,8 @@ cmNinjaTargetGenerator::cmNinjaTargetGenerator(cmGeneratorTarget* target)
   : cmCommonTargetGenerator(target)
   , MacOSXContentGenerator(CM_NULLPTR)
   , OSXBundleGenerator(CM_NULLPTR)
-  , MacContentFolders()
   , LocalGenerator(
       static_cast<cmLocalNinjaGenerator*>(target->GetLocalGenerator()))
-  , Objects()
 {
   MacOSXContentGenerator = new MacOSXContentGeneratorType(this);
 }
