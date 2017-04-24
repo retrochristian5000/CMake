@@ -22,7 +22,6 @@
 #include <utility>
 
 cmGlobalKdevelopGenerator::cmGlobalKdevelopGenerator()
-  : cmExternalMakefileProjectGenerator()
 {
 }
 

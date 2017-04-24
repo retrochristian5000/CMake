@@ -23,8 +23,7 @@ class cmLinkItem : public std::string
 
 public:
   cmLinkItem()
-    : std_string()
-    , Target(CM_NULLPTR)
+    : Target(CM_NULLPTR)
   {
   }
   cmLinkItem(const std_string& n, cmGeneratorTarget const* t)
@@ -39,9 +38,7 @@ class cmLinkImplItem : public cmLinkItem
 {
 public:
   cmLinkImplItem()
-    : cmLinkItem()
-    , Backtrace()
-    , FromGenex(false)
+    : FromGenex(false)
   {
   }
   cmLinkImplItem(std::string const& n, cmGeneratorTarget const* t,

@@ -1570,8 +1570,12 @@ void cmFindPackageCommand::StoreVersionFound()
 
 class cmFileListGeneratorBase
 {
+  CM_DISABLE_COPY(cmFileListGeneratorBase)
+
 public:
+  cmFileListGeneratorBase() {}
   virtual ~cmFileListGeneratorBase() {}
+
 protected:
   bool Consider(std::string const& fullPath, cmFileList& listing);
 
@@ -1588,8 +1592,7 @@ class cmFileList
 {
 public:
   cmFileList()
-    : First()
-    , Last(CM_NULLPTR)
+    : Last(CM_NULLPTR)
   {
   }
   virtual ~cmFileList() {}
@@ -1622,8 +1625,7 @@ class cmFindPackageFileList : public cmFileList
 {
 public:
   cmFindPackageFileList(cmFindPackageCommand* fpc, bool use_suffixes = true)
-    : cmFileList()
-    , FPC(fpc)
+    : FPC(fpc)
     , UseSuffixes(use_suffixes)
   {
   }
@@ -1663,15 +1665,11 @@ bool cmFileListGeneratorBase::Consider(std::string const& fullPath,
 
 class cmFileListGeneratorFixed : public cmFileListGeneratorBase
 {
+  CM_DISABLE_COPY(cmFileListGeneratorFixed)
+
 public:
   cmFileListGeneratorFixed(std::string const& str)
-    : cmFileListGeneratorBase()
-    , String(str)
-  {
-  }
-  cmFileListGeneratorFixed(cmFileListGeneratorFixed const& r)
-    : cmFileListGeneratorBase()
-    , String(r.String)
+    : String(str)
   {
   }
 
@@ -1684,23 +1682,18 @@ private:
   }
   CM_AUTO_PTR<cmFileListGeneratorBase> Clone() const CM_OVERRIDE
   {
-    CM_AUTO_PTR<cmFileListGeneratorBase> g(
-      new cmFileListGeneratorFixed(*this));
-    return g;
+    return CM_AUTO_PTR<cmFileListGeneratorBase>(
+      new cmFileListGeneratorFixed(this->String));
   }
 };
 
 class cmFileListGeneratorEnumerate : public cmFileListGeneratorBase
 {
+  CM_DISABLE_COPY(cmFileListGeneratorEnumerate)
+
 public:
   cmFileListGeneratorEnumerate(std::vector<std::string> const& v)
-    : cmFileListGeneratorBase()
-    , Vector(v)
-  {
-  }
-  cmFileListGeneratorEnumerate(cmFileListGeneratorEnumerate const& r)
-    : cmFileListGeneratorBase()
-    , Vector(r.Vector)
+    : Vector(v)
   {
   }
 
@@ -1718,44 +1711,30 @@ private:
   }
   CM_AUTO_PTR<cmFileListGeneratorBase> Clone() const CM_OVERRIDE
   {
-    CM_AUTO_PTR<cmFileListGeneratorBase> g(
-      new cmFileListGeneratorEnumerate(*this));
-    return g;
+    return CM_AUTO_PTR<cmFileListGeneratorBase>(
+      new cmFileListGeneratorEnumerate(this->Vector));
   }
 };
 
 class cmFileListGeneratorProject : public cmFileListGeneratorBase
 {
+  CM_DISABLE_COPY(cmFileListGeneratorProject)
+
 public:
   cmFileListGeneratorProject(std::vector<std::string> const& names,
                              cmFindPackageCommand::SortOrderType so,
                              cmFindPackageCommand::SortDirectionType sd)
-    : cmFileListGeneratorBase()
-    , Names(names)
+    : Names(names)
+    , SortOrder(so)
+    , SortDirection(sd)
   {
-    this->SetSort(so, sd);
   }
-  cmFileListGeneratorProject(cmFileListGeneratorProject const& r)
-    : cmFileListGeneratorBase()
-    , Names(r.Names)
-  {
-    this->SetSort(r.SortOrder, r.SortDirection);
-  }
-
-  void SetSort(cmFindPackageCommand::SortOrderType o,
-               cmFindPackageCommand::SortDirectionType d)
-  {
-    SortOrder = o;
-    SortDirection = d;
-  }
-
-protected:
-  // sort parameters
-  cmFindPackageCommand::SortOrderType SortOrder;
-  cmFindPackageCommand::SortDirectionType SortDirection;
 
 private:
   std::vector<std::string> const& Names;
+  cmFindPackageCommand::SortOrderType SortOrder;
+  cmFindPackageCommand::SortDirectionType SortDirection;
+
   bool Search(std::string const& parent, cmFileList& lister) CM_OVERRIDE
   {
     // Construct a list of matches.
@@ -1792,26 +1771,20 @@ private:
   }
   CM_AUTO_PTR<cmFileListGeneratorBase> Clone() const CM_OVERRIDE
   {
-    CM_AUTO_PTR<cmFileListGeneratorBase> g(
-      new cmFileListGeneratorProject(*this));
-    return g;
+    return CM_AUTO_PTR<cmFileListGeneratorBase>(new cmFileListGeneratorProject(
+      this->Names, this->SortOrder, this->SortDirection));
   }
 };
 
 class cmFileListGeneratorMacProject : public cmFileListGeneratorBase
 {
+  CM_DISABLE_COPY(cmFileListGeneratorMacProject)
+
 public:
   cmFileListGeneratorMacProject(std::vector<std::string> const& names,
-                                const char* ext)
-    : cmFileListGeneratorBase()
-    , Names(names)
+                                std::string const& ext)
+    : Names(names)
     , Extension(ext)
-  {
-  }
-  cmFileListGeneratorMacProject(cmFileListGeneratorMacProject const& r)
-    : cmFileListGeneratorBase()
-    , Names(r.Names)
-    , Extension(r.Extension)
   {
   }
 
@@ -1849,24 +1822,18 @@ private:
   }
   CM_AUTO_PTR<cmFileListGeneratorBase> Clone() const CM_OVERRIDE
   {
-    CM_AUTO_PTR<cmFileListGeneratorBase> g(
-      new cmFileListGeneratorMacProject(*this));
-    return g;
+    return CM_AUTO_PTR<cmFileListGeneratorBase>(
+      new cmFileListGeneratorMacProject(this->Names, this->Extension));
   }
 };
 
 class cmFileListGeneratorCaseInsensitive : public cmFileListGeneratorBase
 {
+  CM_DISABLE_COPY(cmFileListGeneratorCaseInsensitive)
+
 public:
   cmFileListGeneratorCaseInsensitive(std::string const& str)
-    : cmFileListGeneratorBase()
-    , String(str)
-  {
-  }
-  cmFileListGeneratorCaseInsensitive(
-    cmFileListGeneratorCaseInsensitive const& r)
-    : cmFileListGeneratorBase()
-    , String(r.String)
+    : String(str)
   {
   }
 
@@ -1893,23 +1860,18 @@ private:
   }
   CM_AUTO_PTR<cmFileListGeneratorBase> Clone() const CM_OVERRIDE
   {
-    CM_AUTO_PTR<cmFileListGeneratorBase> g(
-      new cmFileListGeneratorCaseInsensitive(*this));
-    return g;
+    return CM_AUTO_PTR<cmFileListGeneratorBase>(
+      new cmFileListGeneratorCaseInsensitive(this->String));
   }
 };
 
 class cmFileListGeneratorGlob : public cmFileListGeneratorBase
 {
+  CM_DISABLE_COPY(cmFileListGeneratorGlob)
+
 public:
   cmFileListGeneratorGlob(std::string const& str)
-    : cmFileListGeneratorBase()
-    , Pattern(str)
-  {
-  }
-  cmFileListGeneratorGlob(cmFileListGeneratorGlob const& r)
-    : cmFileListGeneratorBase()
-    , Pattern(r.Pattern)
+    : Pattern(str)
   {
   }
 
@@ -1939,8 +1901,8 @@ private:
   }
   CM_AUTO_PTR<cmFileListGeneratorBase> Clone() const CM_OVERRIDE
   {
-    CM_AUTO_PTR<cmFileListGeneratorBase> g(new cmFileListGeneratorGlob(*this));
-    return g;
+    return CM_AUTO_PTR<cmFileListGeneratorBase>(
+      new cmFileListGeneratorGlob(this->Pattern));
   }
 };
 

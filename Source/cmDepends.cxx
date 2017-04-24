@@ -15,8 +15,7 @@
 #include <utility>
 
 cmDepends::cmDepends(cmLocalGenerator* lg, const char* targetDir)
-  : CompileDirectory()
-  , LocalGenerator(lg)
+  : LocalGenerator(lg)
   , Verbose(false)
   , FileComparison(CM_NULLPTR)
   , TargetDirectory(targetDir)
