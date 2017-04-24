@@ -59,6 +59,7 @@ All Modules
    /module/CPackCygwin
    /module/CPackDeb
    /module/CPackDMG
+   /module/CPackFreeBSD
    /module/CPackIFW
    /module/CPackIFWConfigureFile
    /module/CPackNSIS
