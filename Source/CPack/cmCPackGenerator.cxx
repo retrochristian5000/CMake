@@ -620,7 +620,7 @@ int cmCPackGenerator::InstallProjectViaInstallCMakeProjects(
                           << installComponent << std::endl);
         }
 
-        cmake cm;
+        cmake cm(cmake::NORMAL_MODE);
         cm.SetHomeDirectory("");
         cm.SetHomeOutputDirectory("");
         cm.GetCurrentSnapshot().SetDefaultDefinitions();

@@ -81,15 +81,23 @@ public:
   /** \brief Describes the working modes of cmake */
   enum WorkingMode
   {
-    NORMAL_MODE, ///< Cmake runs to create project files
-                 /** \brief Script mode (started by using -P).
-                  *
-                  * In script mode there is no generator and no cache. Also,
-                  * languages are not enabled, so add_executable and things do
-                  * nothing.
-                  */
+    /**
+     * CMake runs to create project files.
+     *
+     * In this mode, all generators and all commands are registered.
+     */
+    NORMAL_MODE,
+
+    /**
+     * Script mode (eg. started by using -P).
+     *
+     * In script mode, there is no generator and no cache.
+     * Also, project commands are not available.
+     */
     SCRIPT_MODE,
-    /** \brief A pkg-config like mode
+
+    /**
+     * A pkg-config like mode.
      *
      * In this mode cmake just searches for a package and prints the results to
      * stdout. This is similar to SCRIPT_MODE, but commands like add_library()
@@ -112,7 +120,7 @@ public:
   typedef std::map<std::string, cmInstalledFile> InstalledFilesMap;
 
   /// Default constructor
-  cmake();
+  cmake(WorkingMode mode);
   /// Destructor
   ~cmake();
 
@@ -293,8 +301,7 @@ public:
   ///! Do all the checks before running configure
   int DoPreConfigureChecks();
 
-  void SetWorkingMode(WorkingMode mode) { this->CurrentWorkingMode = mode; }
-  WorkingMode GetWorkingMode() { return this->CurrentWorkingMode; }
+  WorkingMode GetWorkingMode() const { return this->CurrentWorkingMode; }
 
   ///! Debug the try compile stuff by not deleting the files
   bool GetDebugTryCompile() { return this->DebugTryCompile; }
