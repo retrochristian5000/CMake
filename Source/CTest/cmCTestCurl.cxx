@@ -143,9 +143,17 @@ bool cmCTestCurl::UploadFile(std::string const& local_file,
   ::curl_easy_setopt(this->Curl, CURLOPT_WRITEFUNCTION,
                      curlWriteMemoryCallback);
   ::curl_easy_setopt(this->Curl, CURLOPT_DEBUGFUNCTION, curlDebugCallback);
-  // Be sure to set Content-Type to satisfy fussy modsecurity rules
+  // Set Content-Type to satisfy fussy modsecurity rules.
   struct curl_slist* headers =
     ::curl_slist_append(CM_NULLPTR, "Content-Type: text/xml");
+  // Add any additional headers that the user specified.
+  for (std::list<std::string>::const_iterator h = this->HttpHeaders.begin();
+       h != this->HttpHeaders.end(); ++h) {
+    cmCTestOptionalLog(this->CTest, HANDLER_OUTPUT,
+                       "   Add HTTP Header: \"" << *h << "\"" << std::endl,
+                       this->Quiet);
+    headers = ::curl_slist_append(headers, h->c_str());
+  }
   ::curl_easy_setopt(this->Curl, CURLOPT_HTTPHEADER, headers);
   std::vector<char> responseData;
   std::vector<char> debugData;
@@ -202,6 +210,18 @@ bool cmCTestCurl::HttpRequest(std::string const& url,
   ::curl_easy_setopt(this->Curl, CURLOPT_FILE, (void*)&responseData);
   ::curl_easy_setopt(this->Curl, CURLOPT_DEBUGDATA, (void*)&debugData);
   ::curl_easy_setopt(this->Curl, CURLOPT_FAILONERROR, 1);
+
+  // Add headers if any were specified.
+  if (!this->HttpHeaders.empty()) {
+    struct curl_slist* headers = CM_NULLPTR;
+    for (std::list<std::string>::const_iterator h = this->HttpHeaders.begin();
+         h != this->HttpHeaders.end(); ++h) {
+      cmCTestOptionalLog(this->CTest, HANDLER_OUTPUT,
+                         "   Add HTTP Header: \"" << *h << "\"" << std::endl,
+                         this->Quiet);
+      headers = ::curl_slist_append(headers, h->c_str());
+    }
+  }
 
   CURLcode res = ::curl_easy_perform(this->Curl);
 
