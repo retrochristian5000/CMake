@@ -6,6 +6,7 @@
 #include "cmConfigure.h" // IWYU pragma: keep
 
 #include "cm_curl.h"
+#include <list>
 #include <string>
 #include <vector>
 
@@ -23,6 +24,7 @@ public:
   // currently only supports CURLOPT_SSL_VERIFYPEER_OFF
   // and CURLOPT_SSL_VERIFYHOST_OFF
   void SetCurlOptions(std::vector<std::string> const& args);
+  void SetHttpHeaders(std::list<std::string> l) { this->HttpHeaders = l; }
   void SetUseHttp10On() { this->UseHttp10 = true; }
   void SetTimeOutSeconds(int s) { this->TimeOutSeconds = s; }
   void SetQuiet(bool b) { this->Quiet = b; }
@@ -35,6 +37,7 @@ protected:
 private:
   cmCTest* CTest;
   CURL* Curl;
+  std::list<std::string> HttpHeaders;
   std::string HTTPProxyAuth;
   std::string HTTPProxy;
   curl_proxytype HTTPProxyType;

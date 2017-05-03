@@ -9,6 +9,7 @@
 #include "cmCTestGenericHandler.h"
 
 #include <iosfwd>
+#include <list>
 #include <set>
 #include <string>
 #include <vector>
@@ -42,6 +43,8 @@ public:
 
   // handle the cdash file upload protocol
   int HandleCDashUploadFile(std::string const& file, std::string const& type);
+
+  void SetHttpHeaders(std::list<std::string> l) { this->HttpHeaders = l; }
 
   void ConstructCDashURL(std::string& dropMethod, std::string& url);
 
@@ -95,6 +98,7 @@ private:
   bool HasWarnings;
   bool HasErrors;
   cmCTest::SetOfStrings Files;
+  std::list<std::string> HttpHeaders;
 };
 
 #endif

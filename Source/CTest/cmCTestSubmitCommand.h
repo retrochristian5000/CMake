@@ -8,6 +8,7 @@
 #include "cmCTest.h"
 #include "cmCTestHandlerCommand.h"
 
+#include <list>
 #include <set>
 #include <string>
 #include <vector>
@@ -70,6 +71,7 @@ protected:
     ArgumentDoingRetryCount,
     ArgumentDoingCDashUpload,
     ArgumentDoingCDashUploadType,
+    ArgumentDoingHttpHeader,
     ArgumentDoingLast2
   };
 
@@ -83,6 +85,7 @@ protected:
   bool CDashUpload;
   std::string CDashUploadFile;
   std::string CDashUploadType;
+  std::list<std::string> HttpHeaders;
 };
 
 #endif
