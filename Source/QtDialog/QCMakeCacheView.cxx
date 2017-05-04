@@ -429,7 +429,7 @@ QCMakePropertyList QCMakeCacheModel::properties() const
     return props;
   }
 
-  QList<QModelIndex> idxs;
+  QVector<QModelIndex> idxs;
   idxs.append(this->index(0, 0));
 
   // walk the entire model for property entries
