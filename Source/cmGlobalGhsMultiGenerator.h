@@ -13,7 +13,6 @@ class cmGeneratedFileStream;
 class cmGlobalGhsMultiGenerator : public cmGlobalGenerator
 {
 public:
-  /// The default name of GHS MULTI's build file. Typically: monolith.gpj.
   static const char* FILE_EXTENSION;
 
   cmGlobalGhsMultiGenerator(cmake* cm);
