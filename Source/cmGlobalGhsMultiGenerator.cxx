@@ -38,14 +38,37 @@ void cmGlobalGhsMultiGenerator::GetDocumentation(cmDocumentationEntry& entry)
 {
   entry.Name = GetActualName();
   entry.Brief =
-    "Generates Green Hills MULTI files (experimental, work-in-progress).";
+    "Generates Green Hills MULTI files (experimental, work-in-progress)."
+    " Optional -A <arch> can be one of \"ARM\", \"PPC\", or \"86\".";
+}
+
+bool cmGlobalGhsMultiGenerator::SetGeneratorPlatform(std::string const& p,
+                                                     cmMakefile* /* mf */)
+{
+  if (p == "ARM") {
+    this->Arch = "arm";
+  } else if (p == "PPC") {
+    this->Arch = "ppc";
+  } else if (p == "86") {
+    this->Arch = "86";
+  } else if (p == "") {
+    cmSystemTools::Message(
+      "Green Hills MULTI: -A <arch> not specified; defaulting to ARM");
+    this->Arch = "arm";
+  } else {
+    cmSystemTools::Error(
+      ((std::string)("-A " + p + " not recognized.")).c_str());
+    return false;
+  }
+
+  return true;
 }
 
 void cmGlobalGhsMultiGenerator::EnableLanguage(
   std::vector<std::string> const& l, cmMakefile* mf, bool optional)
 {
   mf->AddDefinition("CMAKE_SYSTEM_NAME", "GHS-MULTI");
-  mf->AddDefinition("CMAKE_SYSTEM_PROCESSOR", "ARM");
+  mf->AddDefinition("CMAKE_SYSTEM_PROCESSOR", this->Arch.c_str());
 
   const std::string ghsCompRoot(GetCompRoot());
   mf->AddDefinition("GHS_COMP_ROOT", ghsCompRoot.c_str());

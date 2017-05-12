@@ -3,6 +3,10 @@ Green Hills MULTI
 
 Generates Green Hills MULTI project files (experimental, work-in-progress).
 
+The ``-A <arch>`` can be supplied for setting the target architecture.
+``<arch>`` must be one of "ARM", "PPC", or "86".  If the target architecture
+is not specified then the default architecture of "ARM" will be used.
+
 Customizations are available through the following cache variables:
 
 * ``GHS_BSP_NAME``
