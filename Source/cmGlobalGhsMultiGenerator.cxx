@@ -101,6 +101,34 @@ bool cmGlobalGhsMultiGenerator::SetGeneratorToolset(std::string const& ts,
 bool cmGlobalGhsMultiGenerator::SetGeneratorPlatform(std::string const& p,
                                                      cmMakefile* mf)
 {
+  const char* tgtPlatform = mf->GetDefinition("GHS_TARGET_PLATFORM");
+  if (tgtPlatform == NULL) {
+    this->Platform = "integrity";
+  } else {
+    this->Platform = tgtPlatform;
+  }
+
+  /* set the compiler code based upon target platform */
+  if (this->Platform == "integrity") {
+    this->ToolsetCode = "int";
+  } else if (this->Platform == "linux") {
+    this->ToolsetCode = "lnx";
+  } else if (this->Platform == "threadx") {
+    this->ToolsetCode = "tx";
+  } else if (this->Platform == "uvelosity") {
+    this->ToolsetCode = "";
+  } else if (this->Platform == "velosity") {
+    this->ToolsetCode = "vel";
+  } else if (this->Platform == "vxworks") {
+    this->ToolsetCode = "vx";
+  } else if (this->Platform == "standalone") {
+    this->ToolsetCode = "";
+  } else {
+    cmSystemTools::Error(((std::string) "GHS_TARGET_PLATFORM \"" +
+                          this->Platform + "\" not recognized")
+                           .c_str());
+  }
+
   if (p == "ARM") {
     this->Arch = "arm";
   } else if (p == "PPC") {
@@ -117,6 +145,8 @@ bool cmGlobalGhsMultiGenerator::SetGeneratorPlatform(std::string const& p,
     return false;
   }
 
+  mf->AddDefinition("CMAKE_SYSTEM_PROCESSOR", this->Arch.c_str());
+
   return true;
 }
 
@@ -124,8 +154,6 @@ void cmGlobalGhsMultiGenerator::EnableLanguage(
   std::vector<std::string> const& l, cmMakefile* mf, bool optional)
 {
   mf->AddDefinition("CMAKE_SYSTEM_NAME", "GHS-MULTI");
-  mf->AddDefinition("CMAKE_SYSTEM_PROCESSOR", this->Arch.c_str());
-
   mf->AddDefinition("GHSMULTI", "1"); // identifier for user CMake files
   this->cmGlobalGenerator::EnableLanguage(l, mf, optional);
 }
