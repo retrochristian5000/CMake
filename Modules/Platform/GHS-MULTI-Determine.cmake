@@ -39,3 +39,10 @@ set(GHS_CUSTOMIZATION "" CACHE FILEPATH "optional GHS customization")
 mark_as_advanced(GHS_CUSTOMIZATION)
 set(GHS_GPJ_MACROS "" CACHE STRING "optional GHS macros generated in the .gpjs for legacy reasons")
 mark_as_advanced(GHS_GPJ_MACROS)
+
+#set and validate GHS_TOOLSET_ROOT
+set(GHS_TOOLSET_ROOT "C:/ghs" CACHE PATH "GHS toolset location.")
+mark_as_advanced(GHS_TOOLSET_ROOT)
+if (NOT IS_ABSOLUTE ${GHS_TOOLSET_ROOT})
+  message( FATAL_ERROR "GHS_TOOLSET_ROOT \"${GHS_TOOLSET_ROOT}\" is not absolute path" )
+endif ()

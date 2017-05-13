@@ -40,7 +40,7 @@ public:
    * Utilized by the generator factory to determine if this generator
    * supports toolsets.
    */
-  static bool SupportsToolset() { return false; }
+  static bool SupportsToolset() { return true; }
 
   /**
    * Utilized by the generator factory to determine if this generator
@@ -49,6 +49,7 @@ public:
   static bool SupportsPlatform() { return true; }
 
   /// Toolset / Platform Support
+  virtual bool SetGeneratorToolset(std::string const& ts, cmMakefile* mf);
   virtual bool SetGeneratorPlatform(std::string const& p, cmMakefile* mf);
 
   /**
@@ -96,11 +97,7 @@ protected:
     std::vector<std::string> const& makeOptions = std::vector<std::string>());
 
 private:
-  std::string const& GetGhsBuildCommand();
-  std::string FindGhsBuildCommand();
-  std::string GetCompRoot();
-  std::vector<std::string> GetCompRootHardPaths();
-  std::vector<std::string> GetCompRootRegistry();
+  std::string GetDefaultCompiler(cmMakefile* mf);
   void OpenBuildFileStream();
 
   void WriteMacros();
@@ -128,10 +125,10 @@ private:
   std::vector<std::string> LibDirs;
 
   bool OSDirRelative;
-  bool GhsBuildCommandInitialized;
-  std::string GhsBuildCommand;
   static const char* DEFAULT_MAKE_PROGRAM;
   std::string Arch;
+  std::string Toolset;
+  std::string ToolsetCode;
 };
 
 #endif

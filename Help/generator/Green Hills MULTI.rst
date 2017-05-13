@@ -7,12 +7,19 @@ The ``-A <arch>`` can be supplied for setting the target architecture.
 ``<arch>`` must be one of "ARM", "PPC", or "86".  If the target architecture
 is not specified then the default architecture of "ARM" will be used.
 
+The ``-T <toolset>`` can be supplied for setting the toolset to be used.
+All toolsets are expected to be located at ``GHS_TOOLSET_ROOT``.
+If the toolset is not specified then the latest toolset will be used.
+
 Customizations are available through the following cache variables:
 
 * ``GHS_BSP_NAME``
 * ``GHS_CUSTOMIZATION``
 * ``GHS_GPJ_MACROS``
 * ``GHS_OS_DIR``
+* ``GHS_TOOLSET_ROOT``
+
+Default to ``C:/ghs``.  Root path for ``toolset``.
 
 .. note::
   This generator is deemed experimental as of CMake |release|

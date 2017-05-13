@@ -20,7 +20,6 @@ cmGlobalGhsMultiGenerator::cmGlobalGhsMultiGenerator(cmake* cm)
   : cmGlobalGenerator(cm)
   , OSDirRelative(false)
 {
-  this->GhsBuildCommandInitialized = false;
 }
 
 cmGlobalGhsMultiGenerator::~cmGlobalGhsMultiGenerator()
@@ -40,6 +39,57 @@ void cmGlobalGhsMultiGenerator::GetDocumentation(cmDocumentationEntry& entry)
   entry.Brief =
     "Generates Green Hills MULTI files (experimental, work-in-progress)."
     " Optional -A <arch> can be one of \"ARM\", \"PPC\", or \"86\".";
+}
+
+bool cmGlobalGhsMultiGenerator::SetGeneratorToolset(std::string const& ts,
+                                                    cmMakefile* mf)
+{
+  /* use user specified toolset or default compiler */
+  if (ts.empty()) {
+    this->Toolset = GetDefaultCompiler(mf);
+    if (this->Toolset.empty()) {
+      cmSystemTools::Message("GHS toolset not detected");
+    }
+  } else {
+    this->Toolset = ts;
+  }
+
+  mf->AddDefinition("CMAKE_SYSTEM_VERSION", this->Toolset.c_str());
+
+  const char* ghsRoot = mf->GetDefinition("GHS_TOOLSET_ROOT");
+  const char* ghsUserCC = mf->GetDefinition("CMAKE_C_COMPILER");
+
+  if (ghsUserCC == NULL) {
+    mf->AddDefinition("CMAKE_C_COMPILER",
+                      std::string((std::string)ghsRoot + "/" + this->Toolset +
+                                  "/cc" + this->ToolsetCode + this->Arch +
+                                  ".exe")
+                        .c_str());
+  }
+  mf->AddDefinition("CMAKE_C_COMPILER_ID_RUN", "TRUE");
+  mf->AddDefinition("CMAKE_C_COMPILER_ID", "GHS");
+  mf->AddDefinition("CMAKE_C_COMPILER_FORCED", "TRUE");
+
+  const char* ghsUserCXX = mf->GetDefinition("CMAKE_CXX_COMPILER");
+  if (ghsUserCXX == NULL) {
+    mf->AddDefinition("CMAKE_CXX_COMPILER",
+                      std::string((std::string)ghsRoot + "/" + this->Toolset +
+                                  "/cx" + this->ToolsetCode + this->Arch +
+                                  ".exe")
+                        .c_str());
+  }
+  mf->AddDefinition("CMAKE_CXX_COMPILER_ID_RUN", "TRUE");
+  mf->AddDefinition("CMAKE_CXX_COMPILER_ID", "GHS");
+  mf->AddDefinition("CMAKE_CXX_COMPILER_FORCED", "TRUE");
+
+  mf->AddCacheDefinition("CMAKE_MAKE_PROGRAM",
+                         std::string((std::string)ghsRoot + "/" +
+                                     this->Toolset + "/" +
+                                     this->DEFAULT_MAKE_PROGRAM + ".exe")
+                           .c_str(),
+                         "build program to use", cmStateEnums::PATH, false);
+
+  return !this->Toolset.empty();
 }
 
 bool cmGlobalGhsMultiGenerator::SetGeneratorPlatform(std::string const& p,
@@ -70,127 +120,25 @@ void cmGlobalGhsMultiGenerator::EnableLanguage(
   mf->AddDefinition("CMAKE_SYSTEM_NAME", "GHS-MULTI");
   mf->AddDefinition("CMAKE_SYSTEM_PROCESSOR", this->Arch.c_str());
 
-  const std::string ghsCompRoot(GetCompRoot());
-  mf->AddDefinition("GHS_COMP_ROOT", ghsCompRoot.c_str());
-  std::string ghsCompRootStart =
-    0 == ghsCompRootStart.size() ? "" : ghsCompRoot + "/";
-  mf->AddDefinition("CMAKE_C_COMPILER",
-                    std::string(ghsCompRootStart + "ccarm.exe").c_str());
-  mf->AddDefinition("CMAKE_C_COMPILER_ID_RUN", "TRUE");
-  mf->AddDefinition("CMAKE_C_COMPILER_ID", "GHS");
-  mf->AddDefinition("CMAKE_C_COMPILER_FORCED", "TRUE");
-
-  mf->AddDefinition("CMAKE_CXX_COMPILER",
-                    std::string(ghsCompRootStart + "cxarm.exe").c_str());
-  mf->AddDefinition("CMAKE_CXX_COMPILER_ID_RUN", "TRUE");
-  mf->AddDefinition("CMAKE_CXX_COMPILER_ID", "GHS");
-  mf->AddDefinition("CMAKE_CXX_COMPILER_FORCED", "TRUE");
-
-  if (!ghsCompRoot.empty()) {
-    static const char* compPreFix = "comp_";
-    std::string compFilename =
-      cmsys::SystemTools::FindLastString(ghsCompRoot.c_str(), compPreFix);
-    cmsys::SystemTools::ReplaceString(compFilename, compPreFix, "");
-    mf->AddDefinition("CMAKE_SYSTEM_VERSION", compFilename.c_str());
-  }
-
   mf->AddDefinition("GHSMULTI", "1"); // identifier for user CMake files
   this->cmGlobalGenerator::EnableLanguage(l, mf, optional);
 }
 
 bool cmGlobalGhsMultiGenerator::FindMakeProgram(cmMakefile* mf)
 {
-  // The GHS generator knows how to lookup its build tool
-  // directly instead of needing a helper module to do it, so we
-  // do not actually need to put CMAKE_MAKE_PROGRAM into the cache.
-  if (cmSystemTools::IsOff(mf->GetDefinition("CMAKE_MAKE_PROGRAM"))) {
-    mf->AddDefinition("CMAKE_MAKE_PROGRAM",
-                      this->GetGhsBuildCommand().c_str());
-  }
+  /* will be set during toolset processing */
   return true;
 }
 
-std::string const& cmGlobalGhsMultiGenerator::GetGhsBuildCommand()
+std::string cmGlobalGhsMultiGenerator::GetDefaultCompiler(cmMakefile* mf)
 {
-  if (!this->GhsBuildCommandInitialized) {
-    this->GhsBuildCommandInitialized = true;
-    this->GhsBuildCommand = this->FindGhsBuildCommand();
-  }
-  return this->GhsBuildCommand;
-}
+  const char* ghsRoot = mf->GetDefinition("GHS_TOOLSET_ROOT");
 
-std::string cmGlobalGhsMultiGenerator::FindGhsBuildCommand()
-{
-  std::vector<std::string> userPaths;
-  userPaths.push_back(this->GetCompRoot());
-  std::string makeProgram =
-    cmSystemTools::FindProgram(DEFAULT_MAKE_PROGRAM, userPaths);
-  if (makeProgram.empty()) {
-    makeProgram = DEFAULT_MAKE_PROGRAM;
-  }
-  return makeProgram;
-}
-
-std::string cmGlobalGhsMultiGenerator::GetCompRoot()
-{
-  std::string output;
-
-  const std::vector<std::string> potentialDirsHardPaths(
-    GetCompRootHardPaths());
-  const std::vector<std::string> potentialDirsRegistry(GetCompRootRegistry());
-
-  std::vector<std::string> potentialDirsComplete;
-  potentialDirsComplete.insert(potentialDirsComplete.end(),
-                               potentialDirsHardPaths.begin(),
-                               potentialDirsHardPaths.end());
-  potentialDirsComplete.insert(potentialDirsComplete.end(),
-                               potentialDirsRegistry.begin(),
-                               potentialDirsRegistry.end());
-
-  // Use latest version
-  std::string outputDirName;
-  for (std::vector<std::string>::const_iterator potentialDirsCompleteIt =
-         potentialDirsComplete.begin();
-       potentialDirsCompleteIt != potentialDirsComplete.end();
-       ++potentialDirsCompleteIt) {
-    const std::string dirName(
-      cmsys::SystemTools::GetFilenameName(*potentialDirsCompleteIt));
-    if (dirName.compare(outputDirName) > 0) {
-      output = *potentialDirsCompleteIt;
-      outputDirName = dirName;
-    }
-  }
-
-  return output;
-}
-
-std::vector<std::string> cmGlobalGhsMultiGenerator::GetCompRootHardPaths()
-{
   std::vector<std::string> output;
-  cmSystemTools::Glob("C:/ghs", "comp_[^;]+", output);
-  for (std::vector<std::string>::iterator outputIt = output.begin();
-       outputIt != output.end(); ++outputIt) {
-    *outputIt = "C:/ghs/" + *outputIt;
-  }
-  return output;
-}
+  cmSystemTools::Glob(ghsRoot, "comp_[^;]+", output);
 
-std::vector<std::string> cmGlobalGhsMultiGenerator::GetCompRootRegistry()
-{
-  std::vector<std::string> output(2);
-  cmsys::SystemTools::ReadRegistryValue(
-    "HKEY_LOCAL_"
-    "MACHINE\\SOFTWARE\\Wow6432Node\\Microsoft\\"
-    "Windows\\CurrentVersion\\Uninstall\\"
-    "GreenHillsSoftwared771f1b4;InstallLocation",
-    output[0]);
-  cmsys::SystemTools::ReadRegistryValue(
-    "HKEY_LOCAL_"
-    "MACHINE\\SOFTWARE\\Wow6432Node\\Microsoft\\"
-    "Windows\\CurrentVersion\\Uninstall\\"
-    "GreenHillsSoftware9881cef6;InstallLocation",
-    output[1]);
-  return output;
+  // Use latest version - if found
+  return (!output.empty() ? output.back() : std::string(""));
 }
 
 void cmGlobalGhsMultiGenerator::OpenBuildFileStream(
@@ -298,11 +246,15 @@ void cmGlobalGhsMultiGenerator::GenerateBuildCommand(
   const std::string& targetName, const std::string& /*config*/, bool /*fast*/,
   bool /*verbose*/, std::vector<std::string> const& makeOptions)
 {
+  const char* gmake =
+    this->CMakeInstance->GetCacheDefinition("CMAKE_MAKE_PROGRAM");
   makeCommand.push_back(
-    this->SelectMakeProgram(makeProgram, this->GetGhsBuildCommand()));
+    this->SelectMakeProgram(makeProgram, (std::string)gmake));
 
   makeCommand.insert(makeCommand.end(), makeOptions.begin(),
                      makeOptions.end());
+  makeCommand.push_back("-top");
+  makeCommand.push_back((std::string) "default" + FILE_EXTENSION);
   if (!targetName.empty()) {
     if (targetName == "clean") {
       makeCommand.push_back("-clean");
