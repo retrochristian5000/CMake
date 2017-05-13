@@ -14,6 +14,7 @@ Customizations are available through the following cache variables:
 * ``GHS_CUSTOMIZATION``
 * ``GHS_GPJ_MACROS``
 * ``GHS_OS_DIR``
+* ``GHS_COMPILER_ROOT``
 
 .. note::
   This generator is deemed experimental as of CMake |release|
