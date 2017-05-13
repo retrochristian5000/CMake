@@ -111,6 +111,23 @@ bool cmGlobalGhsMultiGenerator::SetGeneratorPlatform(std::string const& p,
   /* set the compiler code based upon target platform */
   if (this->Platform == "integrity") {
     this->ToolsetCode = "int";
+    /* set BSP and OS as this is required for compiler to function */
+    const char* ghsBSP = mf->GetDefinition("GHS_BSP_NAME");
+    if (ghsBSP != NULL) {
+      this->GetCMakeInstance()->AddCacheEntry(
+        "GHS_BSP_NAME", ghsBSP, "Stored GHS_BSP_NAME", cmStateEnums::FILEPATH);
+    } else {
+      cmSystemTools::Error("GHS_BSP_NAME variable must be set");
+      return false;
+    }
+    const char* ghsOS = mf->GetDefinition("GHS_OS_DIR");
+    if (ghsOS != NULL) {
+      this->GetCMakeInstance()->AddCacheEntry(
+        "GHS_OS_DIR", ghsOS, "Stored GHS_OS_DIR", cmStateEnums::FILEPATH);
+    } else {
+      cmSystemTools::Error("GHS_OS_DIR variable must be set");
+      return false;
+    }
   } else if (this->Platform == "linux") {
     this->ToolsetCode = "lnx";
   } else if (this->Platform == "threadx") {
@@ -127,6 +144,7 @@ bool cmGlobalGhsMultiGenerator::SetGeneratorPlatform(std::string const& p,
     cmSystemTools::Error(((std::string) "GHS_TARGET_PLATFORM \"" +
                           this->Platform + "\" not recognized")
                            .c_str());
+    return false;
   }
 
   if (p == "ARM") {
@@ -210,42 +228,40 @@ void cmGlobalGhsMultiGenerator::OpenBuildFileStream()
   this->Open(std::string(""), buildFilePath, &this->TargetFolderBuildStreams);
   OpenBuildFileStream(GetBuildFileStream());
 
-  char const* osDir =
-    this->GetCMakeInstance()->GetCacheDefinition("GHS_OS_DIR");
-  if (NULL == osDir) {
-    osDir = "";
-    cmSystemTools::Error("GHS_OS_DIR cache variable must be set");
-  } else {
-    this->GetCMakeInstance()->MarkCliAsUsed("GHS_OS_DIR");
-  }
-  std::string fOSDir(this->trimQuotes(osDir));
-  std::replace(fOSDir.begin(), fOSDir.end(), '\\', '/');
-  if (!fOSDir.empty() && ('c' == fOSDir[0] || 'C' == fOSDir[0])) {
-    this->OSDirRelative = false;
-  } else {
-    this->OSDirRelative = true;
-  }
-
-  char const* bspName =
-    this->GetCMakeInstance()->GetCacheDefinition("GHS_BSP_NAME");
-  if (NULL == bspName) {
-    bspName = "";
-    cmSystemTools::Error("GHS_BSP_NAME cache variable must be set");
-  } else {
-    this->GetCMakeInstance()->MarkCliAsUsed("GHS_BSP_NAME");
-  }
-  std::string fBspName(this->trimQuotes(bspName));
-  std::replace(fBspName.begin(), fBspName.end(), '\\', '/');
   this->WriteMacros();
   this->WriteHighLevelDirectives();
-
   GhsMultiGpj::WriteGpjTag(GhsMultiGpj::PROJECT, this->GetBuildFileStream());
   this->WriteDisclaimer(this->GetBuildFileStream());
   *this->GetBuildFileStream() << "# Top Level Project File" << std::endl;
-  if (!fBspName.empty()) {
-    *this->GetBuildFileStream() << "    -bsp " << fBspName << std::endl;
+
+  // Specify OS DIR if supplied by user
+  // -- not all platforms require this entry
+  char const* osDir =
+    this->GetCMakeInstance()->GetCacheDefinition("GHS_OS_DIR");
+  if (NULL != osDir) {
+    this->GetCMakeInstance()->MarkCliAsUsed("GHS_OS_DIR");
+    std::string fOSDir(this->trimQuotes(osDir));
+    std::replace(fOSDir.begin(), fOSDir.end(), '\\', '/');
+    if (!fOSDir.empty() && ('c' == fOSDir[0] || 'C' == fOSDir[0])) {
+      this->OSDirRelative = false;
+    } else {
+      this->OSDirRelative = true;
+    }
+    this->WriteCompilerOptions(fOSDir);
   }
-  this->WriteCompilerOptions(fOSDir);
+
+  // Specify BSP DIR if supplied by user
+  // -- not all platforms require this entry
+  char const* bspName =
+    this->GetCMakeInstance()->GetCacheDefinition("GHS_BSP_NAME");
+  if (NULL != bspName) {
+    this->GetCMakeInstance()->MarkCliAsUsed("GHS_BSP_NAME");
+    std::string fBspName(this->trimQuotes(bspName));
+    std::replace(fBspName.begin(), fBspName.end(), '\\', '/');
+    if (!fBspName.empty()) {
+      *this->GetBuildFileStream() << "    -bsp " << fBspName << std::endl;
+    }
+  }
 }
 
 void cmGlobalGhsMultiGenerator::CloseBuildFileStream(
@@ -320,8 +336,8 @@ void cmGlobalGhsMultiGenerator::WriteMacros()
 
 void cmGlobalGhsMultiGenerator::WriteHighLevelDirectives()
 {
-  *this->GetBuildFileStream() << "primaryTarget=arm_integrity.tgt"
-                              << std::endl;
+  *this->GetBuildFileStream() << "primaryTarget=" << this->Arch << "_"
+                              << this->Platform << ".tgt" << std::endl;
   char const* const customization =
     this->GetCMakeInstance()->GetCacheDefinition("GHS_CUSTOMIZATION");
   if (NULL != customization && strlen(customization) > 0) {
