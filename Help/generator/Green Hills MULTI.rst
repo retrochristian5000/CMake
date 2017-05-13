@@ -13,6 +13,12 @@ If the toolset is not specified then the latest toolset will be used.
 
 Customizations are available through the following cache variables:
 
+* ``GHS_TARGET_PLATFORM``
+
+Default to ``integrity``.
+Valid values are ``integrity``, ``integrity178``, ``integrityIOT``,
+``threadx``, ``uvelosity``, ``velosity``, ``vxworks``, ``standalone``.
+
 * ``GHS_BSP_NAME``
 * ``GHS_CUSTOMIZATION``
 * ``GHS_GPJ_MACROS``

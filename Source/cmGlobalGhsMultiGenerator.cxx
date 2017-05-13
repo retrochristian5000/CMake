@@ -93,8 +93,38 @@ bool cmGlobalGhsMultiGenerator::SetGeneratorToolset(std::string const& ts,
 }
 
 bool cmGlobalGhsMultiGenerator::SetGeneratorPlatform(std::string const& p,
-                                                     cmMakefile* /* mf */)
+                                                     cmMakefile* mf)
 {
+  const char* tgtPlatform = mf->GetDefinition("GHS_TARGET_PLATFORM");
+  if (tgtPlatform == NULL) {
+    this->Platform = "integrity";
+  } else {
+    this->Platform = tgtPlatform;
+  }
+
+  /* set the compiler code based upon target platform */
+  if (this->Platform == "integrity" || this->Platform == "integrity178" ||
+      this->Platform == "integrityIOT") {
+    this->ToolsetCode = "int";
+  } else if (this->Platform == "linux") {
+    this->ToolsetCode = "lnx";
+  } else if (this->Platform == "threadx") {
+    this->ToolsetCode = "tx";
+  } else if (this->Platform == "uvelosity") {
+    this->ToolsetCode = "";
+  } else if (this->Platform == "velosity") {
+    this->ToolsetCode = "vel";
+  } else if (this->Platform == "vxworks") {
+    this->ToolsetCode = "vx";
+  } else if (this->Platform == "standalone") {
+    this->ToolsetCode = "";
+  } else {
+    cmSystemTools::Error(((std::string) "GHS_TARGET_PLATFORM \"" +
+                          this->Platform + "\" not recognized")
+                           .c_str());
+    return false;
+  }
+
   if (p == "ARM") {
     this->Arch = "arm";
   } else if (p == "PPC") {

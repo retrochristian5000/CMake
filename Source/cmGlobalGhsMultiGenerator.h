@@ -128,6 +128,7 @@ private:
   static const char* DEFAULT_MAKE_PROGRAM;
   std::string Arch;
   std::string Toolset;
+  std::string Platform;
   std::string ToolsetCode;
 };
 
