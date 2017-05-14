@@ -70,8 +70,6 @@ bool cmGlobalGhsMultiGenerator::SetGeneratorToolset(std::string const& ts,
   } else {
     mf->MarkVariableAsUsed("CMAKE_C_COMPILER");
   }
-  mf->AddDefinition("CMAKE_C_COMPILER_ID_RUN", "TRUE");
-  mf->AddDefinition("CMAKE_C_COMPILER_ID", "GHS");
   mf->AddDefinition("CMAKE_C_COMPILER_FORCED", "TRUE");
 
   const char* ghsUserCXX = mf->GetDefinition("CMAKE_CXX_COMPILER");
@@ -84,8 +82,6 @@ bool cmGlobalGhsMultiGenerator::SetGeneratorToolset(std::string const& ts,
   } else {
     mf->MarkVariableAsUsed("CMAKE_CXX_COMPILER");
   }
-  mf->AddDefinition("CMAKE_CXX_COMPILER_ID_RUN", "TRUE");
-  mf->AddDefinition("CMAKE_CXX_COMPILER_ID", "GHS");
   mf->AddDefinition("CMAKE_CXX_COMPILER_FORCED", "TRUE");
 
   mf->AddCacheDefinition("CMAKE_MAKE_PROGRAM",
@@ -104,6 +100,7 @@ bool cmGlobalGhsMultiGenerator::SetGeneratorPlatform(std::string const& p,
   const char* tgtPlatform = mf->GetDefinition("GHS_TARGET_PLATFORM");
   if (tgtPlatform == NULL) {
     this->Platform = "integrity";
+    mf->AddDefinition("GHS_TARGET_PLATFORM", this->Platform.c_str());
   } else {
     this->Platform = tgtPlatform;
   }

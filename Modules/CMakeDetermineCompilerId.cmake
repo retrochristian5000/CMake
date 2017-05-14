@@ -353,6 +353,7 @@ Id flags: ${testflags} ${CMAKE_${lang}_COMPILER_ID_FLAGS_ALWAYS}
       set(CMAKE_${lang}_XCODE_CURRENT_ARCH "${CMAKE_MATCH_1}" PARENT_SCOPE)
     endif()
   else()
+    separate_arguments( testflags )
     execute_process(
       COMMAND "${CMAKE_${lang}_COMPILER}"
               ${CMAKE_${lang}_COMPILER_ID_ARG1}
@@ -501,7 +502,7 @@ function(CMAKE_DETERMINE_COMPILER_ID_CHECK lang file)
         set(ARCHITECTURE_ID "${CMAKE_MATCH_1}")
       endif()
       if("${info}" MATCHES "INFO:compiler_version\\[([^]\"]*)\\]")
-        string(REGEX REPLACE "^0+([0-9])" "\\1" COMPILER_VERSION "${CMAKE_MATCH_1}")
+        string(REGEX REPLACE "^0+([0-9]+)" "\\1" COMPILER_VERSION "${CMAKE_MATCH_1}")
         string(REGEX REPLACE "\\.0+([0-9])" ".\\1" COMPILER_VERSION "${COMPILER_VERSION}")
       endif()
       foreach(comp MAJOR MINOR PATCH TWEAK)
