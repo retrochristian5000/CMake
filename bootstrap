@@ -976,38 +976,28 @@ fi
 # Check if C++ compiler works
 TMPFILE=`cmake_tmp_file`
 echo '
-#if defined(TEST1)
-# include <iostream>
-#else
-# include <iostream.h>
-#endif
+#include <iostream>
 
 class NeedCXX
 {
 public:
-  NeedCXX() { this->Foo = 1; }
-  int GetFoo() { return this->Foo; }
+  NeedCXX() : Foo(1) {}
+  int GetFoo() const { return this->Foo; }
 private:
   int Foo;
 };
 int main()
 {
   NeedCXX c;
-#ifdef TEST3
-  cout << c.GetFoo() << endl;
-#else
   std::cout << c.GetFoo() << std::endl;
-#endif
   return 0;
 }
 ' > "${TMPFILE}.cxx"
 for a in ${cmake_cxx_compilers}; do
-  for b in 1 2 3; do
-    if [ -z "${cmake_cxx_compiler}" ] && \
-      cmake_try_run "${a}" "${cmake_cxx_flags} -DTEST${b}" "${TMPFILE}.cxx" >> cmake_bootstrap.log 2>&1; then
-      cmake_cxx_compiler="${a}"
-    fi
-  done
+  if [ -z "${cmake_cxx_compiler}" ] && \
+    cmake_try_run "${a}" "${cmake_cxx_flags} -DTEST${b}" "${TMPFILE}.cxx" >> cmake_bootstrap.log 2>&1; then
+    cmake_cxx_compiler="${a}"
+  fi
 done
 rm -f "${TMPFILE}.cxx"
 
