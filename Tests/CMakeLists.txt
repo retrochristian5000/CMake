@@ -275,7 +275,7 @@ if(BUILD_TESTING)
   ADD_TEST_MACRO(SystemInformation SystemInformation)
   ADD_TEST_MACRO(MathTest MathTest)
   ADD_TEST_MACRO(CompileFeatures CompileFeatures)
-  ADD_TEST_MACRO(CMakeCommands.target_compile_features target_compile_features)
+  ADD_TEST_MACRO(CMakeCommands.target_compile_features)
 
   if(CMake_TEST_RESOURCES)
     ADD_TEST_MACRO(VSResource VSResource)
@@ -508,7 +508,15 @@ if(BUILD_TESTING)
 
   ADD_TEST_MACRO(Module.FindDependency FindDependency)
 
-  ADD_TEST_MACRO(Module.WriteCompilerDetectionHeader WriteCompilerDetectionHeader)
+  # Only add the compiler detection header test for compilers with
+  # detailed features tables, not just meta-features
+  set(C_expected_features ${CMAKE_C_COMPILE_FEATURES})
+  list(REMOVE_ITEM C_expected_features c_std_90 c_std_99 c_std_11)
+  set(CXX_expected_features ${CMAKE_CXX_COMPILE_FEATURES})
+  list(REMOVE_ITEM CXX_expected_features cxx_std_98 cxx_std_11 cxx_std_14 cxx_std_17)
+  if (C_expected_features AND CXX_expected_features)
+    ADD_TEST_MACRO(Module.WriteCompilerDetectionHeader WriteCompilerDetectionHeader)
+  endif()
 
   if (APPLE OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     include(CheckCXXCompilerFlag)
