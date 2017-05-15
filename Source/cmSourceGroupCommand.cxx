@@ -2,8 +2,6 @@
    file Copyright.txt or https://cmake.org/licensing for details.  */
 #include "cmSourceGroupCommand.h"
 
-#include <algorithm>
-#include <iterator>
 #include <set>
 #include <sstream>
 
@@ -15,7 +13,7 @@ namespace {
 const size_t RootIndex = 1;
 const size_t FilesWithoutPrefixKeywordIndex = 2;
 const size_t FilesWithPrefixKeywordIndex = 4;
-const size_t PrefixKeywordIdex = 2;
+const size_t PrefixKeywordIndex = 2;
 
 std::vector<std::string> tokenizePath(const std::string& path)
 {
@@ -79,17 +77,31 @@ cmSourceGroup* addSourceGroup(const std::vector<std::string>& tokenizedPath,
   return sg;
 }
 
-std::string prepareFilePathForTree(const std::string& path)
+std::string prepareFilePathForTree(const std::string& path,
+                                   const std::string& currentSourceDir)
 {
-  return cmSystemTools::CollapseFullPath(path);
+  std::string preparedPath;
+  if (cmSystemTools::FileIsFullPath(path)) {
+    preparedPath = cmSystemTools::CollapseFullPath(path);
+  } else {
+    preparedPath =
+      cmSystemTools::CollapseFullPath(currentSourceDir + "/" + path);
+  }
+
+  return preparedPath;
 }
 
 std::vector<std::string> prepareFilesPathsForTree(
   std::vector<std::string>::const_iterator begin,
-  std::vector<std::string>::const_iterator end)
+  std::vector<std::string>::const_iterator end,
+  const std::string& currentSourceDir)
 {
-  std::vector<std::string> prepared(std::distance(begin, end));
-  std::transform(begin, end, prepared.begin(), prepareFilePathForTree);
+  std::vector<std::string> prepared;
+
+  for (; begin != end; ++begin) {
+    prepared.push_back(prepareFilePathForTree(*begin, currentSourceDir));
+  }
+
   return prepared;
 }
 
@@ -228,13 +240,13 @@ bool cmSourceGroupCommand::checkTreeArgumentsPreconditions(
   }
 
   if (args[FilesWithoutPrefixKeywordIndex] != "FILES" &&
-      args[PrefixKeywordIdex] != "PREFIX") {
+      args[PrefixKeywordIndex] != "PREFIX") {
     errorMsg = "Unknown argument \"" + args[2] +
       "\". Perhaps the FILES keyword is missing.\n";
     return false;
   }
 
-  if (args[PrefixKeywordIdex] == "PREFIX" &&
+  if (args[PrefixKeywordIndex] == "PREFIX" &&
       (args.size() < 5 || args[FilesWithPrefixKeywordIndex] != "FILES")) {
     errorMsg = "Missing FILES arguments.";
     return false;
@@ -253,13 +265,14 @@ bool cmSourceGroupCommand::processTree(const std::vector<std::string>& args,
   const std::string root = cmSystemTools::CollapseFullPath(args[RootIndex]);
   std::string prefix;
   size_t filesBegin = FilesWithoutPrefixKeywordIndex + 1;
-  if (args[PrefixKeywordIdex] == "PREFIX") {
-    prefix = args[PrefixKeywordIdex + 1];
+  if (args[PrefixKeywordIndex] == "PREFIX") {
+    prefix = args[PrefixKeywordIndex + 1];
     filesBegin = FilesWithPrefixKeywordIndex + 1;
   }
 
   const std::vector<std::string> filesVector =
-    prepareFilesPathsForTree(args.begin() + filesBegin, args.end());
+    prepareFilesPathsForTree(args.begin() + filesBegin, args.end(),
+                             this->Makefile->GetCurrentSourceDirectory());
 
   if (!rootIsPrefix(root, filesVector, errorMsg)) {
     return false;
