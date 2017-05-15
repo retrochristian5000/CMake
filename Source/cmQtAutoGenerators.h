@@ -189,8 +189,8 @@ private:
   bool MocPredefsChanged;
   bool MocRelaxedMode;
   bool MocRunFailed;
-  std::string MocCppFilenameRel;
-  std::string MocCppFilenameAbs;
+  std::string MocCompFileRel;
+  std::string MocCompFileAbs;
   std::string MocPredefsFileRel;
   std::string MocPredefsFileAbs;
   std::vector<std::string> MocSkipList;

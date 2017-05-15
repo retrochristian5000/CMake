@@ -616,9 +616,9 @@ bool cmQtAutoGenerators::SettingsFileWrite()
 
 void cmQtAutoGenerators::Init(cmMakefile* makefile)
 {
-  this->MocCppFilenameRel = "moc_compilation.cpp";
-  this->MocCppFilenameAbs = cmSystemTools::CollapseCombinedPath(
-    this->AutogenBuildDir, this->MocCppFilenameRel);
+  this->MocCompFileRel = "moc_compilation.cpp";
+  this->MocCompFileAbs = cmSystemTools::CollapseCombinedPath(
+    this->AutogenBuildDir, this->MocCompFileRel);
 
   // Moc predefs file
   if (!this->MocPredefsCmd.empty()) {
@@ -1304,18 +1304,18 @@ bool cmQtAutoGenerators::MocGenerateAll(
     automocSource = ost.str();
   }
 
-  if (this->FileDiffers(this->MocCppFilenameAbs, automocSource)) {
+  if (this->FileDiffers(this->MocCompFileAbs, automocSource)) {
     // Actually write moc_compilation.cpp
-    this->LogBold("Generating MOC compilation " + this->MocCppFilenameRel);
-    if (!this->FileWrite("AutoMoc", this->MocCppFilenameAbs, automocSource)) {
+    this->LogBold("Generating MOC compilation " + this->MocCompFileRel);
+    if (!this->FileWrite("AutoMoc", this->MocCompFileAbs, automocSource)) {
       return false;
     }
   } else if (mocCompFileGenerated) {
     // Only touch moc_compilation.cpp
     if (this->Verbose) {
-      this->LogInfo("Touching MOC compilation " + this->MocCppFilenameRel);
+      this->LogInfo("Touching MOC compilation " + this->MocCompFileRel);
     }
-    cmSystemTools::Touch(this->MocCppFilenameAbs, false);
+    cmSystemTools::Touch(this->MocCompFileAbs, false);
   }
 
   return true;
