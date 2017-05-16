@@ -10,6 +10,10 @@ if(POLICY CMP0053)
 endif()
 project(CMake)
 
+if(CMAKE_VERSION VERSION_LESS 3.1)
+  message(WARNING "CMake >= 3.1 may soon be required.  You are using '${CMAKE_VERSION}'.")
+endif()
+
 # Make sure we can find internal find_package modules only used for
 # building CMake and not for shipping externally
 list(INSERT CMAKE_MODULE_PATH 0 ${CMake_SOURCE_DIR}/Source/Modules)
@@ -72,6 +76,10 @@ if(NOT CMake_TEST_EXTERNAL_CMAKE)
 
   # check for available C++ features
   include(${CMake_SOURCE_DIR}/Source/Checks/cm_cxx_features.cmake)
+
+  if(NOT CMake_HAVE_CXX_UNIQUE_PTR)
+    message(WARNING "The C++ compiler does not support 'std::unique_ptr'.  CMake may soon require it.")
+  endif()
 endif()
 
 # set the internal encoding of CMake to UTF-8
