@@ -68,13 +68,13 @@ be included by the user in the C++ implementation file with a preprocessor
 ``#include``.
 
 Included ``moc_*.cpp`` and ``*.moc`` files will be generated in the
-``<CMAKE_CURRENT_BINARY_DIR>/<TARGETNAME>_autogen/include`` directory which is
+``<AUTOGEN_BUILD_DIR>/include_<CONFIG>`` directory which is
 automatically added to the target's :prop_tgt:`INCLUDE_DIRECTORIES`.
 (This differs from CMake 3.7 and below; see their documentation for details.)
 
 Not included ``moc_<basename>.cpp`` files will be generated in custom
 folders to avoid name collisions and included in a separate
-``<CMAKE_CURRENT_BINARY_DIR>/<TARGETNAME>_autogen/moc_compilation.cpp``
+``<AUTOGEN_BUILD_DIR>/mocs_compilation_<CONFIG>.cpp``
 file which is compiled into the target.
 
 The ``moc`` command line will consume the :prop_tgt:`COMPILE_DEFINITIONS` and
@@ -109,7 +109,7 @@ searched for first in the vicinity of including file and afterwards in the
 optional :prop_tgt:`AUTOUIC_SEARCH_PATHS` of the target.
 
 The generated generated ``ui_*.h`` files are placed in the
-``<CMAKE_CURRENT_BINARY_DIR>/<TARGETNAME>_autogen/include`` directory which is
+``<AUTOGEN_BUILD_DIR>/include_<CONFIG>`` directory which is
 automatically added to the target's :prop_tgt:`INCLUDE_DIRECTORIES`.
 (This differs from CMake 3.7 and below; see their documentation for details.)
 

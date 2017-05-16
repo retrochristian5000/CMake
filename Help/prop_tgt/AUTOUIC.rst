@@ -14,7 +14,7 @@ and invoke ``uic`` accordingly.  If an ``#include`` statement like
 searched for first in the vicinity of ``source.cpp`` and afterwards in the
 optional :prop_tgt:`AUTOUIC_SEARCH_PATHS` of the target.
 ``uic`` is run on the ``foo.ui`` file to generate ``ui_foo.h`` in the directory
-``<CMAKE_CURRENT_BINARY_DIR>/<TARGETNAME>_autogen/include``,
+``<AUTOGEN_BUILD_DIR>/include_<CONFIG>``,
 which is added to the target's :prop_tgt:`INCLUDE_DIRECTORIES` automatically.
 
 This property is initialized by the value of the :variable:`CMAKE_AUTOUIC`

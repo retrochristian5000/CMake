@@ -73,10 +73,13 @@ static std::string GetAutogenTargetFilesDir(cmGeneratorTarget const* target)
 
 static std::string GetAutogenTargetBuildDir(cmGeneratorTarget const* target)
 {
-  cmMakefile* makefile = target->Target->GetMakefile();
-  std::string targetDir = makefile->GetCurrentBinaryDirectory();
-  targetDir += "/";
-  targetDir += GetAutogenTargetName(target);
+  std::string targetDir = GetSafeProperty(target, "AUTOGEN_BUILD_DIR");
+  if (targetDir.empty()) {
+    cmMakefile* makefile = target->Target->GetMakefile();
+    targetDir = makefile->GetCurrentBinaryDirectory();
+    targetDir += "/";
+    targetDir += GetAutogenTargetName(target);
+  }
   return targetDir;
 }
 

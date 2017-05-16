@@ -370,8 +370,8 @@ bool cmQtAutoGenerators::ReadAutogenInfoFile(
   {
     this->SettingsFile = cmSystemTools::CollapseFullPath(targetDirectory);
     cmSystemTools::ConvertToUnixSlashes(this->SettingsFile);
-    this->SettingsFile += "/AutogenOldSettings_";
-    this->SettingsFile += config;
+    this->SettingsFile += "/AutogenOldSettings";
+    this->SettingsFile += this->ConfigSuffix;
     this->SettingsFile += ".cmake";
   }
 
