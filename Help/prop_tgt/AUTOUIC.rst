@@ -16,6 +16,7 @@ optional :prop_tgt:`AUTOUIC_SEARCH_PATHS` of the target.
 ``uic`` is run on the ``foo.ui`` file to generate ``ui_foo.h`` in the directory
 ``<AUTOGEN_BUILD_DIR>/include_<CONFIG>``,
 which is added to the target's :prop_tgt:`INCLUDE_DIRECTORIES` automatically.
+(See :prop_tgt:`AUTOGEN_BUILD_DIR`.)
 
 This property is initialized by the value of the :variable:`CMAKE_AUTOUIC`
 variable if it is set when a target is created.

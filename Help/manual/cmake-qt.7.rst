@@ -70,12 +70,13 @@ be included by the user in the C++ implementation file with a preprocessor
 Included ``moc_*.cpp`` and ``*.moc`` files will be generated in the
 ``<AUTOGEN_BUILD_DIR>/include_<CONFIG>`` directory which is
 automatically added to the target's :prop_tgt:`INCLUDE_DIRECTORIES`.
-(This differs from CMake 3.7 and below; see their documentation for details.)
+(This differs from CMake 3.7 and below; see their documentation for details.
+Also see :prop_tgt:`AUTOGEN_BUILD_DIR`.)
 
 Not included ``moc_<basename>.cpp`` files will be generated in custom
 folders to avoid name collisions and included in a separate
 ``<AUTOGEN_BUILD_DIR>/mocs_compilation_<CONFIG>.cpp``
-file which is compiled into the target.
+file which is compiled into the target. (See :prop_tgt:`AUTOGEN_BUILD_DIR`.)
 
 The ``moc`` command line will consume the :prop_tgt:`COMPILE_DEFINITIONS` and
 :prop_tgt:`INCLUDE_DIRECTORIES` target properties from the target it is being
@@ -111,7 +112,8 @@ optional :prop_tgt:`AUTOUIC_SEARCH_PATHS` of the target.
 The generated generated ``ui_*.h`` files are placed in the
 ``<AUTOGEN_BUILD_DIR>/include_<CONFIG>`` directory which is
 automatically added to the target's :prop_tgt:`INCLUDE_DIRECTORIES`.
-(This differs from CMake 3.7 and below; see their documentation for details.)
+(This differs from CMake 3.7 and below; see their documentation for details.
+Also see :prop_tgt:`AUTOGEN_BUILD_DIR`.)
 
 The :prop_tgt:`AUTOUIC` target property may be pre-set for all following
 targets by setting the :variable:`CMAKE_AUTOUIC` variable.  The

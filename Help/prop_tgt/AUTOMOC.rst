@@ -19,7 +19,7 @@ source files at build time and invoke moc accordingly.
   which is automatically added to the target's
   :prop_tgt:`INCLUDE_DIRECTORIES`.  This allows the compiler to find the
   included ``moc_<basename>.cpp`` file regardless of the location the
-  original source.
+  original source. (See :prop_tgt:`AUTOGEN_BUILD_DIR`.)
 
 * If an ``#include`` statement like ``#include "<basename>.moc"`` is found,
   then ``Q_OBJECT`` or ``Q_GADGET`` macros are expected in the current source
@@ -32,7 +32,7 @@ source files at build time and invoke moc accordingly.
   ``<AUTOGEN_BUILD_DIR>/mocs_compilation_<CONFIG>.cpp`` file,
   which is compiled as part of the target. The custom directories with checksum
   based names help to avoid name collisions for moc files with the same
-  ``<basename>``.
+  ``<basename>``. (See :prop_tgt:`AUTOGEN_BUILD_DIR`.)
 
 * Additionally, header files with the same base name as a source file,
   (like ``<basename>.h``) or ``_p`` appended to the base name (like
