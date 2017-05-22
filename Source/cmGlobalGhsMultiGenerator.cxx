@@ -20,7 +20,6 @@ cmGlobalGhsMultiGenerator::cmGlobalGhsMultiGenerator(cmake* cm)
   : cmGlobalGenerator(cm)
   , OSDirRelative(false)
 {
-  this->GhsBuildCommandInitialized = false;
 }
 
 cmGlobalGhsMultiGenerator::~cmGlobalGhsMultiGenerator()
@@ -38,136 +37,162 @@ void cmGlobalGhsMultiGenerator::GetDocumentation(cmDocumentationEntry& entry)
 {
   entry.Name = GetActualName();
   entry.Brief =
-    "Generates Green Hills MULTI files (experimental, work-in-progress).";
+    "Generates Green Hills MULTI files (experimental, work-in-progress)."
+    " Mandatory -A <arch> must be one of \"ARM\", \"PPC\", or \"86\".";
+}
+
+bool cmGlobalGhsMultiGenerator::SetGeneratorToolset(std::string const& ts,
+                                                    cmMakefile* mf)
+{
+  /* use user specified toolset or default compiler */
+  std::string defaultComp = GetDefaultCompiler(mf);
+  if (ts.empty()) {
+    this->Toolset = defaultComp;
+  } else {
+    this->Toolset = ts;
+  }
+
+  if (this->Toolset.empty()) {
+    cmSystemTools::Message("GHS toolset not detected");
+  }
+
+  mf->AddDefinition("CMAKE_SYSTEM_VERSION", this->Toolset.c_str());
+
+  const char* ghsRoot = mf->GetDefinition("GHS_COMPILER_ROOT");
+  const char* ghsUserCC = mf->GetDefinition("CMAKE_C_COMPILER");
+
+  if (ghsUserCC == NULL) {
+    mf->AddDefinition("CMAKE_C_COMPILER",
+                      std::string((std::string)ghsRoot + "/" + this->Toolset +
+                                  "/cc" + this->ToolsetCode + this->Arch +
+                                  ".exe")
+                        .c_str());
+  } else {
+    mf->MarkVariableAsUsed("CMAKE_C_COMPILER");
+  }
+  mf->AddDefinition("CMAKE_C_COMPILER_FORCED", "TRUE");
+
+  const char* ghsUserCXX = mf->GetDefinition("CMAKE_CXX_COMPILER");
+  if (ghsUserCXX == NULL) {
+    mf->AddDefinition("CMAKE_CXX_COMPILER",
+                      std::string((std::string)ghsRoot + "/" + this->Toolset +
+                                  "/cx" + this->ToolsetCode + this->Arch +
+                                  ".exe")
+                        .c_str());
+  } else {
+    mf->MarkVariableAsUsed("CMAKE_CXX_COMPILER");
+  }
+  mf->AddDefinition("CMAKE_CXX_COMPILER_FORCED", "TRUE");
+
+  mf->AddCacheDefinition("CMAKE_MAKE_PROGRAM",
+                         std::string((std::string)ghsRoot + "/" +
+                                     this->Toolset + "/" +
+                                     this->DEFAULT_MAKE_PROGRAM + ".exe")
+                           .c_str(),
+                         "build program to use", cmStateEnums::PATH, true);
+
+  return !this->Toolset.empty();
+}
+
+bool cmGlobalGhsMultiGenerator::SetGeneratorPlatform(std::string const& p,
+                                                     cmMakefile* mf)
+{
+  const char* tgtPlatform = mf->GetDefinition("GHS_TARGET_PLATFORM");
+  if (tgtPlatform == NULL) {
+    this->Platform = "integrity";
+    mf->AddDefinition("GHS_TARGET_PLATFORM", this->Platform.c_str());
+  } else {
+    this->Platform = tgtPlatform;
+  }
+
+  /* set the compiler code based upon target platform */
+  if (this->Platform == "integrity") {
+    this->ToolsetCode = "int";
+    /* set BSP and OS as this is required for compiler to function */
+    const char* ghsBSP = mf->GetDefinition("GHS_BSP_NAME");
+    if (ghsBSP != NULL) {
+      this->GetCMakeInstance()->AddCacheEntry(
+        "GHS_BSP_NAME", ghsBSP, "Stored GHS_BSP_NAME", cmStateEnums::FILEPATH);
+    } else {
+      cmSystemTools::Error("GHS_BSP_NAME variable must be set");
+      return false;
+    }
+    const char* ghsOS = mf->GetDefinition("GHS_OS_DIR");
+    if (ghsOS != NULL) {
+      this->GetCMakeInstance()->AddCacheEntry(
+        "GHS_OS_DIR", ghsOS, "Stored GHS_OS_DIR", cmStateEnums::FILEPATH);
+    } else {
+      cmSystemTools::Error("GHS_OS_DIR variable must be set");
+      return false;
+    }
+  } else if (this->Platform == "linux") {
+    this->ToolsetCode = "lnx";
+  } else if (this->Platform == "threadx") {
+    this->ToolsetCode = "tx";
+  } else if (this->Platform == "uvelosity") {
+    this->ToolsetCode = "";
+  } else if (this->Platform == "velosity") {
+    this->ToolsetCode = "vel";
+  } else if (this->Platform == "vxworks") {
+    this->ToolsetCode = "vx";
+  } else if (this->Platform == "standalone") {
+    this->ToolsetCode = "";
+  } else {
+    cmSystemTools::Error(((std::string) "GHS_TARGET_PLATFORM \"" +
+                          this->Platform + "\" not recognized")
+                           .c_str());
+    return false;
+  }
+
+  if (p == "ARM") {
+    this->Arch = "arm";
+  } else if (p == "PPC") {
+    this->Arch = "ppc";
+  } else if (p == "86") {
+    this->Arch = "86";
+  } else if (p == "") {
+    cmSystemTools::Message(
+      "Green Hills MULTI: -A <arch> not specified; defaulting to ARM");
+    this->Arch = "arm";
+  } else {
+    cmSystemTools::Error(
+      ((std::string)("-A " + p + " not recognized.")).c_str());
+    return false;
+  }
+
+  mf->AddDefinition("CMAKE_SYSTEM_PROCESSOR", this->Arch.c_str());
+
+  return true;
 }
 
 void cmGlobalGhsMultiGenerator::EnableLanguage(
   std::vector<std::string> const& l, cmMakefile* mf, bool optional)
 {
   mf->AddDefinition("CMAKE_SYSTEM_NAME", "GHS-MULTI");
-  mf->AddDefinition("CMAKE_SYSTEM_PROCESSOR", "ARM");
-
-  const std::string ghsCompRoot(GetCompRoot());
-  mf->AddDefinition("GHS_COMP_ROOT", ghsCompRoot.c_str());
-  std::string ghsCompRootStart =
-    0 == ghsCompRootStart.size() ? "" : ghsCompRoot + "/";
-  mf->AddDefinition("CMAKE_C_COMPILER",
-                    std::string(ghsCompRootStart + "ccarm.exe").c_str());
-  mf->AddDefinition("CMAKE_C_COMPILER_ID_RUN", "TRUE");
-  mf->AddDefinition("CMAKE_C_COMPILER_ID", "GHS");
-  mf->AddDefinition("CMAKE_C_COMPILER_FORCED", "TRUE");
-
-  mf->AddDefinition("CMAKE_CXX_COMPILER",
-                    std::string(ghsCompRootStart + "cxarm.exe").c_str());
-  mf->AddDefinition("CMAKE_CXX_COMPILER_ID_RUN", "TRUE");
-  mf->AddDefinition("CMAKE_CXX_COMPILER_ID", "GHS");
-  mf->AddDefinition("CMAKE_CXX_COMPILER_FORCED", "TRUE");
-
-  if (!ghsCompRoot.empty()) {
-    static const char* compPreFix = "comp_";
-    std::string compFilename =
-      cmsys::SystemTools::FindLastString(ghsCompRoot.c_str(), compPreFix);
-    cmsys::SystemTools::ReplaceString(compFilename, compPreFix, "");
-    mf->AddDefinition("CMAKE_SYSTEM_VERSION", compFilename.c_str());
-  }
-
   mf->AddDefinition("GHSMULTI", "1"); // identifier for user CMake files
   this->cmGlobalGenerator::EnableLanguage(l, mf, optional);
 }
 
 bool cmGlobalGhsMultiGenerator::FindMakeProgram(cmMakefile* mf)
 {
-  // The GHS generator knows how to lookup its build tool
-  // directly instead of needing a helper module to do it, so we
-  // do not actually need to put CMAKE_MAKE_PROGRAM into the cache.
-  if (cmSystemTools::IsOff(mf->GetDefinition("CMAKE_MAKE_PROGRAM"))) {
-    mf->AddDefinition("CMAKE_MAKE_PROGRAM",
-                      this->GetGhsBuildCommand().c_str());
-  }
+  /* will be set during toolset processing */
   return true;
 }
 
-std::string const& cmGlobalGhsMultiGenerator::GetGhsBuildCommand()
+std::string cmGlobalGhsMultiGenerator::GetDefaultCompiler(cmMakefile* mf)
 {
-  if (!this->GhsBuildCommandInitialized) {
-    this->GhsBuildCommandInitialized = true;
-    this->GhsBuildCommand = this->FindGhsBuildCommand();
+  const char* ghsRoot = mf->GetDefinition("GHS_COMPILER_ROOT");
+  if (ghsRoot == NULL) {
+    ghsRoot = "C:/ghs";
+    mf->AddDefinition("GHS_COMPILER_ROOT", ghsRoot);
   }
-  return this->GhsBuildCommand;
-}
+  mf->MarkVariableAsUsed("GHS_COMPILER_ROOT");
 
-std::string cmGlobalGhsMultiGenerator::FindGhsBuildCommand()
-{
-  std::vector<std::string> userPaths;
-  userPaths.push_back(this->GetCompRoot());
-  std::string makeProgram =
-    cmSystemTools::FindProgram(DEFAULT_MAKE_PROGRAM, userPaths);
-  if (makeProgram.empty()) {
-    makeProgram = DEFAULT_MAKE_PROGRAM;
-  }
-  return makeProgram;
-}
-
-std::string cmGlobalGhsMultiGenerator::GetCompRoot()
-{
-  std::string output;
-
-  const std::vector<std::string> potentialDirsHardPaths(
-    GetCompRootHardPaths());
-  const std::vector<std::string> potentialDirsRegistry(GetCompRootRegistry());
-
-  std::vector<std::string> potentialDirsComplete;
-  potentialDirsComplete.insert(potentialDirsComplete.end(),
-                               potentialDirsHardPaths.begin(),
-                               potentialDirsHardPaths.end());
-  potentialDirsComplete.insert(potentialDirsComplete.end(),
-                               potentialDirsRegistry.begin(),
-                               potentialDirsRegistry.end());
-
-  // Use latest version
-  std::string outputDirName;
-  for (std::vector<std::string>::const_iterator potentialDirsCompleteIt =
-         potentialDirsComplete.begin();
-       potentialDirsCompleteIt != potentialDirsComplete.end();
-       ++potentialDirsCompleteIt) {
-    const std::string dirName(
-      cmsys::SystemTools::GetFilenameName(*potentialDirsCompleteIt));
-    if (dirName.compare(outputDirName) > 0) {
-      output = *potentialDirsCompleteIt;
-      outputDirName = dirName;
-    }
-  }
-
-  return output;
-}
-
-std::vector<std::string> cmGlobalGhsMultiGenerator::GetCompRootHardPaths()
-{
   std::vector<std::string> output;
-  cmSystemTools::Glob("C:/ghs", "comp_[^;]+", output);
-  for (std::vector<std::string>::iterator outputIt = output.begin();
-       outputIt != output.end(); ++outputIt) {
-    *outputIt = "C:/ghs/" + *outputIt;
-  }
-  return output;
-}
+  cmSystemTools::Glob(ghsRoot, "comp_[^;]+", output);
 
-std::vector<std::string> cmGlobalGhsMultiGenerator::GetCompRootRegistry()
-{
-  std::vector<std::string> output(2);
-  cmsys::SystemTools::ReadRegistryValue(
-    "HKEY_LOCAL_"
-    "MACHINE\\SOFTWARE\\Wow6432Node\\Microsoft\\"
-    "Windows\\CurrentVersion\\Uninstall\\"
-    "GreenHillsSoftwared771f1b4;InstallLocation",
-    output[0]);
-  cmsys::SystemTools::ReadRegistryValue(
-    "HKEY_LOCAL_"
-    "MACHINE\\SOFTWARE\\Wow6432Node\\Microsoft\\"
-    "Windows\\CurrentVersion\\Uninstall\\"
-    "GreenHillsSoftware9881cef6;InstallLocation",
-    output[1]);
-  return output;
+  // Use latest version - if found
+  return (!output.empty() ? output.back() : std::string(""));
 }
 
 void cmGlobalGhsMultiGenerator::OpenBuildFileStream(
@@ -194,48 +219,47 @@ void cmGlobalGhsMultiGenerator::OpenBuildFileStream()
   std::string buildFilePath =
     this->GetCMakeInstance()->GetHomeOutputDirectory();
   buildFilePath += "/";
-  buildFilePath += "default";
+  buildFilePath +=
+    this->GetCMakeInstance()->GetCurrentSnapshot().GetProjectName();
   buildFilePath += FILE_EXTENSION;
 
   this->Open(std::string(""), buildFilePath, &this->TargetFolderBuildStreams);
   OpenBuildFileStream(GetBuildFileStream());
 
-  char const* osDir =
-    this->GetCMakeInstance()->GetCacheDefinition("GHS_OS_DIR");
-  if (NULL == osDir) {
-    osDir = "";
-    cmSystemTools::Error("GHS_OS_DIR cache variable must be set");
-  } else {
-    this->GetCMakeInstance()->MarkCliAsUsed("GHS_OS_DIR");
-  }
-  std::string fOSDir(this->trimQuotes(osDir));
-  std::replace(fOSDir.begin(), fOSDir.end(), '\\', '/');
-  if (!fOSDir.empty() && ('c' == fOSDir[0] || 'C' == fOSDir[0])) {
-    this->OSDirRelative = false;
-  } else {
-    this->OSDirRelative = true;
-  }
-
-  char const* bspName =
-    this->GetCMakeInstance()->GetCacheDefinition("GHS_BSP_NAME");
-  if (NULL == bspName) {
-    bspName = "";
-    cmSystemTools::Error("GHS_BSP_NAME cache variable must be set");
-  } else {
-    this->GetCMakeInstance()->MarkCliAsUsed("GHS_BSP_NAME");
-  }
-  std::string fBspName(this->trimQuotes(bspName));
-  std::replace(fBspName.begin(), fBspName.end(), '\\', '/');
   this->WriteMacros();
   this->WriteHighLevelDirectives();
-
   GhsMultiGpj::WriteGpjTag(GhsMultiGpj::PROJECT, this->GetBuildFileStream());
   this->WriteDisclaimer(this->GetBuildFileStream());
   *this->GetBuildFileStream() << "# Top Level Project File" << std::endl;
-  if (!fBspName.empty()) {
-    *this->GetBuildFileStream() << "    -bsp " << fBspName << std::endl;
+
+  // Specify OS DIR if supplied by user
+  // -- not all platforms require this entry
+  char const* osDir =
+    this->GetCMakeInstance()->GetCacheDefinition("GHS_OS_DIR");
+  if (NULL != osDir) {
+    this->GetCMakeInstance()->MarkCliAsUsed("GHS_OS_DIR");
+    std::string fOSDir(this->trimQuotes(osDir));
+    std::replace(fOSDir.begin(), fOSDir.end(), '\\', '/');
+    if (!fOSDir.empty() && ('c' == fOSDir[0] || 'C' == fOSDir[0])) {
+      this->OSDirRelative = false;
+    } else {
+      this->OSDirRelative = true;
+    }
+    this->WriteCompilerOptions(fOSDir);
   }
-  this->WriteCompilerOptions(fOSDir);
+
+  // Specify BSP DIR if supplied by user
+  // -- not all platforms require this entry
+  char const* bspName =
+    this->GetCMakeInstance()->GetCacheDefinition("GHS_BSP_NAME");
+  if (NULL != bspName) {
+    this->GetCMakeInstance()->MarkCliAsUsed("GHS_BSP_NAME");
+    std::string fBspName(this->trimQuotes(bspName));
+    std::replace(fBspName.begin(), fBspName.end(), '\\', '/');
+    if (!fBspName.empty()) {
+      *this->GetBuildFileStream() << "    -bsp " << fBspName << std::endl;
+    }
+  }
 }
 
 void cmGlobalGhsMultiGenerator::CloseBuildFileStream(
@@ -271,15 +295,19 @@ void cmGlobalGhsMultiGenerator::Generate()
 
 void cmGlobalGhsMultiGenerator::GenerateBuildCommand(
   std::vector<std::string>& makeCommand, const std::string& makeProgram,
-  const std::string& /*projectName*/, const std::string& /*projectDir*/,
+  const std::string& projectName, const std::string& /*projectDir*/,
   const std::string& targetName, const std::string& /*config*/, bool /*fast*/,
   bool /*verbose*/, std::vector<std::string> const& makeOptions)
 {
+  const char* gmake =
+    this->CMakeInstance->GetCacheDefinition("CMAKE_MAKE_PROGRAM");
   makeCommand.push_back(
-    this->SelectMakeProgram(makeProgram, this->GetGhsBuildCommand()));
+    this->SelectMakeProgram(makeProgram, (std::string)gmake));
 
   makeCommand.insert(makeCommand.end(), makeOptions.begin(),
                      makeOptions.end());
+  makeCommand.push_back("-top");
+  makeCommand.push_back(projectName + FILE_EXTENSION);
   if (!targetName.empty()) {
     if (targetName == "clean") {
       makeCommand.push_back("-clean");
@@ -306,8 +334,8 @@ void cmGlobalGhsMultiGenerator::WriteMacros()
 
 void cmGlobalGhsMultiGenerator::WriteHighLevelDirectives()
 {
-  *this->GetBuildFileStream() << "primaryTarget=arm_integrity.tgt"
-                              << std::endl;
+  *this->GetBuildFileStream() << "primaryTarget=" << this->Arch << "_"
+                              << this->Platform << ".tgt" << std::endl;
   char const* const customization =
     this->GetCMakeInstance()->GetCacheDefinition("GHS_CUSTOMIZATION");
   if (NULL != customization && strlen(customization) > 0) {
