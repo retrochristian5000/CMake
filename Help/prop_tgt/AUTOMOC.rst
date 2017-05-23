@@ -13,13 +13,13 @@ source files at build time and invoke moc accordingly.
 
 * If an ``#include`` statement like ``#include "moc_<basename>.cpp"`` is found,
   the ``Q_OBJECT`` or ``Q_GADGET`` macros are expected in an otherwise empty
-  line of the ``<basename>.h(xx)`` header file. ``moc`` is run on the header file to
-  generate ``moc_<basename>.cpp`` in the
-  ``<CMAKE_CURRENT_BINARY_DIR>/<TARGETNAME>_autogen/include`` directory
+  line of the ``<basename>.h(xx)`` header file. ``moc`` is run on the header
+  file to generate ``moc_<basename>.cpp`` in the
+  ``<AUTOGEN_BUILD_DIR>/include_<CONFIG>`` directory
   which is automatically added to the target's
   :prop_tgt:`INCLUDE_DIRECTORIES`.  This allows the compiler to find the
   included ``moc_<basename>.cpp`` file regardless of the location the
-  original source.
+  original source. (See :prop_tgt:`AUTOGEN_BUILD_DIR`.)
 
 * If an ``#include`` statement like ``#include "<basename>.moc"`` is found,
   then ``Q_OBJECT`` or ``Q_GADGET`` macros are expected in the current source
@@ -27,11 +27,12 @@ source files at build time and invoke moc accordingly.
 
 * Header files that are not included by an ``#include "moc_<basename>.cpp"``
   statement are nonetheless scanned for ``Q_OBJECT`` or ``Q_GADGET`` macros.
-  The resulting ``moc_<basename>.cpp`` files are generated in custom
-  directories and automatically included in the generated
-  ``<CMAKE_CURRENT_BINARY_DIR>/<TARGETNAME>_autogen/moc_compilation.cpp`` file,
-  which is compiled as part of the target. The custom directories help to
-  avoid name collisions for moc files with the same ``<basename>``.
+  The resulting ``moc_<basename>_<CONFIG>.cpp`` files are generated in custom
+  directories and automatically included in a generated
+  ``<AUTOGEN_BUILD_DIR>/mocs_compilation_<CONFIG>.cpp`` file,
+  which is compiled as part of the target. The custom directories with checksum
+  based names help to avoid name collisions for moc files with the same
+  ``<basename>``. (See :prop_tgt:`AUTOGEN_BUILD_DIR`.)
 
 * Additionally, header files with the same base name as a source file,
   (like ``<basename>.h``) or ``_p`` appended to the base name (like
