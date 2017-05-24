@@ -34,6 +34,9 @@ Default to ``C:/ghs``.  Used for determining ``GHS_OS_DIR``.
 Default to latest platform OS installation.
 
 * ``GHS_BSP_NAME``
+
+No default value.
+
 * ``GHS_CUSTOMIZATION``
 * ``GHS_GPJ_MACROS``
 * ``GHS_OS_DIR``
