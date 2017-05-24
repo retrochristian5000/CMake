@@ -25,6 +25,14 @@ in ``GHS_PRIMARY_TARGET``.
 
 Default to ``<arch>_<platform>.tgt``.
 
+* ``GHS_OS_ROOT``
+
+Default to ``C:/ghs``.  Used for determining ``GHS_OS_DIR``.
+
+* ``GHS_OS_DIR``
+
+Default to latest platform OS installation.
+
 * ``GHS_BSP_NAME``
 * ``GHS_CUSTOMIZATION``
 * ``GHS_GPJ_MACROS``
