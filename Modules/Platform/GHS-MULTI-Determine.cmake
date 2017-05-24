@@ -13,8 +13,8 @@ if (NOT IS_ABSOLUTE ${GHS_OS_ROOT})
   message( FATAL_ERROR "GHS_OS_ROOT \"${GHS_OS_ROOT}\" is not absolute path" )
 endif ()
 
-#set GHS_OS_DIR
-if ( NOT GHS_OS_DIR )
+#set GHS_OS_DIR if required for platform
+if ( NOT GHS_OS_DIR AND NOT GHS_TARGET_PLATFORM STREQUAL "standalone")
   if (EXISTS ${GHS_OS_ROOT})
 
     #get all directories in root directory

@@ -101,6 +101,17 @@ bool cmGlobalGhsMultiGenerator::SetGeneratorPlatform(std::string const& p,
       this->Platform == "integrityIOT") {
     this->Platform = "integrity";
     this->ToolsetCode = "int";
+    /* verify BSP and OS as this is required for toolset to function */
+    std::string ghsBSP = mf->GetSafeDefinition("GHS_BSP_NAME");
+    if (ghsBSP.empty()) {
+      cmSystemTools::Error("GHS_BSP_NAME variable must be set");
+      return false;
+    }
+    std::string ghsOS = mf->GetSafeDefinition("GHS_OS_DIR");
+    if (ghsOS.empty()) {
+      cmSystemTools::Error("GHS_OS_DIR variable must be set");
+      return false;
+    }
   } else if (this->Platform == "linux") {
     this->ToolsetCode = "lnx";
   } else if (this->Platform == "threadx") {
@@ -200,42 +211,38 @@ void cmGlobalGhsMultiGenerator::OpenBuildFileStream()
   this->Open(std::string(""), buildFilePath, &this->TargetFolderBuildStreams);
   OpenBuildFileStream(GetBuildFileStream());
 
-  char const* osDir =
-    this->GetCMakeInstance()->GetCacheDefinition("GHS_OS_DIR");
-  if (NULL == osDir) {
-    osDir = "";
-    cmSystemTools::Error("GHS_OS_DIR cache variable must be set");
-  } else {
-    this->GetCMakeInstance()->MarkCliAsUsed("GHS_OS_DIR");
-  }
-  std::string fOSDir(this->trimQuotes(osDir));
-  std::replace(fOSDir.begin(), fOSDir.end(), '\\', '/');
-  if (!fOSDir.empty() && ('c' == fOSDir[0] || 'C' == fOSDir[0])) {
-    this->OSDirRelative = false;
-  } else {
-    this->OSDirRelative = true;
-  }
-
-  char const* bspName =
-    this->GetCMakeInstance()->GetCacheDefinition("GHS_BSP_NAME");
-  if (NULL == bspName) {
-    bspName = "";
-    cmSystemTools::Error("GHS_BSP_NAME cache variable must be set");
-  } else {
-    this->GetCMakeInstance()->MarkCliAsUsed("GHS_BSP_NAME");
-  }
-  std::string fBspName(this->trimQuotes(bspName));
-  std::replace(fBspName.begin(), fBspName.end(), '\\', '/');
   this->WriteMacros();
   this->WriteHighLevelDirectives();
-
   GhsMultiGpj::WriteGpjTag(GhsMultiGpj::PROJECT, this->GetBuildFileStream());
   this->WriteDisclaimer(this->GetBuildFileStream());
   *this->GetBuildFileStream() << "# Top Level Project File" << std::endl;
-  if (!fBspName.empty()) {
-    *this->GetBuildFileStream() << "    -bsp " << fBspName << std::endl;
+
+  // Specify OS DIR if supplied by user
+  // -- not all platforms require this entry
+  char const* osDir =
+    this->GetCMakeInstance()->GetCacheDefinition("GHS_OS_DIR");
+  if (NULL != osDir) {
+    std::string fOSDir(this->trimQuotes(osDir));
+    std::replace(fOSDir.begin(), fOSDir.end(), '\\', '/');
+    if (!fOSDir.empty() && ('c' == fOSDir[0] || 'C' == fOSDir[0])) {
+      this->OSDirRelative = false;
+    } else {
+      this->OSDirRelative = true;
+    }
+    this->WriteCompilerOptions(fOSDir);
   }
-  this->WriteCompilerOptions(fOSDir);
+
+  // Specify BSP DIR if supplied by user
+  // -- not all platforms require this entry
+  char const* bspName =
+    this->GetCMakeInstance()->GetCacheDefinition("GHS_BSP_NAME");
+  if (NULL != bspName) {
+    std::string fBspName(this->trimQuotes(bspName));
+    std::replace(fBspName.begin(), fBspName.end(), '\\', '/');
+    if (!fBspName.empty()) {
+      *this->GetBuildFileStream() << "    -bsp " << fBspName << std::endl;
+    }
+  }
 }
 
 void cmGlobalGhsMultiGenerator::CloseBuildFileStream(
