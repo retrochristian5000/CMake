@@ -33,12 +33,13 @@ if (NOT GHS_INT_DIRECTORY)
 endif ()
 
 set(GHS_OS_DIR ${GHS_INT_DIRECTORY} CACHE PATH "OS directory")
-set(GHS_PRIMARY_TARGET "arm_integrity.tgt" CACHE STRING "target for compilation")
 set(GHS_BSP_NAME "simarm" CACHE STRING "BSP name")
 set(GHS_CUSTOMIZATION "" CACHE FILEPATH "optional GHS customization")
 mark_as_advanced(GHS_CUSTOMIZATION)
 set(GHS_GPJ_MACROS "" CACHE STRING "optional GHS macros generated in the .gpjs for legacy reasons")
 mark_as_advanced(GHS_GPJ_MACROS)
+
+set(GHS_TARGET_PLATFORM "integrity" CACHE STRING "GHS target platform")
 
 #set and validate GHS_TOOLSET_ROOT
 set(GHS_TOOLSET_ROOT "C:/ghs" CACHE PATH "GHS toolset location.")

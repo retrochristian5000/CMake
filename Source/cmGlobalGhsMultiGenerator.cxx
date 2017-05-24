@@ -95,16 +95,11 @@ bool cmGlobalGhsMultiGenerator::SetGeneratorToolset(std::string const& ts,
 bool cmGlobalGhsMultiGenerator::SetGeneratorPlatform(std::string const& p,
                                                      cmMakefile* mf)
 {
-  const char* tgtPlatform = mf->GetDefinition("GHS_TARGET_PLATFORM");
-  if (tgtPlatform == NULL) {
-    this->Platform = "integrity";
-  } else {
-    this->Platform = tgtPlatform;
-  }
-
   /* set the compiler code based upon target platform */
+  this->Platform = mf->GetSafeDefinition("GHS_TARGET_PLATFORM");
   if (this->Platform == "integrity" || this->Platform == "integrity178" ||
       this->Platform == "integrityIOT") {
+    this->Platform = "integrity";
     this->ToolsetCode = "int";
   } else if (this->Platform == "linux") {
     this->ToolsetCode = "lnx";
@@ -141,6 +136,10 @@ bool cmGlobalGhsMultiGenerator::SetGeneratorPlatform(std::string const& p,
     return false;
   }
 
+  /* set primary target based on arch and platform */
+  mf->AddCacheDefinition("GHS_PRIMARY_TARGET",
+                         (this->Arch + "_" + this->Platform + ".tgt").c_str(),
+                         "GHS primary target", cmStateEnums::STRING, false);
   return true;
 }
 
@@ -311,8 +310,10 @@ void cmGlobalGhsMultiGenerator::WriteMacros()
 
 void cmGlobalGhsMultiGenerator::WriteHighLevelDirectives()
 {
-  *this->GetBuildFileStream() << "primaryTarget=arm_integrity.tgt"
-                              << std::endl;
+  *this->GetBuildFileStream()
+    << "primaryTarget="
+    << this->GetCMakeInstance()->GetCacheDefinition("GHS_PRIMARY_TARGET")
+    << std::endl;
   char const* const customization =
     this->GetCMakeInstance()->GetCacheDefinition("GHS_CUSTOMIZATION");
   if (NULL != customization && strlen(customization) > 0) {

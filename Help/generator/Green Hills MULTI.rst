@@ -18,6 +18,12 @@ Customizations are available through the following cache variables:
 Default to ``integrity``.
 Valid values are ``integrity``, ``integrity178``, ``integrityIOT``,
 ``threadx``, ``uvelosity``, ``velosity``, ``vxworks``, ``standalone``.
+Used to determine which OS to use.  Also, determines ``<platform>`` value
+in ``GHS_PRIMARY_TARGET``.
+
+* ``GHS_PRIMARY_TARGET``
+
+Default to ``<arch>_<platform>.tgt``.
 
 * ``GHS_BSP_NAME``
 * ``GHS_CUSTOMIZATION``
