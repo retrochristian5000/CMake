@@ -10,6 +10,8 @@ is not specified then the default architecture of "ARM" will be used.
 The ``-T <toolset>`` can be supplied for setting the toolset to be used.
 All toolsets are expected to be located at ``GHS_TOOLSET_ROOT``.
 If the toolset is not specified then the latest toolset will be used.
+For example if ``toolset`` is ``comp_201517`` then
+:variable:`CMAKE_MAKE_PROGRAM` will be set to `c:/ghs/comp_201517/gmake.exe`.
 
 Customizations are available through the following cache variables:
 
@@ -24,6 +26,7 @@ in ``GHS_PRIMARY_TARGET``.
 * ``GHS_PRIMARY_TARGET``
 
 Default to ``<arch>_<platform>.tgt``.
+Used to populate the ``primaryTarget`` setting in the top-level project.
 
 * ``GHS_OS_ROOT``
 
@@ -31,15 +34,24 @@ Default to ``C:/ghs``.  Used for determining ``GHS_OS_DIR``.
 
 * ``GHS_OS_DIR``
 
-Default to latest platform OS installation.
+Default to latest platform OS installation located in ``GHS_OS_ROOT``.
+Used to set ``-os_dir`` option in top-level project.
 
 * ``GHS_BSP_NAME``
 
 No default value.
+Used to set ``-bsp`` option in top-level project.
 
 * ``GHS_CUSTOMIZATION``
+
+No default value.
+Used to set ``customization`` commands in top-level project.
+
 * ``GHS_GPJ_MACROS``
-* ``GHS_OS_DIR``
+
+No default value.
+Used to set ``macro`` commands in top-level project.
+
 * ``GHS_TOOLSET_ROOT``
 
 Default to ``C:/ghs``.  Root path for ``toolset``.
