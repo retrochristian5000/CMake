@@ -85,6 +85,7 @@ target_compile_features(empty PRIVATE ${QT_COMPILE_FEATURES})
 set(timeformat "%Y%j%H%M%S")
 set(RCC_DEPENDS_SRC "${CMAKE_CURRENT_SOURCE_DIR}/rccDepends")
 set(RCC_DEPENDS_BIN "${CMAKE_CURRENT_BINARY_DIR}/rccDepends")
+file(MAKE_DIRECTORY ${RCC_DEPENDS_BIN})
 configure_file(${RCC_DEPENDS_SRC}/res1a.qrc.in ${RCC_DEPENDS_BIN}/res1.qrc COPYONLY)
 configure_file(${RCC_DEPENDS_SRC}/res2a.qrc.in ${RCC_DEPENDS_BIN}/res2.qrc.in COPYONLY)
 try_compile(RCC_DEPENDS
@@ -174,6 +175,7 @@ endif()
 # -- Test
 # Ensure a repeated build succeeds when a header containing a QObject changes
 set(timeformat "%Y%j%H%M%S")
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/mocRerun")
 configure_file(mocRerun/test1a.h.in mocRerun/test1.h COPYONLY)
 try_compile(MOC_RERUN
   "${CMAKE_CURRENT_BINARY_DIR}/mocRerun"
@@ -196,9 +198,8 @@ execute_process(COMMAND "${CMAKE_COMMAND}" -E sleep 1)
 configure_file(mocRerun/test1b.h.in mocRerun/test1.h COPYONLY)
 execute_process(COMMAND "${CMAKE_COMMAND}" --build .
   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/mocRerun"
-  RESULT_VARIABLE mocRerun_result
-  )
-if (mocRerun_result)
+  RESULT_VARIABLE result)
+if (result)
   message(SEND_ERROR "Second build of mocRerun failed.")
 endif()
 # Compare timestamps
@@ -289,9 +290,12 @@ add_subdirectory(mocIncludeRelaxed)
 # -- Test
 # Tests Q_PLUGIN_METADATA json file change detection
 if (NOT QT_TEST_VERSION STREQUAL 4)
+  set(mocPlugSrcDir "${CMAKE_CURRENT_SOURCE_DIR}/mocPlugin")
+  set(mocPlugBinDir "${CMAKE_CURRENT_BINARY_DIR}/mocPlugin")
+  file(MAKE_DIRECTORY "${mocPlugBinDir}")
   try_compile(MOC_PLUGIN
-    "${CMAKE_CURRENT_BINARY_DIR}/mocPlugin"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mocPlugin"
+    "${mocPlugBinDir}"
+    "${mocPlugSrcDir}"
     mocPlugin
     CMAKE_FLAGS "-DQT_TEST_VERSION=${QT_TEST_VERSION}"
                 "-DCMAKE_PREFIX_PATH=${Qt_PREFIX_DIR}"
@@ -302,8 +306,6 @@ if (NOT QT_TEST_VERSION STREQUAL 4)
   endif()
 
   set(timeformat "%Y%j%H%M%S")
-  set(mocPlugSrcDir "${CMAKE_CURRENT_SOURCE_DIR}/mocPlugin")
-  set(mocPlugBinDir "${CMAKE_CURRENT_BINARY_DIR}/mocPlugin")
   find_library(plAFile "PlugA" PATHS "${mocPlugBinDir}" NO_DEFAULT_PATH)
   find_library(plBFile "PlugB" PATHS "${mocPlugBinDir}" NO_DEFAULT_PATH)
   find_library(plCFile "PlugC" PATHS "${mocPlugBinDir}" NO_DEFAULT_PATH)
@@ -318,7 +320,12 @@ if (NOT QT_TEST_VERSION STREQUAL 4)
   execute_process(COMMAND "${CMAKE_COMMAND}" -E sleep 1)
   configure_file("${mocPlugSrcDir}/jsonIn/StyleD.json" "${mocPlugBinDir}/jsonFiles/StyleC.json")
   configure_file("${mocPlugSrcDir}/jsonIn/StyleC.json" "${mocPlugBinDir}/jsonFiles/sub/StyleD.json")
-  execute_process(COMMAND "${CMAKE_COMMAND}" --build . WORKING_DIRECTORY "${mocPlugBinDir}")
+  execute_process(COMMAND "${CMAKE_COMMAND}" --build .
+    WORKING_DIRECTORY "${mocPlugBinDir}"
+    RESULT_VARIABLE result)
+  if (result)
+    message(SEND_ERROR "Second build of mocPlugin failed.")
+  endif()
 
   file(TIMESTAMP "${plAFile}" plAAfter "${timeformat}")
   file(TIMESTAMP "${plBFile}" plBAfter "${timeformat}")
