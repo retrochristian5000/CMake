@@ -55,7 +55,8 @@ to configure the project:
   the CMake cache then CMake will use the specified value if
   possible.
 
-* The :generator:`Green Hills MULTI` generator sets this to ``gbuild``.
+* The :generator:`Green Hills MULTI` generator sets this, by default
+  to the latest installed toolset's ``gbuild``.
   If a user or project explicitly adds ``CMAKE_MAKE_PROGRAM`` to
   the CMake cache then CMake will use the specified value.
 

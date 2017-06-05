@@ -94,6 +94,13 @@
 #  define PLATFORM_ID
 # endif
 
+#elif defined(__INTEGRITY)
+# if defined(INTEGRITY_MZ)
+#  define PLATFORM_ID "IntegrityIOT"
+# else
+#  define PLATFORM_ID "Integrity"
+# endif
+
 #else /* unknown platform */
 # define PLATFORM_ID
 
