@@ -36,10 +36,6 @@ source files at build time and invoke moc accordingly.
   ``<AUTOGEN_BUILD_DIR>/mocs_compilation.cpp`` file,
   which is compiled as part of the target.
 
-  * For multi configuration generators, except Xcode, the file names are
-    ``moc_<basename>_<CONFIG>.cpp`` and
-    ``<AUTOGEN_BUILD_DIR>/mocs_compilation_<CONFIG>.cpp``.
-
   * The custom directories with checksum
     based names help to avoid name collisions for moc files with the same
     ``<basename>``.

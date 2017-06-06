@@ -82,9 +82,6 @@ folders to avoid name collisions and included in a separate
 ``<AUTOGEN_BUILD_DIR>/mocs_compilation.cpp`` file which is compiled
 into the target.
 
-* For multi configuration generators, except Xcode, the file is
-  ``<AUTOGEN_BUILD_DIR>/mocs_compilation_<CONFIG>.cpp``.
-
 * See :prop_tgt:`AUTOGEN_BUILD_DIR`.
 
 The ``moc`` command line will consume the :prop_tgt:`COMPILE_DEFINITIONS` and
