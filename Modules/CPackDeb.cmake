@@ -507,10 +507,6 @@ if(CMAKE_BINARY_DIR)
   message(FATAL_ERROR "CPackDeb.cmake may only be used by CPack internally.")
 endif()
 
-if(NOT UNIX)
-  message(FATAL_ERROR "CPackDeb.cmake may only be used under UNIX.")
-endif()
-
 function(cpack_deb_variable_fallback OUTPUT_VAR_NAME)
   set(FALLBACK_VAR_NAMES ${ARGN})
 
