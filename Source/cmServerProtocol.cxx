@@ -264,6 +264,10 @@ static bool testHomeDirectory(cmState* state, std::string& value,
 {
   const std::string cachedValue =
     std::string(state->GetCacheEntryValue("CMAKE_HOME_DIRECTORY"));
+  if (value.empty()) {
+    value = cachedValue;
+    return true;
+  }
   const std::string suffix = "/CMakeLists.txt";
   const std::string cachedValueCML = cachedValue + suffix;
   const std::string valueCML = value + suffix;
@@ -274,9 +278,6 @@ static bool testHomeDirectory(cmState* state, std::string& value,
                                 "source directory value."));
     return false;
   }
-  if (value.empty()) {
-    value = cachedValue;
-  }
   return true;
 }
 
@@ -285,14 +286,14 @@ static bool testValue(cmState* state, const std::string& key,
                       std::string* errorMessage)
 {
   const std::string cachedValue = std::string(state->GetCacheEntryValue(key));
-  if (!cachedValue.empty() && !value.empty() && cachedValue != value) {
+  if (value.empty()) {
+    value = cachedValue;
+  }
+  if (!cachedValue.empty() && cachedValue != value) {
     setErrorMessage(errorMessage, std::string("\"") + key +
                       "\" is set but incompatible with configured " +
                       keyDescription + " value.");
     return false;
-  }
-  if (value.empty()) {
-    value = cachedValue;
   }
   return true;
 }
