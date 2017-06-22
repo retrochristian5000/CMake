@@ -5,6 +5,8 @@
 
 #if defined(_MSC_VER)
 typedef unsigned short mode_t;
+typedef unsigned short uid_t;
+typedef unsigned short gid_t;
 #endif
 
 #include <sys/types.h>
