@@ -16,6 +16,9 @@ set(CMAKE_CUDA_STANDARD 11)
 add_library(CUDASeparateLibA STATIC file1.cu file2.cu file3.cu)
 
 if(CMAKE_CUDA_SIMULATE_ID STREQUAL "MSVC")
+  # Test adding a flag that is not in our CUDA flag table for VS.
+  string(APPEND CMAKE_CUDA_FLAGS " --ftemplate-depth 50")
+  # Test adding a flag that nvcc should pass to the host compiler.
   target_compile_options(CUDASeparateLibA PRIVATE -Xcompiler=-bigobj)
 endif()
 
