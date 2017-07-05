@@ -179,7 +179,8 @@ Functions
     will be converted to an absolute path relative to the current binary
     directory. This is necessary because doxygen will normally be run from a
     directory within the source tree so that relative source paths work as
-    expected.
+    expected. If this directory does not exist, it will be recursively created
+    prior to executing the doxygen commands.
 
 To change any of these defaults or override any other Doxygen config option,
 set relevant variables before calling ``doxygen_add_docs()``. For example:
@@ -1032,6 +1033,7 @@ doxygen_add_docs() for target ${targetName}")
     # Add the target
     add_custom_target(
         ${targetName}
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${DOXYGEN_OUTPUT_DIRECTORY}
         COMMAND "${DOXYGEN_EXECUTABLE}" "${_target_doxyfile}"
         WORKING_DIRECTORY "${_args_WORKING_DIRECTORY}"
         DEPENDS "${_target_doxyfile}"
