@@ -1013,6 +1013,7 @@ list(APPEND _tools cmake)
 target_link_libraries(cmake CMakeLib)
 
 add_library(CMakeServerLib
+  cmAutoHandle.h cmAutoHandle.cxx
   cmConnection.h cmConnection.cxx
   cmFileMonitor.cxx cmFileMonitor.h
   cmPipeConnection.cxx cmPipeConnection.h
