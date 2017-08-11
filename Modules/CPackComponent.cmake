@@ -37,6 +37,16 @@
 #  components defined by the project.  The user may set it to only include the
 #  specified components.
 #
+#  In situations where only some components should be excluded from packaging a
+#  combination of :command:`get_cmake_property` command with ``COMPONENTS``
+#  option and :command:`list` command with ``REMOVE_ITEM`` option and component
+#  name value can be used - e.g. excluding only components ``foo`` and ``bar``::
+#
+#    get_cmake_property(CPACK_COMPONENTS_ALL COMPONENTS)
+#    list(REMOVE_ITEM CPACK_COMPONENTS_ALL "foo" "bar")
+#
+# CPACK_COMPONENTS_ALL
+#
 # .. variable:: CPACK_<GENNAME>_COMPONENT_INSTALL
 #
 #  Enable/Disable component install for CPack generator <GENNAME>.
