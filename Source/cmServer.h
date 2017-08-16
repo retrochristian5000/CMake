@@ -81,9 +81,9 @@ public:
   class DebugInfo;
 
   cmServer(cmConnection* conn, bool supportExperimental);
-  ~cmServer() override;
+  ~cmServer() CM_OVERRIDE;
 
-  bool Serve(std::string* errorMessage) override;
+  bool Serve(std::string* errorMessage) CM_OVERRIDE;
 
   cmFileMonitor* FileMonitor() const;
 
@@ -93,16 +93,16 @@ private:
   // Callbacks from cmServerConnection:
 
   void ProcessRequest(cmConnection* connection,
-                      const std::string& request) override;
+                      const std::string& request) CM_OVERRIDE;
   std::shared_ptr<cmFileMonitor> fileMonitor;
 
 public:
-  void OnServeStart() override;
+  void OnServeStart() CM_OVERRIDE;
 
-  void StartShutDown() override;
+  void StartShutDown() CM_OVERRIDE;
 
 public:
-  void OnConnected(cmConnection* connection) override;
+  void OnConnected(cmConnection* connection) CM_OVERRIDE;
 
 private:
   static void reportProgress(const char* msg, float progress, void* data);

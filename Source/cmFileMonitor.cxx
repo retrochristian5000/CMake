@@ -37,7 +37,7 @@ public:
 class cmVirtualDirectoryWatcher : public cmIBaseWatcher
 {
 public:
-  ~cmVirtualDirectoryWatcher() override { cmDeleteAll(this->Children); }
+  ~cmVirtualDirectoryWatcher() CM_OVERRIDE { cmDeleteAll(this->Children); }
 
   cmIBaseWatcher* Find(const std::string& ps)
   {
@@ -60,14 +60,14 @@ public:
     }
   }
 
-  void StartWatching() override
+  void StartWatching() CM_OVERRIDE
   {
     for (const auto& i : this->Children) {
       i.second->StartWatching();
     }
   }
 
-  void StopWatching() override
+  void StopWatching() CM_OVERRIDE
   {
     for (const auto& i : this->Children) {
       i.second->StopWatching();
@@ -85,7 +85,7 @@ public:
     return result;
   }
 
-  std::vector<std::string> WatchedDirectories() const override
+  std::vector<std::string> WatchedDirectories() const CM_OVERRIDE
   {
     std::vector<std::string> result;
     for (const auto& i : this->Children) {
@@ -150,7 +150,7 @@ public:
     p->AddChildWatcher(ps, this);
   }
 
-  ~cmRealDirectoryWatcher() override
+  ~cmRealDirectoryWatcher() CM_OVERRIDE
   {
     // Handle is freed via uv_handle_close callback!
   }
@@ -181,7 +181,7 @@ public:
 
   uv_loop_t* Loop() const final { return this->Parent->Loop(); }
 
-  std::vector<std::string> WatchedDirectories() const override
+  std::vector<std::string> WatchedDirectories() const CM_OVERRIDE
   {
     std::vector<std::string> result = { Path() };
     for (const auto& j : cmVirtualDirectoryWatcher::WatchedDirectories()) {
