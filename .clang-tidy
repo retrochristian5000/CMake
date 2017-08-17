@@ -6,7 +6,7 @@ misc-*,\
 -misc-misplaced-widening-cast,\
 -misc-static-assert,\
 modernize-make-shared,\
-modernize-make-unique,\
+-modernize-make-unique,\
 modernize-redundant-void-arg,\
 modernize-use-bool-literals,\
 modernize-use-nullptr,\
