@@ -37,7 +37,10 @@ public:
 class cmVirtualDirectoryWatcher : public cmIBaseWatcher
 {
 public:
-  ~cmVirtualDirectoryWatcher() override { cmDeleteAll(this->Children); }
+  ~cmVirtualDirectoryWatcher() noexcept override
+  {
+    cmDeleteAll(this->Children);
+  }
 
   cmIBaseWatcher* Find(const std::string& ps)
   {

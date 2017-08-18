@@ -24,7 +24,6 @@
 #cmakedefine CMake_HAVE_CXX_FALLTHROUGH
 #cmakedefine CMake_HAVE_CXX_GNU_FALLTHROUGH
 #cmakedefine CMake_HAVE_CXX_ATTRIBUTE_FALLTHROUGH
-#cmakedefine CMake_HAVE_CXX_MAKE_UNIQUE
 #cmakedefine CMake_HAVE_CXX_NULLPTR
 #cmakedefine CMake_HAVE_CXX_OVERRIDE
 #cmakedefine CMake_HAVE_CXX_UNIQUE_PTR
