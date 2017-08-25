@@ -90,10 +90,10 @@ public:
 
   virtual void ReadData(const std::string& data);
 
-  bool IsOpen() const override;
+  bool IsOpen() const CM_OVERRIDE;
 
-  void WriteData(const std::string& data) override;
-  bool OnConnectionShuttingDown() override;
+  void WriteData(const std::string& data) CM_OVERRIDE;
+  bool OnConnectionShuttingDown() CM_OVERRIDE;
 
   virtual void OnDisconnect(int errorCode);
   uv_stream_t* ReadStream = nullptr;

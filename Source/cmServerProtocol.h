@@ -104,13 +104,13 @@ private:
 class cmServerProtocol1 : public cmServerProtocol
 {
 public:
-  std::pair<int, int> ProtocolVersion() const override;
-  bool IsExperimental() const override;
-  const cmServerResponse Process(const cmServerRequest& request) override;
+  std::pair<int, int> ProtocolVersion() const CM_OVERRIDE;
+  bool IsExperimental() const CM_OVERRIDE;
+  const cmServerResponse Process(const cmServerRequest& request) CM_OVERRIDE;
 
 private:
   bool DoActivate(const cmServerRequest& request,
-                  std::string* errorMessage) override;
+                  std::string* errorMessage) CM_OVERRIDE;
 
   void HandleCMakeFileChanges(const std::string& path, int event, int status);
 

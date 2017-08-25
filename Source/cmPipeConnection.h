@@ -15,11 +15,11 @@ public:
   cmPipeConnection(const std::string& name,
                    cmConnectionBufferStrategy* bufferStrategy = nullptr);
 
-  bool OnServeStart(std::string* pString) override;
+  bool OnServeStart(std::string* pString) CM_OVERRIDE;
 
-  bool OnConnectionShuttingDown() override;
+  bool OnConnectionShuttingDown() CM_OVERRIDE;
 
-  void Connect(uv_stream_t* server) override;
+  void Connect(uv_stream_t* server) CM_OVERRIDE;
 
 private:
   const std::string PipeName;

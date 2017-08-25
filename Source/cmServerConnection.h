@@ -23,7 +23,7 @@ class cmServerBase;
 class cmServerBufferStrategy : public cmConnectionBufferStrategy
 {
 public:
-  std::string BufferMessage(std::string& rawBuffer) override;
+  std::string BufferMessage(std::string& rawBuffer) CM_OVERRIDE;
 
 private:
   std::string RequestBuffer;
@@ -37,11 +37,11 @@ class cmStdIoConnection : public cmEventBasedConnection
 public:
   cmStdIoConnection(cmConnectionBufferStrategy* bufferStrategy);
 
-  void SetServer(cmServerBase* s) override;
+  void SetServer(cmServerBase* s) CM_OVERRIDE;
 
-  bool OnConnectionShuttingDown() override;
+  bool OnConnectionShuttingDown() CM_OVERRIDE;
 
-  bool OnServeStart(std::string* pString) override;
+  bool OnServeStart(std::string* pString) CM_OVERRIDE;
 
 private:
   typedef union
