@@ -992,6 +992,12 @@ echo '
 #error "SunPro <= 5.13 C++ 11 mode not supported due to bug in move semantics."
 #endif
 
+#if defined(__clang__) && defined(__apple_build_version__)
+#if __cplusplus < 201103L
+#error "AppleClang not explicitly in C++11 mode."
+#endif
+#endif
+
 class Class
 {
 public:
