@@ -3502,6 +3502,14 @@ void cmVisualStudio10TargetGenerator::WriteProjectReferences()
     (*this->BuildFileStream) << "</Project>\n";
     this->WriteString("<Name>", 3);
     (*this->BuildFileStream) << name << "</Name>\n";
+    if (csproj == this->ProjectType) {
+      std::string cfg = this->Configurations[0];
+      if (!static_cast<cmGlobalVisualStudioGenerator*>(this->GlobalGenerator)
+             ->TargetCanBeReferenced(dt, cfg)) {
+        this->WriteString(
+          "<ReferenceOutputAssembly>false</ReferenceOutputAssembly>\n", 3);
+      }
+    }
     this->WriteString("</ProjectReference>\n", 2);
   }
   this->WriteString("</ItemGroup>\n", 1);
