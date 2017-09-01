@@ -85,6 +85,10 @@ public:
   // return true if target is C# only
   static bool TargetIsCSharpOnly(cmGeneratorTarget const* gt);
 
+  // return true if target can be referenced by C# targets
+  bool TargetCanBeReferenced(cmGeneratorTarget const* gt,
+                             const std::string& config);
+
   /** Get the top-level registry key for this VS version.  */
   std::string GetRegistryBase();
 
