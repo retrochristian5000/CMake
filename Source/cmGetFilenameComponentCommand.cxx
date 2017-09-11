@@ -60,7 +60,17 @@ bool cmGetFilenameComponentCommand::InitialPass(
         }
       }
     }
-    cmSystemTools::SplitProgramFromArgs(filename, result, programArgs);
+    std::string program;
+    if (cmSystemTools::SplitProgramFromArgs(filename, program, programArgs)) {
+      if (cmSystemTools::FileExists(program)) {
+        result = program;
+      } else {
+        result = cmSystemTools::FindProgram(program);
+      }
+    }
+    if (result.empty()) {
+      programArgs.clear();
+    }
   } else if (args[2] == "EXT") {
     result = cmSystemTools::GetFilenameExtension(filename);
   } else if (args[2] == "NAME_WE") {
