@@ -80,6 +80,9 @@ get_filename_component(test_program_name "/ arg1 arg2" PROGRAM
 check("PROGRAM with args output: name" "${test_program_name}" "/")
 check("PROGRAM with args output: args" "${test_program_args}" " arg1 arg2")
 
+get_filename_component(test_program_name " " PROGRAM)
+check("PROGRAM with just a space" "${test_program_name}" "")
+
 list(APPEND non_cache_vars test_program_name)
 list(APPEND non_cache_vars test_program_args)
 
