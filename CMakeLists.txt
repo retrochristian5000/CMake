@@ -78,6 +78,9 @@ if(NOT CMake_TEST_EXTERNAL_CMAKE)
   if(NOT CMake_HAVE_CXX_UNIQUE_PTR)
     message(FATAL_ERROR "The C++ compiler does not support C++11 (e.g. std::unique_ptr).")
   endif()
+  if(NOT CMake_HAVE_CXX_OVERRIDE)
+    message(WARNING "The C++ compiler does not support C++11 'override'.")
+  endif()
 endif()
 
 # set the internal encoding of CMake to UTF-8
