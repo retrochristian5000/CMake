@@ -753,6 +753,8 @@ bool cmSystemTools::RunSingleCommand(std::vector<std::string> const& command,
     }
     if (captureStdErr) {
       captureStdErr->append(exception_str, strlen(exception_str));
+    } else if (captureStdOut) {
+      captureStdOut->append(exception_str, strlen(exception_str));
     }
     result = false;
   } else if (cmsysProcess_GetState(cp) == cmsysProcess_State_Error) {
@@ -762,6 +764,8 @@ bool cmSystemTools::RunSingleCommand(std::vector<std::string> const& command,
     }
     if (captureStdErr) {
       captureStdErr->append(error_str, strlen(error_str));
+    } else if (captureStdOut) {
+      captureStdOut->append(error_str, strlen(error_str));
     }
     result = false;
   } else if (cmsysProcess_GetState(cp) == cmsysProcess_State_Expired) {
