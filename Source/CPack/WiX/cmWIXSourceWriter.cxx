@@ -159,8 +159,7 @@ std::string cmWIXSourceWriter::EscapeAttributeValue(std::string const& value)
   result.reserve(value.size());
 
   char c = 0;
-  for (size_t i = 0; i < value.size(); ++i) {
-    c = value[i];
+  for (char c : value) {
     switch (c) {
       case '<':
         result += "&lt;";
