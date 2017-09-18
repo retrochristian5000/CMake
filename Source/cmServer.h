@@ -5,7 +5,10 @@
 #include "cmConfigure.h" // IWYU pragma: keep
 
 #include "cm_jsoncpp_value.h"
+#include "cm_thread.hxx"
 #include "cm_uv.h"
+
+#include "cmAutoHandle.h"
 
 #include <memory> // IWYU pragma: keep
 #include <string>
@@ -57,16 +60,16 @@ public:
 
   virtual bool OnSignal(int signum);
   uv_loop_t* GetLoop();
-
+  void Close();
   void OnDisconnect(cmConnection* pConnection);
 
 protected:
-  mutable uv_rwlock_t ConnectionsMutex;
+  mutable cm::shared_mutex ConnectionsMutex;
   std::vector<std::unique_ptr<cmConnection>> Connections;
 
   bool ServeThreadRunning = false;
   uv_thread_t ServeThread;
-  uv_async_t ShutdownSignal;
+  auto_async_t ShutdownSignal;
 #ifndef NDEBUG
 public:
   // When the server starts it will mark down it's current thread ID,
@@ -79,8 +82,8 @@ protected:
 
   uv_loop_t Loop;
 
-  uv_signal_t SIGINTHandler;
-  uv_signal_t SIGHUPHandler;
+  auto_signal_t SIGINTHandler;
+  auto_signal_t SIGHUPHandler;
 };
 
 class cmServer : public cmServerBase
