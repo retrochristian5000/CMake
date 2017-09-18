@@ -1549,31 +1549,24 @@ static bool RunCommand(const char* comment, std::vector<std::string>& command,
   }
   std::string output;
   int retCode = 0;
-  // use rc command to create .res file
   bool res = cmSystemTools::RunSingleCommand(
     command, &output, &output, &retCode, nullptr, cmSystemTools::OUTPUT_NONE);
-  // always print the output of the command, unless
-  // it is the dumb rc command banner, but if the command
-  // returned an error code then print the output anyway as
-  // the banner may be mixed with some other important information.
-  if (output.find("Resource Compiler Version") == std::string::npos || !res ||
-      retCode) {
-    std::cout << output;
-  }
-  if (!res) {
-    std::cout << comment << " failed to run." << std::endl;
-    return false;
-  }
-  // if retCodeOut is requested then always return true
-  // and set the retCodeOut to retCode
   if (retCodeOut) {
     *retCodeOut = retCode;
-    return true;
   }
-  if (retCode != 0) {
-    std::cout << comment << " failed. with " << retCode << "\n";
+  if (!res || retCode) {
+    std::cout << comment << ": command \"" << cmJoin(command, " ")
+              << "\" failed (exit code " << retCode
+              << ") with the following output:\n"
+              << output;
+    return false;
   }
-  return retCode == 0;
+  // always print the output of the command, unless
+  // it is the dumb rc command banner
+  if (output.find("Resource Compiler Version") == std::string::npos) {
+    std::cout << output;
+  }
+  return true;
 }
 
 bool cmVSLink::Parse(std::vector<std::string>::const_iterator argBeg,
@@ -1723,7 +1716,7 @@ int cmVSLink::LinkIncremental()
 
   // Compile the resource file.
   std::vector<std::string> rcCommand;
-  rcCommand.push_back(cmSystemTools::FindProgram("rc.exe"));
+  rcCommand.push_back("rc");
   rcCommand.push_back("/fo" + this->ManifestFileRes);
   rcCommand.push_back(this->ManifestFileRC);
   if (!RunCommand("RC Pass 1", rcCommand, this->Verbose)) {
@@ -1780,7 +1773,7 @@ int cmVSLink::LinkNonIncremental()
 int cmVSLink::RunMT(std::string const& out, bool notify)
 {
   std::vector<std::string> mtCommand;
-  mtCommand.push_back(cmSystemTools::FindProgram("mt.exe"));
+  mtCommand.push_back("mt");
   mtCommand.push_back("/nologo");
   mtCommand.push_back("/manifest");
   if (this->LinkGeneratesManifest) {
