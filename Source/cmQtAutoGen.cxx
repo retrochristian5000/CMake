@@ -2,6 +2,7 @@
    file Copyright.txt or https://cmake.org/licensing for details.  */
 #include "cmQtAutoGen.h"
 #include "cmAlgorithms.h"
+#include "cmProcessOutput.h"
 #include "cmSystemTools.h"
 
 #include "cmsys/FStream.hxx"
@@ -158,9 +159,9 @@ static bool RccListInputsQt5(const std::string& rccCommand,
     std::string rccStdOut;
     std::string rccStdErr;
     int retVal = 0;
-    bool result =
-      cmSystemTools::RunSingleCommand(command, &rccStdOut, &rccStdErr, &retVal,
-                                      nullptr, cmSystemTools::OUTPUT_NONE);
+    bool result = cmSystemTools::RunSingleCommand(
+      command, &rccStdOut, &rccStdErr, &retVal, nullptr,
+      cmSystemTools::OUTPUT_NONE, 0.0, cmProcessOutput::Auto);
     if (result && retVal == 0 &&
         rccStdOut.find("--list") != std::string::npos) {
       hasDashDashList = true;
@@ -177,9 +178,9 @@ static bool RccListInputsQt5(const std::string& rccCommand,
     command.push_back(rccCommand);
     command.push_back(hasDashDashList ? "--list" : "-list");
     command.push_back(fileName);
-    result =
-      cmSystemTools::RunSingleCommand(command, &rccStdOut, &rccStdErr, &retVal,
-                                      nullptr, cmSystemTools::OUTPUT_NONE);
+    result = cmSystemTools::RunSingleCommand(
+      command, &rccStdOut, &rccStdErr, &retVal, nullptr,
+      cmSystemTools::OUTPUT_NONE, 0.0, cmProcessOutput::Auto);
   }
   if (!result || retVal) {
     if (errorMessage != nullptr) {
