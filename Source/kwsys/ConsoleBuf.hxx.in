@@ -95,7 +95,7 @@ public:
     _setp();
   }
 
-  ~BasicConsoleBuf() throw() { sync(); }
+  ~BasicConsoleBuf() noexcept { sync(); }
 
   bool activateCodepageChange()
   {
