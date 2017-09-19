@@ -95,8 +95,8 @@ public:
     return *this;
   }
   operator BSTR() const { return str; }
-  BSTR* operator&() throw() { return &str; }
-  ~SmartBSTR() throw() { ::SysFreeString(str); }
+  BSTR* operator&() noexcept { return &str; }
+  ~SmartBSTR() noexcept { ::SysFreeString(str); }
 private:
   BSTR str;
 };
