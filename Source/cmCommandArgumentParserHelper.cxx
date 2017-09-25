@@ -15,6 +15,12 @@
 int cmCommandArgument_yyparse(yyscan_t yyscanner);
 //
 cmCommandArgumentParserHelper::cmCommandArgumentParserHelper()
+  : DCURLYVariable("${")
+  , RCURLYVariable("}")
+  , ATVariable("@")
+  , DOLLARVariable("$")
+  , LCURLYVariable("{")
+  , BSLASHVariable("\\")
 {
   this->WarnUninitialized = false;
   this->CheckSystemVars = false;
@@ -22,12 +28,6 @@ cmCommandArgumentParserHelper::cmCommandArgumentParserHelper()
   this->FileName = nullptr;
   this->RemoveEmpty = true;
   this->EmptyVariable[0] = 0;
-  strcpy(this->DCURLYVariable, "${");
-  strcpy(this->RCURLYVariable, "}");
-  strcpy(this->ATVariable, "@");
-  strcpy(this->DOLLARVariable, "$");
-  strcpy(this->LCURLYVariable, "{");
-  strcpy(this->BSLASHVariable, "\\");
 
   this->NoEscapeMode = false;
   this->ReplaceAtSyntax = false;
