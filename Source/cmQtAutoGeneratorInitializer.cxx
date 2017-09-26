@@ -809,27 +809,46 @@ void cmQtAutoGeneratorInitializer::InitializeAutogenTarget(
         msg += cmPolicies::GetPolicyWarning(cmPolicies::CMP0071);
         msg += "\n";
         std::string tools;
-        if (digest.MocEnabled) {
-          tools += "AUTOMOC";
-        }
-        if (digest.UicEnabled) {
-          if (!tools.empty()) {
-            tools += ",";
-          }
-          tools += "AUTOUIC";
+        std::string property;
+        if (digest.MocEnabled && digest.UicEnabled) {
+          tools = "AUTOMOC and AUTOUIC";
+          property = "SKIP_AUTOGEN";
+        } else if (digest.MocEnabled) {
+          tools = "AUTOMOC";
+          property = "SKIP_AUTOMOC";
+        } else if (digest.UicEnabled) {
+          tools = "AUTOUIC";
+          property = "SKIP_AUTOUIC";
         }
         if (!generatedHeaders.empty()) {
-          msg.append(tools).append(": Ignoring GENERATED header file(s):\n");
-          for (std::string const& absFile : generatedHeaders) {
+          msg += tools;
+          msg += ": Ignoring the GENERATED header file(s):\n";
+          for (const std::string& absFile : generatedHeaders) {
             msg.append("  ").append(cmQtAutoGen::Quoted(absFile)).append("\n");
           }
         }
         if (!generatedSources.empty()) {
-          msg.append(tools).append(": Ignoring GENERATED source file(s):\n");
-          for (std::string const& absFile : generatedSources) {
+          msg += tools;
+          msg += ": Ignoring the GENERATED source file(s):\n";
+          for (const std::string& absFile : generatedSources) {
             msg.append("  ").append(cmQtAutoGen::Quoted(absFile)).append("\n");
           }
         }
+        msg += "Setting `cmake_minimum_required(VERSION 3.10)` or "
+               "`cmake_policy(SET CMP0071 NEW)` lets ";
+        msg += tools;
+        msg += " process the GENERATED files as well"
+               " and silences this warning.\n";
+        msg += "Alternatively the file(s) can be explicitly excluded from ";
+        msg += tools;
+        msg += " processing by setting the source file property ";
+        msg += property;
+        msg += ":\n  set_property(SOURCE file.h PROPERTY ";
+        msg += property;
+        msg += " ON)\n";
+        msg += "  set_source_files_properties(file1.h file2.h PROPERTIES ";
+        msg += property;
+        msg += " ON)\n";
         makefile->IssueMessage(cmake::AUTHOR_WARNING, msg);
       }
     }
