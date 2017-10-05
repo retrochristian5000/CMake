@@ -134,38 +134,50 @@ if(Java_JAVA_EXECUTABLE)
       endif()
     else()
       # extract major/minor version and patch level from "java -version" output
-      # Tested on linux using
-      # 1. Sun / Sun OEM
-      # 2. OpenJDK 1.6
-      # 3. GCJ 1.5
-      # 4. Kaffe 1.4.2
-      # 5. OpenJDK 1.7.x on OpenBSD
-      if(var MATCHES "java version \"([0-9]+\\.[0-9]+\\.[0-9_.]+.*)\"")
-        # This is most likely Sun / OpenJDK, or maybe GCJ-java compat layer
+      set(_java_version_regex [[(([0-9]+)(\.([0-9]+)(\.([0-9]+)(_([0-9]+))?)?)?.*)]])
+      if(var MATCHES "java version \"${_java_version_regex}\"")
+        # Sun, GCJ, older OpenJDK
         set(Java_VERSION_STRING "${CMAKE_MATCH_1}")
+        set(Java_VERSION_MAJOR "${CMAKE_MATCH_2}")
+        set(Java_VERSION_MINOR "${CMAKE_MATCH_4}")
+        set(Java_VERSION_PATCH "${CMAKE_MATCH_6}")
+        set(Java_VERSION_TWEAK "${CMAKE_MATCH_8}")
+      elseif(var MATCHES "openjdk version \"${_java_version_regex}\"")
+        # OpenJDK
+        set(Java_VERSION_STRING "${CMAKE_MATCH_1}")
+        set(Java_VERSION_MAJOR "${CMAKE_MATCH_2}")
+        set(Java_VERSION_MINOR "${CMAKE_MATCH_4}")
+        set(Java_VERSION_PATCH "${CMAKE_MATCH_6}")
+        set(Java_VERSION_TWEAK "${CMAKE_MATCH_8}")
       elseif(var MATCHES "openjdk version \"([0-9]+)-[A-Za-z]+\"")
         # OpenJDK 9 early access builds or locally built
         set(Java_VERSION_STRING "1.${CMAKE_MATCH_1}.0")
-      elseif(var MATCHES "java full version \"kaffe-([0-9]+\\.[0-9]+\\.[0-9_]+)\"")
+        set(Java_VERSION_MAJOR "1")
+        set(Java_VERSION_MINOR "${CMAKE_MATCH_1}")
+        set(Java_VERSION_PATCH "0")
+        set(Java_VERSION_TWEAK "")
+      elseif(var MATCHES "java full version \"kaffe-${_java_version_regex}\"")
         # Kaffe style
         set(Java_VERSION_STRING "${CMAKE_MATCH_1}")
-      elseif(var MATCHES "openjdk version \"([0-9]+\\.[0-9]+\\.[0-9_]+.*)\"")
-        # OpenJDK ver 1.7.x on OpenBSD
-        set(Java_VERSION_STRING "${CMAKE_MATCH_1}")
+        set(Java_VERSION_MAJOR "${CMAKE_MATCH_2}")
+        set(Java_VERSION_MINOR "${CMAKE_MATCH_4}")
+        set(Java_VERSION_PATCH "${CMAKE_MATCH_6}")
+        set(Java_VERSION_TWEAK "${CMAKE_MATCH_8}")
       else()
         if(NOT Java_FIND_QUIETLY)
-          message(WARNING "regex not supported: ${var}. Please report")
+          string(REPLACE "\n" "\n  " ver_msg "\n${var}")
+          message(WARNING "Java version not recognized:${ver_msg}\nPlease report.")
         endif()
       endif()
-      string( REGEX REPLACE "([0-9]+).*" "\\1" Java_VERSION_MAJOR "${Java_VERSION_STRING}" )
-      string( REGEX REPLACE "[0-9]+\\.([0-9]+).*" "\\1" Java_VERSION_MINOR "${Java_VERSION_STRING}" )
-      string( REGEX REPLACE "[0-9]+\\.[0-9]+\\.([0-9]+).*" "\\1" Java_VERSION_PATCH "${Java_VERSION_STRING}" )
-      # warning tweak version can be empty:
-      string( REGEX REPLACE "[0-9]+\\.[0-9]+\\.[0-9]+[_\\.]?([0-9]*).*$" "\\1" Java_VERSION_TWEAK "${Java_VERSION_STRING}" )
-      if( Java_VERSION_TWEAK STREQUAL "" ) # check case where tweak is not defined
-        set(Java_VERSION ${Java_VERSION_MAJOR}.${Java_VERSION_MINOR}.${Java_VERSION_PATCH})
-      else()
-        set(Java_VERSION ${Java_VERSION_MAJOR}.${Java_VERSION_MINOR}.${Java_VERSION_PATCH}.${Java_VERSION_TWEAK})
+      set(Java_VERSION "${Java_VERSION_MAJOR}")
+      if(NOT "x${Java_VERSION}" STREQUAL "x")
+        foreach(c MINOR PATCH TWEAK)
+          if(NOT "x${Java_VERSION_${c}}" STREQUAL "x")
+            string(APPEND Java_VERSION ".${Java_VERSION_${c}}")
+          else()
+            break()
+          endif()
+        endforeach()
       endif()
     endif()
 
