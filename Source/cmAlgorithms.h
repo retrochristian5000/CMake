@@ -43,22 +43,6 @@ inline bool cmHasLiteralSuffixImpl(const char* str1, const char* str2,
 }
 
 template <typename T, size_t N>
-const T* cmArrayBegin(const T (&a)[N])
-{
-  return a;
-}
-template <typename T, size_t N>
-const T* cmArrayEnd(const T (&a)[N])
-{
-  return a + N;
-}
-template <typename T, size_t N>
-size_t cmArraySize(const T (&)[N])
-{
-  return N;
-}
-
-template <typename T, size_t N>
 bool cmHasLiteralPrefix(const T& str1, const char (&str2)[N])
 {
   return cmHasLiteralPrefixImpl(str1, str2, N - 1);
@@ -417,6 +401,19 @@ std::unique_ptr<T> make_unique(Args&&... args)
 }
 
 #endif
+
+// Approximate std::size backport from C++17.
+template <class C>
+size_t size(C const& c)
+{
+  return static_cast<size_t>(c.size());
+}
+
+template <typename T, size_t N>
+size_t size(const T (&)[N]) throw()
+{
+  return N;
+}
 
 } // namespace cm
 

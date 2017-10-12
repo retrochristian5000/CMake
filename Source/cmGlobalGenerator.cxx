@@ -2509,8 +2509,8 @@ bool cmGlobalGenerator::IsReservedTarget(std::string const& name)
     "RUN_TESTS",  "package",   "PACKAGE",    "package_source", "ZERO_CHECK"
   };
 
-  return std::find(cmArrayBegin(reservedTargets), cmArrayEnd(reservedTargets),
-                   name) != cmArrayEnd(reservedTargets);
+  return std::find(std::cbegin(reservedTargets), std::cend(reservedTargets),
+                   name) != std::cend(reservedTargets);
 }
 
 void cmGlobalGenerator::SetExternalMakefileProjectGenerator(
