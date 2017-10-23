@@ -5,17 +5,12 @@
 
 #include "cmConfigure.h" // IWYU pragma: keep
 
+#include "cmCTestRunTest.h"
 #include "cmsys/Process.h"
 #include <chrono>
+#include <cm_uv.h>
 #include <string>
 #include <vector>
-
-/*
- * A wrapper function for cmsysProcess_SetTimeout that takes an
- * std::chrono::duration. For convenience only.
- */
-void cmsysProcess_SetTimeout(cmsysProcess* process,
-                             std::chrono::duration<double> timeout);
 
 /** \class cmProcess
  * \brief run a process with c++
@@ -35,33 +30,77 @@ public:
   void ChangeTimeout(std::chrono::duration<double> t);
   void ResetStartTime();
   // Return true if the process starts
-  bool StartProcess();
+  bool StartProcess(cmCTestRunTest* runner);
 
   // return the process status
   int GetProcessStatus();
-  // Report the status of the program
-  int ReportStatus();
   int GetId() { return this->Id; }
   void SetId(int id) { this->Id = id; }
   int GetExitValue() { return this->ExitValue; }
   std::chrono::duration<double> GetTotalTime() { return this->TotalTime; }
   int GetExitException();
-  std::string GetExitExceptionString();
-  /**
-   * Read one line of output but block for no more than timeout.
-   * Returns:
-   *   cmsysProcess_Pipe_None    = Process terminated and all output read
-   *   cmsysProcess_Pipe_STDOUT  = Line came from stdout or stderr
-   *   cmsysProcess_Pipe_Timeout = Timeout expired while waiting
-   */
-  int GetNextOutputLine(std::string& line,
-                        std::chrono::duration<double> timeout);
+  void GetExitExceptionString(std::string& exception_str);
+  static int GetPipes(int* fds);
+  bool IsTimedOut();
 
+  enum State
+  {
+    Starting,
+    Error,
+    Exception,
+    Executing,
+    Exited,
+    Expired,
+    Killed,
+    Disowned
+  };
+
+  enum ExitException
+  {
+    None,
+    Fault,
+    Illegal,
+    Interrupt,
+    Numerical,
+    Other
+  };
+
+  const int OK = 0;
+  const int MILLISECONDS = 1000;
+
+protected:
+  static void OnExit(uv_process_t* process, int64_t exit_status,
+                     int term_signal);
+  static void OnTimeout(uv_timer_t* timer);
+  static void OnRead(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
+  static void OnAllocate(uv_handle_t* handle, size_t suggested_size,
+                         uv_buf_t* buf);
+  int StartTimer();
+  void SetExitStatus(int exit_value) { this->ExitValue = exit_value; }
+  void SetSignal(int signal) { this->Signal = signal; }
+  void SetState(cmProcess::State state) { this->ProcessState = state; }
 private:
   std::chrono::duration<double> Timeout;
   std::chrono::steady_clock::time_point StartTime;
   std::chrono::duration<double> TotalTime;
-  cmsysProcess* Process;
+  std::string Command;
+  std::string WorkingDirectory;
+  std::vector<std::string> Arguments;
+  std::vector<const char*> ProcessArgs;
+  int Id;
+  int ExitValue;
+  bool ReadHandleClosed = false;
+  bool ProcessHandleClosed = false;
+
+  // libuv vars
+  uv_process_t* Process;
+  uv_pipe_t* PipeReader;
+  uv_timer_t* Timer;
+
+  cmCTestRunTest* Runner = nullptr;
+  int Signal;
+  cmProcess::State ProcessState = cmProcess::State::Starting;
+
   class Buffer : public std::vector<char>
   {
     // Half-open index range of partial line already scanned.
@@ -75,15 +114,9 @@ private:
     {
     }
     bool GetLine(std::string& line);
-    bool GetLast(std::string& line);
   };
   Buffer Output;
-  std::string Command;
-  std::string WorkingDirectory;
-  std::vector<std::string> Arguments;
-  std::vector<const char*> ProcessArgs;
-  int Id;
-  int ExitValue;
+  std::vector<char> Buf;
 };
 
 #endif

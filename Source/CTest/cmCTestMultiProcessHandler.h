@@ -23,6 +23,7 @@ class cmCTestRunTest;
 class cmCTestMultiProcessHandler
 {
   friend class TestComparator;
+  friend class cmCTestRunTest;
 
 public:
   struct TestSet : public std::set<int>
@@ -98,6 +99,8 @@ protected:
   // Return true if there are still tests running
   // check all running processes for output and exit case
   bool CheckOutput();
+  void CheckProcessOutput(cmCTestRunTest* runner);
+
   void RemoveTest(int index);
   // Check if we need to resume an interrupted test set
   void CheckResume();
