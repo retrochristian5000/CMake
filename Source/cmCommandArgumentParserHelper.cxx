@@ -21,6 +21,8 @@ cmCommandArgumentParserHelper::cmCommandArgumentParserHelper()
   this->FileLine = -1;
   this->FileName = nullptr;
   this->RemoveEmpty = true;
+
+#if defined(_MSC_VER) && _MSC_VER < 1900
   this->EmptyVariable[0] = 0;
   strcpy(this->DCURLYVariable, "${");
   strcpy(this->RCURLYVariable, "}");
@@ -28,6 +30,7 @@ cmCommandArgumentParserHelper::cmCommandArgumentParserHelper()
   strcpy(this->DOLLARVariable, "$");
   strcpy(this->LCURLYVariable, "{");
   strcpy(this->BSLASHVariable, "\\");
+#endif
 
   this->NoEscapeMode = false;
   this->ReplaceAtSyntax = false;
