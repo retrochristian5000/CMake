@@ -43,6 +43,10 @@ if(WIN32)
 
   # minimize windows.h content
   add_definitions(-DWIN32_LEAN_AND_MEAN)
+
+  # version support for generated exes
+  configure_file("CMakeVersion.rc.in" "CMakeVersion.rc" @ONLY)
+  set(CMake_VERSION_RC_FILE "${CMAKE_CURRENT_BINARY_DIR}/CMakeVersion.rc")
 endif()
 
 # configure the .dox.in file
@@ -723,7 +727,7 @@ set(_tools)
 
 if(WIN32 AND NOT CYGWIN)
   set_source_files_properties(cmcldeps.cxx PROPERTIES COMPILE_DEFINITIONS _WIN32_WINNT=0x0501)
-  add_executable(cmcldeps cmcldeps.cxx ${MANIFEST_FILE})
+  add_executable(cmcldeps cmcldeps.cxx ${MANIFEST_FILE} ${CMake_VERSION_RC_FILE})
   list(APPEND _tools cmcldeps)
   target_link_libraries(cmcldeps CMakeLib)
 endif()
@@ -1018,7 +1022,7 @@ if(APPLE)
 endif()
 
 # Build CMake executable
-add_executable(cmake cmakemain.cxx cmcmd.cxx cmcmd.h ${MANIFEST_FILE})
+add_executable(cmake cmakemain.cxx cmcmd.cxx cmcmd.h ${MANIFEST_FILE} ${CMake_VERSION_RC_FILE})
 list(APPEND _tools cmake)
 target_link_libraries(cmake CMakeLib)
 
@@ -1034,12 +1038,12 @@ target_link_libraries(CMakeServerLib CMakeLib)
 target_link_libraries(cmake CMakeServerLib)
 
 # Build CTest executable
-add_executable(ctest ctest.cxx ${MANIFEST_FILE})
+add_executable(ctest ctest.cxx ${MANIFEST_FILE} ${CMake_VERSION_RC_FILE})
 list(APPEND _tools ctest)
 target_link_libraries(ctest CTestLib)
 
 # Build CPack executable
-add_executable(cpack CPack/cpack.cxx ${MANIFEST_FILE})
+add_executable(cpack CPack/cpack.cxx ${MANIFEST_FILE} ${CMake_VERSION_RC_FILE})
 list(APPEND _tools cpack)
 target_link_libraries(cpack CPackLib)
 
