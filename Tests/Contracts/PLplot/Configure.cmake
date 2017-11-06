@@ -1,0 +1,1 @@
+set(Contracts.PLplot_BUILD_OPTIONS -DPLplot_CMAKE_ARGS=${CMake_TEST_CONTRACT_PLplot_CMAKE_ARGS})
