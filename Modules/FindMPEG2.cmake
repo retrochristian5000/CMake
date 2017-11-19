@@ -23,17 +23,11 @@
 #   MPEG2_vo_LIBRARY, where to find the vo library.
 
 find_path(MPEG2_INCLUDE_DIR
-  NAMES mpeg2.h mpeg2dec/mpeg2.h
-  PATHS /usr/local/livid
-)
+  NAMES mpeg2.h mpeg2dec/mpeg2.h)
 
-find_library(MPEG2_mpeg2_LIBRARY mpeg2
-  /usr/local/livid/mpeg2dec/libmpeg2/.libs
-)
+find_library(MPEG2_mpeg2_LIBRARY mpeg2)
 
-find_library( MPEG2_vo_LIBRARY vo
-  /usr/local/livid/mpeg2dec/libvo/.libs
-)
+find_library( MPEG2_vo_LIBRARY vo)
 
 include(${CMAKE_CURRENT_LIST_DIR}/FindPackageHandleStandardArgs.cmake)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(MPEG2 DEFAULT_MSG MPEG2_mpeg2_LIBRARY MPEG2_INCLUDE_DIR)
