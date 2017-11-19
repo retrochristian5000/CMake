@@ -33,19 +33,17 @@ if(UNIX)
   find_path( GTK_glibconfig_INCLUDE_PATH NAMES glibconfig.h
     PATHS
     /usr/openwin/share/include
-    /usr/local/include/glib12
-    /usr/lib/glib/include
-    /usr/local/lib/glib/include
     /opt/gnome/include
     /opt/gnome/lib/glib/include
+    PATH_SUFFIXES glib/include lib/glib/include include/glib12
   )
 
   find_path( GTK_glib_INCLUDE_PATH NAMES glib.h
     PATH_SUFFIXES gtk-1.2 glib-1.2 glib12
     PATHS
     /usr/openwin/share/include
-    /usr/lib/glib/include
     /opt/gnome/include
+    PATH_SUFFIXES glib/include
   )
 
   find_path( GTK_gtkgl_INCLUDE_PATH NAMES gtkgl/gtkglarea.h
