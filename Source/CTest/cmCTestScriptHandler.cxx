@@ -38,6 +38,7 @@
 #include "cmake.h"
 
 #ifdef _WIN32
+#define NOMINMAX
 #include <windows.h>
 #else
 #include <unistd.h>
@@ -960,21 +961,21 @@ bool cmCTestScriptHandler::TryToRemoveBinaryDirectoryOnce(
   return cmSystemTools::RemoveADirectory(directoryPath);
 }
 
-double cmCTestScriptHandler::GetRemainingTimeAllowed()
+std::chrono::duration<double> cmCTestScriptHandler::GetRemainingTimeAllowed()
 {
   if (!this->Makefile) {
-    return 1.0e7;
+    return std::chrono::duration<double>::max();
   }
 
   const char* timelimitS = this->Makefile->GetDefinition("CTEST_TIME_LIMIT");
 
   if (!timelimitS) {
-    return 1.0e7;
+    return std::chrono::duration<double>::max();
   }
 
   auto timelimit = std::chrono::duration<double>(atof(timelimitS));
 
   auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(
     std::chrono::steady_clock::now() - this->ScriptStartTime);
-  return (timelimit - duration).count();
+  return (timelimit - duration);
 }
