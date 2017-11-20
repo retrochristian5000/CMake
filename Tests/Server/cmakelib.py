@@ -116,7 +116,9 @@ def writeRawData(cmakeCommand, content):
   if print_communication:
     printClient(content, "(Use \\r\\n:", rn, ")")
 
-  cmakeCommand.write(payload.encode('utf-8'))
+  encoded_payload = payload.encode('utf-8')
+  for c in encoded_payload:
+    cmakeCommand.write(c)
 
 writeRawData.counter = 0
 
