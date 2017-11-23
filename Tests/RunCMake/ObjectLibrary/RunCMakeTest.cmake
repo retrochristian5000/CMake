@@ -14,7 +14,17 @@ else()
   run_cmake(Import)
   run_cmake(Install)
 endif()
-run_cmake(LinkObjLHS)
+
+function (run_object_lib_build name)
+  set(RunCMake_TEST_NO_CLEAN 1)
+  run_cmake(${name})
+  set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/${name}-build)
+  run_cmake_command(${name}-build ${CMAKE_COMMAND} --build .)
+endfunction ()
+
+run_object_lib_build(LinkObjLHSShared)
+run_object_lib_build(LinkObjLHSStatic)
+
 run_cmake(LinkObjRHS1)
 run_cmake(LinkObjRHS2)
 run_cmake(MissingSource)
