@@ -743,7 +743,7 @@ function(CMAKE_DIAGNOSE_UNSUPPORTED_CLANG lang envvar)
   endif()
 
   # Test whether a GNU-like command-line option works.
-  execute_process(COMMAND "${CMAKE_${lang}_COMPILER}" --version
+  execute_process(COMMAND "${CMAKE_${lang}_COMPILER}" --help
     RESULT_VARIABLE _clang_result
     OUTPUT_VARIABLE _clang_stdout
     ERROR_VARIABLE _clang_stderr)
