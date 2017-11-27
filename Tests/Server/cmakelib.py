@@ -100,6 +100,14 @@ def waitForRawMessage(cmakeCommand):
           return jsonPayload
       stdoutdata = stdoutdata[(end+len(']== "CMake Server" ==]')):]
 
+# Python2 has no problem writing the output of encodes directly,
+# but Python3 returns only 'int's for encode and so must be turned
+# into bytes. We use the existence of 'to_bytes' on an int to
+# determine which behavior is appropriate. It might be more clear
+# to do this in the code which uses the flag, but introducing
+# this lookup cost at every byte sent isn't ideal.
+requires_to_bytes_conv = "to_bytes" in dir(10)
+
 def writeRawData(cmakeCommand, content):
   writeRawData.counter += 1
   payload = """
@@ -116,7 +124,17 @@ def writeRawData(cmakeCommand, content):
   if print_communication:
     printClient(content, "(Use \\r\\n:", rn, ")")
 
-  cmakeCommand.write(payload.encode('utf-8'))
+  # To stress test how cmake deals with fragmentation in the
+  # communication channel, we send only one byte at a time.
+  # Certain communication methods / platforms might still buffer
+  # it all into one message since its so close together, but in
+  # general this will catch places where we assume full buffers
+  # come in all at once.
+  encoded_payload = payload.encode('utf-8')
+  for c in encoded_payload:
+    if requires_to_bytes_conv:
+      c = c.to_bytes(1, byteorder='big')
+    cmakeCommand.write(c)
 
 writeRawData.counter = 0
 
