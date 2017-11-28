@@ -1,0 +1,8 @@
+ *CMake Error at .*GoogleTestAddTests.cmake:[0-9]+ \(message\):
+ *  Error running test executable.
+ *
+ *    Path: '.*timeout_test(\.exe)?'
+ *    Result: Process terminated due to timeout
+ *    Output:
+ *     +
+.*
