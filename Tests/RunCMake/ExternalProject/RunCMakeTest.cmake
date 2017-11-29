@@ -15,10 +15,29 @@ run_cmake(UsesTerminal)
 
 # Run both cmake and build steps. We always do a clean before the
 # build to ensure that the download step re-runs each time.
-set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/MultiCommand-build)
-set(RunCMake_TEST_NO_CLEAN 1)
-file(REMOVE_RECURSE "${RunCMake_TEST_BINARY_DIR}")
-file(MAKE_DIRECTORY "${RunCMake_TEST_BINARY_DIR}")
-run_cmake(MultiCommand)
-run_cmake_command(MultiCommand-clean ${CMAKE_COMMAND} --build . --target clean)
-run_cmake_command(MultiCommand-build ${CMAKE_COMMAND} --build .)
+function(__ep_test_with_build testName)
+  set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/${testName}-build)
+  set(RunCMake_TEST_NO_CLEAN 1)
+  file(REMOVE_RECURSE "${RunCMake_TEST_BINARY_DIR}")
+  file(MAKE_DIRECTORY "${RunCMake_TEST_BINARY_DIR}")
+  run_cmake(${testName})
+  run_cmake_command(${testName}-clean ${CMAKE_COMMAND} --build . --target clean)
+  run_cmake_command(${testName}-build ${CMAKE_COMMAND} --build .)
+endfunction()
+
+__ep_test_with_build(MultiCommand)
+
+# There is unexpected behavior when using the old MSYS generator resulting in
+# the substituted paths being malformed. The newer MSYS generator does not have
+# the problem. We need to bypass the substitution test if using the old MSYS
+# generator until the problem is fixed. See merge request 1537 for discussion.
+set(doSubstitutionTest YES)
+if(RunCMake_GENERATOR STREQUAL "MSYS Makefiles")
+  execute_process(COMMAND uname OUTPUT_VARIABLE uname)
+  if(uname MATCHES "^MINGW32_NT")
+      set(doSubstitutionTest NO)
+  endif()
+endif()
+if(doSubstitutionTest)
+    __ep_test_with_build(Substitutions)
+endif()
