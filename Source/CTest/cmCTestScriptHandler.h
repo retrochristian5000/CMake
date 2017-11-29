@@ -96,7 +96,7 @@ public:
    * seconds if the user has set the variable CTEST_TIME_LIMIT. If that has
    * not been set it returns 1e7 seconds
    */
-  double GetRemainingTimeAllowed();
+  std::chrono::duration<double> GetRemainingTimeAllowed();
 
   cmCTestScriptHandler();
   ~cmCTestScriptHandler() override;
