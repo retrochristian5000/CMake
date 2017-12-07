@@ -6,11 +6,8 @@
 #endif
 #include "cmCTestRunTest.h"
 
-#include "cmCTest.h"
 #include "cmCTestMemCheckHandler.h"
-#include "cmCTestTestHandler.h"
 #include "cmProcess.h"
-#include "cmSystemTools.h"
 #include "cmWorkingDirectory.h"
 
 #include "cm_curl.h"
@@ -20,10 +17,7 @@
 #include "cmsys/RegularExpression.hxx"
 #include <chrono>
 #include <iomanip>
-#include <sstream>
-#include <stdio.h>
-#include <time.h>
-#include <utility>
+#include <iostream>
 
 cmCTestRunTest::cmCTestRunTest(cmCTestTestHandler* handler)
 {
@@ -44,54 +38,36 @@ cmCTestRunTest::cmCTestRunTest(cmCTestTestHandler* handler)
   this->RunAgain = false;     // default to not having to run again
 }
 
-cmCTestRunTest::~cmCTestRunTest()
+void cmCTestRunTest::CheckOutput(std::string* line)
 {
-}
-
-bool cmCTestRunTest::CheckOutput()
-{
-  // Read lines for up to 0.1 seconds of total time.
-  std::chrono::duration<double> timeout = std::chrono::milliseconds(100);
-  auto timeEnd = std::chrono::steady_clock::now() + timeout;
-  std::string line;
-  while ((timeout = timeEnd - std::chrono::steady_clock::now(),
-          timeout > std::chrono::seconds(0))) {
-    int p = this->TestProcess->GetNextOutputLine(line, timeout);
-    if (p == cmsysProcess_Pipe_None) {
-      // Process has terminated and all output read.
-      return false;
-    }
-    if (p == cmsysProcess_Pipe_STDOUT) {
-      // Store this line of output.
-      cmCTestLog(this->CTest, HANDLER_VERBOSE_OUTPUT, this->GetIndex()
-                   << ": " << line << std::endl);
-      this->ProcessOutput += line;
-      this->ProcessOutput += "\n";
-
-      // Check for TIMEOUT_AFTER_MATCH property.
-      if (!this->TestProperties->TimeoutRegularExpressions.empty()) {
-        for (auto& reg : this->TestProperties->TimeoutRegularExpressions) {
-          if (reg.first.find(this->ProcessOutput.c_str())) {
-            cmCTestLog(this->CTest, HANDLER_VERBOSE_OUTPUT, this->GetIndex()
-                         << ": "
-                         << "Test timeout changed to "
-                         << std::chrono::duration_cast<std::chrono::seconds>(
-                              this->TestProperties->AlternateTimeout)
-                              .count()
-                         << std::endl);
-            this->TestProcess->ResetStartTime();
-            this->TestProcess->ChangeTimeout(
-              this->TestProperties->AlternateTimeout);
-            this->TestProperties->TimeoutRegularExpressions.clear();
-            break;
-          }
-        }
+  if (!this->TestProperties->TimeoutRegularExpressions.empty()) {
+    for (auto& reg : this->TestProperties->TimeoutRegularExpressions) {
+      if (reg.first.find(line->data())) {
+        cmCTestLog(this->CTest, HANDLER_VERBOSE_OUTPUT, this->GetIndex()
+                     << ": "
+                     << "Test timeout changed to "
+                     << std::chrono::duration_cast<std::chrono::seconds>(
+                          this->TestProperties->AlternateTimeout)
+                          .count()
+                     << std::endl);
+        this->TestProcess->ResetStartTime();
+        this->TestProcess->ChangeTimeout(
+          this->TestProperties->AlternateTimeout);
+        this->TestProperties->TimeoutRegularExpressions.clear();
+        break;
       }
-    } else { // if(p == cmsysProcess_Pipe_Timeout)
-      break;
     }
   }
-  return true;
+}
+
+void cmCTestRunTest::PrintLine(std::string* line)
+{
+  this->ProcessOutput += *line;
+  this->ProcessOutput += "\n";
+
+  this->CheckOutput(line);
+  cmCTestLog(this->CTest, HANDLER_VERBOSE_OUTPUT, this->GetIndex()
+               << ": " << *line << std::endl);
 }
 
 // Streamed compression of test output.  The compressed data
@@ -204,7 +180,7 @@ bool cmCTestRunTest::EndTest(size_t completed, size_t total, bool started)
       }
     }
   }
-  if (res == cmsysProcess_State_Exited) {
+  if (res == cmProcess::State::Exited) {
     bool success = !forceFail &&
       (retVal == 0 ||
        !this->TestProperties->RequiredRegularExpressions.empty());
@@ -225,29 +201,29 @@ bool cmCTestRunTest::EndTest(size_t completed, size_t total, bool started)
       cmCTestLog(this->CTest, HANDLER_OUTPUT, "***Failed  " << reason);
       outputTestErrorsToConsole = this->CTest->OutputTestOutputOnTestFailure;
     }
-  } else if (res == cmsysProcess_State_Expired) {
+  } else if (res == cmProcess::State::Expired) {
     cmCTestLog(this->CTest, HANDLER_OUTPUT, "***Timeout ");
     this->TestResult.Status = cmCTestTestHandler::TIMEOUT;
     outputTestErrorsToConsole = this->CTest->OutputTestOutputOnTestFailure;
-  } else if (res == cmsysProcess_State_Exception) {
+  } else if (res == cmProcess::State::Exception) {
     outputTestErrorsToConsole = this->CTest->OutputTestOutputOnTestFailure;
     cmCTestLog(this->CTest, HANDLER_OUTPUT, "***Exception: ");
-    this->TestResult.ExceptionStatus =
-      this->TestProcess->GetExitExceptionString();
+    this->TestProcess->GetExitExceptionString(
+      this->TestResult.ExceptionStatus);
     switch (this->TestProcess->GetExitException()) {
-      case cmsysProcess_Exception_Fault:
+      case cmProcess::ExitException::Fault:
         cmCTestLog(this->CTest, HANDLER_OUTPUT, "SegFault");
         this->TestResult.Status = cmCTestTestHandler::SEGFAULT;
         break;
-      case cmsysProcess_Exception_Illegal:
+      case cmProcess::ExitException::Illegal:
         cmCTestLog(this->CTest, HANDLER_OUTPUT, "Illegal");
         this->TestResult.Status = cmCTestTestHandler::ILLEGAL;
         break;
-      case cmsysProcess_Exception_Interrupt:
+      case cmProcess::ExitException::Interrupt:
         cmCTestLog(this->CTest, HANDLER_OUTPUT, "Interrupt");
         this->TestResult.Status = cmCTestTestHandler::INTERRUPT;
         break;
-      case cmsysProcess_Exception_Numerical:
+      case cmProcess::ExitException::Numerical:
         cmCTestLog(this->CTest, HANDLER_OUTPUT, "Numerical");
         this->TestResult.Status = cmCTestTestHandler::NUMERICAL;
         break;
@@ -358,7 +334,6 @@ bool cmCTestRunTest::EndTest(size_t completed, size_t total, bool started)
   if (!this->NeedsToRerun()) {
     this->TestHandler->TestResults.push_back(this->TestResult);
   }
-  delete this->TestProcess;
   return passed || skipped;
 }
 
@@ -370,7 +345,7 @@ bool cmCTestRunTest::StartAgain()
   this->RunAgain = false; // reset
   // change to tests directory
   cmWorkingDirectory workdir(this->TestProperties->Directory);
-  this->StartTest(this->TotalNumberOfTests);
+  this->StartTest(this->TotalNumberOfTests, this->MultiTestHandler);
   return true;
 }
 
@@ -423,9 +398,11 @@ void cmCTestRunTest::MemCheckPostProcess()
 }
 
 // Starts the execution of a test.  Returns once it has started
-bool cmCTestRunTest::StartTest(size_t total)
+bool cmCTestRunTest::StartTest(size_t total,
+                               cmCTestMultiProcessHandler* multi_test_handler)
 {
   this->TotalNumberOfTests = total; // save for rerun case
+  this->MultiTestHandler = multi_test_handler;
   cmCTestLog(this->CTest, HANDLER_OUTPUT, std::setw(2 * getNumWidth(total) + 8)
                << "Start "
                << std::setw(getNumWidth(this->TestHandler->GetMaxIndex()))
@@ -732,7 +709,7 @@ bool cmCTestRunTest::ForkProcess(std::chrono::duration<double> testTimeOut,
     cmSystemTools::AppendEnv(*environment);
   }
 
-  return this->TestProcess->StartProcess();
+  return this->TestProcess->StartProcess(this);
 }
 
 void cmCTestRunTest::WriteLogOutputTop(size_t completed, size_t total)
@@ -805,4 +782,10 @@ void cmCTestRunTest::WriteLogOutputTop(size_t completed, size_t total)
   cmCTestLog(this->CTest, HANDLER_OUTPUT, outname.c_str());
   cmCTestLog(this->CTest, DEBUG, "Testing " << this->TestProperties->Name
                                             << " ... ");
+}
+
+void cmCTestRunTest::FinalizeTest()
+{
+  this->MultiTestHandler->CheckProcessOutput(this);
+  this->MultiTestHandler->StartNextTests();
 }

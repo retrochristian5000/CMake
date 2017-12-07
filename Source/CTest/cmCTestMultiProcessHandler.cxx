@@ -9,6 +9,7 @@
 #include "cmSystemTools.h"
 #include "cmWorkingDirectory.h"
 
+#include "cm_uv.h"
 #include "cmsys/FStream.hxx"
 #include "cmsys/String.hxx"
 #include "cmsys/SystemInformation.hxx"
@@ -97,18 +98,7 @@ void cmCTestMultiProcessHandler::RunTests()
   }
   this->TestHandler->SetMaxIndex(this->FindMaxIndex());
   this->StartNextTests();
-  while (!this->Tests.empty()) {
-    if (this->StopTimePassed) {
-      return;
-    }
-    this->CheckOutput();
-    this->StartNextTests();
-  }
-  // let all running tests finish
-  while (this->CheckOutput()) {
-  }
-  this->MarkFinished();
-  this->UpdateCostData();
+  uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 }
 
 void cmCTestMultiProcessHandler::StartTestProcess(int test)
@@ -142,7 +132,7 @@ void cmCTestMultiProcessHandler::StartTestProcess(int test)
   // Lock the resources we'll be using
   this->LockResources(test);
 
-  if (testRun->StartTest(this->Total)) {
+  if (testRun->StartTest(this->Total, this)) {
     this->RunningTests.insert(testRun);
   } else if (testRun->IsStopTimePassed()) {
     this->StopTimePassed = true;
@@ -154,15 +144,7 @@ void cmCTestMultiProcessHandler::StartTestProcess(int test)
       j.second.erase(test);
     }
 
-    this->UnlockResources(test);
-    this->Completed++;
-    this->TestFinishMap[test] = true;
-    this->TestRunningMap[test] = false;
-    this->RunningCount -= GetProcessorsUsed(test);
-    testRun->EndTest(this->Completed, this->Total, false);
-    if (!this->Properties[test]->Disabled) {
-      this->Failed->push_back(this->Properties[test]->Name);
-    }
+    testRun->FinalizeTest();
     delete testRun;
   }
 }
@@ -233,6 +215,13 @@ bool cmCTestMultiProcessHandler::StartTest(int test)
 void cmCTestMultiProcessHandler::StartNextTests()
 {
   size_t numToStart = 0;
+
+  if (this->Tests.empty()) {
+    this->MarkFinished();
+    this->UpdateCostData();
+    return;
+  }
+
   if (this->RunningCount < this->ParallelLevel) {
     numToStart = this->ParallelLevel - this->RunningCount;
   }
@@ -365,45 +354,36 @@ void cmCTestMultiProcessHandler::StartNextTests()
   }
 }
 
-bool cmCTestMultiProcessHandler::CheckOutput()
+void cmCTestMultiProcessHandler::CheckProcessOutput(cmCTestRunTest* runner)
 {
-  // no more output we are done
-  if (this->RunningTests.empty()) {
-    return false;
-  }
-  std::vector<cmCTestRunTest*> finished;
-  std::string out, err;
-  for (cmCTestRunTest* p : this->RunningTests) {
-    if (!p->CheckOutput()) {
-      finished.push_back(p);
-    }
-  }
-  for (cmCTestRunTest* p : finished) {
-    this->Completed++;
-    int test = p->GetIndex();
+  this->Completed++;
+  int test = runner->GetIndex();
+  auto properties = runner->GetTestProperties();
+  std::string name = properties->Name;
+  bool started = !properties->Disabled;
+  bool testResult = runner->EndTest(this->Completed, this->Total, started);
 
-    bool testResult = p->EndTest(this->Completed, this->Total, true);
-    if (p->StartAgain()) {
-      this->Completed--; // remove the completed test because run again
-      continue;
-    }
-    if (testResult) {
-      this->Passed->push_back(p->GetTestProperties()->Name);
-    } else {
-      this->Failed->push_back(p->GetTestProperties()->Name);
-    }
-    for (auto& t : this->Tests) {
-      t.second.erase(test);
-    }
-    this->TestFinishMap[test] = true;
-    this->TestRunningMap[test] = false;
-    this->RunningTests.erase(p);
-    this->WriteCheckpoint(test);
-    this->UnlockResources(test);
-    this->RunningCount -= GetProcessorsUsed(test);
-    delete p;
+  if (runner->StartAgain()) {
+    this->Completed--;
+    return;
   }
-  return true;
+  if (testResult) {
+    this->Passed->push_back(name);
+  } else {
+    // check that this was an actual failure by checking Properties->disabled
+    if (!properties->Disabled) {
+      this->Failed->push_back(name);
+    }
+  }
+  for (auto& t : this->Tests) {
+    t.second.erase(test);
+  }
+  this->TestFinishMap[test] = true;
+  this->TestRunningMap[test] = false;
+  this->RunningTests.erase(runner);
+  this->WriteCheckpoint(test);
+  this->UnlockResources(test);
+  this->RunningCount -= GetProcessorsUsed(test);
 }
 
 void cmCTestMultiProcessHandler::UpdateCostData()

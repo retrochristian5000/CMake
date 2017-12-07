@@ -5,13 +5,14 @@
 
 #include "cmConfigure.h" // IWYU pragma: keep
 
+#include "cmCTestMultiProcessHandler.h"
+#include "cmCTestTestHandler.h"
 #include <chrono>
+#include <cm_uv.h>
 #include <set>
 #include <stddef.h>
 #include <string>
 #include <vector>
-
-#include "cmCTestTestHandler.h"
 
 class cmCTest;
 class cmProcess;
@@ -24,11 +25,14 @@ class cmProcess;
 class cmCTestRunTest
 {
 public:
-  cmCTestRunTest(cmCTestTestHandler* handler);
-  ~cmCTestRunTest();
+  explicit cmCTestRunTest(cmCTestTestHandler* handler);
+
+  ~cmCTestRunTest() = default;
 
   void SetNumberOfRuns(int n) { this->NumberOfRunsLeft = n; }
+
   void SetRunUntilFailOn() { this->RunUntilFail = true; }
+
   void SetTestProperties(cmCTestTestHandler::cmCTestTestProperties* prop)
   {
     this->TestProperties = prop;
@@ -58,13 +62,14 @@ public:
   }
 
   // Read and store output.  Returns true if it must be called again.
-  bool CheckOutput();
+  void CheckOutput(std::string* line);
 
   // Compresses the output, writing to CompressedOutput
   void CompressOutput();
-
+  // Prints output from each process line by line
+  void PrintLine(std::string* output);
   // launch the test process, return whether it started correctly
-  bool StartTest(size_t total);
+  bool StartTest(size_t total, cmCTestMultiProcessHandler* multi_test_handler);
   // capture and report the test results
   bool EndTest(size_t completed, size_t total, bool started);
   // Called by ctest -N to log the command string
@@ -74,10 +79,12 @@ public:
 
   bool StartAgain();
 
+  void FinalizeTest();
+
 private:
   bool NeedsToRerun();
   void DartProcessing();
-  void ExeNotFound(std::string exe);
+
   // Figures out a final timeout which is min(STOP_TIME, NOW+TIMEOUT)
   std::chrono::duration<double> ResolveTimeout();
   bool ForkProcess(std::chrono::duration<double> testTimeOut,
@@ -92,19 +99,12 @@ private:
   cmCTestTestHandler* TestHandler;
   cmCTest* CTest;
   cmProcess* TestProcess;
-  // If the executable to run is ctest, don't create a new process;
-  // just instantiate a new cmTest.  (Can be disabled for a single test
-  // if this option is set to false.)
-  // bool OptimizeForCTest;
-
-  bool UsePrefixCommand;
-  std::string PrefixCommand;
-
   std::string ProcessOutput;
   std::string CompressedOutput;
   double CompressionRatio;
   // The test results
   cmCTestTestHandler::cmCTestTestResult TestResult;
+  cmCTestMultiProcessHandler* MultiTestHandler;
   int Index;
   std::set<std::string> FailedDependencies;
   std::string StartTime;

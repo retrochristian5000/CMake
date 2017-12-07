@@ -31,6 +31,7 @@
 #include "cmWorkingDirectory.h"
 #include "cmXMLWriter.h"
 #include "cm_utf8.h"
+#include "cm_uv.h"
 #include "cmake.h"
 #include "cmsys/FStream.hxx"
 
