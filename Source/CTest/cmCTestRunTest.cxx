@@ -47,7 +47,10 @@ void cmCTestRunTest::CheckOutput(std::string* line)
         cmCTestLog(this->CTest, HANDLER_VERBOSE_OUTPUT, this->GetIndex()
                      << ": "
                      << "Test timeout changed to "
-                     << this->TestProperties->AlternateTimeout << std::endl);
+                     << std::chrono::duration_cast<std::chrono::seconds>(
+                          this->TestProperties->AlternateTimeout)
+                          .count()
+                     << std::endl);
         this->TestProcess->ResetStartTime();
         this->TestProcess->ChangeTimeout(
           this->TestProperties->AlternateTimeout);

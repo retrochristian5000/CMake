@@ -12,6 +12,13 @@
 #include <string>
 #include <vector>
 
+/*
+ * A wrapper function for cmsysProcess_SetTimeout that takes an
+ * std::chrono::duration. For convenience only.
+ */
+void cmsysProcess_SetTimeout(cmsysProcess* process,
+                             std::chrono::duration<double> timeout);
+
 /** \class cmProcess
  * \brief run a process with c++
  *

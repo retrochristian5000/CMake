@@ -7,6 +7,16 @@
 #include <stdio.h>
 #include <type_traits>
 
+void cmsysProcess_SetTimeout(cmsysProcess* process,
+                             std::chrono::duration<double> timeout)
+{
+  cmsysProcess_SetTimeout(
+    process,
+    double(
+      std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count()) /
+      1000.0);
+};
+
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #include <io.h>
 
@@ -278,9 +288,12 @@ int cmProcess::StartTimer()
 {
   int status = OK;
   auto properties = this->Runner->GetTestProperties();
-  if (properties->Timeout != 0.0 || !properties->ExplicitTimeout) {
-    auto timeout = (uint64_t)(this->Timeout * MILLISECONDS);
-    status = uv_timer_start(this->Timer, &cmProcess::OnTimeout, timeout, 0);
+  auto msec =
+    std::chrono::duration_cast<std::chrono::milliseconds>(this->Timeout);
+
+  if (msec != std::chrono::milliseconds(0) || !properties->ExplicitTimeout) {
+    status = uv_timer_start(this->Timer, &cmProcess::OnTimeout,
+                            (uint64_t)msec.count(), 0);
 
     if (status != OK) {
       std::cerr << "Unable to start timer: " << uv_strerror(status)
@@ -611,15 +624,15 @@ void cmProcess::OnExit(uv_process_t* process, int64_t exit_status,
     test->SetState(state);
   }
 
-  test->TotalTime =
-    static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(
-                          std::chrono::steady_clock::now() - test->StartTime)
-                          .count()) /
-    1000.0;
+  test->TotalTime = std::chrono::steady_clock::now() - test->StartTime;
 
-  if (test->TotalTime <= 0.0) {
-    test->TotalTime = 0.0;
+  if (test->TotalTime <= std::chrono::duration<double>::zero()) {
+    test->TotalTime = std::chrono::duration<double>::zero();
   }
+  // Because of a processor clock scew the runtime may become slightly
+  // negative. If someone changed the system clock while the process was
+  // running this may be even more. Make sure not to report a negative
+  // duration here.
   test->SetExitStatus((int)exit_status);
   test->SetSignal(term_signal);
 
@@ -636,11 +649,7 @@ void cmProcess::OnExit(uv_process_t* process, int64_t exit_status,
 void cmProcess::OnTimeout(uv_timer_t* timer)
 {
   auto test = static_cast<cmProcess*>(timer->data);
-  test->TotalTime =
-    static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(
-                          std::chrono::steady_clock::now() - test->StartTime)
-                          .count()) /
-    1000.0;
+  test->TotalTime = std::chrono::steady_clock::now() - test->StartTime;
   cmsysProcess_KillPID((unsigned long)test->Process->pid);
   uv_close((uv_handle_t*)test->Process, NULL);
   uv_close((uv_handle_t*)test->PipeReader, NULL);
