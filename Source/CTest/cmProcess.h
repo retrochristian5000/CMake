@@ -3,14 +3,18 @@
 #ifndef cmProcess_h
 #define cmProcess_h
 
-#include "cmConfigure.h" // IWYU pragma: keep
-
 #include "cmCTestRunTest.h"
+#include "cmConfigure.h" // IWYU pragma: keep
+#include "cmUVHandlePtr.h"
+#include "cm_uv.h"
 #include "cmsys/Process.h"
 #include <chrono>
-#include <cm_uv.h>
+#include <stddef.h> // IWYU
+#include <stdint.h> // IWYU
 #include <string>
 #include <vector>
+
+class cmCTestRunTest;
 
 /*
  * A wrapper function for cmsysProcess_SetTimeout that takes an
@@ -100,9 +104,9 @@ private:
   bool ProcessHandleClosed = false;
 
   // libuv vars
-  uv_process_t* Process;
-  uv_pipe_t* PipeReader;
-  uv_timer_t* Timer;
+  cm::uv_process_ptr Process;
+  cm::uv_pipe_ptr PipeReader;
+  cm::uv_timer_ptr Timer;
 
   cmCTestRunTest* Runner = nullptr;
   int Signal;

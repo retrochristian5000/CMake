@@ -25,7 +25,7 @@ int cmProcess::GetPipes(int* fds)
   SECURITY_ATTRIBUTES attr;
   HANDLE readh, writeh;
   attr.nLength = sizeof(attr);
-  attr.lpSecurityDescriptor = NULL;
+  attr.lpSecurityDescriptor = nullptr;
   attr.bInheritHandle = FALSE;
   if (!CreatePipe(&readh, &writeh, &attr, 0))
     return -1;
@@ -137,10 +137,6 @@ int cmProcess::GetExitException()
 
 cmProcess::cmProcess()
 {
-  this->Process = new uv_process_t;
-  this->Timer = new uv_timer_t;
-  this->PipeReader = new uv_pipe_t;
-
   this->Timeout = std::chrono::duration<double>::zero();
   this->TotalTime = std::chrono::duration<double>::zero();
   this->ExitValue = 0;
@@ -188,10 +184,10 @@ bool cmProcess::StartProcess(cmCTestRunTest* runner)
     return false;
   }
 
-  auto pipe_writer = new uv_pipe_t;
+  cm::uv_pipe_ptr pipe_writer;
 
-  uv_pipe_init(uv_default_loop(), pipe_writer, 0);
-  uv_pipe_init(uv_default_loop(), this->PipeReader, 0);
+  pipe_writer.init(*uv_default_loop(), 0);
+  this->PipeReader.init(*uv_default_loop(), 0, this);
 
   uv_pipe_open(pipe_writer, fds[1]);
   uv_pipe_open(this->PipeReader, fds[0]);
@@ -205,18 +201,14 @@ bool cmProcess::StartProcess(cmCTestRunTest* runner)
   // Ignore stdin of the child process
   stdio[0].flags = UV_IGNORE;
 
-  // set the child's stream to pipe_writer then, later, close it with uv_close
+  // set the child's stream to pipe_writer
   stdio[1].flags = UV_INHERIT_STREAM;
   stdio[1].data.stream = (uv_stream_t*)pipe_writer;
 
   // copy child's stderr to stdout
   stdio[2] = stdio[1];
 
-  // set this cmProcess on the child's data member for access in evt handler
-  this->Process->data = this;
-
-  status = uv_spawn(uv_default_loop(), this->Process, &options);
-
+  status = this->Process.spawn(*uv_default_loop(), options, this);
   if (status != OK) {
     std::cerr << "cmProcess: Never started " << this->Command << " process.\n"
               << "[" << uv_strerror(status) << "]\n";
@@ -226,19 +218,14 @@ bool cmProcess::StartProcess(cmCTestRunTest* runner)
 
   this->ProcessState = cmProcess::State::Executing;
 
-  uv_close((uv_handle_t*)pipe_writer, NULL);
-
-  status = uv_timer_init(uv_default_loop(), this->Timer);
-
+  status = this->Timer.init(*uv_default_loop(), this);
   if (status == OK) {
-    this->Timer->data = this;
     status = this->StartTimer();
     if (status != OK) {
       return false;
     }
   }
 
-  this->PipeReader->data = this;
   status = uv_read_start((uv_stream_t*)this->PipeReader,
                          (uv_alloc_cb)&cmProcess::OnAllocate,
                          (uv_read_cb)&cmProcess::OnRead);
@@ -306,9 +293,6 @@ int cmProcess::StartTimer()
 // return the process status
 int cmProcess::GetProcessStatus()
 {
-  if (!this->Process) {
-    return cmProcess::State::Exited;
-  }
   return this->ProcessState;
 }
 
@@ -636,10 +620,8 @@ void cmProcess::OnExit(uv_process_t* process, int64_t exit_status,
   test->SetExitStatus((int)exit_status);
   test->SetSignal(term_signal);
 
-  uv_close((uv_handle_t*)process, NULL);
-
   if (test->ReadHandleClosed) {
-    uv_close((uv_handle_t*)test->Timer, NULL);
+    uv_timer_stop(test->Timer);
     test->Runner->FinalizeTest();
   }
 
@@ -651,9 +633,6 @@ void cmProcess::OnTimeout(uv_timer_t* timer)
   auto test = static_cast<cmProcess*>(timer->data);
   test->TotalTime = std::chrono::steady_clock::now() - test->StartTime;
   cmsysProcess_KillPID((unsigned long)test->Process->pid);
-  uv_close((uv_handle_t*)test->Process, NULL);
-  uv_close((uv_handle_t*)test->PipeReader, NULL);
-  uv_close((uv_handle_t*)timer, NULL);
   test->SetState(cmProcess::State::Expired);
   test->Runner->FinalizeTest();
 }
@@ -676,9 +655,10 @@ void cmProcess::OnRead(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
 
   } else {
     if (nread != UV_EOF) {
-      std::cerr << "Error reading stream: " << uv_strerror(nread) << std::endl;
+      auto error = (long)nread;
+      std::cerr << "Error reading stream: " << uv_strerror(error) << std::endl;
     }
-    uv_close((uv_handle_t*)stream, NULL);
+
     if (test->ProcessHandleClosed) {
       uv_timer_stop(test->Timer);
       test->Runner->FinalizeTest();

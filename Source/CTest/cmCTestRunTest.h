@@ -26,12 +26,13 @@ class cmCTestRunTest
 {
 public:
   explicit cmCTestRunTest(cmCTestTestHandler* handler);
+
   ~cmCTestRunTest() = default;
 
-  const char NEWLINE = '\n';
-
   void SetNumberOfRuns(int n) { this->NumberOfRunsLeft = n; }
+
   void SetRunUntilFailOn() { this->RunUntilFail = true; }
+
   void SetTestProperties(cmCTestTestHandler::cmCTestTestProperties* prop)
   {
     this->TestProperties = prop;
@@ -98,7 +99,6 @@ private:
   cmCTestTestHandler* TestHandler;
   cmCTest* CTest;
   cmProcess* TestProcess;
-
   std::string ProcessOutput;
   std::string CompressedOutput;
   double CompressionRatio;
