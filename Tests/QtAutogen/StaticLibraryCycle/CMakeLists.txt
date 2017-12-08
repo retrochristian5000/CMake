@@ -1,5 +1,7 @@
-# Test AUTOMOC and AUTORCC on source files with the same name
-# but in different subdirectories
+cmake_minimum_required(VERSION 3.10)
+include("../AutogenTest.cmake")
+
+# Test AUTOMOC on cyclic static libraries
 
 set(CMAKE_AUTOMOC ON)
 
