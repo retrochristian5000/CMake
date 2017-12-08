@@ -50,7 +50,6 @@
 #include "cmGeneratedFileStream.h"
 #include "cmGlobalGenerator.h"
 #include "cmMakefile.h"
-#include "cmProcess.h"
 #include "cmProcessOutput.h"
 #include "cmState.h"
 #include "cmStateSnapshot.h"
@@ -998,7 +997,7 @@ int cmCTest::RunMakeCommand(const char* command, std::string& output,
   cmsysProcess_SetCommand(cp, &*argv.begin());
   cmsysProcess_SetWorkingDirectory(cp, dir);
   cmsysProcess_SetOption(cp, cmsysProcess_Option_HideWindow, 1);
-  cmsysProcess_SetTimeout(cp, timeout);
+  cmsysProcess_SetTimeout(cp, timeout.count());
   cmsysProcess_Execute(cp);
 
   // Initialize tick's
@@ -1089,9 +1088,10 @@ int cmCTest::RunTest(std::vector<const char*> argv, std::string* output,
   bool modifyEnv = (environment && !environment->empty());
 
   // determine how much time we have
-  std::chrono::duration<double> timeout =
-    std::min<std::chrono::duration<double>>(this->GetRemainingTimeAllowed(),
-                                            std::chrono::minutes(2));
+  std::chrono::duration<double> timeout = this->GetRemainingTimeAllowed();
+  if (timeout != std::chrono::duration<double>::max()) {
+    timeout -= std::chrono::minutes(2);
+  }
   if (this->TimeOut > std::chrono::duration<double>::zero() &&
       this->TimeOut < timeout) {
     timeout = this->TimeOut;
@@ -1130,6 +1130,7 @@ int cmCTest::RunTest(std::vector<const char*> argv, std::string* output,
         // invocations. Since --build-generator is required this is a
         // good place to check for it, and to add the arguments in
         if (strcmp(i, "--build-generator") == 0 &&
+            timeout != std::chrono::duration<double>::max() &&
             timeout > std::chrono::duration<double>::zero()) {
           args.push_back("--test-timeout");
           std::ostringstream msg;
@@ -1184,7 +1185,7 @@ int cmCTest::RunTest(std::vector<const char*> argv, std::string* output,
     cmsysProcess_SetOption(cp, cmsysProcess_Option_HideWindow, 1);
   }
 
-  cmsysProcess_SetTimeout(cp, timeout);
+  cmsysProcess_SetTimeout(cp, timeout.count());
   cmsysProcess_Execute(cp);
 
   char* data;
@@ -2608,7 +2609,7 @@ bool cmCTest::RunCommand(std::vector<std::string> const& args,
   if (cmSystemTools::GetRunCommandHideConsole()) {
     cmsysProcess_SetOption(cp, cmsysProcess_Option_HideWindow, 1);
   }
-  cmsysProcess_SetTimeout(cp, timeout);
+  cmsysProcess_SetTimeout(cp, timeout.count());
   cmsysProcess_Execute(cp);
 
   std::vector<char> tempOutput;
