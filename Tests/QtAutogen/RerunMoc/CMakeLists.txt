@@ -1,7 +1,13 @@
+cmake_minimum_required(VERSION 3.10)
+project(RerunMoc)
+include("../AutogenTest.cmake")
+
+# Dummy executable to generate a clean target
+add_executable(dummy dummy.cpp)
 
 set(timeformat "%Y%j%H%M%S")
-set(mocRerunSrcDir "${CMAKE_CURRENT_SOURCE_DIR}/mocRerun")
-set(mocRerunBinDir "${CMAKE_CURRENT_BINARY_DIR}/mocRerun")
+set(mocRerunSrcDir "${CMAKE_CURRENT_SOURCE_DIR}/Moc")
+set(mocRerunBinDir "${CMAKE_CURRENT_BINARY_DIR}/Moc")
 
 # Initial build
 configure_file("${mocRerunSrcDir}/test1a.h.in" "${mocRerunBinDir}/test1.h" COPYONLY)
@@ -9,9 +15,8 @@ try_compile(MOC_RERUN
   "${mocRerunBinDir}"
   "${mocRerunSrcDir}"
   mocRerun
-  CMAKE_FLAGS "-DQT_QMAKE_EXECUTABLE:FILEPATH=${QT_QMAKE_EXECUTABLE}"
-              "-DQT_TEST_VERSION=${QT_TEST_VERSION}"
-              "-DCMAKE_PREFIX_PATH=${Qt_PREFIX_DIR}"
+  CMAKE_FLAGS "-DQT_TEST_VERSION=${QT_TEST_VERSION}"
+              "-DQT_QMAKE_EXECUTABLE:FILEPATH=${QT_QMAKE_EXECUTABLE}"
   OUTPUT_VARIABLE output
 )
 if (NOT MOC_RERUN)
