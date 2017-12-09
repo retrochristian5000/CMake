@@ -1,3 +1,12 @@
+cmake_minimum_required(VERSION 3.10)
+project(RerunMocPlugin)
+include("../AutogenTest.cmake")
+
+# Tests Q_PLUGIN_METADATA and CMAKE_AUTOMOC_DEPEND_FILTERS
+# json file change detection
+
+# Dummy executable to generate a clean target
+add_executable(dummy dummy.cpp)
 
 # Utility variables
 set(timeformat "%Y%j%H%M%S")
@@ -10,7 +19,7 @@ try_compile(MOC_PLUGIN
   "${mocPlugSrcDir}"
   mocPlugin
   CMAKE_FLAGS "-DQT_TEST_VERSION=${QT_TEST_VERSION}"
-              "-DCMAKE_PREFIX_PATH=${Qt_PREFIX_DIR}"
+              "-DQT_QMAKE_EXECUTABLE:FILEPATH=${QT_QMAKE_EXECUTABLE}"
   OUTPUT_VARIABLE output
 )
 if (NOT MOC_PLUGIN)
