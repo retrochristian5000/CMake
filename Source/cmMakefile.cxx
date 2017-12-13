@@ -4507,6 +4507,23 @@ bool cmMakefile::AddRequiredTargetCxxFeature(cmTarget* target,
   }
   if (changeCXXLanguageLevel) {
     target->SetProperty("CXX_STANDARD", *neededCXXLevel);
+  }
+
+  // associate the equivalent cuda language settings to any project that has
+  // c++ files so that you can use cxx language features to set cuda language
+  // level
+  const char* existingCudaStandard = target->GetProperty("CUDA_STANDARD");
+  const char* const* existingCUDALevel = existingCudaStandard
+    ? std::find_if(cm::cbegin(CXX_STANDARDS), cm::cend(CXX_STANDARDS),
+                   cmStrCmp(existingCudaStandard))
+    : nullptr;
+
+  bool changeCUDALanguageLevel = neededCXXLevel && !existingCudaStandard;
+  if (neededCXXLevel && existingCudaStandard &&
+      existingCUDALevel < neededCXXLevel) {
+    changeCUDALanguageLevel = true;
+  }
+  if (changeCUDALanguageLevel) {
     target->SetProperty("CUDA_STANDARD", *neededCXXLevel);
   }
 
