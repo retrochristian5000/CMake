@@ -4409,33 +4409,21 @@ bool cmMakefile::HaveCxxStandardAvailable(cmTarget const* target,
     this->IssueMessage(cmake::FATAL_ERROR, e.str());
     return false;
   }
+  /* clang-format off */
+  const char* const* neededCXXLevel =
+    needCxx17 ? &CXX_STANDARDS[3]
+    : needCxx14 ? &CXX_STANDARDS[2]
+    : needCxx11 ? &CXX_STANDARDS[1]
+    : needCxx98 ? &CXX_STANDARDS[0]
+    : cm::cend(CXX_STANDARDS);
+  /* clang-format on */
 
   const char* const* existingCxxIt = existingCxxStandard
     ? std::find_if(cm::cbegin(CXX_STANDARDS), cm::cend(CXX_STANDARDS),
                    cmStrCmp(existingCxxStandard))
     : cm::cend(CXX_STANDARDS);
 
-  if (needCxx17 &&
-      existingCxxIt < std::find_if(cm::cbegin(CXX_STANDARDS),
-                                   cm::cend(CXX_STANDARDS), cmStrCmp("17"))) {
-    return false;
-  }
-  if (needCxx14 &&
-      existingCxxIt < std::find_if(cm::cbegin(CXX_STANDARDS),
-                                   cm::cend(CXX_STANDARDS), cmStrCmp("14"))) {
-    return false;
-  }
-  if (needCxx11 &&
-      existingCxxIt < std::find_if(cm::cbegin(CXX_STANDARDS),
-                                   cm::cend(CXX_STANDARDS), cmStrCmp("11"))) {
-    return false;
-  }
-  if (needCxx98 &&
-      existingCxxIt < std::find_if(cm::cbegin(CXX_STANDARDS),
-                                   cm::cend(CXX_STANDARDS), cmStrCmp("98"))) {
-    return false;
-  }
-  return true;
+  return !(existingCxxIt < neededCXXLevel);
 }
 
 void cmMakefile::CheckNeededCxxLanguage(const std::string& feature,
@@ -4497,50 +4485,31 @@ bool cmMakefile::AddRequiredTargetCxxFeature(cmTarget* target,
       return false;
     }
   }
-  const char* const* existingCxxIt = existingCxxStandard
-    ? std::find_if(cm::cbegin(CXX_STANDARDS), cm::cend(CXX_STANDARDS),
-                   cmStrCmp(existingCxxStandard))
-    : cm::cend(CXX_STANDARDS);
 
-  bool setCxx98 = needCxx98 && !existingCxxStandard;
-  bool setCxx11 = needCxx11 && !existingCxxStandard;
-  bool setCxx14 = needCxx14 && !existingCxxStandard;
-  bool setCxx17 = needCxx17 && !existingCxxStandard;
+  // we need to determine if our needed language level is higher than the
+  // existing standard level on the target and if so update the target property
+  const char* const* existingCXXLevel = existingCxxStandard
+    ? std::find_if(CXX_STANDARDS, CXX_STANDARDS, cmStrCmp(existingCxxStandard))
+    : nullptr;
+  /* clang-format off */
+  const char* const* neededCXXLevel =
+    needCxx17 ? &CXX_STANDARDS[3]
+    : needCxx14 ? &CXX_STANDARDS[2]
+    : needCxx11 ? &CXX_STANDARDS[1]
+    : needCxx98 ? &CXX_STANDARDS[0]
+    : nullptr;
+  /* clang-format on */
 
-  if (needCxx17 && existingCxxStandard &&
-      existingCxxIt < std::find_if(cm::cbegin(CXX_STANDARDS),
-                                   cm::cend(CXX_STANDARDS), cmStrCmp("17"))) {
-    setCxx17 = true;
-  } else if (needCxx14 && existingCxxStandard &&
-             existingCxxIt < std::find_if(cm::cbegin(CXX_STANDARDS),
-                                          cm::cend(CXX_STANDARDS),
-                                          cmStrCmp("14"))) {
-    setCxx14 = true;
-  } else if (needCxx11 && existingCxxStandard &&
-             existingCxxIt < std::find_if(cm::cbegin(CXX_STANDARDS),
-                                          cm::cend(CXX_STANDARDS),
-                                          cmStrCmp("11"))) {
-    setCxx11 = true;
-  } else if (needCxx98 && existingCxxStandard &&
-             existingCxxIt < std::find_if(cm::cbegin(CXX_STANDARDS),
-                                          cm::cend(CXX_STANDARDS),
-                                          cmStrCmp("98"))) {
-    setCxx98 = true;
+  bool changeCXXLanguageLevel = neededCXXLevel && !existingCxxStandard;
+  if (neededCXXLevel && existingCXXLevel &&
+      existingCXXLevel < neededCXXLevel) {
+    changeCXXLanguageLevel = true;
+  }
+  if (changeCXXLanguageLevel) {
+    target->SetProperty("CXX_STANDARD", *neededCXXLevel);
+    target->SetProperty("CUDA_STANDARD", *neededCXXLevel);
   }
 
-  if (setCxx17) {
-    target->SetProperty("CXX_STANDARD", "17");
-    target->SetProperty("CUDA_STANDARD", "17");
-  } else if (setCxx14) {
-    target->SetProperty("CXX_STANDARD", "14");
-    target->SetProperty("CUDA_STANDARD", "14");
-  } else if (setCxx11) {
-    target->SetProperty("CXX_STANDARD", "11");
-    target->SetProperty("CUDA_STANDARD", "11");
-  } else if (setCxx98) {
-    target->SetProperty("CXX_STANDARD", "98");
-    target->SetProperty("CUDA_STANDARD", "98");
-  }
   return true;
 }
 
