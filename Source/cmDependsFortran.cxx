@@ -331,24 +331,6 @@ bool cmDependsFortran::WriteDependenciesReal(const char* obj,
       continue;
     }
 
-    // If the module is provided in this target special handling is
-    // needed.
-    if (this->Internal->TargetProvides.find(i) !=
-        this->Internal->TargetProvides.end()) {
-      // The module is provided by a different source in the same
-      // target.  Add the proxy dependency to make sure the other
-      // source builds first.
-      std::string proxy = stamp_dir;
-      proxy += "/";
-      proxy += i;
-      proxy += ".mod.proxy";
-      proxy = cmSystemTools::ConvertToOutputPath(
-        this->MaybeConvertToRelativePath(binDir, proxy).c_str());
-
-      // since we require some things add them to our list of requirements
-      makeDepends << obj_m << ".requires: " << proxy << std::endl;
-    }
-
     // The object file should depend on timestamped files for the
     // modules it uses.
     TargetRequiresMap::const_iterator required =
@@ -373,22 +355,10 @@ bool cmDependsFortran::WriteDependenciesReal(const char* obj,
     }
   }
 
-  // Write provided modules to the output stream.
-  for (std::string const& i : info.Provides) {
-    std::string proxy = stamp_dir;
-    proxy += "/";
-    proxy += i;
-    proxy += ".mod.proxy";
-    proxy = cmSystemTools::ConvertToOutputPath(
-      this->MaybeConvertToRelativePath(binDir, proxy).c_str());
-    makeDepends << proxy << ": " << obj_m << ".provides" << std::endl;
-  }
-
   // If any modules are provided then they must be converted to stamp files.
   if (!info.Provides.empty()) {
     // Create a target to copy the module after the object file
     // changes.
-    makeDepends << obj_m << ".provides.build:\n";
     for (std::string const& i : info.Provides) {
       // Include this module in the set provided by this target.
       this->Internal->TargetProvides.insert(i);
@@ -410,6 +380,17 @@ bool cmDependsFortran::WriteDependenciesReal(const char* obj,
       stampFile = this->LocalGenerator->ConvertToOutputFormat(
         this->MaybeConvertToRelativePath(binDir, stampFile),
         cmOutputConverter::SHELL);
+
+      makeDepends << obj_m << ".provides.build"
+                  << ": " << stampFile << "\n";
+      // Note that when cmake_copy_f90_mod finds that a module file
+      // and the corresponding stamp file have no differences, the stamp
+      // file is not updated. In such case the stamp file will be always
+      // older than its prerequisite and trigger cmake_copy_f90_mod
+      // on each new build. This is expected behavior for incremental
+      // builds and can not be changed without preforming recursive make
+      // calls that would considerably slow down the building process.
+      makeDepends << stampFile << ": " << obj_m << "\n";
       makeDepends << "\t$(CMAKE_COMMAND) -E cmake_copy_f90_mod " << modFile
                   << " " << stampFile;
       cmMakefile* mf = this->LocalGenerator->GetMakefile();
@@ -419,8 +400,8 @@ bool cmDependsFortran::WriteDependenciesReal(const char* obj,
       }
       makeDepends << "\n";
     }
-    // After copying the modules update the timestamp file so that
-    // copying will not be done again until the source rebuilds.
+    makeDepends << obj_m << ".provides.build:\n";
+    // After copying the modules update the timestamp file.
     makeDepends << "\t$(CMAKE_COMMAND) -E touch " << obj_m
                 << ".provides.build\n";
 
