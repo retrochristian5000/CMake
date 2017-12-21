@@ -1405,6 +1405,7 @@ struct cmLVS7GFileConfig
   std::string CompileDefs;
   std::string CompileDefsConfig;
   std::string AdditionalDeps;
+  std::string IncludeDirs;
   bool ExcludedFromBuild;
 };
 
@@ -1490,6 +1491,12 @@ cmLocalVisualStudio7GeneratorFCInfo::cmLocalVisualStudio7GeneratorFCInfo(
     if (const char* ccdefs = sf.GetProperty(defPropName)) {
       fc.CompileDefsConfig =
         genexInterpreter.Evaluate(ccdefs, COMPILE_DEFINITIONS);
+      needfc = true;
+    }
+
+    const std::string INCLUDE_DIRECTORIES("INCLUDE_DIRECTORIES");
+    if (const char* cincs = sf.GetProperty(INCLUDE_DIRECTORIES)) {
+      fc.IncludeDirs = genexInterpreter.Evaluate(cincs, INCLUDE_DIRECTORIES);
       needfc = true;
     }
 
@@ -1670,7 +1677,7 @@ bool cmLocalVisualStudio7Generator::WriteGroup(
           fout << "\t\t\t\t\t<Tool\n"
                << "\t\t\t\t\tName=\"" << aCompilerTool << "\"\n";
           if (!fc.CompileFlags.empty() || !fc.CompileDefs.empty() ||
-              !fc.CompileDefsConfig.empty()) {
+              !fc.CompileDefsConfig.empty() || !fc.IncludeDirs.empty()) {
             Options::Tool tool = Options::Compiler;
             cmVS7FlagTable const* table =
               cmLocalVisualStudio7GeneratorFlagTable;
@@ -1682,6 +1689,7 @@ bool cmLocalVisualStudio7Generator::WriteGroup(
             fileOptions.Parse(fc.CompileFlags.c_str());
             fileOptions.AddDefines(fc.CompileDefs.c_str());
             fileOptions.AddDefines(fc.CompileDefsConfig.c_str());
+            fileOptions.AddIncludes(fc.IncludeDirs.c_str());
             fileOptions.OutputFlagMap(fout, "\t\t\t\t\t");
             fileOptions.OutputAdditionalIncludeDirectories(
               fout, "\t\t\t\t\t", "\n",
