@@ -244,7 +244,7 @@ required form if set.
   TAGFILES
   TCL_SUBST
 
-The following single value Doxygen options would be quoted automatically
+The following single value Doxygen options will be quoted automatically
 if they contain at least one space:
 
 ::
@@ -291,6 +291,36 @@ if they contain at least one space:
   WARN_FORMAT
   WARN_LOGFILE
   XML_OUTPUT
+
+There are situations where it may be undesirable for a particular config option
+to be automatically quoted by ``doxygen_add_docs()``, such as ``ALIASES`` which
+may need to include its own embedded quoting.  The ``DOXYGEN_VERBATIM_VARS``
+variable can be used to specify a list of Doxygen variables (including the
+leading ``DOXYGEN_`` prefix) which should not be quoted.  The project is then
+responsible for ensuring that those variables' values make sense when placed
+directly in the Doxygen input file.  In the case of list variables, list items
+are still separated by spaces, it is only the automatic quoting that is
+skipped.  For example, the following allows ``doxygen_add_docs()`` to apply
+quoting to ``DOXYGEN_PROJECT_BRIEF``, but not each item in the
+``DOXYGEN_ALIASES`` list (:ref:`bracket syntax <Bracket Argument>` is also used
+to make working with embedded quotes easier):
+
+.. code-block:: cmake
+
+  set(DOXYGEN_PROJECT_BRIEF "String with spaces")
+  set(DOXYGEN_ALIASES
+      [[somealias="@some_command param"]]
+      "anotherAlias=@foobar"
+  )
+  set(DOXYGEN_VERBATIM_VARS DOXYGEN_ALIASES)
+
+The resultant ``Doxyfile`` will contain the following lines:
+
+.. code-block:: text
+
+  PROJECT_BRIEF = "String with spaces"
+  ALIASES       = somealias="@some_command param" anotherAlias=@foobar
+
 
 Deprecated Result Variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -716,12 +746,15 @@ endif()
 
 function(doxygen_quote_value VARIABLE)
     # Quote a value of the given variable if:
-    # - variable parameter was really given
-    # - a variable it points is defined
-    # - a value doesn't quoted already
-    # - and it has spaces
+    # - VARIABLE parameter was really given
+    # - the variable it names is defined and is not present in the list
+    #   specified by DOXYGEN_VERBATIM_VARS (if set)
+    # - the value of the named variable isn't already quoted
+    # - the value has spaces
     if(VARIABLE AND DEFINED ${VARIABLE} AND
-       NOT ${VARIABLE} MATCHES "^\".* .*\"$" AND ${VARIABLE} MATCHES " ")
+       NOT ${VARIABLE} MATCHES "^\".* .*\"$" AND ${VARIABLE} MATCHES " " AND
+       NOT (DEFINED DOXYGEN_VERBATIM_VARS AND
+            "${VARIABLE}" IN_LIST DOXYGEN_VERBATIM_VARS))
         set(${VARIABLE} "\"${${VARIABLE}}\"" PARENT_SCOPE)
     endif()
 endfunction()
@@ -730,8 +763,18 @@ function(doxygen_list_to_quoted_strings LIST_VARIABLE)
     if(LIST_VARIABLE AND DEFINED ${LIST_VARIABLE})
         unset(_inputs)
         unset(_sep)
+        unset(_verbatim)
+        # Have to test if list items should be treated as verbatim here
+        # because we lose the variable name when we pass just one list item
+        # to doxygen_quote_value() below
+        if(DEFINED DOXYGEN_VERBATIM_VARS AND
+           "${LIST_VARIABLE}" IN_LIST DOXYGEN_VERBATIM_VARS)
+            set(_verbatim True)
+        endif()
         foreach(_in IN LISTS ${LIST_VARIABLE})
-            doxygen_quote_value(_in)
+            if(NOT _verbatim)
+                doxygen_quote_value(_in)
+            endif()
             string(APPEND _inputs "${_sep}${_in}")
             set(_sep " ")
         endforeach()
