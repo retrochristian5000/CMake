@@ -24,6 +24,7 @@
 #include "cm_sys_stat.h"
 #include "cmake.h"
 #include "cmsys/FStream.hxx"
+#include "cmsys/SystemInformation.hxx"
 
 #include <algorithm>
 #include <array>
@@ -50,6 +51,20 @@ inline static std::string GetSafeProperty(cmSourceFile const* sf,
                                           const char* key)
 {
   return std::string(SafeString(sf->GetProperty(key)));
+}
+
+static std::size_t GetParallelCPUCount()
+{
+  static std::size_t count = 0;
+  // Detect only on the first call
+  if (count == 0) {
+    cmsys::SystemInformation info;
+    info.RunCPUCheck();
+    count = info.GetNumberOfPhysicalCPU();
+    count = std::max<std::size_t>(count, 1);
+    count = std::min<std::size_t>(count, cmQtAutoGen::parallelMax);
+  }
+  return count;
 }
 
 static void AddDefinitionEscaped(cmMakefile* makefile, const char* key,
@@ -294,7 +309,7 @@ void cmQtAutoGeneratorInitializer::InitCustomTargets()
     this->AutogenInfoFile += "/AutogenInfo.cmake";
 
     this->AutogenSettingsFile = this->DirInfo;
-    this->AutogenSettingsFile += "/AutogenOldSettings.cmake";
+    this->AutogenSettingsFile += "/AutogenOldSettings.txt";
   }
 
   // Autogen target FOLDER property
@@ -630,7 +645,7 @@ void cmQtAutoGeneratorInitializer::InitCustomTargets()
           qrc.InfoFile = base;
           qrc.InfoFile += "Info.cmake";
           qrc.SettingsFile = base;
-          qrc.SettingsFile += "Settings.cmake";
+          qrc.SettingsFile += "Settings.txt";
         }
       }
     }
@@ -686,8 +701,9 @@ void cmQtAutoGeneratorInitializer::InitCustomTargets()
             ccName += qrc.PathChecksum;
           }
           std::vector<std::string> ccDepends;
-          // Add the .qrc file to the custom target dependencies
+          // Add the .qrc and info file to the custom target dependencies
           ccDepends.push_back(qrc.QrcFile);
+          ccDepends.push_back(qrc.InfoFile);
 
           cmTarget* autoRccTarget = makefile->AddUtilityCommand(
             ccName, cmMakefile::TargetOrigin::Generator, true,
@@ -709,15 +725,14 @@ void cmQtAutoGeneratorInitializer::InitCustomTargets()
         {
           std::vector<std::string> ccByproducts;
           std::vector<std::string> ccDepends;
-          // Add the .qrc file to the custom command dependencies
+          // Add the .qrc and info file to the custom command dependencies
           ccDepends.push_back(qrc.QrcFile);
+          ccDepends.push_back(qrc.InfoFile);
 
           // Add the resource files to the dependencies
           {
             std::string error;
-            if (cmQtAutoGen::RccListInputs(this->RccExecutable,
-                                           this->RccListOptions, qrc.QrcFile,
-                                           qrc.Resources, &error)) {
+            if (RccListInputs(qrc.QrcFile, qrc.Resources, error)) {
               for (std::string const& fileName : qrc.Resources) {
                 // Add resource file to the custom command dependencies
                 ccDepends.push_back(fileName);
@@ -905,6 +920,14 @@ void cmQtAutoGeneratorInitializer::SetupCustomTargets()
   AddDefinitionEscaped(makefile, "_multi_config",
                        cmQtAutoGen::MultiConfigName(this->MultiConfig));
   AddDefinitionEscaped(makefile, "_build_dir", this->DirBuild);
+  {
+    std::string parallel = GetSafeProperty(this->Target, "AUTOGEN_PARALLEL");
+    // Autodetect number of CPUs
+    if (parallel.empty() || (parallel == "AUTO")) {
+      parallel = std::to_string(GetParallelCPUCount());
+    }
+    AddDefinitionEscaped(makefile, "_parallel", parallel);
+  }
 
   if (this->MocEnabled || this->UicEnabled) {
     AddDefinitionEscaped(makefile, "_qt_version_major", this->QtVersionMajor);
@@ -1355,4 +1378,86 @@ bool cmQtAutoGeneratorInitializer::QtVersionGreaterOrEqual(
       (majorUL == requestMajor && minorUL >= requestMinor);
   }
   return false;
+}
+
+/// @brief Reads the resource files list from from a .qrc file
+/// @arg fileName Must be the absolute path of the .qrc file
+/// @return True if the rcc file was successfully read
+bool cmQtAutoGeneratorInitializer::RccListInputs(
+  std::string const& fileName, std::vector<std::string>& files,
+  std::string& error)
+{
+  if (!cmSystemTools::FileExists(fileName.c_str())) {
+    error = "rcc resource file does not exist:\n  ";
+    error += cmQtAutoGen::Quoted(fileName);
+    error += "\n";
+    return false;
+  }
+  if (!RccListOptions.empty()) {
+    // Use rcc for file listing
+    if (RccExecutable.empty()) {
+      error = "rcc executable not available";
+      return false;
+    }
+
+    // Run rcc list command in the directory of the qrc file with the pathless
+    // qrc file name argument. This way rcc prints relative paths.
+    // This avoids issues on Windows when the qrc file is in a path that
+    // contains non-ASCII characters.
+    std::string const fileDir = cmSystemTools::GetFilenamePath(fileName);
+    std::string const fileNameName = cmSystemTools::GetFilenameName(fileName);
+
+    bool result = false;
+    int retVal = 0;
+    std::string rccStdOut;
+    std::string rccStdErr;
+    {
+      std::vector<std::string> cmd;
+      cmd.push_back(RccExecutable);
+      cmd.insert(cmd.end(), RccListOptions.begin(), RccListOptions.end());
+      cmd.push_back(fileNameName);
+      result = cmSystemTools::RunSingleCommand(
+        cmd, &rccStdOut, &rccStdErr, &retVal, fileDir.c_str(),
+        cmSystemTools::OUTPUT_NONE, 0.0, cmProcessOutput::Auto);
+    }
+    if (!result || retVal) {
+      error = "rcc list process failed for:\n  ";
+      error += cmQtAutoGen::Quoted(fileName);
+      error += "\n";
+      error += rccStdOut;
+      error += "\n";
+      error += rccStdErr;
+      error += "\n";
+      return false;
+    }
+    if (!cmQtAutoGen::RccListParseOutput(rccStdOut, rccStdErr, files, error)) {
+      return false;
+    }
+  } else {
+    // We can't use rcc for the file listing.
+    // Read the qrc file content into string and parse it.
+    {
+      std::string qrcContents;
+      {
+        cmsys::ifstream ifs(fileName.c_str());
+        if (ifs) {
+          std::ostringstream osst;
+          osst << ifs.rdbuf();
+          qrcContents = osst.str();
+        } else {
+          error = "rcc file not readable:\n  ";
+          error += cmQtAutoGen::Quoted(fileName);
+          error += "\n";
+          return false;
+        }
+      }
+      // Parse string content
+      cmQtAutoGen::RccListParseContent(qrcContents, files);
+    }
+  }
+
+  // Convert relative paths to absolute paths
+  cmQtAutoGen::RccListConvertFullPath(cmSystemTools::GetFilenamePath(fileName),
+                                      files);
+  return true;
 }
