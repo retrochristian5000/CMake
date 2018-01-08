@@ -28,9 +28,11 @@ if(MINGW)
   set(CMAKE_FIND_LIBRARY_SUFFIXES ".dll" ".dll.a" ".a" ".lib")
   set(CMAKE_C_STANDARD_LIBRARIES_INIT "-lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32")
   set(CMAKE_CXX_STANDARD_LIBRARIES_INIT "${CMAKE_C_STANDARD_LIBRARIES_INIT}")
+  set(CMAKE_DL_LIBS "dl")
+else()
+  set(CMAKE_DL_LIBS "")
 endif()
 
-set(CMAKE_DL_LIBS "")
 set(CMAKE_LIBRARY_PATH_FLAG "-L")
 set(CMAKE_LINK_LIBRARY_FLAG "-l")
 set(CMAKE_LINK_DEF_FILE_FLAG "") # Empty string: passing the file is enough
