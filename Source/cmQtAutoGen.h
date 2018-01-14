@@ -9,13 +9,15 @@
 #include <vector>
 
 /** \class cmQtAutoGen
- * \brief Class used as namespace for QtAutogen related types  and functions
+ * \brief Class used as namespace for QtAutoGen related types and functions
  */
 class cmQtAutoGen
 {
 public:
   static std::string const listSep;
+  static const unsigned int parallelMax = 64;
 
+  /// @brief AutoGen generator type
   enum Generator
   {
     GEN, // General
@@ -24,6 +26,7 @@ public:
     RCC
   };
 
+  /// @brief Multiconfiguration type
   enum MultiConfig
   {
     SINGLE, // Single configuration
@@ -45,6 +48,11 @@ public:
   /// @brief Returns a the string escaped and enclosed in quotes
   static std::string Quoted(std::string const& text);
 
+  static std::string QuotedCommand(std::vector<std::string> const& command);
+
+  /// @brief Returns the parent directory of the file with a "/" suffix
+  static std::string SubDirPrefix(std::string const& filename);
+
   /// @brief Appends the suffix to the filename before the last dot
   static std::string AppendFilenameSuffix(std::string const& filename,
                                           std::string const& suffix);
@@ -59,14 +67,21 @@ public:
                               std::vector<std::string> const& newOpts,
                               bool isQt5);
 
-  /// @brief Reads the resource files list from from a .qrc file
-  /// @arg fileName Must be the absolute path of the .qrc file
-  /// @return True if the rcc file was successfully read
-  static bool RccListInputs(std::string const& rccCommand,
-                            std::vector<std::string> const& rccListOptions,
-                            std::string const& fileName,
-                            std::vector<std::string>& files,
-                            std::string* errorMessage = nullptr);
+  /// @brief Parses the content of a qrc file
+  ///
+  /// Use when rcc does not support the "--list" option
+  static void RccListParseContent(std::string const& content,
+                                  std::vector<std::string>& files);
+
+  /// @brief Parses the output of the "rcc --list ..." command
+  static bool RccListParseOutput(std::string const& rccStdOut,
+                                 std::string const& rccStdErr,
+                                 std::vector<std::string>& files,
+                                 std::string& error);
+
+  /// @brief Converts relative qrc entry paths to full paths
+  static void RccListConvertFullPath(std::string const& qrcFileDir,
+                                     std::vector<std::string>& files);
 };
 
 #endif
