@@ -60,6 +60,10 @@ private:
   bool QtVersionGreaterOrEqual(unsigned long requestMajor,
                                unsigned long requestMinor) const;
 
+  bool RccListInputs(std::string const& fileName,
+                     std::vector<std::string>& files,
+                     std::string& errorMessage);
+
 private:
   cmGeneratorTarget* Target;
   bool MocEnabled;
