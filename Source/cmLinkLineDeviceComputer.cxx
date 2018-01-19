@@ -3,7 +3,6 @@
 
 #include "cmLinkLineDeviceComputer.h"
 
-#include <set>
 #include <sstream>
 
 #include "cmComputeLinkInformation.h"
@@ -32,38 +31,33 @@ std::string cmLinkLineDeviceComputer::ComputeLinkLibraries(
   ItemVector const& items = cli.GetItems();
   std::string config = cli.GetConfig();
   for (auto const& item : items) {
-    if (!item.Target) {
-      continue;
-    }
+    if (item.Target) {
+      bool skippable = false;
+      bool use_as_link = true;
+      switch (item.Target->GetType()) {
+        case cmStateEnums::MODULE_LIBRARY:
+        case cmStateEnums::INTERFACE_LIBRARY:
+          skippable = true;
+          break;
+        case cmStateEnums::STATIC_LIBRARY:
+          skippable =
+            item.Target->GetPropertyAsBool("CUDA_RESOLVE_DEVICE_SYMBOLS");
+          use_as_link = false;
+          break;
+        default:
+          break;
+      }
+      if (skippable) {
+        continue;
+      }
 
-    bool skippable = false;
-    switch (item.Target->GetType()) {
-      case cmStateEnums::SHARED_LIBRARY:
-      case cmStateEnums::MODULE_LIBRARY:
-      case cmStateEnums::INTERFACE_LIBRARY:
-        skippable = true;
-        break;
-      case cmStateEnums::STATIC_LIBRARY:
-        // If a static library is resolving its device linking, it should
-        // be removed for other device linking
-        skippable =
-          item.Target->GetPropertyAsBool("CUDA_RESOLVE_DEVICE_SYMBOLS");
-        break;
-      default:
-        break;
-    }
+      if (use_as_link) {
+        fout << "-l" << item.Value;
+      } else {
+        fout << item.Value;
+      }
 
-    if (skippable) {
-      continue;
-    }
-
-    std::set<std::string> langs;
-    item.Target->GetLanguages(langs, config);
-    if (langs.count("CUDA") == 0) {
-      continue;
-    }
-
-    if (item.IsPath) {
+    } else if (item.IsPath) {
       fout << this->ConvertToOutputFormat(
         this->ConvertToLinkReference(item.Value));
     } else {
