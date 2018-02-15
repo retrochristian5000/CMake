@@ -113,9 +113,9 @@ and it uniquely identifies the bundle.
 Object Libraries
 ^^^^^^^^^^^^^^^^
 
-The ``OBJECT`` library type is also not linked to. It defines a non-archival
-collection of object files resulting from compiling the given source files.
-The object files collection can be used as source inputs to other targets:
+The ``OBJECT`` library type defines a non-archival collection of object files
+resulting from compiling the given source files.  The object files collection
+can be used as source inputs to other targets:
 
 .. code-block:: cmake
 
@@ -125,21 +125,45 @@ The object files collection can be used as source inputs to other targets:
 
   add_executable(test_exe $<TARGET_OBJECTS:archive> test.cpp)
 
-``OBJECT`` libraries may not be used in the right hand side of
-:command:`target_link_libraries`.  They also may not be used as the ``TARGET``
-in a use of the :command:`add_custom_command(TARGET)` command signature.  They
-may be installed, and will be exported as an INTERFACE library.
-
-Although object libraries may not be named directly in calls to
-the :command:`target_link_libraries` command, they can be "linked"
-indirectly by using an :ref:`Interface Library <Interface Libraries>`
-whose :prop_tgt:`INTERFACE_SOURCES` target property is set to name
+``OBJECT`` libraries may not be used as the ``TARGET`` in a use of the
+:command:`add_custom_command(TARGET)` command signature.  They may be
+installed, and will be exported as an ``INTERFACE`` library.
+Nevertheless, the list of objects can be used by
+:command:`add_custom_command(OUTPUT)` or :command:`file(GENERATE)` by using
 ``$<TARGET_OBJECTS:objlib>``.
 
-Although object libraries may not be used as the ``TARGET``
-in a use of the :command:`add_custom_command(TARGET)` command signature,
-the list of objects can be used by :command:`add_custom_command(OUTPUT)` or
-:command:`file(GENERATE)` by using ``$<TARGET_OBJECTS:objlib>``.
+``OBJECT`` libraries may also be used in :command:`target_link_libraries` like
+any other library target, but the behavior is a little bit different:
+
+If an ``OBJECT`` library appears on the left hand side of
+:command:`target_link_libraries` it will use the transitive usage-requirements
+of the targets on the right hand side but will not link to them (because
+creating an ``OBJECT`` library does not have a link step).  Its own transitive
+usage-requirements will be forwarded (as with any other library) if it later
+appears on the right hand side of :command:`target_link_libraries`.
+
+Note, however, that if an ``OBJECT`` library appears on the right hand side of
+:command:`target_link_libraries` and shall be added to the **transitive**
+usage-requirements of another target (e.g. by using keyword ``INTERFACE``)
+its usage-requirements do not include the object files it will be compiled to.
+If added to another target as compile-requirement (e.g. by using keyword
+``PRIVATE``) its usage-requirements do contain its object files.  (Keyword
+``PUBLIC`` does both accordingly.)
+That means, the other target can link to the ``OBJECT`` library's object-files
+but not automatically forward them through its usage-requirements.  (If it
+really needs to do this it must use the ``$<TARGET_OBJECT:...>``
+generator-expression.)
+
+Stated with other words: If an ``OBJECT`` library's name appears in another
+target's :prop_tgt:`INTERFACE_LINK_LIBRARIES` property it will be treated just
+like an ``INTERFACE`` library, but when it appears in another target's
+:prop_tgt:`LINK_LIBRARIES` property its object files will be included in the
+link, too.
+
+However, keep in mind that even if an ``OBJECT`` library's name appears in
+another ``OBJECT`` library's :prop_tgt:`LINK_LIBRARIES` property that other
+``OBJECT`` library does only receive the usage-requirements without the
+object-files, because it does not have a link step.
 
 
 Build Specification and Usage Requirements
