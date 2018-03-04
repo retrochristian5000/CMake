@@ -75,6 +75,10 @@ bool cmDepends::Check(const char* makeFile, const char* internalFile,
 {
   // Dependency checks must be done in proper working directory.
   cmWorkingDirectory workdir(this->CompileDirectory);
+  if (workdir.Failed()) {
+    // Directory missing, dependencies will have to be regenerated
+    return false;
+  }
 
   // Check whether dependencies must be regenerated.
   bool okay = true;
