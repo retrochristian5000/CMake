@@ -1,0 +1,7 @@
+ep-cache-args-notfound-value
+----------------------------
+
+* The :module:`ExternalProject` can now successfully generate the cache
+  file when the last cache variable ``-Dvar:STRING=value`` associated with
+  either ``CMAKE_CACHE_ARG`` or ``CMAKE_DEFAULT_CACHE_ARGS`` configure step
+  option is set to a value ending with ``-NOTFOUND``.
