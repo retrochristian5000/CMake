@@ -18,6 +18,11 @@ set_property(TARGET CompileOptions PROPERTY COMPILE_OPTIONS
   "-DTEST_DEFINE"
   "-DNEEDS_ESCAPE=\"E$CAPE\""
   "$<$<CXX_COMPILER_ID:GNU>:-DTEST_DEFINE_GNU>"
+  "SHELL:-D DEF_A"
+  "$<1:SHELL:-D DEF_B>"
+  "SHELL:-D 'DEF_C' -D \"DEF_D\""
+  [[SHELL:-D "DEF_STR=\"string with spaces\""]]
+  "SHELL:" # produces no options
   ${c_tests}
   ${cxx_tests}
   )
