@@ -34,8 +34,7 @@ set(_cmake_feature_test_cxx_digit_separators "${Intel16_CXX14}")
 # This test is supposed to work in Intel 14 but the compiler has a bug
 # in versions 14 and 15::
 # https://software.intel.com/en-us/forums/intel-c-compiler/topic/600514
-# It also appears to fail with an internal compiler error on Intel 16 and 17.
-#set(_cmake_feature_test_cxx_generalized_initializers "${Intel16_CXX14}")
+set(_cmake_feature_test_cxx_generalized_initializers "${Intel16_CXX14}")
 unset(Intel16_CXX14)
 
 set(Intel15 "__INTEL_COMPILER >= 1500")
