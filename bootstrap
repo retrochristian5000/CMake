@@ -790,6 +790,12 @@ cmake_verbose=
 cmake_parallel_make=
 cmake_ccache_enabled=
 cmake_prefix_dir="${cmake_default_prefix}"
+cmake_c_compiler=
+cmake_cxx_compiler=
+cmake_c_flags="${CFLAGS}"
+cmake_cxx_flags="${CXXFLAGS}"
+cmake_ld_flags="${LDFLAGS}"
+
 while test $# != 0; do
   case "$1" in
   --prefix=*) dir=`cmake_arg "$1"`
@@ -821,6 +827,11 @@ while test $# != 0; do
   --version) cmake_version_display ; exit 2 ;;
   --verbose) cmake_verbose=TRUE ;;
   --enable-ccache) cmake_ccache_enabled=TRUE ;;
+  CC=*) cmake_c_compiler=`cmake_arg "$1"` ;;
+  CXX=*) cmake_cxx_compiler=`cmake_arg "$1"` ;;
+  CFLAGS=*) cmake_c_flags=`cmake_arg "$1"` ;;
+  CXXFLAGS=*) cmake_cxx_flags=`cmake_arg "$1"` ;;
+  LDFLAGS=*) cmake_ld_flags=`cmake_arg "$1"` ;;
   --) shift; break ;;
   *) die "Unknown option: $1" ;;
   esac
@@ -897,29 +908,24 @@ if [ -n "${cmake_in_source_build}" ]; then
   rm -f "${cmake_source_dir}/Source/cmConfigure.h"
 fi
 
-# If exist compiler flags, set them
-cmake_c_flags=${CFLAGS}
-cmake_cxx_flags=${CXXFLAGS}
-cmake_ld_flags=${LDFLAGS}
-
 # Add Cygwin-specific flags
 if ${cmake_system_cygwin}; then
-  cmake_ld_flags="${LDFLAGS} -Wl,--enable-auto-import"
+  cmake_ld_flags="${cmake_ld_flags} -Wl,--enable-auto-import"
 fi
 
 # Add CoreFoundation framework on Darwin
 if ${cmake_system_darwin}; then
-  cmake_ld_flags="${LDFLAGS} -framework CoreFoundation"
+  cmake_ld_flags="${cmake_ld_flags} -framework CoreFoundation"
 fi
 
 # Add BeOS toolkits...
 if ${cmake_system_beos}; then
-  cmake_ld_flags="${LDFLAGS} -lroot -lbe"
+  cmake_ld_flags="${cmake_ld_flags} -lroot -lbe"
 fi
 
 # Add Haiku toolkits...
 if ${cmake_system_haiku}; then
-  cmake_ld_flags="${LDFLAGS} -lroot -lbe"
+  cmake_ld_flags="${cmake_ld_flags} -lroot -lbe"
 fi
 
 #-----------------------------------------------------------------------------
@@ -989,10 +995,11 @@ esac
 
 #-----------------------------------------------------------------------------
 # Test C compiler
-cmake_c_compiler=
 
 # If CC is set, use that for compiler, otherwise use list of known compilers
-if [ -n "${cmake_toolchain}" ]; then
+if [ -n "${cmake_c_compiler}" ]; then
+  cmake_c_compilers="${cmake_c_compiler}"
+elif [ -n "${cmake_toolchain}" ]; then
   eval cmake_c_compilers="\${cmake_toolchain_${cmake_toolchain}_CC}"
 elif [ -n "${CC}" ]; then
   cmake_c_compilers="${CC}"
@@ -1051,12 +1058,13 @@ echo "C compiler on this system is: ${cmake_c_compiler} ${cmake_c_flags}"
 
 #-----------------------------------------------------------------------------
 # Test CXX compiler
-cmake_cxx_compiler=
 
 # On Mac OSX, CC is the same as cc, so make sure not to try CC as c++ compiler.
 
 # If CC is set, use that for compiler, otherwise use list of known compilers
-if [ -n "${cmake_toolchain}" ]; then
+if [ -n "${cmake_cxx_compiler}" ]; then
+  cmake_cxx_compilers="${cmake_cxx_compiler}"
+elif [ -n "${cmake_toolchain}" ]; then
   eval cmake_cxx_compilers="\${cmake_toolchain_${cmake_toolchain}_CXX}"
 elif [ -n "${CXX}" ]; then
   cmake_cxx_compilers="${CXX}"
@@ -1531,10 +1539,16 @@ if [ -n "${cmake_ccache_enabled}" ]; then
   CC="ccache ${CC}"
   CXX="ccache ${CXX}"
 fi
+CFLAGS="${cmake_c_flags}"
+CXXFLAGS="${cmake_cxx_flags}"
+LDFLAGS="${cmake_ld_flags}"
 MAKE="${cmake_make_processor}"
 export CC
 export CXX
 export MAKE
+export CFLAGS
+export CXXFLAGS
+export LDFLAGS
 
 # Run bootstrap CMake to configure real CMake
 cmake_options="-DCMAKE_BOOTSTRAP=1"
