@@ -1,0 +1,5 @@
+string(REGEX MATCHALL "Generating generated.cpp" matches "${actual_stdout}")
+list(LENGTH matches num)
+if(NOT ${num} EQUAL 1)
+  set(RunCMake_TEST_FAILED "generated.cpp should be generated just once")
+endif()
