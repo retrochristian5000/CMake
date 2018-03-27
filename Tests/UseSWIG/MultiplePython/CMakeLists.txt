@@ -7,8 +7,8 @@ include(CTest)
 find_package(SWIG REQUIRED)
 include(${SWIG_USE_FILE})
 
-find_package(Python2 REQUIRED COMPONENTS Development)
-find_package(Python3 REQUIRED COMPONENTS Development)
+find_package(Python2 REQUIRED COMPONENTS Interpreter Development)
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 
 unset(CMAKE_SWIG_FLAGS)
 
@@ -22,6 +22,11 @@ swig_add_library(example1
                  LANGUAGE python
                  OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/Python2"
                  SOURCES ../example.i ../example.cxx)
+set_target_properties (example1 PROPERTIES
+  OUTPUT_NAME example
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Python2"
+  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Python2"
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Python2")
 target_link_libraries(example1 PRIVATE Python2::Python)
 
 # re-use sample interface file for another plugin
@@ -29,4 +34,19 @@ swig_add_library(example2
                  LANGUAGE python
                  OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/Python3"
                  SOURCES ../example.i ../example.cxx)
+set_target_properties (example2 PROPERTIES
+  OUTPUT_NAME example
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Python3"
+  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Python3"
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Python3")
 target_link_libraries(example2 PRIVATE Python3::Python)
+
+
+
+add_test (NAME MultiplePython.example1
+  COMMAND "${CMAKE_COMMAND}" -E env "PYTHONPATH=$<TARGET_FILE_DIR:example1>"
+  "${Python2_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../runme.py")
+
+add_test (NAME MultiplePython.example2
+  COMMAND "${CMAKE_COMMAND}" -E env "PYTHONPATH=$<TARGET_FILE_DIR:example2>"
+  "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../runme.py")
