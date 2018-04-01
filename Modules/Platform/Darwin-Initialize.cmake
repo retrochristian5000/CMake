@@ -20,6 +20,9 @@ execute_process(COMMAND sw_vers -productVersion
 set(CMAKE_OSX_ARCHITECTURES "$ENV{CMAKE_OSX_ARCHITECTURES}" CACHE STRING
   "Build architectures for OSX")
 
+# iOS, tvOS, and watchOS should lookup compilers from Platform/Darwin-${CMAKE_CXX_COMPILER_ID}-<LANG>
+set(_CMAKE_EFFECTIVE_SYSTEM_NAME "Apple")
+
 #----------------------------------------------------------------------------
 # _CURRENT_OSX_VERSION - as a two-component string: 10.5, 10.6, ...
 #
