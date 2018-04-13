@@ -247,7 +247,6 @@ function(_OPENMP_GET_FLAGS LANG FLAG_MODE OPENMP_FLAG_VAR OPENMP_LIB_NAMES_VAR)
             NAMES "libiomp5md"
             HINTS ${CMAKE_${LANG}_IMPLICIT_LINK_DIRECTORIES}
             CMAKE_FIND_ROOT_PATH_BOTH
-            NO_DEFAULT_PATH
           )
           mark_as_advanced(OpenMP_libiomp5md_LIBRARY)
         else()
