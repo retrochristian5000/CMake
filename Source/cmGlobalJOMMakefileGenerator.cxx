@@ -52,3 +52,21 @@ void cmGlobalJOMMakefileGenerator::PrintCompilerAdvice(
   }
   this->cmGlobalUnixMakefileGenerator3::PrintCompilerAdvice(os, lang, envVar);
 }
+
+void cmGlobalJOMMakefileGenerator::GenerateBuildCommand(
+  std::vector<std::string>& makeCommand, const std::string& makeProgram,
+  const std::string& projectName, const std::string& projectDir,
+  const std::string& targetName, const std::string& config, bool fast,
+  int jobs, bool verbose, std::vector<std::string> const& makeOptions)
+{
+  // JOM does parallel builds by default, the -j is only needed if a specific
+  // number is given
+  // see https://github.com/qt-labs/jom/blob/master/src/jomlib/options.cpp
+  if (jobs == cmake::DEFAULT_BUILD_PARALLEL_LEVEL) {
+    jobs = cmake::NO_BUILD_PARALLEL_LEVEL;
+  }
+
+  cmGlobalUnixMakefileGenerator3::GenerateBuildCommand(
+    makeCommand, makeProgram, projectName, projectDir, targetName, config,
+    fast, jobs, verbose, makeOptions);
+}
