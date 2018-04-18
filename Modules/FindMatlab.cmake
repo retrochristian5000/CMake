@@ -1361,7 +1361,7 @@ if(Matlab_ROOT_DIR)
     if("${Matlab_VERSION_STRING_INTERNAL}" STREQUAL "")
       list(APPEND _matlab_possible_roots "UNKNOWN" "NOTFOUND" ${Matlab_ROOT_DIR}) # empty version, empty MCR/Matlab indication
     else()
-      list(APPEND _matlab_possible_roots "NOTFOUND" ${Matlab_VERSION_STRING_INTERNAL} ${Matlab_ROOT_DIR}) # cached version
+      list(APPEND _matlab_possible_roots ${Matlab_VERSION_STRING_INTERNAL} "NOTFOUND" ${Matlab_ROOT_DIR}) # cached version
     endif()
   endif()
 else()
@@ -1397,6 +1397,7 @@ endif()
 # take the first possible Matlab root
 list(LENGTH _matlab_possible_roots _numbers_of_matlab_roots)
 set(Matlab_VERSION_STRING "NOTFOUND")
+set(Matlab_Or_MCR "UNKNOWN")
 if(_numbers_of_matlab_roots GREATER 0)
   list(GET _matlab_possible_roots 0 Matlab_Or_MCR)
   list(GET _matlab_possible_roots 1 Matlab_VERSION_STRING)
