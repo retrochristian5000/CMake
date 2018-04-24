@@ -1809,6 +1809,10 @@ void cmGlobalXCodeGenerator::CreateBuildSettings(cmGeneratorTarget* gtgt,
         this->CurrentLocalGenerator->AppendFlags(extraLinkOptions, linkFlags);
       }
     }
+    std::vector<std::string> opts;
+    gtgt->GetLinkOptions(opts, configName, llang);
+    // LINK_OPTIONS are escaped.
+    this->CurrentLocalGenerator->AppendCompileOptions(extraLinkOptions, opts);
   }
 
   // Set target-specific architectures.
