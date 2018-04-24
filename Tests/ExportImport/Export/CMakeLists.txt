@@ -597,3 +597,17 @@ install(
   )
 install(DIRECTORY $<1:include/abs>$<0:/wrong> DESTINATION $<1:include>$<0:/wrong>)
 install(EXPORT expAbs NAMESPACE expAbs_ DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/expAbs)
+
+
+#------------------------------------------------------------------------------
+# test export of INTERFACE_LINK_OPTIONS
+# re-use target testSharedLibRequired
+add_library(testLinkOptions INTERFACE)
+set_property(TARGET testLinkOptions PROPERTY
+  INTERFACE_INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR};${CMAKE_CURRENT_SOURCE_DIR}>"
+)
+target_link_options(testLinkOptions INTERFACE $<TARGET_LINKER_FILE:bld_testSharedLibRequired>)
+
+install(TARGETS testLinkOptions
+        EXPORT RequiredExp DESTINATION lib)
+export(TARGETS testLinkOptions NAMESPACE bld_ APPEND FILE ExportBuildTree.cmake)
