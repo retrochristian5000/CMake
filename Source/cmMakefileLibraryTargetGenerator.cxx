@@ -180,7 +180,7 @@ void cmMakefileLibraryTargetGenerator::WriteSharedLibraryRules(bool relink)
   linkRuleVar += "_CREATE_SHARED_LIBRARY";
 
   std::string extraFlags;
-  this->GetTargetLinkFlags(extraFlags);
+  this->GetTargetLinkFlags(extraFlags, linkLanguage);
   this->LocalGenerator->AddConfigVariableFlags(
     extraFlags, "CMAKE_SHARED_LINKER_FLAGS", this->ConfigName);
 
@@ -221,7 +221,7 @@ void cmMakefileLibraryTargetGenerator::WriteModuleLibraryRules(bool relink)
   linkRuleVar += "_CREATE_SHARED_MODULE";
 
   std::string extraFlags;
-  this->GetTargetLinkFlags(extraFlags);
+  this->GetTargetLinkFlags(extraFlags, linkLanguage);
   this->LocalGenerator->AddConfigVariableFlags(
     extraFlags, "CMAKE_MODULE_LINKER_FLAGS", this->ConfigName);
 
@@ -244,7 +244,7 @@ void cmMakefileLibraryTargetGenerator::WriteFrameworkRules(bool relink)
   linkRuleVar += "_CREATE_MACOSX_FRAMEWORK";
 
   std::string extraFlags;
-  this->GetTargetLinkFlags(extraFlags);
+  this->GetTargetLinkFlags(extraFlags, linkLanguage);
   this->LocalGenerator->AddConfigVariableFlags(
     extraFlags, "CMAKE_MACOSX_FRAMEWORK_LINKER_FLAGS", this->ConfigName);
 
@@ -270,7 +270,7 @@ void cmMakefileLibraryTargetGenerator::WriteDeviceLibraryRules(
 
   // Create set of linking flags.
   std::string linkFlags;
-  this->GetTargetLinkFlags(linkFlags);
+  this->GetTargetLinkFlags(linkFlags, linkLanguage);
 
   // Get the name of the device object to generate.
   std::string const targetOutputReal =
