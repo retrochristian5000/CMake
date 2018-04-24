@@ -59,6 +59,26 @@ function(run_BuildDir)
     ${CMAKE_COMMAND} --build BuildDir-build --target CustomTarget)
   run_cmake_command(BuildDir--build-multiple-targets ${CMAKE_COMMAND} -E chdir ..
     ${CMAKE_COMMAND} --build BuildDir-build --target CustomTarget2 --target CustomTarget3)
+  run_cmake_command(BuildDir--build-jobs-bad-number ${CMAKE_COMMAND} -E chdir ..
+    ${CMAKE_COMMAND} --build BuildDir-build -j 12ab)
+  run_cmake_command(BuildDir--build-jobs-good-number ${CMAKE_COMMAND} -E chdir ..
+    ${CMAKE_COMMAND} --build BuildDir-build -j 2)
+  run_cmake_command(BuildDir--build-jobs-good-number-trailing--target ${CMAKE_COMMAND} -E chdir ..
+    ${CMAKE_COMMAND} --build BuildDir-build -j 2 --target CustomTarget)
+  run_cmake_command(BuildDir--build-jobs-no-number ${CMAKE_COMMAND} -E chdir ..
+    ${CMAKE_COMMAND} --build BuildDir-build -j)
+  run_cmake_command(BuildDir--build-jobs-no-number-trailing--target ${CMAKE_COMMAND} -E chdir ..
+    ${CMAKE_COMMAND} --build BuildDir-build -j --target CustomTarget)
+  run_cmake_command(BuildDir--build--parallel-bad-number ${CMAKE_COMMAND} -E chdir ..
+    ${CMAKE_COMMAND} --build BuildDir-build --parallel 12ab)
+  run_cmake_command(BuildDir--build--parallel-good-number ${CMAKE_COMMAND} -E chdir ..
+    ${CMAKE_COMMAND} --build BuildDir-build --parallel 2)
+  run_cmake_command(BuildDir--build--parallel-good-number-trailing--target ${CMAKE_COMMAND} -E chdir ..
+    ${CMAKE_COMMAND} --build BuildDir-build --parallel 2 --target CustomTarget)
+  run_cmake_command(BuildDir--build--parallel-no-number ${CMAKE_COMMAND} -E chdir ..
+    ${CMAKE_COMMAND} --build BuildDir-build --parallel)
+  run_cmake_command(BuildDir--build--parallel-no-number-trailing--target ${CMAKE_COMMAND} -E chdir ..
+    ${CMAKE_COMMAND} --build BuildDir-build --parallel --target CustomTarget)
 endfunction()
 run_BuildDir()
 
