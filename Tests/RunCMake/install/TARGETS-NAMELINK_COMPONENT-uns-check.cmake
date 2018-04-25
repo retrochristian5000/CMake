@@ -1,0 +1,20 @@
+if(APPLE)
+  set(_check_files
+    [[lib]]
+    [[lib/libnamelink-uns-dev\.1\.0\.dylib]]
+    [[lib/libnamelink-uns-dev\.1\.dylib]]
+    [[lib/libnamelink-uns\.1\.0\.dylib]]
+    [[lib/libnamelink-uns\.1\.dylib]]
+    [[lib/libnamelink-uns\.dylib]]
+  )
+else()
+  set(_check_files
+    [[lib]]
+    [[lib/libnamelink-uns-dev\.so\.1]]
+    [[lib/libnamelink-uns-dev\.so\.1\.0]]
+    [[lib/libnamelink-uns\.so]]
+    [[lib/libnamelink-uns\.so\.1]]
+    [[lib/libnamelink-uns\.so\.1\.0]]
+  )
+endif()
+check_installed("^${_check_files}$")
