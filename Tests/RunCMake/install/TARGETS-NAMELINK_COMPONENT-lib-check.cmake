@@ -1,0 +1,50 @@
+if(WIN32)
+  set(_check_files
+    [[lib]]
+    [[lib/namelink-none\.dll]]
+    [[lib/namelink-same\.dll]]
+    [[lib/namelink-sep\.dll]]
+    [[lib/namelink-skip\.dll]]
+  )
+elseif(CYGWIN)
+  set(_check_files
+    [[lib]]
+    [[lib/cygnamelink-none\.dll]]
+    [[lib/cygnamelink-same\.dll]]
+    [[lib/cygnamelink-sep\.dll]]
+    [[lib/cygnamelink-skip\.dll]]
+  )
+elseif(APPLE)
+  set(_check_files
+    [[lib]]
+    [[lib/libnamelink-none\.dylib]]
+    [[lib/libnamelink-same\.1\.0\.dylib]]
+    [[lib/libnamelink-same\.1\.dylib]]
+    [[lib/libnamelink-same\.dylib]]
+    [[lib/libnamelink-sep\.1\.0\.dylib]]
+    [[lib/libnamelink-sep\.1\.dylib]]
+    [[lib/libnamelink-skip\.1\.0\.dylib]]
+    [[lib/libnamelink-skip\.1\.dylib]]
+  )
+elseif(NO_NAMELINK)
+  set(_check_files
+    [[lib]]
+    [[lib/libnamelink-none\.so]]
+    [[lib/libnamelink-same\.so]]
+    [[lib/libnamelink-sep\.so]]
+    [[lib/libnamelink-skip\.so]]
+  )
+else()
+  set(_check_files
+    [[lib]]
+    [[lib/libnamelink-none\.so]]
+    [[lib/libnamelink-same\.so]]
+    [[lib/libnamelink-same\.so\.1]]
+    [[lib/libnamelink-same\.so\.1\.0]]
+    [[lib/libnamelink-sep\.so\.1]]
+    [[lib/libnamelink-sep\.so\.1\.0]]
+    [[lib/libnamelink-skip\.so\.1]]
+    [[lib/libnamelink-skip\.so\.1\.0]]
+  )
+endif()
+check_installed("^${_check_files}$")
