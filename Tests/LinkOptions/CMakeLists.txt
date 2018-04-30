@@ -9,13 +9,14 @@ endif()
 add_library(LinkOptions_dll SHARED LinkOptionsLib.c)
 set_property(TARGET LinkOptions_dll PROPERTY LINK_OPTIONS ${pre}BADFLAG${obj}
   "SHELL:" # produces no options
+  "LINKER:" # produces no options
   )
 
 add_library(LinkOptions_mod MODULE LinkOptionsLib.c)
 set_property(TARGET LinkOptions_mod PROPERTY LINK_OPTIONS "SHELL:${pre}BADFLAG${obj}")
 
 add_executable(LinkOptions_exe LinkOptionsExe.c)
-set_property(TARGET LinkOptions_exe PROPERTY LINK_OPTIONS ${pre}BADFLAG${obj})
+set_property(TARGET LinkOptions_exe PROPERTY LINK_OPTIONS "LINKER:${pre}BADFLAG${obj}")
 
 add_library(LinkOptions_dll_config SHARED LinkOptionsLib.c)
 set_property(TARGET LinkOptions_dll_config PROPERTY LINK_OPTIONS $<$<CONFIG:${TEST_CONFIG}>:${pre}BADFLAG_$<UPPER_CASE:${TEST_CONFIG}>${obj}>)

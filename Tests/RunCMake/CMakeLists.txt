@@ -331,6 +331,8 @@ endif()
 add_RunCMake_test(File_Generate)
 add_RunCMake_test(ExportWithoutLanguage)
 add_RunCMake_test(target_link_libraries)
+add_RunCMake_test(add_link_options)
+add_RunCMake_test(target_link_options)
 
 add_RunCMake_test(target_compile_features)
 add_RunCMake_test(CheckModules)
