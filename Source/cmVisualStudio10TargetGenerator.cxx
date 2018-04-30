@@ -386,52 +386,54 @@ void cmVisualStudio10TargetGenerator::Generate()
   // Write the encoding header into the file
   char magic[] = { char(0xEF), char(0xBB), char(0xBF) };
   this->BuildFileStream->write(magic, 3);
+  (*this->BuildFileStream) << "<?xml version=\"1.0\" encoding=\"" +
+      this->GlobalGenerator->Encoding() + "\"?>\n";
 
+  Elem e0(*this->BuildFileStream, 0);
+  e0.StartElement("Project");
+  e0.Attribute("DefaultTargets", "Build");
   // get the tools version to use
   const std::string toolsVer(this->GlobalGenerator->GetToolsVersion());
-  std::string project_defaults = "<?xml version=\"1.0\" encoding=\"" +
-    this->GlobalGenerator->Encoding() + "\"?>\n";
-  project_defaults.append("<Project DefaultTargets=\"Build\" ToolsVersion=\"");
-  project_defaults.append(toolsVer + "\" ");
-  project_defaults.append(
-    "xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">\n");
-  this->WriteString(project_defaults.c_str(), 0);
+  e0.Attribute("ToolsVersion", toolsVer);
+  e0.Attribute("xmlns", "http://schemas.microsoft.com/developer/msbuild/2003");
+  e0.SetHasElements();
 
   if (this->NsightTegra) {
-    this->WriteString("<PropertyGroup Label=\"NsightTegraProject\">\n", 1);
+    Elem e1(e0, "PropertyGroup");
+    e1.Attribute("Label", "NsightTegraProject");
     const unsigned int nsightTegraMajorVersion = this->NsightTegraVersion[0];
     const unsigned int nsightTegraMinorVersion = this->NsightTegraVersion[1];
     if (nsightTegraMajorVersion >= 2) {
-      this->WriteString("<NsightTegraProjectRevisionNumber>", 2);
       if (nsightTegraMajorVersion > 3 ||
           (nsightTegraMajorVersion == 3 && nsightTegraMinorVersion >= 1)) {
-        (*this->BuildFileStream) << "11";
+        e1.Element("NsightTegraProjectRevisionNumber", "11");
       } else {
         // Nsight Tegra 2.0 uses project revision 9.
-        (*this->BuildFileStream) << "9";
+        e1.Element("NsightTegraProjectRevisionNumber", "9");
       }
-      (*this->BuildFileStream) << "</NsightTegraProjectRevisionNumber>\n";
       // Tell newer versions to upgrade silently when loading.
-      this->WriteElem("NsightTegraUpgradeOnceWithoutPrompt", "true", 2);
+      e1.Element("NsightTegraUpgradeOnceWithoutPrompt", "true");
     } else {
       // Require Nsight Tegra 1.6 for JCompile support.
-      this->WriteElem("NsightTegraProjectRevisionNumber", "7", 2);
+      e1.Element("NsightTegraProjectRevisionNumber", "7");
     }
-    this->WriteString("</PropertyGroup>\n", 1);
+    e1.EndElement();
   }
 
   if (const char* hostArch =
         this->GlobalGenerator->GetPlatformToolsetHostArchitecture()) {
-    this->WriteString("<PropertyGroup>\n", 1);
-    this->WriteElemEscapeXML("PreferredToolArchitecture", hostArch, 2);
-    this->WriteString("</PropertyGroup>\n", 1);
+    Elem e1(e0, "PropertyGroup");
+    e1.Element("PreferredToolArchitecture", hostArch);
+    e1.EndElement();
   }
 
   if (this->ProjectType != csproj) {
     this->WriteProjectConfigurations();
   }
-  this->WriteString("<PropertyGroup Label=\"Globals\">\n", 1);
-  this->WriteElem("ProjectGuid", "{" + this->GUID + "}", 2);
+
+  Elem e1(e0, "PropertyGroup");
+  e1.Attribute("Label", "Globals");
+  e1.Element("ProjectGuid", "{" + this->GUID + "}");
 
   if (this->MSTools &&
       this->GeneratorTarget->GetType() <= cmStateEnums::GLOBAL_TARGET) {
@@ -446,10 +448,7 @@ void cmVisualStudio10TargetGenerator::Generate()
     if (this->ProjectType == csproj) {
       tagName = "ProjectTypeGuids";
     }
-    this->WriteString("", 2);
-    (*this->BuildFileStream) << "<" << tagName << ">"
-                             << cmVS10EscapeXML(vsProjectTypes) << "</"
-                             << tagName << ">\n";
+    e1.Element(tagName.c_str(), vsProjectTypes);
   }
 
   const char* vsProjectName =
@@ -460,45 +459,44 @@ void cmVisualStudio10TargetGenerator::Generate()
     this->GeneratorTarget->GetProperty("VS_SCC_PROVIDER");
 
   if (vsProjectName && vsLocalPath && vsProvider) {
-    this->WriteElemEscapeXML("SccProjectName", vsProjectName, 2);
-    this->WriteElemEscapeXML("SccLocalPath", vsLocalPath, 2);
-    this->WriteElemEscapeXML("SccProvider", vsProvider, 2);
+    e1.Element("SccProjectName", vsProjectName);
+    e1.Element("SccLocalPath", vsLocalPath);
+    e1.Element("SccProvider", vsProvider);
 
     const char* vsAuxPath =
       this->GeneratorTarget->GetProperty("VS_SCC_AUXPATH");
     if (vsAuxPath) {
-      this->WriteElemEscapeXML("SccAuxPath", vsAuxPath, 2);
+      e1.Element("SccAuxPath", vsAuxPath);
     }
   }
 
   if (this->GeneratorTarget->GetPropertyAsBool("VS_WINRT_COMPONENT")) {
-    this->WriteElem("WinMDAssembly", "true", 2);
+    e1.Element("WinMDAssembly", "true");
   }
 
   const char* vsGlobalKeyword =
     this->GeneratorTarget->GetProperty("VS_GLOBAL_KEYWORD");
   if (!vsGlobalKeyword) {
-    this->WriteElem("Keyword", "Win32Proj", 2);
+    e1.Element("Keyword", "Win32Proj");
   } else {
-    this->WriteElemEscapeXML("Keyword", vsGlobalKeyword, 2);
+    e1.Element("Keyword", vsGlobalKeyword);
   }
 
   const char* vsGlobalRootNamespace =
     this->GeneratorTarget->GetProperty("VS_GLOBAL_ROOTNAMESPACE");
   if (vsGlobalRootNamespace) {
-    this->WriteElemEscapeXML("RootNamespace", vsGlobalRootNamespace, 2);
+    e1.Element("RootNamespace", vsGlobalRootNamespace);
   }
 
-  this->WriteElemEscapeXML("Platform", this->Platform, 2);
+  e1.Element("Platform", this->Platform);
   const char* projLabel = this->GeneratorTarget->GetProperty("PROJECT_LABEL");
   if (!projLabel) {
     projLabel = this->Name.c_str();
   }
-  this->WriteElemEscapeXML("ProjectName", projLabel, 2);
+  e1.Element("ProjectName", projLabel);
   if (const char* targetFrameworkVersion = this->GeneratorTarget->GetProperty(
         "VS_DOTNET_TARGET_FRAMEWORK_VERSION")) {
-    this->WriteElemEscapeXML("TargetFrameworkVersion", targetFrameworkVersion,
-                             2);
+    e1.Element("TargetFrameworkVersion", targetFrameworkVersion);
   }
 
   // Disable the project upgrade prompt that is displayed the first time a
@@ -506,7 +504,7 @@ void cmVisualStudio10TargetGenerator::Generate()
   // the IDE (respected by VS 2013 and above).
   if (this->GlobalGenerator->GetVersion() >=
       cmGlobalVisualStudioGenerator::VS12) {
-    this->WriteElem("VCProjectUpgraderObjectName", "NoUpgrade", 2);
+    e1.Element("VCProjectUpgraderObjectName", "NoUpgrade");
   }
 
   std::vector<std::string> keys = this->GeneratorTarget->GetPropertyKeys();
@@ -523,96 +521,97 @@ void cmVisualStudio10TargetGenerator::Generate()
     const char* value = this->GeneratorTarget->GetProperty(keyIt);
     if (!value)
       continue;
-    this->WriteString("<", 2);
-    (*this->BuildFileStream) << globalKey << ">" << cmVS10EscapeXML(value)
-                             << "</" << globalKey << ">\n";
+    e1.Element(globalKey.c_str(), value);
   }
 
   if (this->Managed) {
-    std::string outputType = "<OutputType>";
+    std::string outputType;
     switch (this->GeneratorTarget->GetType()) {
       case cmStateEnums::OBJECT_LIBRARY:
       case cmStateEnums::STATIC_LIBRARY:
       case cmStateEnums::SHARED_LIBRARY:
-        outputType += "Library";
+        outputType = "Library";
         break;
       case cmStateEnums::MODULE_LIBRARY:
-        outputType += "Module";
+        outputType = "Module";
         break;
       case cmStateEnums::EXECUTABLE:
         if (this->GeneratorTarget->Target->GetPropertyAsBool(
               "WIN32_EXECUTABLE")) {
-          outputType += "WinExe";
+          outputType = "WinExe";
         } else {
-          outputType += "Exe";
+          outputType = "Exe";
         }
         break;
       case cmStateEnums::UTILITY:
       case cmStateEnums::GLOBAL_TARGET:
-        outputType += "Utility";
+        outputType = "Utility";
         break;
       case cmStateEnums::UNKNOWN_LIBRARY:
       case cmStateEnums::INTERFACE_LIBRARY:
         break;
     }
-    outputType += "</OutputType>\n";
-    this->WriteString(outputType.c_str(), 2);
-    this->WriteElem("AppDesignerFolder", "Properties", 2);
+    e1.Element("OutputType", outputType);
+    e1.Element("AppDesignerFolder", "Properties");
   }
 
-  this->WriteString("</PropertyGroup>\n", 1);
+  e1.EndElement();
 
   switch (this->ProjectType) {
     case vcxproj:
-      this->WriteString("<Import Project=\"" VS10_CXX_DEFAULT_PROPS "\" />\n",
-                        1);
+      Elem(e0, "Import")
+        .Attribute("Project", VS10_CXX_DEFAULT_PROPS)
+        .EndElement();
       break;
     case csproj:
-      this->WriteString("<Import Project=\"" VS10_CSharp_DEFAULT_PROPS "\" "
-                        "Condition=\"Exists('" VS10_CSharp_DEFAULT_PROPS "')\""
-                        "/>\n",
-                        1);
+      Elem(e0, "Import")
+        .Attribute("Project", VS10_CSharp_DEFAULT_PROPS)
+        .Attribute("Condition", "Exists('" VS10_CSharp_DEFAULT_PROPS "')")
+        .EndElement();
       break;
   }
 
   this->WriteProjectConfigurationValues();
 
   if (this->ProjectType == vcxproj) {
-    this->WriteString("<Import Project=\"" VS10_CXX_PROPS "\" />\n", 1);
+    Elem(e0, "Import").Attribute("Project", VS10_CXX_PROPS).EndElement();
   }
-  this->WriteString("<ImportGroup Label=\"ExtensionSettings\">\n", 1);
-  if (this->GlobalGenerator->IsCudaEnabled()) {
-    this->WriteString("<Import Project=\"$(VCTargetsPath)\\"
-                      "BuildCustomizations\\CUDA ",
-                      2);
-    (*this->BuildFileStream)
-      << cmVS10EscapeAttr(
-           this->GlobalGenerator->GetPlatformToolsetCudaString())
-      << ".props\" />\n";
-  }
-  if (this->GlobalGenerator->IsMasmEnabled()) {
-    this->WriteString("<Import Project=\"$(VCTargetsPath)\\"
-                      "BuildCustomizations\\masm.props\" />\n",
-                      2);
-  }
-  if (this->GlobalGenerator->IsNasmEnabled()) {
-    // Always search in the standard modules location.
-    std::string propsTemplate =
-      GetCMakeFilePath("Templates/MSBuild/nasm.props.in");
-
-    std::string propsLocal;
-    propsLocal += this->DefaultArtifactDir;
-    propsLocal += "\\nasm.props";
-    ConvertToWindowsSlash(propsLocal);
-    this->Makefile->ConfigureFile(propsTemplate.c_str(), propsLocal.c_str(),
-                                  false, true, true);
-    std::string import = std::string("<Import Project=\"") +
-      cmVS10EscapeAttr(propsLocal) + "\" />\n";
-    this->WriteString(import.c_str(), 2);
-  }
-  this->WriteString("</ImportGroup>\n", 1);
-  this->WriteString("<ImportGroup Label=\"PropertySheets\">\n", 1);
   {
+    Elem e1(e0, "ImportGroup");
+    e1.Attribute("Label", "ExtensionSettings");
+    e1.SetHasElements();
+
+    if (this->GlobalGenerator->IsCudaEnabled()) {
+      Elem(e1, "Import")
+        .Attribute("Project", "$(VCTargetsPath)\\BuildCustomizations\\CUDA " +
+                     this->GlobalGenerator->GetPlatformToolsetCudaString() +
+                     ".props")
+        .EndElement();
+    }
+    if (this->GlobalGenerator->IsMasmEnabled()) {
+      Elem(e1, "Import")
+        .Attribute("Project",
+                   "$(VCTargetsPath)\\BuildCustomizations\\masm.props")
+        .EndElement();
+    }
+    if (this->GlobalGenerator->IsNasmEnabled()) {
+      // Always search in the standard modules location.
+      std::string propsTemplate =
+        GetCMakeFilePath("Templates/MSBuild/nasm.props.in");
+
+      std::string propsLocal;
+      propsLocal += this->DefaultArtifactDir;
+      propsLocal += "\\nasm.props";
+      ConvertToWindowsSlash(propsLocal);
+      this->Makefile->ConfigureFile(propsTemplate.c_str(), propsLocal.c_str(),
+                                    false, true, true);
+      Elem(e1, "Import").Attribute("Project", propsLocal).EndElement();
+    }
+    e1.EndElement();
+  }
+  {
+    Elem e1(e0, "ImportGroup");
+    e1.Attribute("Label", "PropertySheets");
     std::string props;
     switch (this->ProjectType) {
       case vcxproj:
@@ -627,16 +626,17 @@ void cmVisualStudio10TargetGenerator::Generate()
     }
     if (!props.empty()) {
       ConvertToWindowsSlash(props);
-      this->WriteString("", 2);
-      (*this->BuildFileStream)
-        << "<Import Project=\"" << cmVS10EscapeAttr(props) << "\""
-        << " Condition=\"exists('" << cmVS10EscapeAttr(props) << "')\""
-        << " Label=\"LocalAppDataPlatform\" />\n";
+      Elem(e1, "Import")
+        .Attribute("Project", props)
+        .Attribute("Condition", "exists('" + props + "')")
+        .Attribute("Label", "LocalAppDataPlatform")
+        .EndElement();
     }
+
+    this->WritePlatformExtensions();
+    e1.EndElement();
   }
-  this->WritePlatformExtensions();
-  this->WriteString("</ImportGroup>\n", 1);
-  this->WriteString("<PropertyGroup Label=\"UserMacros\" />\n", 1);
+  Elem(e0, "PropertyGroup").Attribute("Label", "UserMacros").EndElement();
   this->WriteWinRTPackageCertificateKeyFile();
   this->WritePathAndIncrementalLinkOptions();
   this->WriteItemDefinitionGroups();
@@ -650,48 +650,51 @@ void cmVisualStudio10TargetGenerator::Generate()
   this->WriteSDKReferences();
   switch (this->ProjectType) {
     case vcxproj:
-      this->WriteString("<Import Project=\"" VS10_CXX_TARGETS "\" />\n", 1);
+      Elem(e0, "Import").Attribute("Project", VS10_CXX_TARGETS).EndElement();
       break;
     case csproj:
-      this->WriteString("<Import Project=\"" VS10_CSharp_TARGETS "\" />\n", 1);
+      Elem(e0, "Import")
+        .Attribute("Project", VS10_CSharp_TARGETS)
+        .EndElement();
       break;
   }
 
   this->WriteTargetSpecificReferences();
-  this->WriteString("<ImportGroup Label=\"ExtensionTargets\">\n", 1);
-  this->WriteTargetsFileReferences();
-  if (this->GlobalGenerator->IsCudaEnabled()) {
-    this->WriteString("<Import Project=\"$(VCTargetsPath)\\"
-                      "BuildCustomizations\\CUDA ",
-                      2);
-    (*this->BuildFileStream)
-      << cmVS10EscapeAttr(
-           this->GlobalGenerator->GetPlatformToolsetCudaString())
-      << ".targets\" />\n";
+  {
+    Elem e1(e0, "ImportGroup");
+    e1.Attribute("Label", "ExtensionTargets");
+    e1.SetHasElements();
+    this->WriteTargetsFileReferences();
+    if (this->GlobalGenerator->IsCudaEnabled()) {
+      Elem(e1, "Import")
+        .Attribute("Project", "$(VCTargetsPath)\\BuildCustomizations\\CUDA " +
+                     this->GlobalGenerator->GetPlatformToolsetCudaString() +
+                     ".targets");
+    }
+    if (this->GlobalGenerator->IsMasmEnabled()) {
+      Elem(e1, "Import")
+        .Attribute("Project",
+                   "$(VCTargetsPath)\\BuildCustomizations\\masm.targets")
+        .EndElement();
+    }
+    if (this->GlobalGenerator->IsNasmEnabled()) {
+      std::string nasmTargets =
+        GetCMakeFilePath("Templates/MSBuild/nasm.targets");
+      Elem(e1, "Import").Attribute("Project", nasmTargets).EndElement();
+    }
+    e1.EndElement();
   }
-  if (this->GlobalGenerator->IsMasmEnabled()) {
-    this->WriteString("<Import Project=\"$(VCTargetsPath)\\"
-                      "BuildCustomizations\\masm.targets\" />\n",
-                      2);
-  }
-  if (this->GlobalGenerator->IsNasmEnabled()) {
-    std::string nasmTargets =
-      GetCMakeFilePath("Templates/MSBuild/nasm.targets");
-    std::string import = "<Import Project=\"";
-    import += cmVS10EscapeAttr(nasmTargets) + "\" />\n";
-    this->WriteString(import.c_str(), 2);
-  }
-  this->WriteString("</ImportGroup>\n", 1);
   if (this->ProjectType == csproj) {
     for (std::string const& i : this->Configurations) {
-      this->WriteString("<PropertyGroup Condition=\"'$(Configuration)' == '",
-                        1);
-      (*this->BuildFileStream) << i << "'\">\n";
+      Elem e1(e0, "PropertyGroup");
+      e1.Attribute("Condition", "'$(Configuration)' == '" + i + "'");
+      e1.SetHasElements();
       this->WriteEvents(i);
-      this->WriteString("</PropertyGroup>\n", 1);
+      e1.EndElement();
     }
     // make sure custom commands are executed before build (if necessary)
-    this->WriteString("<PropertyGroup>\n", 1);
+    Elem e1(e0, "PropertyGroup");
+    e1.SetHasElements();
     this->WriteString("<BuildDependsOn>\n", 2);
     for (std::string const& i : this->CSharpCustomCommandNames) {
       this->WriteString(i.c_str(), 3);
@@ -699,7 +702,7 @@ void cmVisualStudio10TargetGenerator::Generate()
     }
     this->WriteString("$(BuildDependsOn)\n", 3);
     this->WriteString("</BuildDependsOn>\n", 2);
-    this->WriteString("</PropertyGroup>\n", 1);
+    e1.EndElement();
   }
   this->WriteString("</Project>", 0);
   // The groups are stored in a separate file for VS 10
@@ -1442,8 +1445,8 @@ void cmVisualStudio10TargetGenerator::WriteGroups()
 
   Elem e0(fout, 0);
   e0.StartElement("Project");
-  e0.Attr("ToolsVersion", toolsVer);
-  e0.Attr("xmlns", "http://schemas.microsoft.com/developer/msbuild/2003");
+  e0.Attribute("ToolsVersion", toolsVer);
+  e0.Attribute("xmlns", "http://schemas.microsoft.com/developer/msbuild/2003");
   e0.SetHasElements();
 
   for (auto const& ti : this->Tools) {
