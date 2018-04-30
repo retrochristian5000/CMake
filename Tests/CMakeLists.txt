@@ -651,7 +651,7 @@ if(BUILD_TESTING)
         PASS_REGULAR_EXPRESSION "${regex}"
         DEPENDS LinkOptions-${depends})
       set_property(TEST LinkOptions-${name} APPEND PROPERTY
-        FAIL_REGULAR_EXPRESSION "SHELL:")
+        FAIL_REGULAR_EXPRESSION "(SHELL|LINKER):")
     endmacro()
     ADD_LINK_OPTIONS_TEST(dll prepare)
     ADD_LINK_OPTIONS_TEST(mod dll)
