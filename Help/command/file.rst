@@ -3,23 +3,44 @@ file
 
 File manipulation command.
 
-------------------------------------------------------------------------------
+Synopsis
+^^^^^^^^
 
-::
+.. parsed-literal::
 
-  file(WRITE <filename> <content>...)
-  file(APPEND <filename> <content>...)
+  `Reading`_
+    file(`READ`_ <filename> <out-var> [...])
+    file(`STRINGS`_ <filename> <out-var> [...])
+    file(`\<HASH\> <HASH_>`_ <filename> <out-var>)
+    file(`TIMESTAMP`_ <filename> <out-var> [...])
 
-Write ``<content>`` into a file called ``<filename>``.  If the file does
-not exist, it will be created.  If the file already exists, ``WRITE``
-mode will overwrite it and ``APPEND`` mode will append to the end.
-Any directories in the path specified by ``<filename>`` that do not
-exist will be created.
+  `Filesystem`_
+    file({`GLOB`_ | `GLOB_RECURSE`_} <out-var> [...] [<globbing-expr>...])
+    file(`RENAME`_ <oldname> <newname>)
+    file({`REMOVE`_ | `REMOVE_RECURSE`_ } [<files>...])
+    file(`MAKE_DIRECTORY`_ [<dir>...])
+    file({`COPY`_ | `INSTALL`_} <file>... DESTINATION <dir> [...])
 
-If the file is a build input, use the :command:`configure_file` command
-to update the file only when its content changes.
+  `Path Conversion`_
+    file(`RELATIVE_PATH`_ <out-var> <directory> <file>)
+    file({`TO_CMAKE_PATH`_ | `TO_NATIVE_PATH`_} <path> <out-var>)
 
-------------------------------------------------------------------------------
+  `Transfer`_
+    file(`DOWNLOAD`_ <url> <file> [...])
+    file(`UPLOAD`_ <file> <url> [...])
+
+  `Writing`_
+    file({`WRITE`_ | `APPEND`_} <filename> <content>...)
+    file({`TOUCH`_ | `TOUCH_NOCREATE`_} [<file>...])
+    file(`GENERATE`_ OUTPUT <output-file> [...])
+
+  `Locking`_
+    file(`LOCK`_ <path> [...])
+
+Reading
+^^^^^^^
+
+.. _READ:
 
 ::
 
@@ -31,7 +52,7 @@ Read content from a file called ``<filename>`` and store it in a
 read at most ``<max-in>`` bytes.  The ``HEX`` option causes data to
 be converted to a hexadecimal representation (useful for binary data).
 
-------------------------------------------------------------------------------
+.. _STRINGS:
 
 ::
 
@@ -82,7 +103,7 @@ For example, the code
 stores a list in the variable ``myfile`` in which each item is a line
 from the input file.
 
-------------------------------------------------------------------------------
+.. _HASH:
 
 ::
 
@@ -93,7 +114,25 @@ store it in a ``<variable>``.  The supported ``<HASH>`` algorithm names
 are those listed by the :ref:`string(\<HASH\>) <Supported Hash Algorithms>`
 command.
 
-------------------------------------------------------------------------------
+.. _TIMESTAMP:
+
+::
+
+  file(TIMESTAMP <filename> <variable> [<format>] [UTC])
+
+Compute a string representation of the modification time of ``<filename>``
+and store it in ``<variable>``.  Should the command be unable to obtain a
+timestamp variable will be set to the empty string ("").
+
+See the :command:`string(TIMESTAMP)` command for documentation of
+the ``<format>`` and ``UTC`` options.
+
+
+Filesystem
+^^^^^^^^^^
+
+.. _GLOB:
+.. _GLOB_RECURSE:
 
 ::
 
@@ -148,7 +187,7 @@ Examples of recursive globbing include::
 
   /dir/*.py  - match all python files in /dir and subdirectories
 
-------------------------------------------------------------------------------
+.. _RENAME:
 
 ::
 
@@ -157,7 +196,8 @@ Examples of recursive globbing include::
 Move a file or directory within a filesystem from ``<oldname>`` to
 ``<newname>``, replacing the destination atomically.
 
-------------------------------------------------------------------------------
+.. _REMOVE:
+.. _REMOVE_RECURSE:
 
 ::
 
@@ -168,7 +208,7 @@ Remove the given files.  The ``REMOVE_RECURSE`` mode will remove the given
 files and directories, also non-empty directories. No error is emitted if a
 given file does not exist.
 
-------------------------------------------------------------------------------
+.. _MAKE_DIRECTORY:
 
 ::
 
@@ -176,7 +216,44 @@ given file does not exist.
 
 Create the given directories and their parents as needed.
 
-------------------------------------------------------------------------------
+.. _COPY:
+.. _INSTALL:
+
+::
+
+  file(<COPY|INSTALL> <files>... DESTINATION <dir>
+       [FILE_PERMISSIONS <permissions>...]
+       [DIRECTORY_PERMISSIONS <permissions>...]
+       [NO_SOURCE_PERMISSIONS] [USE_SOURCE_PERMISSIONS]
+       [FILES_MATCHING]
+       [[PATTERN <pattern> | REGEX <regex>]
+        [EXCLUDE] [PERMISSIONS <permissions>...]] [...])
+
+The ``COPY`` signature copies files, directories, and symlinks to a
+destination folder.  Relative input paths are evaluated with respect
+to the current source directory, and a relative destination is
+evaluated with respect to the current build directory.  Copying
+preserves input file timestamps, and optimizes out a file if it exists
+at the destination with the same timestamp.  Copying preserves input
+permissions unless explicit permissions or ``NO_SOURCE_PERMISSIONS``
+are given (default is ``USE_SOURCE_PERMISSIONS``).
+
+See the :command:`install(DIRECTORY)` command for documentation of
+permissions, ``FILES_MATCHING``, ``PATTERN``, ``REGEX``, and
+``EXCLUDE`` options.  Copying directories preserves the structure
+of their content even if options are used to select a subset of
+files.
+
+The ``INSTALL`` signature differs slightly from ``COPY``: it prints
+status messages (subject to the :variable:`CMAKE_INSTALL_MESSAGE` variable),
+and ``NO_SOURCE_PERMISSIONS`` is default.
+Installation scripts generated by the :command:`install` command
+use this signature (with some undocumented options for internal use).
+
+Path Conversion
+^^^^^^^^^^^^^^^
+
+.. _RELATIVE_PATH:
 
 ::
 
@@ -185,7 +262,8 @@ Create the given directories and their parents as needed.
 Compute the relative path from a ``<directory>`` to a ``<file>`` and
 store it in the ``<variable>``.
 
-------------------------------------------------------------------------------
+.. _TO_CMAKE_PATH:
+.. _TO_NATIVE_PATH:
 
 ::
 
@@ -203,7 +281,11 @@ path with platform-specific slashes (``\`` on Windows and ``/`` elsewhere).
 Always use double quotes around the ``<path>`` to be sure it is treated
 as a single argument to this command.
 
-------------------------------------------------------------------------------
+Transfer
+^^^^^^^^
+
+.. _DOWNLOAD:
+.. _UPLOAD:
 
 ::
 
@@ -290,9 +372,28 @@ check certificates and/or use ``EXPECTED_HASH`` to verify downloaded content.
 If neither ``TLS`` option is given CMake will check variables
 ``CMAKE_TLS_VERIFY`` and ``CMAKE_TLS_CAINFO``, respectively.
 
-------------------------------------------------------------------------------
+Writing
+^^^^^^^
+
+.. _WRITE:
+.. _APPEND:
 
 ::
+
+  file(WRITE <filename> <content>...)
+  file(APPEND <filename> <content>...)
+
+Write ``<content>`` into a file called ``<filename>``.  If the file does
+not exist, it will be created.  If the file already exists, ``WRITE``
+mode will overwrite it and ``APPEND`` mode will append to the end.
+Any directories in the path specified by ``<filename>`` that do not
+exist will be created.
+
+If the file is a build input, use the :command:`configure_file` command
+to update the file only when its content changes.
+
+.. _TOUCH:
+.. _TOUCH_NOCREATE:
 
   file(TOUCH [<files>...])
   file(TOUCH_NOCREATE [<files>...])
@@ -307,20 +408,7 @@ does not exist it will be silently ignored.
 With TOUCH and TOUCH_NOCREATE the contents of an existing file will not be
 modified.
 
-------------------------------------------------------------------------------
-
-::
-
-  file(TIMESTAMP <filename> <variable> [<format>] [UTC])
-
-Compute a string representation of the modification time of ``<filename>``
-and store it in ``<variable>``.  Should the command be unable to obtain a
-timestamp variable will be set to the empty string ("").
-
-See the :command:`string(TIMESTAMP)` command for documentation of
-the ``<format>`` and ``UTC`` options.
-
-------------------------------------------------------------------------------
+.. _GENERATE:
 
 ::
 
@@ -366,40 +454,10 @@ generation phase. The output file will not yet have been written when the
 ``file(GENERATE)`` command returns, it is written only after processing all
 of a project's ``CMakeLists.txt`` files.
 
-------------------------------------------------------------------------------
+Locking
+^^^^^^^
 
-::
-
-  file(<COPY|INSTALL> <files>... DESTINATION <dir>
-       [FILE_PERMISSIONS <permissions>...]
-       [DIRECTORY_PERMISSIONS <permissions>...]
-       [NO_SOURCE_PERMISSIONS] [USE_SOURCE_PERMISSIONS]
-       [FILES_MATCHING]
-       [[PATTERN <pattern> | REGEX <regex>]
-        [EXCLUDE] [PERMISSIONS <permissions>...]] [...])
-
-The ``COPY`` signature copies files, directories, and symlinks to a
-destination folder.  Relative input paths are evaluated with respect
-to the current source directory, and a relative destination is
-evaluated with respect to the current build directory.  Copying
-preserves input file timestamps, and optimizes out a file if it exists
-at the destination with the same timestamp.  Copying preserves input
-permissions unless explicit permissions or ``NO_SOURCE_PERMISSIONS``
-are given (default is ``USE_SOURCE_PERMISSIONS``).
-
-See the :command:`install(DIRECTORY)` command for documentation of
-permissions, ``FILES_MATCHING``, ``PATTERN``, ``REGEX``, and
-``EXCLUDE`` options.  Copying directories preserves the structure
-of their content even if options are used to select a subset of
-files.
-
-The ``INSTALL`` signature differs slightly from ``COPY``: it prints
-status messages (subject to the :variable:`CMAKE_INSTALL_MESSAGE` variable),
-and ``NO_SOURCE_PERMISSIONS`` is default.
-Installation scripts generated by the :command:`install` command
-use this signature (with some undocumented options for internal use).
-
-------------------------------------------------------------------------------
+.. _LOCK:
 
 ::
 
