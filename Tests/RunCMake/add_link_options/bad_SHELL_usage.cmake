@@ -1,0 +1,4 @@
+
+add_link_options("LINKER:-foo,SHELL:-bar")
+
+add_library(example SHARED empty.c)
