@@ -613,6 +613,60 @@ if(BUILD_TESTING)
   ADD_LINK_FLAGS_TEST(mod_flags_config dll_flags_config)
   ADD_LINK_FLAGS_TEST(exe_flags_config mod_flags_config)
 
+  if (NOT CMAKE_C_COMPILER_ID STREQUAL "Intel")
+    # Intel compiler does not reject bad flags or objects!
+    add_test(LinkOptions-prepare
+      ${CMAKE_CTEST_COMMAND} -C ${CTestTest_CONFIG}
+      --build-and-test
+      "${CMake_SOURCE_DIR}/Tests/LinkOptions"
+      "${CMake_BINARY_DIR}/Tests/LinkOptions"
+      ${build_generator_args}
+      --build-project LinkOptions
+      --build-target LinkOptions
+      --build-options ${build_options}
+      -DTEST_CONFIG=${CTestTest_CONFIG}
+      )
+    list(APPEND TEST_BUILD_DIRS "${CMake_BINARY_DIR}/Tests/LinkOptions")
+
+    macro(ADD_LINK_OPTIONS_TEST name depends)
+      add_test(LinkOptions-${name}
+        ${CMAKE_CMAKE_COMMAND} --build "${CMake_BINARY_DIR}/Tests/LinkOptions"
+        --target LinkOptions_${name} --config ${CTestTest_CONFIG}
+        )
+      set (regex "BADFLAG")
+      set (extra "${ARGV2}")
+      if (extra)
+        set (regex "${regex}_${extra}")
+        set (excluded SHARED MODULE EXECUTABLE)
+        list (REMOVE_ITEM excluded "${extra}")
+        string (REPLACE ";" "|" excluded "${excluded}")
+        set_tests_properties(LinkOptions-${name} PROPERTIES
+          FAIL_REGULAR_EXPRESSION "BADFLAG_(${excluded})")
+      endif()
+      if ("${name}" MATCHES "_config$")
+        string(TOUPPER "${CTestTest_CONFIG}" config)
+        set (regex "${regex}_${config}")
+      endif()
+      set_tests_properties(LinkOptions-${name} PROPERTIES
+        PASS_REGULAR_EXPRESSION "${regex}"
+        DEPENDS LinkOptions-${depends})
+      set_property(TEST LinkOptions-${name} APPEND PROPERTY
+        FAIL_REGULAR_EXPRESSION "(SHELL|LINKER):")
+    endmacro()
+    ADD_LINK_OPTIONS_TEST(dll prepare)
+    ADD_LINK_OPTIONS_TEST(mod dll)
+    ADD_LINK_OPTIONS_TEST(exe mod)
+    ADD_LINK_OPTIONS_TEST(dll_config exe)
+    ADD_LINK_OPTIONS_TEST(mod_config dll_config)
+    ADD_LINK_OPTIONS_TEST(exe_config mod_config)
+    ADD_LINK_OPTIONS_TEST(dll_flags exe_config "SHARED")
+    ADD_LINK_OPTIONS_TEST(mod_flags dll_flags "MODULE")
+    ADD_LINK_OPTIONS_TEST(exe_flags mod_flags "EXECUTABLE")
+    ADD_LINK_OPTIONS_TEST(dll_flags_config exe_flags "SHARED")
+    ADD_LINK_OPTIONS_TEST(mod_flags_config dll_flags_config "MODULE")
+    ADD_LINK_OPTIONS_TEST(exe_flags_config mod_flags_config "EXECUTABLE")
+  endif()
+
   # If we are running right now with a Unix Makefiles or Ninja based generator,
   # build the "Simple" test with the ExtraGenerators, if available
   # This doesn't test whether the generated project files work (unfortunately),
@@ -2814,6 +2868,35 @@ ${CMake_BINARY_DIR}/bin/cmake -DDIR=dev -P ${CMake_SOURCE_DIR}/Utilities/Release
   ADD_TEST_MACRO(CMakeCommands.target_include_directories target_include_directories)
   ADD_TEST_MACRO(CMakeCommands.target_compile_definitions target_compile_definitions)
   ADD_TEST_MACRO(CMakeCommands.target_compile_options target_compile_options)
+
+  if (NOT CMAKE_C_COMPILER_ID STREQUAL "Intel")
+    # Intel compiler does not reject bad flags or objects!
+    ADD_TEST_MACRO(CMakeCommands.add_link_options add_link_options)
+    set_tests_properties(CMakeCommands.add_link_options PROPERTIES
+      PASS_REGULAR_EXPRESSION "BADFLAG")
+    add_test(CMakeCommands.target_link_options-prepare
+      ${CMAKE_CTEST_COMMAND} -C \${CTEST_CONFIGURATION_TYPE}
+      --build-and-test
+      "${CMake_SOURCE_DIR}/Tests/CMakeCommands/target_link_options"
+      "${CMake_BINARY_DIR}/Tests/CMakeCommands/target_link_options"
+      ${build_generator_args}
+      --build-project target_link_options
+      --build-target target_link_options
+      --build-options ${build_options})
+    add_test(CMakeCommands.target_link_options-lib
+      ${CMAKE_CMAKE_COMMAND} --build "${CMake_BINARY_DIR}/Tests/CMakeCommands/target_link_options"
+      --target target_link_options_lib --config \${CTEST_CONFIGURATION_TYPE})
+    set_tests_properties(CMakeCommands.target_link_options-lib PROPERTIES
+      PASS_REGULAR_EXPRESSION "BADFLAG_PRIVATE"
+      FAIL_REGULAR_EXPRESSION "BADFLAG_INTERFACE"
+      DEPENDS CMakeCommands.target_link_options-prepare)
+    add_test(CMakeCommands.target_link_options-consumer
+      ${CMAKE_CMAKE_COMMAND} --build "${CMake_BINARY_DIR}/Tests/CMakeCommands/target_link_options"
+      --target target_link_options_consumer --config \${CTEST_CONFIGURATION_TYPE})
+    set_tests_properties(CMakeCommands.target_link_options-consumer PROPERTIES
+      PASS_REGULAR_EXPRESSION "BADFLAG_INTERFACE"
+      DEPENDS CMakeCommands.target_link_options-prepare)
+  endif()
 
   # The cmake server-mode test requires python for a simple client.
   find_package(PythonInterp QUIET)
