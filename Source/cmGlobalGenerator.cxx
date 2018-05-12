@@ -2700,6 +2700,11 @@ void cmGlobalGenerator::GetFilesReplacedDuringGenerate(
             std::back_inserter(filenames));
 }
 
+void cmGlobalGenerator::AddGeneratedDependencyFile(const std::string& filename)
+{
+  GeneratedDependencyFiles.push_back(filename);
+}
+
 void cmGlobalGenerator::GetTargetSets(TargetDependSet& projectTargets,
                                       TargetDependSet& originalTargets,
                                       cmLocalGenerator* root,
