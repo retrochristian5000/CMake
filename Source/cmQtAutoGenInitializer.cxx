@@ -850,6 +850,8 @@ void cmQtAutoGenInitializer::InitCustomTargets()
 void cmQtAutoGenInitializer::SetupCustomTargets()
 {
   cmMakefile* makefile = this->Target->Target->GetMakefile();
+  cmLocalGenerator* localGen = this->Target->GetLocalGenerator();
+  cmGlobalGenerator* globalGen = localGen->GetGlobalGenerator();
 
   // Create info directory on demand
   if (!cmSystemTools::MakeDirectory(this->DirInfo)) {
@@ -994,6 +996,9 @@ void cmQtAutoGenInitializer::SetupCustomTargets()
   // Generate auto RCC info files
   if (this->RccEnabled) {
     for (Qrc const& qrc : this->Qrcs) {
+      // Register rcc info file as generated
+      globalGen->AddGeneratedDependencyFile(qrc.InfoFile);
+
       cmGeneratedFileStream ofs;
       ofs.SetCopyIfDifferent(true);
       ofs.Open(qrc.InfoFile.c_str(), false, true);
