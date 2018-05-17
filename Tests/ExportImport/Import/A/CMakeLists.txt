@@ -472,3 +472,10 @@ if (((CMAKE_C_COMPILER_ID STREQUAL GNU AND CMAKE_C_COMPILER_VERSION VERSION_GREA
     endif()
   endif()
 endif()
+
+#---------------------------------------------------------------------------------
+# try to build library imp_testLinkOptions with imported INTERFACE bld_tsetLinkOptions
+# The link will be successful only if property INTERFACE_LINK_OPTIONS from
+# target tsetLinkOptions is correctly exported
+add_library(imp_testLinkOptions SHARED imp_testLinkOptions.cpp)
+target_link_libraries(imp_testLinkOptions PRIVATE bld_testLinkOptions)

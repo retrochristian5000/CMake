@@ -1,0 +1,10 @@
+
+if (NOT actual_stdout MATCHES "BADFLAG_PRIVATE")
+  set (RunCMake_TEST_FAILED "Not found expected 'BADFLAG_PRIVATE'.")
+endif()
+if (NOT actual_stdout MATCHES "BADFLAG_PUBLIC")
+  string (APPEND RunCMake_TEST_FAILED "\nNot found expected 'BADFLAG_PUBLIC'.")
+endif()
+if (actual_stdout MATCHES "BADFLAG_INTERFACE")
+  string (APPEND RunCMake_TEST_FAILED "\nFound unexpected 'BADFLAG_INTERFACE'.")
+endif()
