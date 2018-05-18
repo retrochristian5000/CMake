@@ -14,12 +14,13 @@
 #include <sstream>
 
 cmCommandContext::cmCommandName& cmCommandContext::cmCommandName::operator=(
-  const char* name)
+  std::string const& name)
 {
-  Lower = cmSystemTools::LowerCase(name);
-  Original = name;
+  this->Original = name;
+  this->Lower = cmSystemTools::LowerCase(name);
   return *this;
 }
+
 struct cmListFileParser
 {
   cmListFileParser(cmListFile* lf, cmListFileBacktrace const& lfbt,

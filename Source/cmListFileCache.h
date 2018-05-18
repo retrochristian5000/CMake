@@ -28,8 +28,8 @@ struct cmCommandContext
     std::string Lower;
     std::string Original;
     cmCommandName() {}
-    cmCommandName(const char* name) { *this = name; }
-    cmCommandName& operator=(const char* name);
+    cmCommandName(std::string const& name) { *this = name; }
+    cmCommandName& operator=(std::string const& name);
   } Name;
   long Line;
   cmCommandContext()
