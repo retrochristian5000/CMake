@@ -122,7 +122,7 @@
 #
 #    write_basic_package_version_file(<filename>
 #      [VERSION <major.minor.patch>]
-#      COMPATIBILITY <AnyNewerVersion|SameMajorVersion|SameMinorVersion|ExactVersion> )
+#      COMPATIBILITY <AnyNewerVersion|SameMajorVersion|SameMinorVersion|SamePatchVersion|ExactVersion> )
 #
 #
 # Writes a file for use as ``<package>ConfigVersion.cmake`` file to
@@ -147,11 +147,16 @@
 # If ``SameMinorVersion`` is used, the behaviour is the same as
 # ``SameMajorVersion``, but both major and minor version must be the same as
 # requested, e.g version 0.2 will not be compatible if 0.1 is requested.
+# If ``SamePatchVersion`` is used, the behaviour is the same as
+# ``SameMinorVersion``, but also the patch version must be the same as
+# requested, e.g version 0.0.2 will not be compatible if 0.0.1 is requested.
 # If ``ExactVersion`` is used, then the package is only considered compatible if
 # the requested version matches exactly its own version number (not considering
-# the tweak version).  For example, version 1.2.3 of a package is only
-# considered compatible to requested version 1.2.3.  This mode is for packages
-# without compatibility guarantees.
+# the tweak version). The behaviour is the same as ``SamePatchVersion``, but
+# the tweak number is always considered compatible, even if smaller than the one
+# requested. For example, version 1.2.3 of a package is only considered
+# compatible to requested version 1.2.3.  This mode is for packages without
+# compatibility guarantees.
 # If your project has more elaborated version matching rules, you will need to
 # write your own custom ``ConfigVersion.cmake`` file instead of using this
 # macro.
