@@ -1,12 +1,28 @@
-#include <stdio.h>
+#define __STDC_FORMAT_MACROS
 
-#define TEST_EXPRESSION(x, y)                                                 \
-  if ((x) != (y)) {                                                           \
-    printf("Problem with EXPR: Expression: \"%s\" in C returns %d while in "  \
-           "CMake returns: %d\n",                                             \
-           #x, (x), (y));                                                     \
-    res++;                                                                    \
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+int res = 0;
+bool print = false;
+
+void test_expression(int64_t x, int64_t y, const char* text)
+{
+  bool fail = (x) != (y);
+  if (fail) {
+    res++;
+    printf("Problem with EXPR:");
   }
+  if (fail || print) {
+    printf("Expression: \"%s\" in CMake returns %" PRId64, text, (y));
+    if (fail) {
+      printf(" while in C returns: %" PRId64, (x));
+    }
+    printf("\n");
+  }
+}
 
 int main(int argc, char* argv[])
 {
@@ -14,8 +30,9 @@ int main(int argc, char* argv[])
     printf("Usage: %s\n", argv[0]);
     return 1;
   }
-  int res = 0;
+
 #include "MathTestTests.h"
+
   if (res != 0) {
     printf("%s: %d math tests failed\n", argv[0], res);
     return 1;
