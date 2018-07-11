@@ -1,0 +1,13 @@
+set(test123 [[bin/test1out(\.exe)?;bin/test2deb(\.exe)?;bin/test3exc(\.exe)?]])
+set(libtest45 [[bin/(cyg|lib)test4lib\.(so|dll|dylib);bin/(cyg|lib)test5ar\.a]])
+set(test45 [[bin/test4\.dll;bin/test4\.lib;bin/test5ar\.lib]])
+
+check_installed("^bin;${libtest45};${test123}$")
+if(RunCMake_TEST_FAILED)
+  set(_old_err "${RunCMake_TEST_FAILED}")
+  set(RunCMake_TEST_FAILED)
+  check_installed("^bin;${test123};${test45}$")
+  if(RunCMake_TEST_FAILED)
+    set(RunCMake_TEST_FAILED "${_old_err}\n${RunCMake_TEST_FAILED}")
+  endif()
+endif()
