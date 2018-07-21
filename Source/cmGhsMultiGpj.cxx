@@ -11,8 +11,7 @@ const char* GHS_TAG[] = { "[INTEGRITY Application]",
                           "[Reference]",
                           "[Subproject]" };
 
-void GhsMultiGpj::WriteGpjTag(Types const gpjType,
-                              cmGeneratedFileStream* const filestream)
+void GhsMultiGpj::WriteGpjTag(Types const gpjType, std::ostream& fout)
 {
   char const* tag;
   switch (gpjType) {
@@ -27,5 +26,5 @@ void GhsMultiGpj::WriteGpjTag(Types const gpjType,
     default:
       tag = "";
   }
-  *filestream << tag << std::endl;
+  fout << tag << std::endl;
 }
