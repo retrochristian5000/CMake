@@ -7,6 +7,8 @@
 
 class cmGeneratedFileStream;
 
+const char* GHS_TAG[]; /* table of tag strings */
+
 class GhsMultiGpj
 {
 public:
