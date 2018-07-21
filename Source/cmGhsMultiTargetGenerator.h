@@ -29,8 +29,6 @@ private:
 
   void GenerateTarget();
 
-  bool IsTargetGroup() const { return this->TargetGroup; }
-
   void WriteTargetSpecifics(std::ostream& fout, const std::string& config);
 
   void WriteCompilerFlags(std::ostream& fout, const std::string& config,
@@ -55,19 +53,13 @@ private:
   void WriteSources(std::ostream& fout_proj);
   void WriteSourceProperty(std::ostream& fout, const cmSourceFile* sf,
                            std::string propName, std::string propFlag);
+  void WriteReferences(std::ostream& fout);
   static void WriteObjectLangOverride(std::ostream& fout,
                                       const cmSourceFile* sourceFile);
-
-  static bool DetermineIfTargetGroup(const cmGeneratorTarget* target);
-  bool DetermineIfDynamicDownload(std::string const& config,
-                                  const std::string& language);
 
   cmGeneratorTarget* GeneratorTarget;
   cmLocalGhsMultiGenerator* LocalGenerator;
   cmMakefile* Makefile;
-  bool TargetGroup;
-  bool DynamicDownload;
-  static std::string const DDOption;
   std::map<std::string, std::string> FlagsByLanguage;
   std::map<std::string, std::string> DefinesByLanguage;
 
