@@ -1,11 +1,13 @@
 cmake_minimum_required(VERSION 3.5)
-project(demo C)
+project(test C)
 
 add_library(libdemo
   test.c
+  testCase.c
   subfolder_test.c
   subfolder_test_0.c
   "subfolder/test.c"
+  subfolder/testcase.c
 )
 
 add_executable(demo main.c)
