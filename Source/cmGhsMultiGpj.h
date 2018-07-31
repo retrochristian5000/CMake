@@ -4,8 +4,11 @@
 #define cmGhsMultiGpj_h
 
 #include "cmConfigure.h" // IWYU pragma: keep
+#include <iosfwd>
 
 class cmGeneratedFileStream;
+
+const char* GHS_TAG[]; /* table of tag strings */
 
 class GhsMultiGpj
 {
@@ -20,8 +23,7 @@ public:
     SUBPROJECT
   };
 
-  static void WriteGpjTag(Types const gpjType,
-                          cmGeneratedFileStream* filestream);
+  static void WriteGpjTag(Types const gpjType, std::ostream& fout);
 };
 
 #endif // ! cmGhsMultiGpjType_h

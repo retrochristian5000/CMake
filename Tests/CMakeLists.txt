@@ -2210,31 +2210,88 @@ ${CMake_BINARY_DIR}/bin/cmake -DDIR=dev -P ${CMake_SOURCE_DIR}/Utilities/Release
   endif()
 
   if (CMake_TEST_GreenHillsMULTI)
-    macro(add_test_GhsMulti name primaryTarget bspName)
-      add_test(NAME GhsMulti.${name} COMMAND ${CMAKE_CTEST_COMMAND}
-        --build-and-test
-        "${CMake_SOURCE_DIR}/Tests/GhsMulti"
-        "${CMake_BINARY_DIR}/Tests/GhsMulti/${name}"
-        --build-generator "Green Hills MULTI"
-        --build-project ReturnNum
-        --build-config $<CONFIGURATION>
-        --build-options -DGHS_PRIMARY_TARGET=${primaryTarget}
-        -DGHS_BSP_NAME=${bspName}
-        )
-    endmacro ()
-    add_test_GhsMulti("arm_integrity_simarm" "arm_integrity.tgt" "simarm")
-    add_test_GhsMulti("arm64_integrity_simarm" "arm64_integrity.tgt" "simarm")
-    add_test(NAME GhsMulti.duplicate_source_filenames
+    if (CMake_TEST_GreenHillsMULTI_platform_name)
+      set(ghs_platform_name "-A${CMake_TEST_GreenHillsMULTI_platform_name}")
+    endif()
+    if (CMake_TEST_GreenHillsMULTI_toolset_name)
+      set(ghs_toolset_name "-T${CMake_TEST_GreenHillsMULTI_toolset_name}")
+    endif()
+    if (CMake_TEST_GreenHillsMULTI_target_platform)
+      set(ghs_target_platform "-DGHS_TARGET_PLATFORM=${CMake_TEST_GreenHillsMULTI_target_platform}")
+    endif()
+    if (CMake_TEST_GreenHillsMULTI_toolset_root)
+      set(ghs_toolset_root "-DGHS_TOOLSET_ROOT=${CMake_TEST_GreenHillsMULTI_toolset_root}")
+    endif()
+    if (CMake_TEST_GreenHillsMULTI_os_root)
+      set(ghs_os_root "-DGHS_OS_ROOT=${CMake_TEST_GreenHillsMULTI_os_root}")
+    endif()
+    if (CMake_TEST_GreenHillsMULTI_os_dir)
+      set(ghs_os_root "-DGHS_OS_DIR=${CMake_TEST_GreenHillsMULTI_os_dir}")
+    endif()
+    if (CMake_TEST_GreenHillsMULTI_bsp_name)
+      set(ghs_bsp_name "-DGHS_BSP_NAME=${CMake_TEST_GreenHillsMULTI_bsp_name}")
+    endif()
+    macro(add_test_GhsMulti test_name test_dir bin_dir build_opts test_cmd)
+      separate_arguments(_build_opts NATIVE_COMMAND ${build_opts})
+      separate_arguments(_test_cmd NATIVE_COMMAND ${test_cmd})
+      add_test(NAME GhsMulti.${test_name}
         COMMAND ${CMAKE_CTEST_COMMAND}
         --build-and-test
-        "${CMake_SOURCE_DIR}/Tests/GhsMultiDuplicateSourceFilenames"
-        "${CMake_BINARY_DIR}/Tests/GhsMultiDuplicateSourceFilenames"
+        "${CMake_SOURCE_DIR}/Tests/GhsMulti/${test_dir}"
+        "${CMake_BINARY_DIR}/Tests/GhsMulti/${test_dir}/${bin_dir}"
         --build-generator "Green Hills MULTI"
-        --build-project ReturnNum
+        --build-project test
         --build-config $<CONFIGURATION>
-        --build-options -DGHS_PRIMARY_TARGET=arm_integrity.tgt
-        -DGHS_BSP_NAME="simarm"
+        --build-options ${ghs_platform_name} ${ghs_toolset_name} ${ghs_target_platform}
+          ${ghs_toolset_root} ${ghs_os_root} ${ghs_os_dir} ${ghs_bsp_name} ${_build_opts}
+        --test-command ${_test_cmd}
         )
+      list(APPEND TEST_BUILD_DIRS "${CMake_BINARY_DIR}/Tests/GhsMulti/${test_dir}/${bin_dir}")
+    endmacro ()
+    # test integrity build
+    macro(add_test_GhsMulti_arm_integrity test_name primaryTarget bspName)
+      add_test_GhsMulti( ${test_name} ${test_name} GhsMultiIntegrityArm ${test_name}
+        "-DGHS_PRIMARY_TARGET=${primaryTarget} -DGHS_BSP_NAME=${bspName}")
+    endmacro ()
+    add_test_GhsMulti_arm_integrity("arm_integrity_simarm" "arm_integrity.tgt" "simarm")
+    add_test_GhsMulti_arm_integrity("arm64_integrity_simarm" "arm64_integrity.tgt" "simarm")
+    if ( CMake_TEST_GreenHillsMULTI_platform_name AND NOT CMake_TEST_GreenHillsMULTI_platform_name MATCHES "arm")
+      set_tests_properties(GhsMulti.arm_integrity_simarm PROPERTIES DISABLED TRUE)
+      set_tests_properties(GhsMulti.arm64_integrity_simarm PROPERTIES DISABLED TRUE)
+    endif()
+    if (CMake_TEST_GreenHillsMULTI_target_platform AND NOT CMake_TEST_GreenHillsMULTI_target_platform MATCHES "integrity")
+      set_tests_properties(GhsMulti.arm_integrity_simarm PROPERTIES DISABLED TRUE)
+      set_tests_properties(GhsMulti.arm64_integrity_simarm PROPERTIES DISABLED TRUE)
+    endif()
+    add_test_GhsMulti(ppc_integrity GhsMultiIntegrityPpc "" "" "")
+    if (NOT CMake_TEST_GreenHillsMULTI_platform_name MATCHES "ppc" OR
+      NOT CMake_TEST_GreenHillsMULTI_target_platform MATCHES "integrity")
+      set_tests_properties(GhsMulti.ppc_integrity PROPERTIES DISABLED TRUE)
+    endif()
+    add_test_GhsMulti(duplicate_source_filenames GhsMultiDuplicateSourceFilenames "" "" "")
+    macro(add_test_GhsMulti_rename_install test_name)
+      add_test_GhsMulti( ${test_name} GhsMultiRenameInstall ${test_name}
+        "-DCMAKE_INSTALL_PREFIX=. -DRUN_TEST=${test_name}" "${CMAKE_CMAKE_COMMAND} -P ./cmake_install.cmake")
+    endmacro ()
+    add_test_GhsMulti_rename_install(SINGLE_EXEC)
+    add_test_GhsMulti_rename_install(SINGLE_EXEC_RENAMED)
+    add_test_GhsMulti_rename_install(EXEC_AND_LIB)
+    add_test_GhsMulti(multiple_source_groups GhsMultiSrcGroups Default "" "")
+    add_test_GhsMulti(multiple_source_groups_folders GhsMultiSrcGroups Folders "-DCMAKE_FOLDER=ON" "")
+    add_test_GhsMulti(unsupported_targets GhsMultiUnsupportedTargets "" "" "")
+    set_tests_properties(GhsMulti.unsupported_targets PROPERTIES TIMEOUT 15)
+    add_test_GhsMulti(object_library GhsMultiObjectLibrary "" "" "")
+    set_tests_properties(GhsMulti.object_library PROPERTIES TIMEOUT 15)
+    add_test_GhsMulti(exclude GhsMultiExclude "" ""
+      "${CMAKE_CMAKE_COMMAND} -P ${CMake_SOURCE_DIR}/Tests/GhsMulti/GhsMultiExclude/verify.cmake")
+    add_test_GhsMulti(interface GhsMultiInterface "" "" "")
+    set_tests_properties(GhsMulti.interface PROPERTIES TIMEOUT 15)
+    add_test_GhsMulti(transitive_link_test GhsMultiLinkTest TransitiveLink "-DRUN_TEST=NO_FLAGS" "")
+    add_test_GhsMulti(flags_link_test GhsMultiLinkTest FlagsCheck "-DRUN_TEST=CHECK_FLAGS" "")
+    add_test_GhsMulti(multiple_projects GhsMultiMultipleProjects "" ""
+      "${CMAKE_CMAKE_COMMAND} -P ${CMake_SOURCE_DIR}/Tests/GhsMulti/GhsMultiMultipleProjects/verify.cmake")
+    add_test_GhsMulti(compiler_options_none GhsMultiCompilerOptions None "-DRUN_TEST=RELEASE_FLAGS -DRUN_TEST_BUILD_TYPE=\"\"" "")
+    add_test_GhsMulti(compiler_options_kernel GhsMultiCompilerOptions Kernel "-DRUN_TEST=KERNEL_FLAGS -DRUN_TEST_BUILD_TYPE=DEBUG" "")
   endif ()
 
   if(tegra AND NOT "${CMake_SOURCE_DIR};${CMake_BINARY_DIR}" MATCHES " ")
