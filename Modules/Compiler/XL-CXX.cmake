@@ -44,6 +44,3 @@ if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 10.1)
 endif ()
 
 __compiler_check_default_language_standard(CXX 10.1 98)
-
-set(CMAKE_CXX_COMPILE_OBJECT
-  "<CMAKE_CXX_COMPILER> -+ <DEFINES> <INCLUDES> <FLAGS> -o <OBJECT> -c <SOURCE>")
