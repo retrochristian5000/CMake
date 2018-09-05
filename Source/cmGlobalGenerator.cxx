@@ -828,8 +828,9 @@ void cmGlobalGenerator::EnableLanguage(
     std::string sharedLibFlagsVar = "CMAKE_SHARED_LIBRARY_";
     sharedLibFlagsVar += lang;
     sharedLibFlagsVar += "_FLAGS";
-    const char* sharedLibFlags = mf->GetSafeDefinition(sharedLibFlagsVar);
-    if (sharedLibFlags) {
+    std::string const& sharedLibFlags =
+      mf->GetSafeDefinition(sharedLibFlagsVar);
+    if (!sharedLibFlags.empty()) {
       this->LanguageToOriginalSharedLibFlags[lang] = sharedLibFlags;
     }
 
@@ -1112,7 +1113,7 @@ bool cmGlobalGenerator::GlobalSettingIsOn(std::string const& name) const
   return this->Makefiles[0]->IsOn(name);
 }
 
-const char* cmGlobalGenerator::GetSafeGlobalSetting(
+std::string cmGlobalGenerator::GetSafeGlobalSetting(
   std::string const& name) const
 {
   assert(!this->Makefiles.empty());

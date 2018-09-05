@@ -350,8 +350,7 @@ bool cmInstallCommand::HandleTargetsMode(std::vector<std::string> const& args)
 
   // Check whether this is a DLL platform.
   bool dll_platform =
-    strcmp(this->Makefile->GetSafeDefinition("CMAKE_IMPORT_LIBRARY_SUFFIX"),
-           "") != 0;
+    !this->Makefile->GetSafeDefinition("CMAKE_IMPORT_LIBRARY_SUFFIX").empty();
 
   for (std::string const& tgt : targetList.GetVector()) {
 
