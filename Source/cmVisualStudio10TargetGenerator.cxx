@@ -2486,7 +2486,9 @@ bool cmVisualStudio10TargetGenerator::ComputeClOptions(
   }
 
   // Check IPO related warning/error.
-  this->GeneratorTarget->IsIPOEnabled(linkLanguage, configName);
+  if (this->GeneratorTarget->IsIPOEnabled(linkLanguage, configName)) {
+    clOptions.AddFlag("WholeProgramOptimization", "true");
+  }
 
   // Get preprocessor definitions for this directory.
   std::string defineFlags = this->Makefile->GetDefineFlags();
