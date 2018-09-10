@@ -360,8 +360,6 @@ int cmCPackGenerator::InstallProjectViaInstalledDirectories(
         return 0;
       }
       files = gl.GetFiles();
-      std::vector<std::string>::iterator gfit;
-      std::vector<cmsys::RegularExpression>::iterator regIt;
       for (std::string const& gf : files) {
         bool skip = false;
         std::string inFile = gf;
