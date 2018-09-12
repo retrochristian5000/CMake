@@ -5,7 +5,6 @@
 #include "cmsys/Glob.hxx"
 #include <sstream>
 #include <stddef.h>
-#include <string.h>
 #include <utility>
 
 #include "cmAlgorithms.h"

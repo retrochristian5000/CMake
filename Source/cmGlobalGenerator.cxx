@@ -1093,7 +1093,7 @@ void cmGlobalGenerator::FillExtensionToLanguageMap(const std::string& l,
 {
   std::string extensionsVar = std::string("CMAKE_") + std::string(l) +
     std::string("_SOURCE_FILE_EXTENSIONS");
-  std::string exts = mf->GetSafeDefinition(extensionsVar);
+  const std::string& exts = mf->GetSafeDefinition(extensionsVar);
   std::vector<std::string> extensionList;
   cmSystemTools::ExpandListArgument(exts, extensionList);
   for (std::string const& i : extensionList) {
@@ -1594,7 +1594,7 @@ void cmGlobalGenerator::FinalizeTargetCompileInfo()
     for (std::string const& li : langs) {
       std::string const standardIncludesVar =
         "CMAKE_" + li + "_STANDARD_INCLUDE_DIRECTORIES";
-      std::string const standardIncludesStr =
+      std::string const& standardIncludesStr =
         mf->GetSafeDefinition(standardIncludesVar);
       std::vector<std::string> standardIncludesVec;
       cmSystemTools::ExpandListArgument(standardIncludesStr,
