@@ -37,6 +37,9 @@
   { symbol: [ "__GLIBC__", private, "<stdlib.h>", public ] },
   { symbol: [ "_Noreturn", private, "<stdlib.h>", public ] },
 
+  # HACK: iwyu wants <cxxabi.h> when using std::put_time from <iomanip>
+  { symbol: [ "__cxxabiv1::__forced_unwind", private, "<iomanip>", public ] },
+
   # HACK: iwyu wrongly thinks that including <iosfwd> is sufficient.
   { symbol: [ "std::stringstream", private, "<sstream>", public ] },
   { symbol: [ "std::istringstream", private, "<sstream>", public ] },
