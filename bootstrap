@@ -491,6 +491,7 @@ if ${cmake_system_mingw}; then
     src/fs-poll.c \
     src/inet.c \
     src/threadpool.c \
+    src/timer.c \
     src/uv-common.c \
     src/win/async.c \
     src/win/core.c \
@@ -512,7 +513,6 @@ if ${cmake_system_mingw}; then
     src/win/stream.c \
     src/win/tcp.c \
     src/win/thread.c \
-    src/win/timer.c \
     src/win/tty.c \
     src/win/udp.c \
     src/win/util.c \
@@ -521,6 +521,7 @@ if ${cmake_system_mingw}; then
     "
 else
   LIBUV_C_SOURCES="\
+    src/timer.c \
     src/uv-common.c \
     src/unix/cmake-bootstrap.c \
     src/unix/core.c \
@@ -535,7 +536,6 @@ else
     src/unix/process.c \
     src/unix/signal.c \
     src/unix/stream.c \
-    src/unix/timer.c \
     "
 fi
 
