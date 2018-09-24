@@ -55,6 +55,7 @@ public:
   std::string Filename;
   std::string MD5;
   std::string Message;
+  std::string BuildID;
 
 private:
   std::vector<char> CurrentValue;
@@ -96,6 +97,8 @@ private:
       this->MD5 = this->GetCurrentValue();
     } else if (name == "message") {
       this->Message = this->GetCurrentValue();
+    } else if (name == "buildId") {
+      this->BuildID = this->GetCurrentValue();
     }
   }
 };
@@ -134,10 +137,12 @@ cmCTestSubmitHandler::cmCTestSubmitHandler()
 
 void cmCTestSubmitHandler::Initialize()
 {
-  // We submit all available parts by default.
+  // We submit all available parts except Done by default.
   for (cmCTest::Part p = cmCTest::PartStart; p != cmCTest::PartCount;
        p = cmCTest::Part(p + 1)) {
-    this->SubmitPart[p] = true;
+    if (p != cmCTest::PartDone) {
+      this->SubmitPart[p] = true;
+    }
   }
   this->CDash = false;
   this->HasWarnings = false;
@@ -638,6 +643,7 @@ void cmCTestSubmitHandler::ParseResponse(
                  "   Submission failed: " << parser.Message << std::endl);
       return;
     }
+    this->CTest->SetBuildID(parser.BuildID);
   }
   output = cmSystemTools::UpperCase(output);
   if (output.find("WARNING") != std::string::npos) {
@@ -1385,6 +1391,11 @@ int cmCTestSubmitHandler::ProcessHandler()
   this->CTest->AddIfExists(cmCTest::PartMemCheck, "Purify.xml");
   this->CTest->AddIfExists(cmCTest::PartNotes, "Notes.xml");
   this->CTest->AddIfExists(cmCTest::PartUpload, "Upload.xml");
+
+  if (this->SubmitPart[cmCTest::PartDone]) {
+    this->CTest->GenerateDoneFile();
+    this->CTest->AddIfExists(cmCTest::PartDone, "Done.xml");
+  }
 
   // Query parts for files to submit.
   for (cmCTest::Part p = cmCTest::PartStart; p != cmCTest::PartCount;
