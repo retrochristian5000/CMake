@@ -45,10 +45,11 @@ endif()
 
 # Custom command that generates byproducts
 if(TEST_CUSTOM_COMMAND)
+  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/bar.cpp.in "void bar() {}")
   add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/bar.cpp
     COMMAND ${CMAKE_COMMAND} -E touch foo.customcommand
     COMMAND ${CMAKE_COMMAND} -E touch foo.customcommand.notdeclared
-    COMMAND ${CMAKE_COMMAND} -E copy foo.customcommand bar.cpp
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/bar.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/bar.cpp
     BYPRODUCTS foo.customcommand
     COMMENT "Creating byproducts with a custom command"
   )
