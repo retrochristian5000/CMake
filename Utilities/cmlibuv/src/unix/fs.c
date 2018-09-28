@@ -432,10 +432,12 @@ static ssize_t uv__fs_pathmax_size(const char* path) {
   pathmax = pathconf(path, _PC_PATH_MAX);
 
   if (pathmax == -1) {
-#if defined(PATH_MAX)
-    return PATH_MAX;
+#if defined(_POSIX_PATH_MAX)
+    pathmax = _POSIX_PATH_MAX;
+#elif defined(PATH_MAX)
+    pathmax = PATH_MAX;
 #else
-#error "PATH_MAX undefined in the current platform"
+    pathmax = 4096; /* fallback */
 #endif
   }
 
@@ -445,8 +447,25 @@ static ssize_t uv__fs_pathmax_size(const char* path) {
 static ssize_t uv__fs_readlink(uv_fs_t* req) {
   ssize_t len;
   char* buf;
+  struct stat st;
+  int ret;
 
-  len = uv__fs_pathmax_size(req->path);
+  ret = lstat(req->path, &st);
+  if (ret != 0) {
+    return -1;
+  }
+  if (!S_ISLNK(st.st_mode)) {
+    errno = EINVAL;
+    return -1;
+  }
+
+  len = st.st_size;
+
+  /* Some symlinks in /proc report st_size == 0 */
+  if (len == 0) {
+    len = uv__fs_pathmax_size(req->path);
+  }
+
   buf = uv__malloc(len + 1);
 
   if (buf == NULL) {
@@ -473,8 +492,15 @@ static ssize_t uv__fs_readlink(uv_fs_t* req) {
 }
 
 static ssize_t uv__fs_realpath(uv_fs_t* req) {
-  ssize_t len;
   char* buf;
+
+#if defined(_POSIX_VERSION) && _POSIX_VERSION >= 200809L
+  buf = realpath(req->path, NULL);
+  if (buf == NULL) {
+    return -1;
+  }
+#else
+  ssize_t len;
 
   len = uv__fs_pathmax_size(req->path);
   buf = uv__malloc(len + 1);
@@ -488,6 +514,7 @@ static ssize_t uv__fs_realpath(uv_fs_t* req) {
     uv__free(buf);
     return -1;
   }
+#endif
 
   req->ptr = buf;
 
