@@ -21,3 +21,5 @@ target_link_libraries(CSharpLinkToCxx CLIApp)
 # because it is unmanaged
 add_library(CppNativeApp SHARED cpp_native.hpp cpp_native.cpp)
 target_link_libraries(CSharpLinkToCxx CppNativeApp)
+add_library(CppStaticApp STATIC cpp_static.cpp)
+target_link_libraries(CSharpLinkToCxx CppStaticApp)
