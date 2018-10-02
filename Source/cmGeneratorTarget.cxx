@@ -495,6 +495,33 @@ const char* cmGeneratorTarget::GetFeature(const std::string& feature,
   return this->LocalGenerator->GetFeature(feature, config);
 }
 
+const char* cmGeneratorTarget::GetLinkPIEProperty(
+  const std::string& config) const
+{
+  const char* PICValue = this->GetLinkInterfaceDependentStringAsBoolProperty(
+    "POSITION_INDEPENDENT_CODE", config);
+  if (PICValue == nullptr) {
+    // POSITION_INDEPENDENT_CODE is not set
+    return nullptr;
+  }
+
+  switch (this->GetPolicyStatusCMP0083()) {
+    case cmPolicies::WARN: {
+      std::ostringstream e;
+      e << cmPolicies::GetPolicyWarning(cmPolicies::CMP0083);
+      this->LocalGenerator->IssueMessage(cmake::AUTHOR_WARNING, e.str());
+      CM_FALLTHROUGH;
+    }
+    case cmPolicies::OLD:
+      return nullptr;
+    default:
+      // nothing to do
+      break;
+  }
+
+  return PICValue;
+}
+
 bool cmGeneratorTarget::IsIPOEnabled(std::string const& lang,
                                      std::string const& config) const
 {
@@ -4050,9 +4077,7 @@ const char* getLinkInterfaceDependentProperty(cmGeneratorTarget const* tgt,
 {
   switch (t) {
     case BoolType:
-      assert(false &&
-             "String compatibility check function called for boolean");
-      return nullptr;
+      return tgt->GetLinkInterfaceDependentStringAsBoolProperty(prop, config);
     case StringType:
       return tgt->GetLinkInterfaceDependentStringProperty(prop, config);
     case NumberMinType:
@@ -4386,9 +4411,10 @@ std::pair<bool, const char*> consistentProperty(const char* lhs,
   const char* const null_ptr = nullptr;
 
   switch (t) {
-    case BoolType:
-      assert(false && "consistentProperty for strings called with BoolType");
-      return std::pair<bool, const char*>(false, null_ptr);
+    case BoolType: {
+      bool same = cmSystemTools::IsOn(lhs) == cmSystemTools::IsOn(rhs);
+      return std::make_pair(same, same ? lhs : nullptr);
+    }
     case StringType:
       return consistentStringProperty(lhs, rhs);
     case NumberMinType:
@@ -4550,6 +4576,13 @@ bool cmGeneratorTarget::GetLinkInterfaceDependentBoolProperty(
 {
   return checkInterfacePropertyCompatibility<bool>(this, p, config, "FALSE",
                                                    BoolType, nullptr);
+}
+
+const char* cmGeneratorTarget::GetLinkInterfaceDependentStringAsBoolProperty(
+  const std::string& p, const std::string& config) const
+{
+  return checkInterfacePropertyCompatibility<const char*>(
+    this, p, config, "FALSE", BoolType, nullptr);
 }
 
 const char* cmGeneratorTarget::GetLinkInterfaceDependentStringProperty(

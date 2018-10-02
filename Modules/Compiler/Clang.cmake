@@ -21,6 +21,7 @@ else()
   macro(__compiler_clang lang)
     __compiler_gnu(${lang})
     set(CMAKE_${lang}_COMPILE_OPTIONS_PIE "-fPIE")
+    # Link options for PIE are already set in 'Compiler/GNU.cmake'
     set(CMAKE_INCLUDE_SYSTEM_FLAG_${lang} "-isystem ")
     set(CMAKE_${lang}_COMPILE_OPTIONS_VISIBILITY "-fvisibility=")
     if(CMAKE_${lang}_COMPILER_VERSION VERSION_LESS 3.4.0)

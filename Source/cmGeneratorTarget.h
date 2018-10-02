@@ -173,6 +173,8 @@ public:
   const char* GetFeature(const std::string& feature,
                          const std::string& config) const;
 
+  const char* GetLinkPIEProperty(const std::string& config) const;
+
   bool IsIPOEnabled(std::string const& lang, std::string const& config) const;
 
   bool IsLinkInterfaceDependentBoolProperty(const std::string& p,
@@ -187,6 +189,8 @@ public:
   bool GetLinkInterfaceDependentBoolProperty(const std::string& p,
                                              const std::string& config) const;
 
+  const char* GetLinkInterfaceDependentStringAsBoolProperty(
+    const std::string& p, const std::string& config) const;
   const char* GetLinkInterfaceDependentStringProperty(
     const std::string& p, const std::string& config) const;
   const char* GetLinkInterfaceDependentNumberMinProperty(

@@ -9,3 +9,43 @@ run_cmake(Conflict6)
 run_cmake(Debug)
 run_cmake(Genex1)
 run_cmake(Genex2)
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  # try to locate readelf needed for validation
+  find_program (READELF NAMES readelf)
+endif()
+if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  # try to locate otool needed for validation
+  find_program (OTOOL NAMES otool)
+endif()
+
+if ((READELF OR OTOOL) AND
+    (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+      OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
+      OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"))
+  macro(run_cmake_target test subtest)
+    set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/${test}-build)
+    set(RunCMake_TEST_NO_CLEAN 1)
+    set(RunCMake_TEST_CONFIG Release)
+    run_cmake_command(${test}-${subtest} ${CMAKE_COMMAND} --build . --config Release --target ${subtest} ${ARGN})
+
+    unset(RunCMake_TEST_BINARY_DIR)
+    unset(RunCMake_TEST_NO_CLEAN)
+  endmacro()
+
+  set(RunCMake_TEST_OUTPUT_MERGE TRUE)
+  if (NOT RunCMake_GENERATOR_IS_MULTI_CONFIG)
+    set(RunCMake_TEST_OPTIONS -DCMAKE_BUILD_TYPE=Release)
+  endif()
+
+  run_cmake(PIE)
+  run_cmake_target(PIE pie_on)
+  run_cmake_target(PIE pie_off)
+
+  run_cmake(CMP0083)
+  run_cmake_target(CMP0083 cmp0083_new)
+  run_cmake_target(CMP0083 cmp0083_old)
+
+  unset(RunCMake_TEST_OPTIONS)
+  unset(RunCMake_TEST_OUTPUT_MERGE)
+endif()
