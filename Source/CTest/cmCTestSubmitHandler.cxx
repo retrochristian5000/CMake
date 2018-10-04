@@ -56,6 +56,7 @@ public:
   std::string Filename;
   std::string MD5;
   std::string Message;
+  std::string BuildID;
 
 private:
   std::vector<char> CurrentValue;
@@ -97,6 +98,8 @@ private:
       this->MD5 = this->GetCurrentValue();
     } else if (name == "message") {
       this->Message = this->GetCurrentValue();
+    } else if (name == "buildId") {
+      this->BuildID = this->GetCurrentValue();
     }
   }
 };
@@ -645,6 +648,7 @@ void cmCTestSubmitHandler::ParseResponse(
                  "   Submission failed: " << parser.Message << std::endl);
       return;
     }
+    this->CTest->SetBuildID(parser.BuildID);
   }
   output = cmSystemTools::UpperCase(output);
   if (output.find("WARNING") != std::string::npos) {
@@ -1407,6 +1411,12 @@ int cmCTestSubmitHandler::ProcessHandler()
 
   // Make sure files are unique, but preserve order.
   files.erase(cmRemoveDuplicates(files), files.end());
+
+  // Submit Done.xml last
+  if (this->SubmitPart[cmCTest::PartDone]) {
+    this->CTest->GenerateDoneFile();
+    files.push_back("Done.xml");
+  }
 
   if (ofs) {
     ofs << "Upload files:" << std::endl;
