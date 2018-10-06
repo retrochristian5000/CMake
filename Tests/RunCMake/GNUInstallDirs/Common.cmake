@@ -3,6 +3,7 @@ set(CMAKE_LIBRARY_ARCHITECTURE "arch")
 include(GNUInstallDirs)
 set(dirs
   BINDIR
+  CMAKEBASEDIR
   DATADIR
   DATAROOTDIR
   DOCDIR
