@@ -66,6 +66,8 @@
 #   man documentation (``DATAROOTDIR/man``)
 # ``DOCDIR``
 #   documentation root (``DATAROOTDIR/doc/PROJECT_NAME``)
+# ``CMAKEBASEDIR``
+#   CMake configuration files root (``LIBDIR/cmake``)
 #
 # If the includer does not define a value the above-shown default will be
 # used and the value will appear in the cache for editing by the user.
@@ -297,6 +299,14 @@ _GNUInstallDirs_cache_path_fallback(CMAKE_INSTALL_RUNSTATEDIR "${CMAKE_INSTALL_L
   "Run-time variable data (LOCALSTATEDIR/run)")
 
 #-----------------------------------------------------------------------------
+# Values whose defaults are relative to LIBDIR.  Store empty values in
+# the cache and store the defaults in local variables if the cache values are
+# not set explicitly.  This auto-updates the defaults as LIBDIR changes.
+
+_GNUInstallDirs_cache_path_fallback(CMAKE_INSTALL_CMAKEBASEDIR "${CMAKE_INSTALL_LIBDIR}/cmake"
+  "CMake configuration files root (LIBDIR/cmake)")
+
+#-----------------------------------------------------------------------------
 
 mark_as_advanced(
   CMAKE_INSTALL_BINDIR
@@ -315,6 +325,7 @@ mark_as_advanced(
   CMAKE_INSTALL_LOCALEDIR
   CMAKE_INSTALL_MANDIR
   CMAKE_INSTALL_DOCDIR
+  CMAKE_INSTALL_CMAKEBASEDIR
   )
 
 macro(GNUInstallDirs_get_absolute_install_dir absvar var)
@@ -371,6 +382,7 @@ foreach(dir
     LOCALEDIR
     MANDIR
     DOCDIR
+    CMAKEBASEDIR
     )
   GNUInstallDirs_get_absolute_install_dir(CMAKE_INSTALL_FULL_${dir} CMAKE_INSTALL_${dir})
 endforeach()
