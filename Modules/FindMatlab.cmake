@@ -27,7 +27,7 @@
 #   available on the MCR version, and will yield an error if the MCR is found
 #   instead of the regular Matlab installation.
 # * ``MEX_COMPILER`` the MEX compiler.
-# * ``MCC_COMPILER`` the MCC compiler, included with the Matlab Compiler add-on.
+# * ``MCC_COMPILER`` the MCC compiler, included with the Matlab Runtime.
 # * ``SIMULINK`` the Simulink environment.
 #
 # .. note::
