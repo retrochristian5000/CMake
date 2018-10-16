@@ -149,7 +149,7 @@ Modules
   Studio.
 
 * The :module:`FindMatlab` module gained a new ``MCC_COMPILER``
-  component to request finding the Matlab Compiler add-on.
+  component to request finding the compiler provided by the `Matlab Runtime`_.
 
 * The :module:`FindPkgConfig` module gained an option to create imported
   targets in global scope.
@@ -168,6 +168,8 @@ Modules
 
 * The :module:`UseSWIG` module learned to manage target property
   :prop_tgt:`INCLUDE_DIRECTORIES` for ``SWIG`` compilation.
+
+.. _`Matlab Runtime`: https://www.mathworks.com/products/compiler/matlab-runtime.html
 
 CTest
 -----
