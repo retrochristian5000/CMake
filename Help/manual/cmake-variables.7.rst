@@ -17,6 +17,7 @@ Variables that Provide Information
    /variable/CMAKE_ARGC
    /variable/CMAKE_ARGV0
    /variable/CMAKE_BINARY_DIR
+   /variable/CMAKE_BUILD_RPATH_USE_ORIGIN
    /variable/CMAKE_BUILD_TOOL
    /variable/CMAKE_CACHEFILE_DIR
    /variable/CMAKE_CACHE_MAJOR_VERSION
