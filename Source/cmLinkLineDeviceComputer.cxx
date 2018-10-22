@@ -69,8 +69,6 @@ std::string cmLinkLineDeviceComputer::ComputeLinkLibraries(
       }
       out +=
         this->ConvertToOutputFormat(this->ConvertToLinkReference(item.Value));
-    } else {
-      out += item.Value;
     }
 
     if (emitted.insert(out).second) {
