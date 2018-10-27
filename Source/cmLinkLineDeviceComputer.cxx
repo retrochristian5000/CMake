@@ -78,14 +78,12 @@ std::string cmLinkLineDeviceComputer::ComputeLinkLibraries(
     std::string out;
     if (item.IsPath) {
       // nvcc understands absolute paths to libraries ending in '.a' should
-      // be passed to nvlink.  Other extensions like '.so' or '.dylib' are
-      // rejected by the nvcc front-end even though nvlink knows to ignore
-      // them.  Bypass the front-end via '-Xnvlink'.
-      if (!cmHasLiteralSuffix(item.Value, ".a")) {
-        out += "-Xnvlink ";
+      // be passed to nvlink.  Other extensions like '.so' or '.dylib' need
+      // to be dropped as nvlink treats versioned libs '.so.1' as static libs
+      if (cmHasLiteralSuffix(item.Value, ".a")) {
+        out += this->ConvertToOutputFormat(
+          this->ConvertToLinkReference(item.Value));
       }
-      out +=
-        this->ConvertToOutputFormat(this->ConvertToLinkReference(item.Value));
     } else if (cmLinkItemValidForDevice(item.Value)) {
       out += item.Value;
     }
