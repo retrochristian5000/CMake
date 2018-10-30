@@ -734,6 +734,32 @@ bool cmGlobalVisualStudioGenerator::TargetIsFortranOnly(
   return false;
 }
 
+bool cmGlobalVisualStudioGenerator::TargetIsCSProj(cmGeneratorTarget const* gt)
+{
+  // C# targets can be defined with add_library() (using SHARED or STATIC) and
+  // also using add_executable(). We do not treat imported C# targets the same
+  // (these come in as UTILITY)
+  if (gt->GetType() != cmStateEnums::SHARED_LIBRARY &&
+      gt->GetType() != cmStateEnums::STATIC_LIBRARY &&
+      gt->GetType() != cmStateEnums::EXECUTABLE) {
+    return false;
+  }
+
+  if (gt->IsCSharpOnly("")) {
+    return true;
+  }
+
+  // Historically we have allowed the linker language to be explicitly
+  // set to CSharp to get a .csproj with no sources.
+  if (const char* linkerLang = gt->GetProperty("LINKER_LANGUAGE")) {
+    if (strcmp(linkerLang, "CSharp") == 0) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 bool cmGlobalVisualStudioGenerator::TargetCompare::operator()(
   cmGeneratorTarget const* l, cmGeneratorTarget const* r) const
 {

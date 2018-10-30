@@ -220,7 +220,7 @@ static std::string computeProjectFileExtension(cmGeneratorTarget const* t,
 {
   std::string res;
   res = ".vcxproj";
-  if (t->HasLanguage("CSharp", config)) {
+  if (cmGlobalVisualStudioGenerator::TargetIsCSProj(t)) {
     res = ".csproj";
   }
   return res;
@@ -3838,7 +3838,7 @@ void cmVisualStudio10TargetGenerator::WriteProjectReferences(Elem& e0)
     }
     // Workaround for static library C# targets
     if (referenceNotManaged && dt->GetType() == cmStateEnums::STATIC_LIBRARY) {
-      referenceNotManaged = !dt->HasLanguage("CSharp", "");
+      referenceNotManaged = !dt->IsCSharpOnly("");
     }
     if (referenceNotManaged) {
       e2.Element("ReferenceOutputAssembly", "false");
