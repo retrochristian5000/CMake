@@ -5716,20 +5716,11 @@ void cmGeneratorTarget::GetLanguages(std::set<std::string>& languages,
   }
 }
 
-bool cmGeneratorTarget::HasLanguage(std::string const& language,
-                                    std::string const& config,
-                                    bool exclusive) const
+bool cmGeneratorTarget::IsCSharpOnly(std::string const& config) const
 {
   std::set<std::string> languages;
   this->GetLanguages(languages, config);
-  // The "exclusive" check applies only to source files and not
-  // the linker language which may be affected by dependencies.
-  if (exclusive && languages.size() > 1) {
-    return false;
-  }
-  // add linker language (if it is different from compiler languages)
-  languages.insert(this->GetLinkerLanguage(config));
-  return languages.count(language) > 0;
+  return languages.size() == 1 && languages.count("CSharp") > 0;
 }
 
 void cmGeneratorTarget::ComputeLinkImplementationLanguages(
@@ -6095,6 +6086,6 @@ cmGeneratorTarget::ManagedType cmGeneratorTarget::GetManagedType(
   // C# targets are always managed. This language specific check
   // is added to avoid that the COMMON_LANGUAGE_RUNTIME target property
   // has to be set manually for C# targets.
-  return this->HasLanguage("CSharp", config) ? ManagedType::Managed
-                                             : ManagedType::Native;
+  return this->IsCSharpOnly(config) ? ManagedType::Managed
+                                    : ManagedType::Native;
 }
