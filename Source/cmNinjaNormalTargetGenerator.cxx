@@ -496,9 +496,9 @@ std::vector<std::string> cmNinjaNormalTargetGenerator::ComputeLinkCmd()
       }
       cmSystemTools::ExpandListArgument(linkCmdStr, linkCmds);
       if (this->GetGeneratorTarget()->GetPropertyAsBool("LINK_WHAT_YOU_USE")) {
-        std::string cmakeCommand =
-          this->GetLocalGenerator()->ConvertToOutputFormat(
-            cmSystemTools::GetCMakeCommand(), cmLocalGenerator::SHELL);
+        std::string cmakeCommand = "( ";
+        cmakeCommand += this->GetLocalGenerator()->ConvertToOutputFormat(
+          cmSystemTools::GetCMakeCommand(), cmLocalGenerator::SHELL);
         cmakeCommand += " -E __run_co_compile --lwyu=";
         cmGeneratorTarget& gt = *this->GetGeneratorTarget();
         const std::string cfgName = this->GetConfigName();
@@ -506,7 +506,7 @@ std::vector<std::string> cmNinjaNormalTargetGenerator::ComputeLinkCmd()
           gt.GetFullPath(cfgName, cmStateEnums::RuntimeBinaryArtifact,
                          /*realname=*/true));
         cmakeCommand += targetOutputReal;
-        cmakeCommand += " || true";
+        cmakeCommand += " || true )";
         linkCmds.push_back(std::move(cmakeCommand));
       }
       return linkCmds;
