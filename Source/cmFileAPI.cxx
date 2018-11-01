@@ -4,6 +4,7 @@
 
 #include "cmAlgorithms.h"
 #include "cmCryptoHash.h"
+#include "cmFileAPICache.h"
 #include "cmFileAPICodemodel.h"
 #include "cmGlobalGenerator.h"
 #include "cmSystemTools.h"
@@ -234,6 +235,17 @@ bool cmFileAPI::ReadQuery(std::string const& query,
     objects.push_back(o);
     return true;
   }
+  if (kindName == ObjectKindName(ObjectKind::Cache)) {
+    Object o;
+    o.Kind = ObjectKind::Cache;
+    if (verStr == "v2") {
+      o.Version = 2;
+    } else {
+      return false;
+    }
+    objects.push_back(o);
+    return true;
+  }
   if (kindName == ObjectKindName(ObjectKind::InternalTest)) {
     Object o;
     o.Kind = ObjectKind::InternalTest;
@@ -372,6 +384,7 @@ const char* cmFileAPI::ObjectKindName(ObjectKind kind)
   // Keep in sync with ObjectKind enum.
   static const char* objectKindNames[] = {
     "codemodel", //
+    "cache",     //
     "__test"     //
   };
   return objectKindNames[size_t(kind)];
@@ -392,6 +405,9 @@ Json::Value cmFileAPI::BuildObject(Object const& object)
   switch (object.Kind) {
     case ObjectKind::CodeModel:
       value = this->BuildCodeModel(object);
+      break;
+    case ObjectKind::Cache:
+      value = this->BuildCache(object);
       break;
     case ObjectKind::InternalTest:
       value = this->BuildInternalTest(object);
@@ -445,6 +461,8 @@ cmFileAPI::ClientRequest cmFileAPI::BuildClientRequest(
 
   if (kindName == this->ObjectKindName(ObjectKind::CodeModel)) {
     r.Kind = ObjectKind::CodeModel;
+  } else if (kindName == this->ObjectKindName(ObjectKind::Cache)) {
+    r.Kind = ObjectKind::Cache;
   } else if (kindName == this->ObjectKindName(ObjectKind::InternalTest)) {
     r.Kind = ObjectKind::InternalTest;
   } else {
@@ -465,6 +483,9 @@ cmFileAPI::ClientRequest cmFileAPI::BuildClientRequest(
   switch (r.Kind) {
     case ObjectKind::CodeModel:
       this->BuildClientRequestCodeModel(r, versions);
+      break;
+    case ObjectKind::Cache:
+      this->BuildClientRequestCache(r, versions);
       break;
     case ObjectKind::InternalTest:
       this->BuildClientRequestInternalTest(r, versions);
@@ -645,6 +666,42 @@ Json::Value cmFileAPI::BuildCodeModel(Object const& object)
   }
 
   return codemodel;
+}
+
+// The "cache" object kind.
+
+static unsigned int const CacheV2Minor = 0;
+
+void cmFileAPI::BuildClientRequestCache(
+  ClientRequest& r, std::vector<RequestVersion> const& versions)
+{
+  // Select a known version from those requested.
+  for (RequestVersion const& v : versions) {
+    if ((v.Major == 2 && v.Minor <= CacheV2Minor)) {
+      r.Version = v.Major;
+      break;
+    }
+  }
+  if (!r.Version) {
+    r.Error = NoSupportedVersion(versions);
+  }
+}
+
+Json::Value cmFileAPI::BuildCache(Object const& object)
+{
+  using namespace std::placeholders;
+  Json::Value cache = cmFileAPICacheDump(*this, object.Version);
+  cache["kind"] = this->ObjectKindName(object.Kind);
+
+  Json::Value& version = cache["version"] = Json::objectValue;
+  if (object.Version == 2) {
+    version["major"] = 2;
+    version["minor"] = CacheV2Minor;
+  } else {
+    return cache; // should be unreachable
+  }
+
+  return cache;
 }
 
 // The "__test" object kind is for internal testing of CMake.
