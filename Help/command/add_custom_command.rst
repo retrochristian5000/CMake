@@ -186,6 +186,7 @@ The options are:
 
   Arguments to ``WORKING_DIRECTORY`` may use
   :manual:`generator expressions <cmake-generator-expressions(7)>`.
+  A leading generator expression must expand to an absolute path.
 
 ``DEPFILE``
   Specify a ``.d`` depfile for the :generator:`Ninja` generator.

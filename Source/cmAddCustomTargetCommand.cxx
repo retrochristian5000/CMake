@@ -183,9 +183,14 @@ bool cmAddCustomTargetCommand::InitialPass(
 
   // Convert working directory to a full path.
   if (!working_directory.empty()) {
-    const std::string& build_dir = this->Makefile->GetCurrentBinaryDirectory();
-    working_directory =
-      cmSystemTools::CollapseFullPath(working_directory, build_dir);
+    if (!cmSystemTools::FileIsFullPath(working_directory) &&
+        !cmGeneratorExpression::StartsWithGeneratorExpression(
+          working_directory)) {
+      const std::string& build_dir =
+        this->Makefile->GetCurrentBinaryDirectory();
+      working_directory =
+        cmSystemTools::CollapseFullPath(working_directory, build_dir);
+    }
   }
 
   if (commandLines.empty() && !byproducts.empty()) {
