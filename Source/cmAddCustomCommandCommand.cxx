@@ -8,6 +8,7 @@
 
 #include "cmCustomCommand.h"
 #include "cmCustomCommandLines.h"
+#include "cmGeneratorExpression.h"
 #include "cmGlobalGenerator.h"
 #include "cmMakefile.h"
 #include "cmPolicies.h"
@@ -320,8 +321,12 @@ bool cmAddCustomCommandCommand::InitialPass(
 
   // Convert working directory to a full path.
   if (!working.empty()) {
-    const std::string& build_dir = this->Makefile->GetCurrentBinaryDirectory();
-    working = cmSystemTools::CollapseFullPath(working, build_dir);
+    if (!cmSystemTools::FileIsFullPath(working) &&
+        !cmGeneratorExpression::StartsWithGeneratorExpression(working)) {
+      const std::string& build_dir =
+        this->Makefile->GetCurrentBinaryDirectory();
+      working = cmSystemTools::CollapseFullPath(working, build_dir);
+    }
   }
 
   // Choose which mode of the command to use.
