@@ -495,6 +495,33 @@ const char* cmGeneratorTarget::GetFeature(const std::string& feature,
   return this->LocalGenerator->GetFeature(feature, config);
 }
 
+const char* cmGeneratorTarget::GetLinkPIEProperty(
+  const std::string& config) const
+{
+  const char* PICValue = this->GetLinkInterfaceDependentStringAsBoolProperty(
+    "POSITION_INDEPENDENT_CODE", config);
+  if (PICValue == nullptr) {
+    // POSITION_INDEPENDENT_CODE is not set
+    return nullptr;
+  }
+
+  switch (this->GetPolicyStatusCMP0083()) {
+    case cmPolicies::WARN: {
+      std::ostringstream e;
+      e << cmPolicies::GetPolicyWarning(cmPolicies::CMP0083);
+      this->LocalGenerator->IssueMessage(cmake::AUTHOR_WARNING, e.str());
+      CM_FALLTHROUGH;
+    }
+    case cmPolicies::OLD:
+      return nullptr;
+    default:
+      // nothing to do
+      break;
+  }
+
+  return PICValue;
+}
+
 bool cmGeneratorTarget::IsIPOEnabled(std::string const& lang,
                                      std::string const& config) const
 {
@@ -4050,9 +4077,7 @@ const char* getLinkInterfaceDependentProperty(cmGeneratorTarget const* tgt,
 {
   switch (t) {
     case BoolType:
-      assert(false &&
-             "String compatibility check function called for boolean");
-      return nullptr;
+      return tgt->GetLinkInterfaceDependentStringAsBoolProperty(prop, config);
     case StringType:
       return tgt->GetLinkInterfaceDependentStringProperty(prop, config);
     case NumberMinType:
@@ -4268,21 +4293,35 @@ std::string compatibilityAgree(CompatibleType t, bool dominant)
 }
 
 template <typename PropertyType>
-PropertyType getTypedProperty(cmGeneratorTarget const* tgt,
-                              const std::string& prop);
+PropertyType getTypedProperty(
+  cmGeneratorTarget const* tgt, const std::string& prop,
+  cmGeneratorExpressionInterpreter* genexInterpreter = nullptr);
 
 template <>
 bool getTypedProperty<bool>(cmGeneratorTarget const* tgt,
-                            const std::string& prop)
+                            const std::string& prop,
+                            cmGeneratorExpressionInterpreter* genexInterpreter)
 {
-  return tgt->GetPropertyAsBool(prop);
+  if (genexInterpreter == nullptr) {
+    return tgt->GetPropertyAsBool(prop);
+  }
+
+  const char* value = tgt->GetProperty(prop);
+  return cmSystemTools::IsOn(genexInterpreter->Evaluate(value, prop));
 }
 
 template <>
-const char* getTypedProperty<const char*>(cmGeneratorTarget const* tgt,
-                                          const std::string& prop)
+const char* getTypedProperty<const char*>(
+  cmGeneratorTarget const* tgt, const std::string& prop,
+  cmGeneratorExpressionInterpreter* genexInterpreter)
 {
-  return tgt->GetProperty(prop);
+  const char* value = tgt->GetProperty(prop);
+
+  if (genexInterpreter == nullptr) {
+    return value;
+  }
+
+  return genexInterpreter->Evaluate(value, prop).c_str();
 }
 
 template <typename PropertyType>
@@ -4372,9 +4411,10 @@ std::pair<bool, const char*> consistentProperty(const char* lhs,
   const char* const null_ptr = nullptr;
 
   switch (t) {
-    case BoolType:
-      assert(false && "consistentProperty for strings called with BoolType");
-      return std::pair<bool, const char*>(false, null_ptr);
+    case BoolType: {
+      bool same = cmSystemTools::IsOn(lhs) == cmSystemTools::IsOn(rhs);
+      return std::make_pair(same, same ? lhs : nullptr);
+    }
     case StringType:
       return consistentStringProperty(lhs, rhs);
     case NumberMinType:
@@ -4423,6 +4463,11 @@ PropertyType checkInterfacePropertyCompatibility(cmGeneratorTarget const* tgt,
   }
 
   std::string interfaceProperty = "INTERFACE_" + p;
+  std::unique_ptr<cmGeneratorExpressionInterpreter> genexInterpreter(
+    p == "POSITION_INDEPENDENT_CODE" ? new cmGeneratorExpressionInterpreter(
+                                         tgt->GetLocalGenerator(), config, tgt)
+                                     : nullptr);
+
   for (cmGeneratorTarget const* theTarget : deps) {
     // An error should be reported if one dependency
     // has INTERFACE_POSITION_INDEPENDENT_CODE ON and the other
@@ -4434,8 +4479,8 @@ PropertyType checkInterfacePropertyCompatibility(cmGeneratorTarget const* tgt,
 
     const bool ifaceIsSet = std::find(propKeys.begin(), propKeys.end(),
                                       interfaceProperty) != propKeys.end();
-    PropertyType ifacePropContent =
-      getTypedProperty<PropertyType>(theTarget, interfaceProperty);
+    PropertyType ifacePropContent = getTypedProperty<PropertyType>(
+      theTarget, interfaceProperty, genexInterpreter.get());
 
     std::string reportEntry;
     if (ifaceIsSet) {
@@ -4531,6 +4576,13 @@ bool cmGeneratorTarget::GetLinkInterfaceDependentBoolProperty(
 {
   return checkInterfacePropertyCompatibility<bool>(this, p, config, "FALSE",
                                                    BoolType, nullptr);
+}
+
+const char* cmGeneratorTarget::GetLinkInterfaceDependentStringAsBoolProperty(
+  const std::string& p, const std::string& config) const
+{
+  return checkInterfacePropertyCompatibility<const char*>(
+    this, p, config, "FALSE", BoolType, nullptr);
 }
 
 const char* cmGeneratorTarget::GetLinkInterfaceDependentStringProperty(
