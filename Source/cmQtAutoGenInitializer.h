@@ -4,9 +4,11 @@
 #define cmQtAutoGenInitializer_h
 
 #include "cmConfigure.h" // IWYU pragma: keep
+#include "cmGeneratedFileStream.h"
 #include "cmQtAutoGen.h"
 
 #include <map>
+#include <ostream>
 #include <set>
 #include <string>
 #include <vector>
@@ -42,6 +44,38 @@ public:
     bool Unique;
     std::vector<std::string> Options;
     std::vector<std::string> Resources;
+  };
+
+  /// @brief Writes a CMake info file
+  class InfoWriter
+  {
+  public:
+    /// @brief Open the given file
+    InfoWriter(std::string const& filename);
+
+    /// @return True if the file is open
+    operator bool() const { return static_cast<bool>(Ofs_); }
+
+    void Write(const char* text) { Ofs_ << text; }
+    void Write(const char* key, std::string const& value);
+    void WriteUInt(const char* key, unsigned int value);
+    void WriteVector(const char* key, std::vector<std::string> const& list);
+    void WriteSet(const char* key, std::set<std::string> const& list);
+    void WriteMap(const char* key,
+                  std::map<std::string, std::string> const& map);
+    void WriteMap(const char* key,
+                  std::map<std::string, std::vector<std::string>> const& map);
+    void WriteMap(const char* key,
+                  std::map<std::string, std::set<std::string>> const& map);
+    void WriteNestedLists(const char* key,
+                          std::vector<std::vector<std::string>> const& lists);
+
+  private:
+    template <class IT>
+    static std::string ListJoin(IT it_begin, IT it_end);
+
+  private:
+    cmGeneratedFileStream Ofs_;
   };
 
 public:
@@ -129,10 +163,10 @@ private:
     std::string Executable;
     std::string PredefsCmd;
     std::set<std::string> Skip;
-    std::string Includes;
-    std::map<std::string, std::string> ConfigIncludes;
-    std::string Defines;
-    std::map<std::string, std::string> ConfigDefines;
+    std::vector<std::string> Includes;
+    std::map<std::string, std::vector<std::string>> ConfigIncludes;
+    std::set<std::string> Defines;
+    std::map<std::string, std::set<std::string>> ConfigDefines;
     std::string MocsCompilation;
   } Moc;
 
@@ -143,8 +177,8 @@ private:
     std::string Executable;
     std::set<std::string> Skip;
     std::vector<std::string> SearchPaths;
-    std::string Options;
-    std::map<std::string, std::string> ConfigOptions;
+    std::vector<std::string> Options;
+    std::map<std::string, std::vector<std::string>> ConfigOptions;
     std::vector<std::string> FileFiles;
     std::vector<std::vector<std::string>> FileOptions;
   } Uic;
