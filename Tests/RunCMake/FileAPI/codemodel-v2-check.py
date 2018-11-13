@@ -38,8 +38,11 @@ def check_backtrace(t, b, backtrace):
 def check_directory(c):
     def _check(actual, expected):
         assert is_dict(actual)
-        expected_keys = ["build", "source"]
+        expected_keys = ["build", "source", "projectIndex"]
         assert matches(actual["build"], expected["build"])
+
+        assert is_int(actual["projectIndex"])
+        assert is_string(c["projects"][actual["projectIndex"]]["name"], expected["projectName"])
 
         if expected["parentSource"] is not None:
             expected_keys.append("parentIndex")
@@ -101,11 +104,13 @@ def check_target_backtrace_graph(t):
 def check_target(c):
     def _check(actual, expected):
         assert is_dict(actual)
-        assert sorted(actual.keys()) == ["directoryIndex", "id", "jsonFile", "name"]
+        assert sorted(actual.keys()) == ["directoryIndex", "id", "jsonFile", "name", "projectIndex"]
         assert is_int(actual["directoryIndex"])
         assert matches(c["directories"][actual["directoryIndex"]]["source"], expected["directorySource"])
         assert is_string(actual["name"], expected["name"])
         assert is_string(actual["jsonFile"])
+        assert is_int(actual["projectIndex"])
+        assert is_string(c["projects"][actual["projectIndex"]]["name"], expected["projectName"])
 
         filepath = os.path.join(reply_dir, actual["jsonFile"])
         with open(filepath) as f:
@@ -382,6 +387,39 @@ def check_target(c):
 
     return _check
 
+def check_project(c):
+    def _check(actual, expected):
+        assert is_dict(actual)
+        expected_keys = ["name", "directoryIndexes"]
+
+        check_list_match(lambda a, e: matches(c["directories"][a]["source"], e),
+                         actual["directoryIndexes"], expected["directorySources"],
+                         missing_exception=lambda e: "Directory source: %s" % e,
+                         extra_exception=lambda a: "Directory source: %s" % c["directories"][a]["source"])
+
+        if expected["parentName"] is not None:
+            expected_keys.append("parentIndex")
+            assert is_int(actual["parentIndex"])
+            assert is_string(c["projects"][actual["parentIndex"]]["name"], expected["parentName"])
+
+        if expected["childNames"] is not None:
+            expected_keys.append("childIndexes")
+            check_list_match(lambda a, e: is_string(c["projects"][a]["name"], e),
+                             actual["childIndexes"], expected["childNames"],
+                             missing_exception=lambda e: "Child name: %s" % e,
+                             extra_exception=lambda a: "Child name: %s" % c["projects"][a]["name"])
+
+        if expected["targetIds"] is not None:
+            expected_keys.append("targetIndexes")
+            check_list_match(lambda a, e: matches(c["targets"][a]["id"], e),
+                             actual["targetIndexes"], expected["targetIds"],
+                             missing_exception=lambda e: "Target ID: %s" % e,
+                             extra_exception=lambda a: "Target ID: %s" % c["targets"][a]["id"])
+
+        assert sorted(actual.keys()) == sorted(expected_keys)
+
+    return _check
+
 def gen_check_directories(c, g):
     expected = [
         {
@@ -395,6 +433,7 @@ def gen_check_directories(c, g):
                 "^imported$",
                 "^object$",
                 "^.*/Tests/RunCMake/FileAPIExternalSource$",
+                "^dir$",
             ],
             "targetIds": [
                 "^ALL_BUILD::@6890427a1f51a3e7e1df$",
@@ -407,6 +446,7 @@ def gen_check_directories(c, g):
                 "^c_static_lib::@6890427a1f51a3e7e1df$",
                 "^interface_exe::@6890427a1f51a3e7e1df$",
             ],
+            "projectName": "codemodel-v2",
         },
         {
             "source": "^alias$",
@@ -419,6 +459,7 @@ def gen_check_directories(c, g):
                 "^c_alias_exe::@53632cba2752272bb008$",
                 "^cxx_alias_exe::@53632cba2752272bb008$",
             ],
+            "projectName": "Alias",
         },
         {
             "source": "^custom$",
@@ -431,6 +472,7 @@ def gen_check_directories(c, g):
                 "^custom_exe::@c11385ffed57b860da63$",
                 "^custom_tgt::@c11385ffed57b860da63$",
             ],
+            "projectName": "Custom",
         },
         {
             "source": "^cxx$",
@@ -447,6 +489,7 @@ def gen_check_directories(c, g):
                 "^cxx_static_exe::@a56b12a3f5c0529fb296$",
                 "^cxx_static_lib::@a56b12a3f5c0529fb296$",
             ],
+            "projectName": "Cxx",
         },
         {
             "source": "^imported$",
@@ -462,6 +505,7 @@ def gen_check_directories(c, g):
                 "^link_imported_shared_exe::@ba7eb709d0b48779c6c8$",
                 "^link_imported_static_exe::@ba7eb709d0b48779c6c8$",
             ],
+            "projectName": "Imported",
         },
         {
             "source": "^object$",
@@ -476,6 +520,15 @@ def gen_check_directories(c, g):
                 "^cxx_object_exe::@5ed5358f70faf8d8af7a$",
                 "^cxx_object_lib::@5ed5358f70faf8d8af7a$",
             ],
+            "projectName": "Object",
+        },
+        {
+            "source": "^dir$",
+            "build": "^dir$",
+            "parentSource": "^\\.$",
+            "childSources": None,
+            "targetIds": None,
+            "projectName": "codemodel-v2",
         },
         {
             "source": "^.*/Tests/RunCMake/FileAPIExternalSource$",
@@ -487,6 +540,7 @@ def gen_check_directories(c, g):
                 "^ZERO_CHECK::@[0-9a-f]+$",
                 "^generated_exe::@[0-9a-f]+$",
             ],
+            "projectName": "External",
         },
     ]
 
@@ -514,6 +568,7 @@ def gen_check_targets(c, g):
             "name": "ALL_BUILD",
             "id": "^ALL_BUILD::@6890427a1f51a3e7e1df$",
             "directorySource": "^\\.$",
+            "projectName": "codemodel-v2",
             "type": "UTILITY",
             "isGeneratorProvided": True,
             "sources": [
@@ -692,6 +747,7 @@ def gen_check_targets(c, g):
             "name": "ZERO_CHECK",
             "id": "^ZERO_CHECK::@6890427a1f51a3e7e1df$",
             "directorySource": "^\\.$",
+            "projectName": "codemodel-v2",
             "type": "UTILITY",
             "isGeneratorProvided": True,
             "sources": [
@@ -761,6 +817,7 @@ def gen_check_targets(c, g):
             "name": "interface_exe",
             "id": "^interface_exe::@6890427a1f51a3e7e1df$",
             "directorySource": "^\\.$",
+            "projectName": "codemodel-v2",
             "type": "EXECUTABLE",
             "isGeneratorProvided": None,
             "sources": [
@@ -905,6 +962,7 @@ def gen_check_targets(c, g):
             "name": "c_lib",
             "id": "^c_lib::@6890427a1f51a3e7e1df$",
             "directorySource": "^\\.$",
+            "projectName": "codemodel-v2",
             "type": "STATIC_LIBRARY",
             "isGeneratorProvided": None,
             "sources": [
@@ -1011,6 +1069,7 @@ def gen_check_targets(c, g):
             "name": "c_exe",
             "id": "^c_exe::@6890427a1f51a3e7e1df$",
             "directorySource": "^\\.$",
+            "projectName": "codemodel-v2",
             "type": "EXECUTABLE",
             "isGeneratorProvided": None,
             "sources": [
@@ -1151,6 +1210,7 @@ def gen_check_targets(c, g):
             "name": "c_shared_lib",
             "id": "^c_shared_lib::@6890427a1f51a3e7e1df$",
             "directorySource": "^\\.$",
+            "projectName": "codemodel-v2",
             "type": "SHARED_LIBRARY",
             "isGeneratorProvided": None,
             "sources": [
@@ -1271,6 +1331,7 @@ def gen_check_targets(c, g):
             "name": "c_shared_exe",
             "id": "^c_shared_exe::@6890427a1f51a3e7e1df$",
             "directorySource": "^\\.$",
+            "projectName": "codemodel-v2",
             "type": "EXECUTABLE",
             "isGeneratorProvided": None,
             "sources": [
@@ -1411,6 +1472,7 @@ def gen_check_targets(c, g):
             "name": "c_static_lib",
             "id": "^c_static_lib::@6890427a1f51a3e7e1df$",
             "directorySource": "^\\.$",
+            "projectName": "codemodel-v2",
             "type": "STATIC_LIBRARY",
             "isGeneratorProvided": None,
             "sources": [
@@ -1517,6 +1579,7 @@ def gen_check_targets(c, g):
             "name": "c_static_exe",
             "id": "^c_static_exe::@6890427a1f51a3e7e1df$",
             "directorySource": "^\\.$",
+            "projectName": "codemodel-v2",
             "type": "EXECUTABLE",
             "isGeneratorProvided": None,
             "sources": [
@@ -1657,6 +1720,7 @@ def gen_check_targets(c, g):
             "name": "ALL_BUILD",
             "id": "^ALL_BUILD::@a56b12a3f5c0529fb296$",
             "directorySource": "^cxx$",
+            "projectName": "Cxx",
             "type": "UTILITY",
             "isGeneratorProvided": True,
             "sources": [
@@ -1755,6 +1819,7 @@ def gen_check_targets(c, g):
             "name": "ZERO_CHECK",
             "id": "^ZERO_CHECK::@a56b12a3f5c0529fb296$",
             "directorySource": "^cxx$",
+            "projectName": "Cxx",
             "type": "UTILITY",
             "isGeneratorProvided": True,
             "sources": [
@@ -1824,6 +1889,7 @@ def gen_check_targets(c, g):
             "name": "cxx_lib",
             "id": "^cxx_lib::@a56b12a3f5c0529fb296$",
             "directorySource": "^cxx$",
+            "projectName": "Cxx",
             "type": "STATIC_LIBRARY",
             "isGeneratorProvided": None,
             "sources": [
@@ -1906,6 +1972,7 @@ def gen_check_targets(c, g):
             "name": "cxx_exe",
             "id": "^cxx_exe::@a56b12a3f5c0529fb296$",
             "directorySource": "^cxx$",
+            "projectName": "Cxx",
             "type": "EXECUTABLE",
             "isGeneratorProvided": None,
             "sources": [
@@ -2010,6 +2077,7 @@ def gen_check_targets(c, g):
             "name": "cxx_shared_lib",
             "id": "^cxx_shared_lib::@a56b12a3f5c0529fb296$",
             "directorySource": "^cxx$",
+            "projectName": "Cxx",
             "type": "SHARED_LIBRARY",
             "isGeneratorProvided": None,
             "sources": [
@@ -2106,6 +2174,7 @@ def gen_check_targets(c, g):
             "name": "cxx_shared_exe",
             "id": "^cxx_shared_exe::@a56b12a3f5c0529fb296$",
             "directorySource": "^cxx$",
+            "projectName": "Cxx",
             "type": "EXECUTABLE",
             "isGeneratorProvided": None,
             "sources": [
@@ -2210,6 +2279,7 @@ def gen_check_targets(c, g):
             "name": "cxx_static_lib",
             "id": "^cxx_static_lib::@a56b12a3f5c0529fb296$",
             "directorySource": "^cxx$",
+            "projectName": "Cxx",
             "type": "STATIC_LIBRARY",
             "isGeneratorProvided": None,
             "sources": [
@@ -2292,6 +2362,7 @@ def gen_check_targets(c, g):
             "name": "cxx_static_exe",
             "id": "^cxx_static_exe::@a56b12a3f5c0529fb296$",
             "directorySource": "^cxx$",
+            "projectName": "Cxx",
             "type": "EXECUTABLE",
             "isGeneratorProvided": None,
             "sources": [
@@ -2396,6 +2467,7 @@ def gen_check_targets(c, g):
             "name": "ALL_BUILD",
             "id": "^ALL_BUILD::@53632cba2752272bb008$",
             "directorySource": "^alias$",
+            "projectName": "Alias",
             "type": "UTILITY",
             "isGeneratorProvided": True,
             "sources": [
@@ -2478,6 +2550,7 @@ def gen_check_targets(c, g):
             "name": "ZERO_CHECK",
             "id": "^ZERO_CHECK::@53632cba2752272bb008$",
             "directorySource": "^alias$",
+            "projectName": "Alias",
             "type": "UTILITY",
             "isGeneratorProvided": True,
             "sources": [
@@ -2547,6 +2620,7 @@ def gen_check_targets(c, g):
             "name": "c_alias_exe",
             "id": "^c_alias_exe::@53632cba2752272bb008$",
             "directorySource": "^alias$",
+            "projectName": "Alias",
             "type": "EXECUTABLE",
             "isGeneratorProvided": None,
             "sources": [
@@ -2651,6 +2725,7 @@ def gen_check_targets(c, g):
             "name": "cxx_alias_exe",
             "id": "^cxx_alias_exe::@53632cba2752272bb008$",
             "directorySource": "^alias$",
+            "projectName": "Alias",
             "type": "EXECUTABLE",
             "isGeneratorProvided": None,
             "sources": [
@@ -2755,6 +2830,7 @@ def gen_check_targets(c, g):
             "name": "ALL_BUILD",
             "id": "^ALL_BUILD::@5ed5358f70faf8d8af7a$",
             "directorySource": "^object$",
+            "projectName": "Object",
             "type": "UTILITY",
             "isGeneratorProvided": True,
             "sources": [
@@ -2845,6 +2921,7 @@ def gen_check_targets(c, g):
             "name": "ZERO_CHECK",
             "id": "^ZERO_CHECK::@5ed5358f70faf8d8af7a$",
             "directorySource": "^object$",
+            "projectName": "Object",
             "type": "UTILITY",
             "isGeneratorProvided": True,
             "sources": [
@@ -2914,6 +2991,7 @@ def gen_check_targets(c, g):
             "name": "c_object_lib",
             "id": "^c_object_lib::@5ed5358f70faf8d8af7a$",
             "directorySource": "^object$",
+            "projectName": "Object",
             "type": "OBJECT_LIBRARY",
             "isGeneratorProvided": None,
             "sources": [
@@ -2994,6 +3072,7 @@ def gen_check_targets(c, g):
             "name": "c_object_exe",
             "id": "^c_object_exe::@5ed5358f70faf8d8af7a$",
             "directorySource": "^object$",
+            "projectName": "Object",
             "type": "EXECUTABLE",
             "isGeneratorProvided": None,
             "sources": [
@@ -3135,6 +3214,7 @@ def gen_check_targets(c, g):
             "name": "cxx_object_lib",
             "id": "^cxx_object_lib::@5ed5358f70faf8d8af7a$",
             "directorySource": "^object$",
+            "projectName": "Object",
             "type": "OBJECT_LIBRARY",
             "isGeneratorProvided": None,
             "sources": [
@@ -3215,6 +3295,7 @@ def gen_check_targets(c, g):
             "name": "cxx_object_exe",
             "id": "^cxx_object_exe::@5ed5358f70faf8d8af7a$",
             "directorySource": "^object$",
+            "projectName": "Object",
             "type": "EXECUTABLE",
             "isGeneratorProvided": None,
             "sources": [
@@ -3356,6 +3437,7 @@ def gen_check_targets(c, g):
             "name": "ALL_BUILD",
             "id": "^ALL_BUILD::@ba7eb709d0b48779c6c8$",
             "directorySource": "^imported$",
+            "projectName": "Imported",
             "type": "UTILITY",
             "isGeneratorProvided": True,
             "sources": [
@@ -3450,6 +3532,7 @@ def gen_check_targets(c, g):
             "name": "ZERO_CHECK",
             "id": "^ZERO_CHECK::@ba7eb709d0b48779c6c8$",
             "directorySource": "^imported$",
+            "projectName": "Imported",
             "type": "UTILITY",
             "isGeneratorProvided": True,
             "sources": [
@@ -3519,6 +3602,7 @@ def gen_check_targets(c, g):
             "name": "link_imported_exe",
             "id": "^link_imported_exe::@ba7eb709d0b48779c6c8$",
             "directorySource": "^imported$",
+            "projectName": "Imported",
             "type": "EXECUTABLE",
             "isGeneratorProvided": None,
             "sources": [
@@ -3606,6 +3690,7 @@ def gen_check_targets(c, g):
             "name": "link_imported_shared_exe",
             "id": "^link_imported_shared_exe::@ba7eb709d0b48779c6c8$",
             "directorySource": "^imported$",
+            "projectName": "Imported",
             "type": "EXECUTABLE",
             "isGeneratorProvided": None,
             "sources": [
@@ -3693,6 +3778,7 @@ def gen_check_targets(c, g):
             "name": "link_imported_static_exe",
             "id": "^link_imported_static_exe::@ba7eb709d0b48779c6c8$",
             "directorySource": "^imported$",
+            "projectName": "Imported",
             "type": "EXECUTABLE",
             "isGeneratorProvided": None,
             "sources": [
@@ -3780,6 +3866,7 @@ def gen_check_targets(c, g):
             "name": "link_imported_object_exe",
             "id": "^link_imported_object_exe::@ba7eb709d0b48779c6c8$",
             "directorySource": "^imported$",
+            "projectName": "Imported",
             "type": "EXECUTABLE",
             "isGeneratorProvided": None,
             "sources": [
@@ -3867,6 +3954,7 @@ def gen_check_targets(c, g):
             "name": "link_imported_interface_exe",
             "id": "^link_imported_interface_exe::@ba7eb709d0b48779c6c8$",
             "directorySource": "^imported$",
+            "projectName": "Imported",
             "type": "EXECUTABLE",
             "isGeneratorProvided": None,
             "sources": [
@@ -3954,6 +4042,7 @@ def gen_check_targets(c, g):
             "name": "ALL_BUILD",
             "id": "^ALL_BUILD::@c11385ffed57b860da63$",
             "directorySource": "^custom$",
+            "projectName": "Custom",
             "type": "UTILITY",
             "isGeneratorProvided": True,
             "sources": [
@@ -4032,6 +4121,7 @@ def gen_check_targets(c, g):
             "name": "ZERO_CHECK",
             "id": "^ZERO_CHECK::@c11385ffed57b860da63$",
             "directorySource": "^custom$",
+            "projectName": "Custom",
             "type": "UTILITY",
             "isGeneratorProvided": True,
             "sources": [
@@ -4101,6 +4191,7 @@ def gen_check_targets(c, g):
             "name": "custom_tgt",
             "id": "^custom_tgt::@c11385ffed57b860da63$",
             "directorySource": "^custom$",
+            "projectName": "Custom",
             "type": "UTILITY",
             "isGeneratorProvided": None,
             "sources": [
@@ -4187,6 +4278,7 @@ def gen_check_targets(c, g):
             "name": "custom_exe",
             "id": "^custom_exe::@c11385ffed57b860da63$",
             "directorySource": "^custom$",
+            "projectName": "Custom",
             "type": "EXECUTABLE",
             "isGeneratorProvided": None,
             "sources": [
@@ -4291,6 +4383,7 @@ def gen_check_targets(c, g):
             "name": "ALL_BUILD",
             "id": "^ALL_BUILD::@[0-9a-f]+$",
             "directorySource": "^.*/Tests/RunCMake/FileAPIExternalSource$",
+            "projectName": "External",
             "type": "UTILITY",
             "isGeneratorProvided": True,
             "sources": [
@@ -4369,6 +4462,7 @@ def gen_check_targets(c, g):
             "name": "ZERO_CHECK",
             "id": "^ZERO_CHECK::@[0-9a-f]+$",
             "directorySource": "^.*/Tests/RunCMake/FileAPIExternalSource$",
+            "projectName": "External",
             "type": "UTILITY",
             "isGeneratorProvided": True,
             "sources": [
@@ -4438,6 +4532,7 @@ def gen_check_targets(c, g):
             "name": "generated_exe",
             "id": "^generated_exe::@[0-9a-f]+$",
             "directorySource": "^.*/Tests/RunCMake/FileAPIExternalSource$",
+            "projectName": "External",
             "type": "EXECUTABLE",
             "isGeneratorProvided": None,
             "sources": [
@@ -4746,11 +4841,153 @@ def check_targets(c, g):
                      missing_exception=lambda e: "Target ID: %s" % e["id"],
                      extra_exception=lambda a: "Target ID: %s" % a["id"])
 
+def gen_check_projects(c, g):
+    expected = [
+        {
+            "name": "codemodel-v2",
+            "parentName": None,
+            "childNames": [
+                "Alias",
+                "Custom",
+                "Cxx",
+                "Imported",
+                "Object",
+                "External",
+            ],
+            "directorySources": [
+                "^\\.$",
+                "^dir$",
+            ],
+            "targetIds": [
+                "^ALL_BUILD::@6890427a1f51a3e7e1df$",
+                "^ZERO_CHECK::@6890427a1f51a3e7e1df$",
+                "^interface_exe::@6890427a1f51a3e7e1df$",
+                "^c_lib::@6890427a1f51a3e7e1df$",
+                "^c_exe::@6890427a1f51a3e7e1df$",
+                "^c_shared_lib::@6890427a1f51a3e7e1df$",
+                "^c_shared_exe::@6890427a1f51a3e7e1df$",
+                "^c_static_lib::@6890427a1f51a3e7e1df$",
+                "^c_static_exe::@6890427a1f51a3e7e1df$",
+            ],
+        },
+        {
+            "name": "Cxx",
+            "parentName": "codemodel-v2",
+            "childNames": None,
+            "directorySources": [
+                "^cxx$",
+            ],
+            "targetIds": [
+                "^ALL_BUILD::@a56b12a3f5c0529fb296$",
+                "^ZERO_CHECK::@a56b12a3f5c0529fb296$",
+                "^cxx_lib::@a56b12a3f5c0529fb296$",
+                "^cxx_exe::@a56b12a3f5c0529fb296$",
+                "^cxx_shared_lib::@a56b12a3f5c0529fb296$",
+                "^cxx_shared_exe::@a56b12a3f5c0529fb296$",
+                "^cxx_static_lib::@a56b12a3f5c0529fb296$",
+                "^cxx_static_exe::@a56b12a3f5c0529fb296$",
+            ],
+        },
+        {
+            "name": "Alias",
+            "parentName": "codemodel-v2",
+            "childNames": None,
+            "directorySources": [
+                "^alias$",
+            ],
+            "targetIds": [
+                "^ALL_BUILD::@53632cba2752272bb008$",
+                "^ZERO_CHECK::@53632cba2752272bb008$",
+                "^c_alias_exe::@53632cba2752272bb008$",
+                "^cxx_alias_exe::@53632cba2752272bb008$",
+            ],
+        },
+        {
+            "name": "Object",
+            "parentName": "codemodel-v2",
+            "childNames": None,
+            "directorySources": [
+                "^object$",
+            ],
+            "targetIds": [
+                "^ALL_BUILD::@5ed5358f70faf8d8af7a$",
+                "^ZERO_CHECK::@5ed5358f70faf8d8af7a$",
+                "^c_object_lib::@5ed5358f70faf8d8af7a$",
+                "^c_object_exe::@5ed5358f70faf8d8af7a$",
+                "^cxx_object_lib::@5ed5358f70faf8d8af7a$",
+                "^cxx_object_exe::@5ed5358f70faf8d8af7a$",
+            ],
+        },
+        {
+            "name": "Imported",
+            "parentName": "codemodel-v2",
+            "childNames": None,
+            "directorySources": [
+                "^imported$",
+            ],
+            "targetIds": [
+                "^ALL_BUILD::@ba7eb709d0b48779c6c8$",
+                "^ZERO_CHECK::@ba7eb709d0b48779c6c8$",
+                "^link_imported_exe::@ba7eb709d0b48779c6c8$",
+                "^link_imported_shared_exe::@ba7eb709d0b48779c6c8$",
+                "^link_imported_static_exe::@ba7eb709d0b48779c6c8$",
+                "^link_imported_object_exe::@ba7eb709d0b48779c6c8$",
+                "^link_imported_interface_exe::@ba7eb709d0b48779c6c8$",
+            ],
+        },
+        {
+            "name": "Custom",
+            "parentName": "codemodel-v2",
+            "childNames": None,
+            "directorySources": [
+                "^custom$",
+            ],
+            "targetIds": [
+                "^ALL_BUILD::@c11385ffed57b860da63$",
+                "^ZERO_CHECK::@c11385ffed57b860da63$",
+                "^custom_tgt::@c11385ffed57b860da63$",
+                "^custom_exe::@c11385ffed57b860da63$",
+            ],
+        },
+        {
+            "name": "External",
+            "parentName": "codemodel-v2",
+            "childNames": None,
+            "directorySources": [
+                "^.*/Tests/RunCMake/FileAPIExternalSource$",
+            ],
+            "targetIds": [
+                "^ALL_BUILD::@[0-9a-f]+$",
+                "^ZERO_CHECK::@[0-9a-f]+$",
+                "^generated_exe::@[0-9a-f]+$",
+            ],
+        },
+    ]
+
+    if matches(g, "^Visual Studio "):
+        for e in expected:
+            if e["parentName"] is not None:
+                e["targetIds"] = filter_list(lambda t: not matches(t, "^\\^ZERO_CHECK"), e["targetIds"])
+
+    elif g != "Xcode":
+        for e in expected:
+            e["targetIds"] = filter_list(lambda t: not matches(t, "^\\^(ALL_BUILD|ZERO_CHECK)"), e["targetIds"])
+
+    return expected
+
+def check_projects(c, g):
+    check_list_match(lambda a, e: is_string(a["name"], e["name"]), c["projects"], gen_check_projects(c, g),
+                     check=check_project(c),
+                     check_exception=lambda a, e: "Project name: %s" % a["name"],
+                     missing_exception=lambda e: "Project name: %s" % e["name"],
+                     extra_exception=lambda a: "Project name: %s" % a["name"])
+
 def check_object_codemodel_configuration(c, g):
-    assert sorted(c.keys()) == ["directories", "name", "targets"]
+    assert sorted(c.keys()) == ["directories", "name", "projects", "targets"]
     assert is_string(c["name"])
     check_directories(c, g)
     check_targets(c, g)
+    check_projects(c, g)
 
 def check_object_codemodel(g):
     def _check(o):
