@@ -1488,7 +1488,7 @@ int cmake::ActualConfigure()
   return 0;
 }
 
-void cmake::CreateDefaultGlobalGenerator()
+std::unique_ptr<cmGlobalGenerator> cmake::EvaluateDefaultGlobalGenerator()
 {
 #if defined(_WIN32) && !defined(__CYGWIN__) && !defined(CMAKE_BOOT_MINGW)
   std::string found;
@@ -1541,11 +1541,20 @@ void cmake::CreateDefaultGlobalGenerator()
   if (!gen) {
     gen = new cmGlobalNMakeMakefileGenerator(this);
   }
-  this->SetGlobalGenerator(gen);
-  std::cout << "-- Building for: " << gen->GetName() << "\n";
+  return std::unique_ptr<cmGlobalGenerator>(gen);
 #else
-  this->SetGlobalGenerator(new cmGlobalUnixMakefileGenerator3(this));
+  return cm::make_unique<cmGlobalUnixMakefileGenerator3>(this);
 #endif
+}
+
+void cmake::CreateDefaultGlobalGenerator()
+{
+  auto gen = this->EvaluateDefaultGlobalGenerator();
+#if defined(_WIN32) && !defined(__CYGWIN__) && !defined(CMAKE_BOOT_MINGW)
+  // This print could be unified for all platforms
+  std::cout << "-- Building for: " << gen->GetName() << "\n";
+#endif
+  this->SetGlobalGenerator(gen.release());
 }
 
 void cmake::PreLoadCMakeFiles()
@@ -1877,9 +1886,18 @@ void cmake::SetIsInTryCompile(bool b)
 void cmake::AppendGlobalGeneratorsDocumentation(
   std::vector<cmDocumentationEntry>& v)
 {
+  const auto defaultGenerator = this->EvaluateDefaultGlobalGenerator();
+  const std::string defaultName = defaultGenerator->GetName();
+  bool foundDefaultOne = false;
+
   for (cmGlobalGeneratorFactory* g : this->Generators) {
     cmDocumentationEntry e;
     g->GetDocumentation(e);
+    if (!foundDefaultOne &&
+        cmSystemTools::StringStartsWith(e.Name, defaultName.c_str())) {
+      e.CustomNamePrefix = '*';
+      foundDefaultOne = true;
+    }
     v.push_back(std::move(e));
   }
 }

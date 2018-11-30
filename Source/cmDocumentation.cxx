@@ -44,8 +44,15 @@ static const char* cmDocumentationStandardOptions[][2] = {
   { nullptr, nullptr }
 };
 
-static const char* cmDocumentationGeneratorsHeader[][2] = {
+static const char* cmDocumentationCPackGeneratorsHeader[][2] = {
   { nullptr, "The following generators are available on this platform:" },
+  { nullptr, nullptr }
+};
+
+static const char* cmDocumentationCMakeGeneratorsHeader[][2] = {
+  { nullptr,
+    "The following generators are available on this platform (* marks "
+    "default):" },
   { nullptr, nullptr }
 };
 
@@ -186,7 +193,7 @@ void cmDocumentation::addCMakeStandardDocSections()
   cmDocumentationSection* sec;
 
   sec = new cmDocumentationSection("Generators", "GENERATORS");
-  sec->Append(cmDocumentationGeneratorsHeader);
+  sec->Append(cmDocumentationCMakeGeneratorsHeader);
   this->AllSections["Generators"] = sec;
 }
 
@@ -202,7 +209,7 @@ void cmDocumentation::addCPackStandardDocSections()
   cmDocumentationSection* sec;
 
   sec = new cmDocumentationSection("Generators", "GENERATORS");
-  sec->Append(cmDocumentationGeneratorsHeader);
+  sec->Append(cmDocumentationCPackGeneratorsHeader);
   this->AllSections["Generators"] = sec;
 }
 
