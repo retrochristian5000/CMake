@@ -3648,8 +3648,10 @@ void cmMakefile::ConfigureString(const std::string& input, std::string& output,
   }
 
   // Perform variable replacements.
-  this->ExpandVariablesInString(output, escapeQuotes, true, atOnly, nullptr,
-                                -1, true, true);
+  const auto& currentTrace = this->Backtrace.Top();
+  this->ExpandVariablesInString(output, escapeQuotes, true, atOnly,
+                                currentTrace.FilePath.c_str(),
+                                currentTrace.Line, true, true);
 }
 
 int cmMakefile::ConfigureFile(const char* infile, const char* outfile,
