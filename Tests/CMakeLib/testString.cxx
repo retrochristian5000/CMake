@@ -3,6 +3,7 @@
 
 #include "cmString.hxx"
 
+#include "cm_static_string_view.hxx"
 #include "cm_string_view.hxx"
 
 #include <cstring>
@@ -250,6 +251,36 @@ static bool testConstructFromN()
   ASSERT_TRUE(str.size() == 3);
   ASSERT_TRUE(std::strncmp(str.data(), "aaa", 3) == 0);
   return true;
+}
+
+static const auto staticStringView = "abc"_s;
+
+static bool testFromStaticStringView(cm::String str)
+{
+  cm::String const& str_const = str;
+  ASSERT_TRUE(str_const.data() == staticStringView.data());
+  ASSERT_TRUE(str_const.size() == staticStringView.size());
+  ASSERT_TRUE(str.c_str() == staticStringView);
+  cm::String substr = str.substr(1);
+  cm::String const& substr_const = substr;
+  ASSERT_TRUE(substr_const.data() == &staticStringView[1]);
+  ASSERT_TRUE(substr_const.size() == 2);
+  ASSERT_TRUE(substr.c_str() == &staticStringView[1]);
+  return true;
+}
+
+static bool testConstructFromStaticStringView()
+{
+  std::cout << "testConstructFromStaticStringView()\n";
+  return testFromStaticStringView(staticStringView);
+}
+
+static bool testAssignFromStaticStringView()
+{
+  std::cout << "testAssignFromStaticStringView()\n";
+  cm::String str;
+  str = staticStringView;
+  return testFromStaticStringView(str);
 }
 
 static bool testConstructCopy()
@@ -728,7 +759,7 @@ static bool testMethod_substr_AtEnd(cm::String str)
 static bool testMethod_substr_AtEndBorrowed()
 {
   std::cout << "testMethod_substr_AtEndBorrowed()\n";
-  return testMethod_substr_AtEnd(cm::String::borrow("abc"));
+  return testMethod_substr_AtEnd("abc"_s);
 }
 
 static bool testMethod_substr_AtEndOwned()
@@ -782,7 +813,7 @@ static bool testMethod_substr_AtStart(cm::String str)
 static bool testMethod_substr_AtStartBorrowed()
 {
   std::cout << "testMethod_substr_AtStartBorrowed()\n";
-  return testMethod_substr_AtStart(cm::String::borrow("abc"));
+  return testMethod_substr_AtStart("abc"_s);
 }
 
 static bool testMethod_substr_AtStartOwned()
@@ -976,6 +1007,14 @@ static bool testAddition()
     ASSERT_TRUE("abcd" == "a" + (cm::String("b") + "c") + "d");
   }
   {
+    ASSERT_TRUE(cm::String("a"_s) + "b"_s == "ab"_s);
+    ASSERT_TRUE("ab"_s == "a"_s + cm::String("b"_s));
+    ASSERT_TRUE("a"_s + cm::String("b"_s) + "c"_s == "abc"_s);
+    ASSERT_TRUE("abc"_s == "a"_s + cm::String("b"_s) + "c"_s);
+    ASSERT_TRUE("a"_s + (cm::String("b"_s) + "c"_s) + "d"_s == "abcd"_s);
+    ASSERT_TRUE("abcd"_s == "a"_s + (cm::String("b"_s) + "c"_s) + "d"_s);
+  }
+  {
     const char* a = "a";
     const char* b = "b";
     const char* ab = "ab";
@@ -1099,6 +1138,9 @@ int testString(int /*unused*/, char* /*unused*/ [])
   if (!testConstructFromN()) {
     return 1;
   }
+  if (!testConstructFromStaticStringView()) {
+    return 1;
+  }
   if (!testConstructCopy()) {
     return 1;
   }
@@ -1133,6 +1175,9 @@ int testString(int /*unused*/, char* /*unused*/ [])
     return 1;
   }
   if (!testAssignFromInitList()) {
+    return 1;
+  }
+  if (!testAssignFromStaticStringView()) {
     return 1;
   }
   if (!testOperatorBool()) {
