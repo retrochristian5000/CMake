@@ -28,6 +28,8 @@ function(__ep_test_with_build testName)
 endfunction()
 
 __ep_test_with_build(MultiCommand)
+__ep_test_with_build(LogOutputOnFailure)
+__ep_test_with_build(LogOutputOnFailureMerged)
 
 # We can't test the substitution when using the old MSYS due to
 # make/sh mangling the paths (substitution is performed correctly,
