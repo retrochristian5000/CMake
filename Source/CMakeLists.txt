@@ -375,6 +375,9 @@ set(SRCS
   cmXMLWriter.h
   cmake.cxx
   cmake.h
+  cm_string_view.cxx
+  cm_string_view.hxx
+  cm_static_string_view.hxx
 
   cmCommand.cxx
   cmCommand.h
@@ -566,6 +569,8 @@ set(SRCS
   cmSiteNameCommand.h
   cmSourceGroupCommand.cxx
   cmSourceGroupCommand.h
+  cmString.cxx
+  cmString.hxx
   cmStringReplaceHelper.cxx
   cmStringCommand.cxx
   cmStringCommand.h
