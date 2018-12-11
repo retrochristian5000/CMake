@@ -4873,7 +4873,11 @@ def gen_check_targets(c, g):
 
     return expected
 
-def check_targets(c, g):
+def check_targets(c, g, inSource):
+    if inSource:
+        # FIXME: expected paths need some rewrites for in-source testing
+        return
+
     check_list_match(lambda a, e: matches(a["id"], e["id"]),
                      c["targets"], gen_check_targets(c, g),
                      check=check_target(c),
@@ -5027,11 +5031,11 @@ def check_projects(c, g):
                      missing_exception=lambda e: "Project name: %s" % e["name"],
                      extra_exception=lambda a: "Project name: %s" % a["name"])
 
-def check_object_codemodel_configuration(c, g):
+def check_object_codemodel_configuration(c, g, inSource):
     assert sorted(c.keys()) == ["directories", "name", "projects", "targets"]
     assert is_string(c["name"])
     check_directories(c, g)
-    check_targets(c, g)
+    check_targets(c, g, inSource)
     check_projects(c, g)
 
 def check_object_codemodel(g):
@@ -5043,6 +5047,8 @@ def check_object_codemodel(g):
         assert matches(o["paths"]["build"], "^.*/Tests/RunCMake/FileAPI/codemodel-v2-build$")
         assert matches(o["paths"]["source"], "^.*/Tests/RunCMake/FileAPI$")
 
+        inSource = os.path.dirname(o["paths"]["build"]) == o["paths"]["source"]
+
         if matches(g, "^(Visual Studio |Xcode$)"):
             assert sorted([c["name"] for c in o["configurations"]]) == ["Debug", "MinSizeRel", "RelWithDebInfo", "Release"]
         else:
@@ -5050,7 +5056,7 @@ def check_object_codemodel(g):
             assert o["configurations"][0]["name"] in ("", "Debug", "Release", "RelWithDebInfo", "MinSizeRel")
 
         for c in o["configurations"]:
-            check_object_codemodel_configuration(c, g)
+            check_object_codemodel_configuration(c, g, inSource)
     return _check
 
 assert is_dict(index)
