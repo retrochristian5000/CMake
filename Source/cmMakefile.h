@@ -871,6 +871,9 @@ public:
                               const char* sourceFilename) const;
   bool IsProjectFile(const char* filename) const;
 
+  int GetRecursionDepth() const;
+  void SetRecursionDepth(int recursionDepth);
+
 protected:
   // add link libraries and directories to the target
   void AddGlobalLinkInformation(cmTarget& target);
@@ -931,6 +934,7 @@ protected:
 private:
   cmStateSnapshot StateSnapshot;
   cmListFileBacktrace Backtrace;
+  int RecursionDepth;
 
   void ReadListFile(cmListFile const& listFile,
                     const std::string& filenametoread);
