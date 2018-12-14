@@ -1,0 +1,22 @@
+CMAKE_MAXIMUM_RECURSION_DEPTH
+-----------------------------
+
+Maximum recursion depth for CMake scripts. It is intended to be set on the
+command line with ``-DCMAKE_MAXIMUM_RECURSION_DEPTH=<x>``. If it is not set, or
+is set to a non-integer value, a default limit of 1000 is used. If the
+recursion limit is reached, the script terminates immediately with a fatal
+error.
+
+Calling any of the following commands increases the recursion depth:
+
+* :command:`include`
+* :command:`find_package`
+* :command:`add_subdirectory`
+* :command:`try_compile`
+* :command:`ctest_read_custom_files`
+* :command:`ctest_run_script` (unless ``NEW_PROCESS`` is specified)
+* User-defined :command:`function`'s and :command:`macro`'s (note that
+  :command:`function` and :command:`macro` themselves don't increase recursion
+  depth)
+* Reading or writing variables that are being watched by a
+  :command:`variable_watch`

@@ -1,0 +1,5 @@
+1000
+CMake Error at .*/FindRecursivePackage\.cmake:1 \(message\):
+  Maximum recursion depth of 1000 exceeded
+Call Stack \(most recent call first\):
+  .*/FindRecursivePackage\.cmake:3 \(find_package\)

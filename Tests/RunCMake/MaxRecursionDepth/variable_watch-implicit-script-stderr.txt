@@ -1,0 +1,6 @@
+1000
+CMake Error at .*/Tests/RunCMake/MaxRecursionDepth/variable_watch\.cmake:9999 \(update_x\):
+  Maximum recursion depth of 1000 exceeded
+Call Stack \(most recent call first\):
+  .*/Tests/RunCMake/MaxRecursionDepth/variable_watch\.cmake:5 \(set\)
+  .*/Tests/RunCMake/MaxRecursionDepth/variable_watch\.cmake:9999 \(update_x\)
