@@ -106,8 +106,7 @@ void cmGhsMultiTargetGenerator::Generate()
                                              this->Name.c_str());
 
   // Skip if empty or not included in build
-  std::vector<cmSourceFile*> objectSources = this->GetSources();
-  if (!objectSources.empty() && this->IncludeThisTarget()) {
+  if (!this->GetSources().empty() && this->IncludeThisTarget()) {
 
     // Open the filestream in copy-if-different mode.
     std::string fname = this->LocalGenerator->GetCurrentBinaryDirectory();
@@ -143,13 +142,7 @@ void cmGhsMultiTargetGenerator::Generate()
       this->WriteTargetLinkLibraries(fout, config, language);
     }
     this->WriteCustomCommands(fout);
-
-    std::map<const cmSourceFile*, std::string> objectNames =
-      cmGhsMultiTargetGenerator::GetObjectNames(
-        &objectSources, this->LocalGenerator, this->GeneratorTarget);
-#if 0 /* temp stub - this generates its own files */
-    this->WriteSources(objectSources, objectNames);
-#endif
+    this->WriteSources(fout);
 
     fout.Close();
   }
@@ -481,43 +474,164 @@ cmGhsMultiTargetGenerator::GetObjectNames(
   return objectNamesCorrected;
 }
 
-void cmGhsMultiTargetGenerator::WriteSources(
-  std::vector<cmSourceFile*> const& objectSources,
-  std::map<const cmSourceFile*, std::string> const& objectNames)
+void cmGhsMultiTargetGenerator::WriteSources(std::ostream& fout_proj)
 {
-  for (const cmSourceFile* sf : objectSources) {
-    std::vector<cmSourceGroup> sourceGroups(this->Makefile->GetSourceGroups());
-    std::string const& sourceFullPath = sf->GetFullPath();
-    cmSourceGroup* sourceGroup =
-      this->Makefile->FindSourceGroup(sourceFullPath, sourceGroups);
-    std::string sgPath = sourceGroup->GetFullName();
-    cmSystemTools::ConvertToUnixSlashes(sgPath);
-    cmGlobalGhsMultiGenerator::AddFilesUpToPath(
-      this->GetFolderBuildStreams(), &this->FolderBuildStreams,
-      this->LocalGenerator->GetBinaryDirectory().c_str(), sgPath,
-      GhsMultiGpj::SUBPROJECT, this->RelBuildFilePath);
+  std::vector<cmSourceFile*> sources = this->GetSources();
+  std::vector<cmSourceGroup> sourceGroups = this->Makefile->GetSourceGroups();
 
-    std::string fullSourcePath(sf->GetFullPath());
-    if (sf->GetExtension() == "int" || sf->GetExtension() == "bsp") {
-      *this->FolderBuildStreams[sgPath] << fullSourcePath << std::endl;
-    } else {
-      // WORKAROUND: GHS MULTI needs the path to use backslashes without quotes
-      //  to open files in search as of version 6.1.6
-      cmsys::SystemTools::ReplaceString(fullSourcePath, "/", "\\");
-      *this->FolderBuildStreams[sgPath] << fullSourcePath << std::endl;
+  /* collect which files are in which groups */
+  std::map<cmSourceGroup*, std::vector<cmSourceFile*>> groupFiles;
+  std::map<std::string, cmSourceGroup*> groupNames;
+
+  for (auto& sf : sources) {
+    cmSourceGroup* sourceGroup =
+      this->Makefile->FindSourceGroup(sf->GetFullPath(), sourceGroups);
+    groupFiles[sourceGroup].push_back(sf);
+  }
+
+  for (auto& g : groupFiles) {
+    groupNames[g.first->GetFullName()] = g.first;
+  }
+
+  /* sort the group names and files within group names */
+  const std::vector<std::pair<std::string, std::string>> standardGroups = {
+    { "Header Files", CM_HEADER_REGEX },
+    { "Source Files", CM_SOURCE_REGEX },
+    { "CMake Rules", "\\.rule$" },
+    { "Object Files", "\\.(lo|o|obj)$" },
+    { "Object Libraries", "^MATCH_NO_SOURCES$" },
+    { "Resources", CM_RESOURCE_REGEX },
+    { "", "^.*$" }
+  };
+
+  /* 1) order standard groups first */
+  std::vector<cmSourceGroup*> groupOrderVec;
+  for (auto& gn : standardGroups) {
+    cmSourceGroup* sg = groupNames[gn.first];
+    if (sg) {
+      groupOrderVec.push_back(sg);
+    }
+    groupNames.erase(gn.first);
+  }
+
+  /* 2) sort the files within each standard group */
+  for (auto& g : groupOrderVec) {
+    std::sort(groupFiles[g].begin(), groupFiles[g].end(),
+              [](cmSourceFile* l, cmSourceFile* r) {
+                return l->GetFullPath() < r->GetFullPath();
+              });
+  }
+
+  /* 3) generate the regex to partition user source group files */
+  std::vector<std::pair<std::string, cmsys::RegularExpression>> groupRegex;
+  for (auto& gn : standardGroups) {
+    groupRegex.push_back(
+      std::make_pair(gn.first, cmsys::RegularExpression(gn.second)));
+  }
+
+  /* 4) process each user-defined group */
+  for (auto& gn : groupNames) {
+    /* 4a) add this group to the in-order list */
+    groupOrderVec.push_back(gn.second);
+
+    /* 4b) determine which partition each file belongs in */
+    std::map<std::string, std::vector<cmSourceFile*>> temp;
+    for (auto& sf : groupFiles[gn.second]) {
+      // Now search for a group whose regex matches the file.
+      for (auto& regex : groupRegex) {
+        if (regex.second.find(sf->GetFullPath())) {
+          temp[regex.first].push_back(sf);
+          break;
+        }
+      }
     }
 
-    if ("ld" != sf->GetExtension() && "int" != sf->GetExtension() &&
-        "bsp" != sf->GetExtension()) {
-      this->WriteObjectLangOverride(this->FolderBuildStreams[sgPath], sf);
-      if (objectNames.end() != objectNames.find(sf)) {
-        *this->FolderBuildStreams[sgPath]
-          << "    -o \"" << objectNames.find(sf)->second << "\"" << std::endl;
+    /* 4c) sort each list of files */
+    for (auto& vf : temp) {
+      std::sort(vf.second.begin(), vf.second.end(),
+                [](cmSourceFile* l, cmSourceFile* r) {
+                  return l->GetFullPath() < r->GetFullPath();
+                });
+    }
+
+    /* 4d) replace the unsorted list with the sorted version */
+    auto& gfl = groupFiles[gn.second];
+    gfl.clear();
+    for (auto& sg : standardGroups) {
+      gfl.insert(gfl.end(), temp[sg.first].begin(), temp[sg.first].end());
+    }
+  }
+
+  /* get all the object names for these sources */
+  std::map<const cmSourceFile*, std::string> objectNames =
+    cmGhsMultiTargetGenerator::GetObjectNames(&sources, this->LocalGenerator,
+                                              this->GeneratorTarget);
+
+  /* write files into the proper group
+   * -- standard groups go into main project
+   *    unless FOLDER property is set.
+   */
+  std::vector<cmGeneratedFileStream*> gfiles;
+
+  for (cmSourceGroup* sg : groupOrderVec) {
+    std::ostream* fout;
+    bool useFolders =
+      cmSystemTools::IsOn(this->GeneratorTarget->GetProperty("FOLDER"));
+    if ((useFolders && sg->GetFullName().empty()) ||
+        (!useFolders &&
+         groupNames.find(sg->GetFullName()) == groupNames.end())) {
+      fout = &fout_proj;
+    } else {
+      // Open the filestream in copy-if-different mode.
+      std::string gname = this->Name;
+      gname += "_";
+      gname += sg->GetFullName();
+      cmsys::SystemTools::ReplaceString(gname, "\\", "_");
+      std::string fname = this->LocalGenerator->GetCurrentBinaryDirectory();
+      fname += "/";
+      fname += gname;
+      fname += cmGlobalGhsMultiGenerator::FILE_EXTENSION;
+      cmGeneratedFileStream* f = new cmGeneratedFileStream(fname.c_str());
+      f->SetCopyIfDifferent(true);
+      gfiles.push_back(f);
+      fout = f;
+      cmGlobalGhsMultiGenerator::OpenBuildFileStream(f);
+      *fout << "[Subproject]" << std::endl;
+      cmGlobalGhsMultiGenerator::WriteDisclaimer(f);
+      fout_proj << gname << cmGlobalGhsMultiGenerator::FILE_EXTENSION << " ";
+      fout_proj << "[Subproject]" << std::endl;
+    }
+
+    /* output rule for each source file */
+    for (const cmSourceFile* si : groupFiles[sg]) {
+      std::string fullSourcePath(si->GetFullPath());
+
+      if (si->GetExtension() == "int" || si->GetExtension() == "bsp") {
+        *fout << fullSourcePath << std::endl;
+      } else {
+        // WORKAROUND: GHS MULTI needs the path to use backslashes without
+        // quotes
+        //  to open files in search as of version 6.1.6
+        cmsys::SystemTools::ReplaceString(fullSourcePath, "/", "\\");
+        *fout << fullSourcePath << std::endl;
       }
 
-      this->WriteObjectDir(this->FolderBuildStreams[sgPath],
-                           this->AbsBuildFilePath + sgPath);
+      if ("ld" != sf->GetExtension() && "int" != sf->GetExtension() &&
+          "bsp" != sf->GetExtension()) {
+        this->WriteObjectLangOverride(this->FolderBuildStreams[sgPath], sf);
+        if (objectNames.end() != objectNames.find(sf)) {
+          *this->FolderBuildStreams[sgPath]
+            << "    -o \"" << objectNames.find(sf)->second << "\""
+            << std::endl;
+        }
+        std::string sgPath = sg->GetFullName();
+        this->WriteObjectDir(*fout, this->AbsBuildFilePath + sgPath);
+      }
     }
+  }
+
+  for (cmGeneratedFileStream* f : gfiles) {
+    f->Close();
   }
 }
 
@@ -534,8 +648,8 @@ void cmGhsMultiTargetGenerator::WriteObjectLangOverride(
   }
 }
 
-void cmGhsMultiTargetGenerator::WriteObjectDir(
-  cmGeneratedFileStream* fileStream, std::string const& dir)
+void cmGhsMultiTargetGenerator::WriteObjectDir(std::ostream& fout,
+                                               std::string const& dir)
 {
   std::string workingDir(dir);
   cmSystemTools::ConvertToUnixSlashes(workingDir);
@@ -543,7 +657,7 @@ void cmGhsMultiTargetGenerator::WriteObjectDir(
     workingDir += "/";
   }
   workingDir += "Objs";
-  *fileStream << "    -object_dir=\"" << workingDir << "\"" << std::endl;
+  fout << "    -object_dir=\"" << workingDir << "\"" << std::endl;
 }
 
 std::string cmGhsMultiTargetGenerator::GetOutputDirectory(
