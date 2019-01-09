@@ -32,6 +32,10 @@ add_executable(groups
   standard.h
   )
 
+if("${CMAKE_C_COMPILER_ID}" MATCHES "GHS")
+  target_link_options(groups PRIVATE "-non_shared")
+endif()
+
 source_group( gC FILES sub/testOBJ.h testOBJ.c testOBJ.h sub/testOBJ.c )
 source_group( gA FILES test1.c test1.h)
 source_group( gB test[65].c )

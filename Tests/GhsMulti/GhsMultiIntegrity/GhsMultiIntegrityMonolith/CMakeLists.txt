@@ -3,6 +3,10 @@
 
 cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 
+if("${CMAKE_C_COMPILER_ID}" STREQUAL "GHS")
+  add_link_options("-non_shared")
+endif()
+
 project(test C)
 
 # create virtual AS
