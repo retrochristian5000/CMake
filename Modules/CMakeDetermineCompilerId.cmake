@@ -391,6 +391,40 @@ Id flags: ${testflags} ${CMAKE_${lang}_COMPILER_ID_FLAGS_ALWAYS}
       separate_arguments(CMAKE_${lang}_XCODE_ARCHS)
       set(CMAKE_${lang}_XCODE_ARCHS "${CMAKE_${lang}_XCODE_ARCHS}" PARENT_SCOPE)
     endif()
+  elseif("${CMAKE_GENERATOR}" MATCHES "Green Hills MULTI")
+    set(id_dir ${CMAKE_${lang}_COMPILER_ID_DIR})
+    set(id_src "${src}")
+    if (GHS_PRIMARY_TARGET)
+      set(ghs_primary_target "${GHS_PRIMARY_TARGET}")
+    else()
+      set(ghs_primary_target "${CMAKE_GENERATOR_PLATFORM}_${GHS_TARGET_PLATFORM}.tgt")
+    endif()
+    if ("${GHS_TARGET_PLATFORM}" MATCHES "integrity")
+        set(bsp_name "macro GHS_BSP=${GHS_BSP_NAME}")
+        set(os_dir "macro GHS_OS=${GHS_OS_DIR}")
+    endif()
+    set(command "${CMAKE_MAKE_PROGRAM}" "-commands" "-top" "GHS_default.gpj")
+    configure_file(${CMAKE_ROOT}/Modules/CompilerId/GHS_default.gpj.in
+      ${id_dir}/GHS_default.gpj @ONLY)
+    configure_file(${CMAKE_ROOT}/Modules/CompilerId/GHS_lib.gpj.in
+      ${id_dir}/GHS_lib.gpj @ONLY)
+    execute_process(COMMAND ${command}
+      WORKING_DIRECTORY ${id_dir}
+      OUTPUT_VARIABLE CMAKE_${lang}_COMPILER_ID_OUTPUT
+      ERROR_VARIABLE CMAKE_${lang}_COMPILER_ID_OUTPUT
+      RESULT_VARIABLE CMAKE_${lang}_COMPILER_ID_RESULT
+      )
+    # Match the compiler location line printed out.
+    set(ghs_toolpath "${CMAKE_MAKE_PROGRAM}")
+    string(REPLACE "/gbuild.exe" "/" ghs_toolpath ${ghs_toolpath})
+    string(REPLACE / "\\\\" ghs_toolpath ${ghs_toolpath})
+    if("${CMAKE_${lang}_COMPILER_ID_OUTPUT}" MATCHES "(${ghs_toolpath}[^ ]*)")
+      set(_comp "${CMAKE_MATCH_1}.exe")
+      if(EXISTS "${_comp}")
+        file(TO_CMAKE_PATH "${_comp}" _comp)
+        set(CMAKE_${lang}_COMPILER_ID_TOOL "${_comp}" PARENT_SCOPE)
+      endif()
+    endif()
   else()
     execute_process(
       COMMAND "${CMAKE_${lang}_COMPILER}"
@@ -544,7 +578,7 @@ function(CMAKE_DETERMINE_COMPILER_ID_CHECK lang file)
         set(ARCHITECTURE_ID "${CMAKE_MATCH_1}")
       endif()
       if("${info}" MATCHES "INFO:compiler_version\\[([^]\"]*)\\]")
-        string(REGEX REPLACE "^0+([0-9])" "\\1" COMPILER_VERSION "${CMAKE_MATCH_1}")
+        string(REGEX REPLACE "^0+([0-9]+)" "\\1" COMPILER_VERSION "${CMAKE_MATCH_1}")
         string(REGEX REPLACE "\\.0+([0-9])" ".\\1" COMPILER_VERSION "${COMPILER_VERSION}")
       endif()
       if("${info}" MATCHES "INFO:compiler_version_internal\\[([^]\"]*)\\]")
