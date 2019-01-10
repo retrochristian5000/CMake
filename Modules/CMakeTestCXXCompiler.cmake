@@ -22,6 +22,7 @@ unset(CMAKE_CXX_COMPILER_WORKS CACHE)
 # any makefiles or projects.
 if(NOT CMAKE_CXX_COMPILER_WORKS)
   PrintTestCompilerStatus("CXX" "")
+  set_try_compile_target_type()
   file(WRITE ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/testCXXCompiler.cxx
     "#ifndef __cplusplus\n"
     "# error \"The CMAKE_CXX_COMPILER is set to a C compiler\"\n"
@@ -34,6 +35,7 @@ if(NOT CMAKE_CXX_COMPILER_WORKS)
   set(CMAKE_CXX_COMPILER_WORKS ${CMAKE_CXX_COMPILER_WORKS})
   unset(CMAKE_CXX_COMPILER_WORKS CACHE)
   set(CXX_TEST_WAS_RUN 1)
+  restore_try_compile_target_type()
 endif()
 
 if(NOT CMAKE_CXX_COMPILER_WORKS)
