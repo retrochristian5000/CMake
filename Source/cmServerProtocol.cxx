@@ -13,8 +13,8 @@
 #include "cmState.h"
 #include "cmSystemTools.h"
 #include "cm_uv.h"
-#include "cmake.h"
 
+#include "cmake.h"
 #include <algorithm>
 #include <cassert>
 #include <functional>

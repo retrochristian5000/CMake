@@ -9,11 +9,11 @@
 #include "cmGeneratorTarget.h"
 #include "cmLocalGenerator.h"
 #include "cmMakefile.h"
+#include "cmMessageType.h"
 #include "cmState.h"
 #include "cmStateTypes.h"
 #include "cmSystemTools.h"
 #include "cmTarget.h"
-#include "cmake.h"
 
 #include <memory>
 #include <utility>
@@ -116,7 +116,7 @@ cmQtAutoGenGlobalInitializer::cmQtAutoGenGlobalInitializer(
             msg += ")\n";
           }
           msg += "to your CMakeLists.txt file.";
-          target->Makefile->IssueMessage(cmake::AUTHOR_WARNING, msg);
+          target->Makefile->IssueMessage(MessageType::AUTHOR_WARNING, msg);
         }
         if (mocIsValid || uicIsValid || rccIsValid) {
           // Create autogen target initializer
