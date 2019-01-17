@@ -17,7 +17,7 @@ function(CMAKE_DETERMINE_COMPILER_ABI lang src)
     set(BIN "${CMAKE_PLATFORM_INFO_DIR}/CMakeDetermineCompilerABI_${lang}.bin")
     set(CMAKE_FLAGS )
     if(DEFINED CMAKE_${lang}_VERBOSE_FLAG)
-      set(CMAKE_FLAGS "-DEXE_LINKER_FLAGS=${CMAKE_${lang}_VERBOSE_FLAG}")
+      set(CMAKE_FLAGS "-DCOMPILE_DEFINITIONS=${CMAKE_${lang}_VERBOSE_FLAG}")
     endif()
     if(NOT "x${CMAKE_${lang}_COMPILER_ID}" STREQUAL "xMSVC")
       # Avoid adding our own platform standard libraries for compilers
