@@ -662,7 +662,7 @@ public:
   }
 };
 
-cmSourceFile* cmTarget::AddSource(const std::string& src)
+cmSourceFile* cmTarget::AddSource(const std::string& src, bool before)
 {
   cmSourceFileLocation sfl(this->Makefile, src,
                            cmSourceFileLocationKind::Known);
@@ -671,8 +671,14 @@ cmSourceFile* cmTarget::AddSource(const std::string& src)
                    TargetPropertyEntryFinder(sfl)) ==
       this->Internal->SourceEntries.end()) {
     cmListFileBacktrace lfbt = this->Makefile->GetBacktrace();
-    this->Internal->SourceEntries.push_back(src);
-    this->Internal->SourceBacktraces.push_back(lfbt);
+    this->Internal->SourceEntries.insert(
+      before ? this->Internal->SourceEntries.cbegin()
+             : this->Internal->SourceEntries.cend(),
+      src);
+    this->Internal->SourceBacktraces.insert(
+      before ? this->Internal->SourceBacktraces.cbegin()
+             : this->Internal->SourceBacktraces.cend(),
+      lfbt);
   }
   if (cmGeneratorExpression::Find(src) != std::string::npos) {
     return nullptr;
