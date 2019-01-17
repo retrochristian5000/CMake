@@ -1,0 +1,5 @@
+1000
+CMake Error at .*/function\.cmake:2 \(message\):
+  Maximum recursion depth of 1000 exceeded
+Call Stack \(most recent call first\):
+  .*/function\.cmake:4 \(recursive\)
