@@ -56,8 +56,6 @@ std::string cmGeneratorExpressionNode::EvaluateDependentExpression(
 
 static const struct ZeroNode : public cmGeneratorExpressionNode
 {
-  ZeroNode() = default;
-
   bool GeneratesContent() const override { return false; }
 
   bool AcceptsArbitraryContentParameter() const override { return true; }
@@ -74,8 +72,6 @@ static const struct ZeroNode : public cmGeneratorExpressionNode
 
 static const struct OneNode : public cmGeneratorExpressionNode
 {
-  OneNode() = default;
-
   bool AcceptsArbitraryContentParameter() const override { return true; }
 
   std::string Evaluate(
@@ -95,7 +91,6 @@ static const struct ZeroNode installInterfaceNode;
 #define BOOLEAN_OP_NODE(OPNAME, OP, SUCCESS_VALUE, FAILURE_VALUE)             \
   static const struct OP##Node : public cmGeneratorExpressionNode             \
   {                                                                           \
-    OP##Node() = default;                                                     \
     virtual int NumExpectedParameters() const { return OneOrMoreParameters; } \
                                                                               \
     std::string Evaluate(const std::vector<std::string>& parameters,          \
@@ -127,8 +122,6 @@ BOOLEAN_OP_NODE(orNode, OR, 0, 1)
 
 static const struct NotNode : public cmGeneratorExpressionNode
 {
-  NotNode() = default;
-
   std::string Evaluate(
     const std::vector<std::string>& parameters,
     cmGeneratorExpressionContext* context,
@@ -147,8 +140,6 @@ static const struct NotNode : public cmGeneratorExpressionNode
 
 static const struct BoolNode : public cmGeneratorExpressionNode
 {
-  BoolNode() = default;
-
   int NumExpectedParameters() const override { return 1; }
 
   std::string Evaluate(
@@ -163,8 +154,6 @@ static const struct BoolNode : public cmGeneratorExpressionNode
 
 static const struct IfNode : public cmGeneratorExpressionNode
 {
-  IfNode() = default;
-
   int NumExpectedParameters() const override { return 3; }
 
   std::string Evaluate(const std::vector<std::string>& parameters,
@@ -184,8 +173,6 @@ static const struct IfNode : public cmGeneratorExpressionNode
 
 static const struct StrEqualNode : public cmGeneratorExpressionNode
 {
-  StrEqualNode() = default;
-
   int NumExpectedParameters() const override { return 2; }
 
   std::string Evaluate(
@@ -200,8 +187,6 @@ static const struct StrEqualNode : public cmGeneratorExpressionNode
 
 static const struct EqualNode : public cmGeneratorExpressionNode
 {
-  EqualNode() = default;
-
   int NumExpectedParameters() const override { return 2; }
 
   std::string Evaluate(
@@ -278,8 +263,6 @@ static const struct EqualNode : public cmGeneratorExpressionNode
 
 static const struct InListNode : public cmGeneratorExpressionNode
 {
-  InListNode() = default;
-
   int NumExpectedParameters() const override { return 2; }
 
   std::string Evaluate(
@@ -328,8 +311,6 @@ static const struct InListNode : public cmGeneratorExpressionNode
 
 static const struct TargetExistsNode : public cmGeneratorExpressionNode
 {
-  TargetExistsNode() = default;
-
   int NumExpectedParameters() const override { return 1; }
 
   std::string Evaluate(
@@ -359,8 +340,6 @@ static const struct TargetExistsNode : public cmGeneratorExpressionNode
 
 static const struct TargetNameIfExistsNode : public cmGeneratorExpressionNode
 {
-  TargetNameIfExistsNode() = default;
-
   int NumExpectedParameters() const override { return 1; }
 
   std::string Evaluate(
@@ -393,8 +372,6 @@ static const struct TargetNameIfExistsNode : public cmGeneratorExpressionNode
 
 struct GenexEvaluator : public cmGeneratorExpressionNode
 {
-  GenexEvaluator() = default;
-
 protected:
   std::string EvaluateExpression(
     const std::string& genexOperator, const std::string& expression,
@@ -430,8 +407,6 @@ protected:
 
 static const struct TargetGenexEvalNode : public GenexEvaluator
 {
-  TargetGenexEvalNode() = default;
-
   int NumExpectedParameters() const override { return 2; }
 
   bool AcceptsArbitraryContentParameter() const override { return true; }
@@ -476,8 +451,6 @@ static const struct TargetGenexEvalNode : public GenexEvaluator
 
 static const struct GenexEvalNode : public GenexEvaluator
 {
-  GenexEvalNode() = default;
-
   int NumExpectedParameters() const override { return 1; }
 
   bool AcceptsArbitraryContentParameter() const override { return true; }
@@ -500,8 +473,6 @@ static const struct GenexEvalNode : public GenexEvaluator
 
 static const struct LowerCaseNode : public cmGeneratorExpressionNode
 {
-  LowerCaseNode() = default;
-
   bool AcceptsArbitraryContentParameter() const override { return true; }
 
   std::string Evaluate(
@@ -516,8 +487,6 @@ static const struct LowerCaseNode : public cmGeneratorExpressionNode
 
 static const struct UpperCaseNode : public cmGeneratorExpressionNode
 {
-  UpperCaseNode() = default;
-
   bool AcceptsArbitraryContentParameter() const override { return true; }
 
   std::string Evaluate(
@@ -532,8 +501,6 @@ static const struct UpperCaseNode : public cmGeneratorExpressionNode
 
 static const struct MakeCIdentifierNode : public cmGeneratorExpressionNode
 {
-  MakeCIdentifierNode() = default;
-
   bool AcceptsArbitraryContentParameter() const override { return true; }
 
   std::string Evaluate(
@@ -548,8 +515,6 @@ static const struct MakeCIdentifierNode : public cmGeneratorExpressionNode
 
 static const struct Angle_RNode : public cmGeneratorExpressionNode
 {
-  Angle_RNode() = default;
-
   int NumExpectedParameters() const override { return 0; }
 
   std::string Evaluate(
@@ -564,8 +529,6 @@ static const struct Angle_RNode : public cmGeneratorExpressionNode
 
 static const struct CommaNode : public cmGeneratorExpressionNode
 {
-  CommaNode() = default;
-
   int NumExpectedParameters() const override { return 0; }
 
   std::string Evaluate(
@@ -580,8 +543,6 @@ static const struct CommaNode : public cmGeneratorExpressionNode
 
 static const struct SemicolonNode : public cmGeneratorExpressionNode
 {
-  SemicolonNode() = default;
-
   int NumExpectedParameters() const override { return 0; }
 
   std::string Evaluate(
@@ -596,8 +557,6 @@ static const struct SemicolonNode : public cmGeneratorExpressionNode
 
 struct CompilerIdNode : public cmGeneratorExpressionNode
 {
-  CompilerIdNode() = default;
-
   int NumExpectedParameters() const override { return OneOrZeroParameters; }
 
   std::string EvaluateWithLanguage(const std::vector<std::string>& parameters,
@@ -650,8 +609,6 @@ struct CompilerIdNode : public cmGeneratorExpressionNode
 
 static const struct CCompilerIdNode : public CompilerIdNode
 {
-  CCompilerIdNode() = default;
-
   std::string Evaluate(
     const std::vector<std::string>& parameters,
     cmGeneratorExpressionContext* context,
@@ -672,8 +629,6 @@ static const struct CCompilerIdNode : public CompilerIdNode
 
 static const struct CXXCompilerIdNode : public CompilerIdNode
 {
-  CXXCompilerIdNode() = default;
-
   std::string Evaluate(
     const std::vector<std::string>& parameters,
     cmGeneratorExpressionContext* context,
@@ -694,8 +649,6 @@ static const struct CXXCompilerIdNode : public CompilerIdNode
 
 static const struct FortranCompilerIdNode : public CompilerIdNode
 {
-  FortranCompilerIdNode() = default;
-
   std::string Evaluate(
     const std::vector<std::string>& parameters,
     cmGeneratorExpressionContext* context,
@@ -716,8 +669,6 @@ static const struct FortranCompilerIdNode : public CompilerIdNode
 
 struct CompilerVersionNode : public cmGeneratorExpressionNode
 {
-  CompilerVersionNode() = default;
-
   int NumExpectedParameters() const override { return OneOrZeroParameters; }
 
   std::string EvaluateWithLanguage(const std::vector<std::string>& parameters,
@@ -753,8 +704,6 @@ struct CompilerVersionNode : public cmGeneratorExpressionNode
 
 static const struct CCompilerVersionNode : public CompilerVersionNode
 {
-  CCompilerVersionNode() = default;
-
   std::string Evaluate(
     const std::vector<std::string>& parameters,
     cmGeneratorExpressionContext* context,
@@ -775,8 +724,6 @@ static const struct CCompilerVersionNode : public CompilerVersionNode
 
 static const struct CxxCompilerVersionNode : public CompilerVersionNode
 {
-  CxxCompilerVersionNode() = default;
-
   std::string Evaluate(
     const std::vector<std::string>& parameters,
     cmGeneratorExpressionContext* context,
@@ -797,8 +744,6 @@ static const struct CxxCompilerVersionNode : public CompilerVersionNode
 
 static const struct FortranCompilerVersionNode : public CompilerVersionNode
 {
-  FortranCompilerVersionNode() = default;
-
   std::string Evaluate(
     const std::vector<std::string>& parameters,
     cmGeneratorExpressionContext* context,
@@ -819,8 +764,6 @@ static const struct FortranCompilerVersionNode : public CompilerVersionNode
 
 struct PlatformIdNode : public cmGeneratorExpressionNode
 {
-  PlatformIdNode() = default;
-
   int NumExpectedParameters() const override { return OneOrZeroParameters; }
 
   std::string Evaluate(
@@ -848,8 +791,6 @@ struct PlatformIdNode : public cmGeneratorExpressionNode
 
 static const struct VersionGreaterNode : public cmGeneratorExpressionNode
 {
-  VersionGreaterNode() = default;
-
   int NumExpectedParameters() const override { return 2; }
 
   std::string Evaluate(
@@ -868,8 +809,6 @@ static const struct VersionGreaterNode : public cmGeneratorExpressionNode
 
 static const struct VersionGreaterEqNode : public cmGeneratorExpressionNode
 {
-  VersionGreaterEqNode() = default;
-
   int NumExpectedParameters() const override { return 2; }
 
   std::string Evaluate(
@@ -888,8 +827,6 @@ static const struct VersionGreaterEqNode : public cmGeneratorExpressionNode
 
 static const struct VersionLessNode : public cmGeneratorExpressionNode
 {
-  VersionLessNode() = default;
-
   int NumExpectedParameters() const override { return 2; }
 
   std::string Evaluate(
@@ -908,8 +845,6 @@ static const struct VersionLessNode : public cmGeneratorExpressionNode
 
 static const struct VersionLessEqNode : public cmGeneratorExpressionNode
 {
-  VersionLessEqNode() = default;
-
   int NumExpectedParameters() const override { return 2; }
 
   std::string Evaluate(
@@ -928,8 +863,6 @@ static const struct VersionLessEqNode : public cmGeneratorExpressionNode
 
 static const struct VersionEqualNode : public cmGeneratorExpressionNode
 {
-  VersionEqualNode() = default;
-
   int NumExpectedParameters() const override { return 2; }
 
   std::string Evaluate(
@@ -948,8 +881,6 @@ static const struct VersionEqualNode : public cmGeneratorExpressionNode
 
 static const struct LinkOnlyNode : public cmGeneratorExpressionNode
 {
-  LinkOnlyNode() = default;
-
   std::string Evaluate(
     const std::vector<std::string>& parameters,
     cmGeneratorExpressionContext* context,
@@ -970,8 +901,6 @@ static const struct LinkOnlyNode : public cmGeneratorExpressionNode
 
 static const struct ConfigurationNode : public cmGeneratorExpressionNode
 {
-  ConfigurationNode() = default;
-
   int NumExpectedParameters() const override { return 0; }
 
   std::string Evaluate(
@@ -987,8 +916,6 @@ static const struct ConfigurationNode : public cmGeneratorExpressionNode
 
 static const struct ConfigurationTestNode : public cmGeneratorExpressionNode
 {
-  ConfigurationTestNode() = default;
-
   int NumExpectedParameters() const override { return OneOrZeroParameters; }
 
   std::string Evaluate(
@@ -1046,8 +973,6 @@ static const struct ConfigurationTestNode : public cmGeneratorExpressionNode
 
 static const struct JoinNode : public cmGeneratorExpressionNode
 {
-  JoinNode() = default;
-
   int NumExpectedParameters() const override { return 2; }
 
   bool AcceptsArbitraryContentParameter() const override { return true; }
@@ -1066,8 +991,6 @@ static const struct JoinNode : public cmGeneratorExpressionNode
 
 static const struct CompileLanguageNode : public cmGeneratorExpressionNode
 {
-  CompileLanguageNode() = default;
-
   int NumExpectedParameters() const override { return OneOrZeroParameters; }
 
   std::string Evaluate(
@@ -1146,8 +1069,6 @@ std::string getLinkedTargetsContent(
 
 static const struct TargetPropertyNode : public cmGeneratorExpressionNode
 {
-  TargetPropertyNode() = default;
-
   // This node handles errors on parameter count itself.
   int NumExpectedParameters() const override { return OneOrMoreParameters; }
 
@@ -1442,8 +1363,6 @@ static const struct TargetPropertyNode : public cmGeneratorExpressionNode
 
 static const struct TargetNameNode : public cmGeneratorExpressionNode
 {
-  TargetNameNode() = default;
-
   bool GeneratesContent() const override { return true; }
 
   bool AcceptsArbitraryContentParameter() const override { return true; }
@@ -1464,8 +1383,6 @@ static const struct TargetNameNode : public cmGeneratorExpressionNode
 
 static const struct TargetObjectsNode : public cmGeneratorExpressionNode
 {
-  TargetObjectsNode() = default;
-
   std::string Evaluate(
     const std::vector<std::string>& parameters,
     cmGeneratorExpressionContext* context,
@@ -1546,8 +1463,6 @@ static const struct TargetObjectsNode : public cmGeneratorExpressionNode
 
 static const struct CompileFeaturesNode : public cmGeneratorExpressionNode
 {
-  CompileFeaturesNode() = default;
-
   int NumExpectedParameters() const override { return OneOrMoreParameters; }
 
   std::string Evaluate(
@@ -1671,8 +1586,6 @@ cmPolicies::PolicyID policyForString(const char* policy_id)
 
 static const struct TargetPolicyNode : public cmGeneratorExpressionNode
 {
-  TargetPolicyNode() = default;
-
   int NumExpectedParameters() const override { return 1; }
 
   std::string Evaluate(
@@ -1732,8 +1645,6 @@ static const struct TargetPolicyNode : public cmGeneratorExpressionNode
 
 static const struct InstallPrefixNode : public cmGeneratorExpressionNode
 {
-  InstallPrefixNode() = default;
-
   bool GeneratesContent() const override { return true; }
   int NumExpectedParameters() const override { return 0; }
 
@@ -1953,8 +1864,6 @@ struct TargetFilesystemArtifactResultGetter<ArtifactPathTag>
 template <typename ArtifactT, typename ComponentT>
 struct TargetFilesystemArtifact : public cmGeneratorExpressionNode
 {
-  TargetFilesystemArtifact() = default;
-
   int NumExpectedParameters() const override { return 1; }
 
   std::string Evaluate(
@@ -2009,8 +1918,6 @@ struct TargetFilesystemArtifact : public cmGeneratorExpressionNode
 template <typename ArtifactT>
 struct TargetFilesystemArtifactNodeGroup
 {
-  TargetFilesystemArtifactNodeGroup() = default;
-
   TargetFilesystemArtifact<ArtifactT, ArtifactPathTag> File;
   TargetFilesystemArtifact<ArtifactT, ArtifactNameTag> FileName;
   TargetFilesystemArtifact<ArtifactT, ArtifactDirTag> FileDir;
@@ -2037,8 +1944,6 @@ static const TargetFilesystemArtifact<ArtifactBundleContentDirTag,
 
 static const struct ShellPathNode : public cmGeneratorExpressionNode
 {
-  ShellPathNode() = default;
-
   std::string Evaluate(
     const std::vector<std::string>& parameters,
     cmGeneratorExpressionContext* context,
