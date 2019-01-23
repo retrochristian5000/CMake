@@ -270,6 +270,13 @@ void cmSystemTools::Error(const char* m1, const char* m2, const char* m3,
   cmSystemTools::Message(message.c_str(), "Error");
 }
 
+void cmSystemTools::Error(const std::string& m)
+{
+  std::string message = "CMake Error: " + m;
+  cmSystemTools::s_ErrorOccured = true;
+  cmSystemTools::Message(message.c_str(), "Error");
+}
+
 void cmSystemTools::SetInterruptCallback(InterruptCallback f, void* clientData)
 {
   s_InterruptCallback = f;
@@ -338,7 +345,7 @@ void cmSystemTools::ReportLastSystemError(const char* msg)
   std::string m = msg;
   m += ": System Error: ";
   m += Superclass::GetLastSystemError();
-  cmSystemTools::Error(m.c_str());
+  cmSystemTools::Error(m);
 }
 
 bool cmSystemTools::IsInternallyOn(const char* val)
@@ -549,7 +556,7 @@ std::vector<std::string> cmSystemTools::HandleResponseFile(
         error += cmSystemTools::GetLastSystemError();
         error += "):\n  ";
         error += arg.substr(1);
-        cmSystemTools::Error(error.c_str());
+        cmSystemTools::Error(error);
       } else {
         std::string line;
         cmSystemTools::GetLineFromStream(responseFile, line);
@@ -1652,7 +1659,7 @@ bool cmSystemTools::CreateTar(const char* outFileName,
     e += outFileName;
     e += "\": ";
     e += cmSystemTools::GetLastSystemError();
-    cmSystemTools::Error(e.c_str());
+    cmSystemTools::Error(e);
     return false;
   }
   cmArchiveWrite::Compress compress = cmArchiveWrite::CompressNone;
@@ -1685,7 +1692,7 @@ bool cmSystemTools::CreateTar(const char* outFileName,
     }
   }
   if (!a) {
-    cmSystemTools::Error(a.GetError().c_str());
+    cmSystemTools::Error(a.GetError());
     return false;
   }
   return true;
@@ -3121,7 +3128,7 @@ bool cmSystemTools::CreateSymlink(const std::string& origName,
     if (errorMessage) {
       *errorMessage = std::move(e);
     } else {
-      cmSystemTools::Error(e.c_str());
+      cmSystemTools::Error(e);
     }
     return false;
   }
@@ -3142,7 +3149,7 @@ bool cmSystemTools::CreateLink(const std::string& origName,
     if (errorMessage) {
       *errorMessage = std::move(e);
     } else {
-      cmSystemTools::Error(e.c_str());
+      cmSystemTools::Error(e);
     }
     return false;
   }
