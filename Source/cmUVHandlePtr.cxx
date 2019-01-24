@@ -38,6 +38,9 @@ struct uv_handle_deleter
 };
 
 template <typename T>
+uv_handle_ptr_base_<T>::uv_handle_ptr_base_() = default;
+
+template <typename T>
 void uv_handle_ptr_base_<T>::allocate(void* data)
 {
   reset();
