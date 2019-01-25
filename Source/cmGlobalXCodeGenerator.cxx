@@ -3215,7 +3215,7 @@ std::string cmGlobalXCodeGenerator::GetObjectsNormalDirectory(
   dir += configName;
   dir += "/";
   dir += t->GetName();
-  dir += ".build/Objects-normal/";
+  dir += ".build/$(OBJECT_FILE_DIR_normal:base)/";
 
   return dir;
 }
