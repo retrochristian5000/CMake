@@ -3576,7 +3576,7 @@ std::string cmGlobalXCodeGenerator::RelativeToSource(const char* p)
 
 std::string cmGlobalXCodeGenerator::RelativeToBinary(const char* p)
 {
-  return this->CurrentLocalGenerator->ConvertToRelativePath(
+  return this->CurrentLocalGenerator->MaybeConvertToRelativePath(
     cmSystemTools::JoinPath(this->ProjectOutputDirectoryComponents), p);
 }
 
