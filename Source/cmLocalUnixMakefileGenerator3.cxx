@@ -1276,8 +1276,7 @@ bool cmLocalUnixMakefileGenerator3::UpdateDependencies(
     this->GlobalGenerator->GetCMakeInstance()->GetFileComparison();
   {
     int result;
-    if (!ftc->FileTimeCompare(internalDependFile.c_str(), tgtInfo.c_str(),
-                              &result) ||
+    if (!ftc->FileTimeCompare(internalDependFile, tgtInfo, &result) ||
         result < 0) {
       if (verbose) {
         std::ostringstream msg;
@@ -1297,8 +1296,7 @@ bool cmLocalUnixMakefileGenerator3::UpdateDependencies(
   dirInfoFile += "/CMakeDirectoryInformation.cmake";
   {
     int result;
-    if (!ftc->FileTimeCompare(internalDependFile.c_str(), dirInfoFile.c_str(),
-                              &result) ||
+    if (!ftc->FileTimeCompare(internalDependFile, dirInfoFile, &result) ||
         result < 0) {
       if (verbose) {
         std::ostringstream msg;
