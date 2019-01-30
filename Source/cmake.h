@@ -443,7 +443,6 @@ public:
 
 protected:
   void RunCheckForUnusedVariables();
-  void InitializeProperties();
   int HandleDeleteCacheVariables(const std::string& var);
 
   typedef std::vector<cmGlobalGeneratorFactory*> RegisteredGeneratorsVector;
@@ -463,7 +462,8 @@ protected:
   std::string GeneratorToolset;
 
   ///! read in a cmake list file to initialize the cache
-  void ReadListFile(const std::vector<std::string>& args, const char* path);
+  void ReadListFile(const std::vector<std::string>& args,
+                    const std::string& path);
   bool FindPackage(const std::vector<std::string>& args);
 
   ///! Check if CMAKE_CACHEFILE_DIR is set. If it is not, delete the log file.
@@ -534,18 +534,6 @@ private:
 
   void AppendGlobalGeneratorsDocumentation(std::vector<cmDocumentationEntry>&);
   void AppendExtraGeneratorsDocumentation(std::vector<cmDocumentationEntry>&);
-
-  /**
-   * Convert a message type between a warning and an error, based on the state
-   * of the error output CMake variables, in the cache.
-   */
-  MessageType ConvertMessageType(MessageType t) const;
-
-  /*
-   * Check if messages of this type should be output, based on the state of the
-   * warning and error output CMake variables, in the cache.
-   */
-  bool IsMessageTypeVisible(MessageType t) const;
 };
 
 #define CMAKE_STANDARD_OPTIONS_TABLE                                          \
