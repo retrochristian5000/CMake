@@ -312,6 +312,7 @@ set(SRCS
   cmMakefileTargetGenerator.cxx
   cmMakefileExecutableTargetGenerator.cxx
   cmMakefileLibraryTargetGenerator.cxx
+  cmMakefileProfilingData.cxx
   cmMakefileUtilityTargetGenerator.cxx
   cmMessageType.h
   cmMessenger.cxx

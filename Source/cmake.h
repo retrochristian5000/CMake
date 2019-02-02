@@ -30,6 +30,9 @@ class cmFileTimeCache;
 class cmGlobalGenerator;
 class cmGlobalGeneratorFactory;
 class cmMakefile;
+#if defined(CMAKE_BUILD_WITH_CMAKE)
+class cmMakefileProfilingData;
+#endif
 class cmMessenger;
 class cmVariableWatch;
 struct cmDocumentationEntry;
@@ -442,6 +445,11 @@ public:
   }
   cmStateSnapshot GetCurrentSnapshot() const { return this->CurrentSnapshot; }
 
+#if defined(CMAKE_BUILD_WITH_CMAKE)
+  cmMakefileProfilingData& GetProfilingOutput();
+  bool IsProfilingEnabled() const;
+#endif
+
 protected:
   void RunCheckForUnusedVariables();
   int HandleDeleteCacheVariables(const std::string& var);
@@ -534,6 +542,10 @@ private:
 
   void AppendGlobalGeneratorsDocumentation(std::vector<cmDocumentationEntry>&);
   void AppendExtraGeneratorsDocumentation(std::vector<cmDocumentationEntry>&);
+
+#if defined(CMAKE_BUILD_WITH_CMAKE)
+  std::unique_ptr<cmMakefileProfilingData> ProfilingOutput;
+#endif
 };
 
 #define CMAKE_STANDARD_OPTIONS_TABLE                                          \

@@ -109,6 +109,12 @@ static const char* cmDocumentationOptions[][2] = {
   { "--check-system-vars",
     "Find problems with variable usage in system "
     "files." },
+#  if defined(CMAKE_BUILD_WITH_CMAKE)
+  { "--profiling-format=<fmt>", "Output data for profiling CMake scripts." },
+  { "--profiling-output=<file>",
+    "Select an output path for the profiling data enabled through "
+    "--profiling-format." },
+#  endif
   { nullptr, nullptr }
 };
 
