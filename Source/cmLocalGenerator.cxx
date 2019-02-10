@@ -138,9 +138,7 @@ cmLocalGenerator::cmLocalGenerator(cmGlobalGenerator* gg, cmMakefile* makefile)
     this->VariableMappings[compilerOptionSysroot] =
       this->Makefile->GetSafeDefinition(compilerOptionSysroot);
 
-    for (const char* const* replaceIter = cm::cbegin(ruleReplaceVars);
-         replaceIter != cm::cend(ruleReplaceVars); ++replaceIter) {
-      std::string actualReplace = *replaceIter;
+    for (std::string actualReplace : cmMakeRange(ruleReplaceVars)) {
       if (actualReplace.find("${LANG}") != std::string::npos) {
         cmSystemTools::ReplaceString(actualReplace, "${LANG}", lang);
       }

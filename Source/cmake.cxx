@@ -1894,9 +1894,8 @@ bool cmake::LoadCache(const std::string& path, bool internal,
   bool result = this->State->LoadCache(path, internal, excludes, includes);
   static const char* entries[] = { "CMAKE_CACHE_MAJOR_VERSION",
                                    "CMAKE_CACHE_MINOR_VERSION" };
-  for (const char* const* nameIt = cm::cbegin(entries);
-       nameIt != cm::cend(entries); ++nameIt) {
-    this->UnwatchUnusedCli(*nameIt);
+  for (const char* name : cmMakeRange(entries)) {
+    this->UnwatchUnusedCli(name);
   }
   return result;
 }
@@ -1908,9 +1907,8 @@ bool cmake::SaveCache(const std::string& path)
                                    "CMAKE_CACHE_MINOR_VERSION",
                                    "CMAKE_CACHE_PATCH_VERSION",
                                    "CMAKE_CACHEFILE_DIR" };
-  for (const char* const* nameIt = cm::cbegin(entries);
-       nameIt != cm::cend(entries); ++nameIt) {
-    this->UnwatchUnusedCli(*nameIt);
+  for (const char* name : cmMakeRange(entries)) {
+    this->UnwatchUnusedCli(name);
   }
   return result;
 }

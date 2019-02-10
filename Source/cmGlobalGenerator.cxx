@@ -2281,9 +2281,8 @@ void cmGlobalGenerator::AddGlobalTarget_Package(
   }
 
   const char* reservedTargets[] = { "package", "PACKAGE" };
-  for (const char* const* tn = cm::cbegin(reservedTargets);
-       tn != cm::cend(reservedTargets); ++tn) {
-    if (!this->CheckCMP0037(*tn, "when CPack packaging is enabled")) {
+  for (const char* tn : cmMakeRange(reservedTargets)) {
+    if (!this->CheckCMP0037(tn, "when CPack packaging is enabled")) {
       return;
     }
   }
@@ -2331,9 +2330,8 @@ void cmGlobalGenerator::AddGlobalTarget_PackageSource(
   }
 
   const char* reservedTargets[] = { "package_source" };
-  for (const char* const* tn = cm::cbegin(reservedTargets);
-       tn != cm::cend(reservedTargets); ++tn) {
-    if (!this->CheckCMP0037(*tn, "when CPack source packaging is enabled")) {
+  for (const char* tn : cmMakeRange(reservedTargets)) {
+    if (!this->CheckCMP0037(tn, "when CPack source packaging is enabled")) {
       return;
     }
   }
@@ -2361,9 +2359,8 @@ void cmGlobalGenerator::AddGlobalTarget_Test(
   }
 
   const char* reservedTargets[] = { "test", "RUN_TESTS" };
-  for (const char* const* tn = cm::cbegin(reservedTargets);
-       tn != cm::cend(reservedTargets); ++tn) {
-    if (!this->CheckCMP0037(*tn, "when CTest testing is enabled")) {
+  for (const char* tn : cmMakeRange(reservedTargets)) {
+    if (!this->CheckCMP0037(tn, "when CTest testing is enabled")) {
       return;
     }
   }
