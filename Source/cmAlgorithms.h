@@ -219,6 +219,12 @@ cmRange<typename Range::const_iterator> cmMakeRange(Range const& range)
   return cmRange<typename Range::const_iterator>(range.begin(), range.end());
 }
 
+template <typename T, size_t N>
+auto cmMakeRange(T (&arr)[N])
+{
+  return cmRange<decltype(std::begin(arr))>(std::begin(arr), std::end(arr));
+}
+
 template <typename Range>
 void cmDeleteAll(Range const& r)
 {
