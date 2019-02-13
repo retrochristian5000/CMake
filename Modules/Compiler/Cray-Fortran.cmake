@@ -4,6 +4,10 @@
 include(Compiler/Cray)
 __compiler_cray(Fortran)
 
+# FIXME: confirm or fix values
+set(CMAKE_Fortran_SUBMODULE_SEP "@")
+set(CMAKE_Fortran_SUBMODULE_EXT ".smod")
+
 set(CMAKE_Fortran_MODOUT_FLAG -em)
 set(CMAKE_Fortran_MODDIR_FLAG -J)
 set(CMAKE_Fortran_MODDIR_DEFAULT .)
