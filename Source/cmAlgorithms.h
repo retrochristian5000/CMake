@@ -77,16 +77,6 @@ private:
   const std::string m_test;
 };
 
-template <typename FwdIt>
-FwdIt cmRotate(FwdIt first, FwdIt middle, FwdIt last)
-{
-  const typename std::iterator_traits<FwdIt>::difference_type dist =
-    std::distance(middle, last);
-  std::rotate(first, middle, last);
-  std::advance(first, dist);
-  return first;
-}
-
 template <typename Container, typename Predicate>
 void cmEraseIf(Container& cont, Predicate pred)
 {
@@ -134,7 +124,7 @@ FwdIt RemoveN(FwdIt i1, FwdIt i2, size_t n)
 {
   FwdIt m = i1;
   std::advance(m, n);
-  return cmRotate(i1, m, i2);
+  return std::rotate(i1, m, i2);
 }
 
 template <typename Range>
