@@ -7,12 +7,8 @@
 #include <string.h>
 
 cmUuid::cmUuid()
+  : Groups{ 4, 2, 2, 2, 6 }
 {
-  Groups.push_back(4);
-  Groups.push_back(2);
-  Groups.push_back(2);
-  Groups.push_back(2);
-  Groups.push_back(6);
 }
 
 std::string cmUuid::FromMd5(std::vector<unsigned char> const& uuidNamespace,
