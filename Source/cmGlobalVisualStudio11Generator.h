@@ -45,8 +45,9 @@ protected:
   bool UseFolderProperty() const override;
   static std::set<std::string> GetInstalledWindowsCESDKs();
 
-  /** Return true if the configuration needs to be deployed */
-  bool NeedsDeploy(cmStateEnums::TargetType type) const override;
+  /** Return true if target system supports debugging deployment. */
+  bool cmGlobalVisualStudio11Generator::TargetSystemSupportsDeployment()
+    const override;
 
 private:
   class Factory;
