@@ -244,6 +244,11 @@ if(WIN32)
 else()
   set(test_shell_path /shell/path)
 endif()
+if(WIN32)
+  set(test_shell_path2 c:/shell/path d:/another/path)
+else()
+  set(test_shell_path2 /shell/path /another/path)
+endif()
 set(path_prefix BYPASS_FURTHER_CONVERSION)
 
 add_custom_target(check-part4 ALL
@@ -251,6 +256,7 @@ add_custom_target(check-part4 ALL
     # Prefix path to bypass its further conversion when being processed by
     # CMake as command-line argument
     -Dtest_shell_path=${path_prefix}$<SHELL_PATH:${test_shell_path}>
+    "-Dtest_shell_path2=$<SHELL_PATH:${test_shell_path2}>"
     -Dpath_prefix=${path_prefix}
     -Dif_1=$<IF:1,a,b>
     -Dif_2=$<IF:0,a,b>
