@@ -66,6 +66,7 @@ These modules are loaded using the :command:`include` command.
    /module/Dart
    /module/DeployQt4
    /module/Documentation
+   /module/EnvModules
    /module/ExternalData
    /module/ExternalProject
    /module/FeatureSummary

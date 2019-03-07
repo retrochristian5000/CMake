@@ -1314,6 +1314,10 @@ ${CMake_BINARY_DIR}/bin/cmake -DDIR=dev -P ${CMake_SOURCE_DIR}/Utilities/Release
   # because of the registry write these tests depend on each other
   set_tests_properties ( complex PROPERTIES DEPENDS complexOneConfig)
 
+  add_test(EnvModules ${CMAKE_CMAKE_COMMAND}
+    -P ${CMake_SOURCE_DIR}/Tests/EnvModules.cmake
+  )
+
   add_test(Environment ${CMAKE_CTEST_COMMAND}
     --build-and-test
     "${CMake_SOURCE_DIR}/Tests/Environment"
