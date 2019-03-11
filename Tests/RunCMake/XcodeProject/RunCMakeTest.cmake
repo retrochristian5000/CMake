@@ -24,7 +24,6 @@ run_cmake(PerConfigPerSourceIncludeDirs)
 function(XcodeSchemaGeneration)
   set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/XcodeSchemaGeneration-build)
   set(RunCMake_TEST_NO_CLEAN 1)
-  set(RunCMake_TEST_OPTIONS "-DCMAKE_XCODE_GENERATE_SCHEME=ON")
 
   file(REMOVE_RECURSE "${RunCMake_TEST_BINARY_DIR}")
   file(MAKE_DIRECTORY "${RunCMake_TEST_BINARY_DIR}")
