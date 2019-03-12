@@ -55,6 +55,14 @@ Compiler writers may try out their scanning functionality using
 the `cxx-modules-sandbox`_ test project, modified to set variables
 as above for their compiler.
 
+For compilers that generate module maps, tell CMake as follows:
+
+.. code-block:: cmake
+
+  set(CMAKE_EXPERIMENTAL_CXX_MODULE_MAP_FORMAT "gcc")
+  set(CMAKE_EXPERIMENTAL_CXX_MODULE_MAP_FLAG
+    "${compiler_flags_for_module_map} -fmodule-mapper=<MODULE_MAP_FILE>")
+
 .. _`D1483r1`: https://mathstuf.fedorapeople.org/fortran-modules/fortran-modules.html
 .. _`P1689r2`: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p1689r2.html
 .. _`cxx-modules-sandbox`: https://github.com/mathstuf/cxx-modules-sandbox
