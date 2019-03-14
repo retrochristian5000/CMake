@@ -261,6 +261,17 @@ CMAKE_CXX_SOURCES="\
   cmAddSubDirectoryCommand \
   cmAddTestCommand \
   cmArgumentParser \
+  cmBinUtilsLinker \
+  cmBinUtilsLinuxELFGetRuntimeDependenciesTool \
+  cmBinUtilsLinuxELFLinker \
+  cmBinUtilsLinuxELFObjdumpGetRuntimeDependenciesTool \
+  cmBinUtilsMacOSMachOGetRuntimeDependenciesTool \
+  cmBinUtilsMacOSMachOLinker \
+  cmBinUtilsMacOSMachOOToolGetRuntimeDependenciesTool \
+  cmBinUtilsWindowsPEGetRuntimeDependenciesTool \
+  cmBinUtilsWindowsPEDumpbinGetRuntimeDependenciesTool \
+  cmBinUtilsWindowsPELinker \
+  cmBinUtilsWindowsPEObjdumpGetRuntimeDependenciesTool \
   cmBreakCommand \
   cmBuildCommand \
   cmCMakeMinimumRequired \
@@ -357,6 +368,8 @@ CMAKE_CXX_SOURCES="\
   cmInstallTargetGenerator \
   cmInstallTargetsCommand \
   cmInstalledFile \
+  cmLDConfigLDConfigTool \
+  cmLDConfigTool \
   cmLinkDirectoriesCommand \
   cmLinkItem \
   cmLinkLineComputer \
@@ -394,6 +407,7 @@ CMAKE_CXX_SOURCES="\
   cmPropertyMap \
   cmReturnCommand \
   cmRulePlaceholderExpander \
+  cmRuntimeDependencyArchive \
   cmScriptGenerator \
   cmSearchPath \
   cmSeparateArgumentsCommand \
