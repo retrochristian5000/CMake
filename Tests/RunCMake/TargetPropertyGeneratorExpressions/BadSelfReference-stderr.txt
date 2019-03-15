@@ -34,4 +34,7 @@
     \$<TARGET_PROPERTY:BadSelfReference6,COMPILE_DEFINITIONS>
 
   Self reference on target "BadSelfReference6".
-*)+$
+*)+
+
+
+CMake Generate step failed\.  Build files cannot be regenerated correctly\.$
