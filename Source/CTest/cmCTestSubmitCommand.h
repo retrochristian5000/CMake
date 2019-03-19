@@ -13,6 +13,7 @@
 #include <vector>
 
 class cmCTestGenericHandler;
+class cmCTestSubmitHandler;
 class cmCommand;
 class cmExecutionStatus;
 
@@ -25,26 +26,8 @@ class cmExecutionStatus;
 class cmCTestSubmitCommand : public cmCTestHandlerCommand
 {
 public:
-  cmCTestSubmitCommand()
-  {
-    this->PartsMentioned = false;
-    this->FilesMentioned = false;
-    this->InternalTest = false;
-    this->RetryCount = "";
-    this->RetryDelay = "";
-    this->CDashUpload = false;
-  }
-
-  /**
-   * This is a virtual constructor for the command.
-   */
-  cmCommand* Clone() override
-  {
-    cmCTestSubmitCommand* ni = new cmCTestSubmitCommand;
-    ni->CTest = this->CTest;
-    ni->CTestScriptHandler = this->CTestScriptHandler;
-    return ni;
-  }
+  cmCTestSubmitCommand();
+  cmCommand* Clone() override;
 
   bool InitialPass(std::vector<std::string> const& args,
                    cmExecutionStatus& status) override;
@@ -62,6 +45,8 @@ protected:
   bool CheckArgumentKeyword(std::string const& arg) override;
   bool CheckArgumentValue(std::string const& arg) override;
 
+  cmCTestSubmitHandler* Handler;
+
   enum
   {
     ArgumentDoingParts = Superclass::ArgumentDoingLast1,
@@ -73,6 +58,12 @@ protected:
     ArgumentDoingHttpHeader,
     ArgumentDoingSubmitURL,
     ArgumentDoingLast2
+  };
+
+  enum
+  {
+    cts_BUILD_ID = ct_LAST,
+    cts_LAST
   };
 
   bool PartsMentioned;
