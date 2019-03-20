@@ -3,8 +3,13 @@
 
 #Setup Green Hills MULTI specific compilation information
 
-set(GHS_OS_ROOT "C:/ghs" CACHE PATH "GHS platform OS search root directory")
-mark_as_advanced(GHS_OS_ROOT)
+if(CMAKE_HOST_UNIX)
+  set(GHS_OS_ROOT "/usr/ghs" CACHE PATH "GHS platform OS search root directory")
+  mark_as_advanced(GHS_OS_ROOT)
+else()
+  set(GHS_OS_ROOT "c:/ghs" CACHE PATH "GHS platform OS search root directory")
+  mark_as_advanced(GHS_OS_ROOT)
+endif()
 
 set(GHS_OS_DIR "NOTFOUND" CACHE PATH "GHS platform OS directory")
 mark_as_advanced(GHS_OS_DIR)
