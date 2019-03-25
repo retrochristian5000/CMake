@@ -2331,6 +2331,9 @@ bool SystemTools::CopyFileAlways(const std::string& source,
     } else {
       destination_dir = SystemTools::GetFilenamePath(destination);
     }
+    if (SystemTools::SameFile(source, real_destination)) {
+      return true;
+    }
 
     // Create destination directory
 
