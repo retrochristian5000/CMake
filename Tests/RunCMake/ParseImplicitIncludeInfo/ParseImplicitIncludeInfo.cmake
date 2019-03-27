@@ -37,6 +37,19 @@ set(targets
   sunos-C-SunPro-5.13.0 sunos-CXX-SunPro-5.13.0 sunos-Fortran-SunPro-8.8.0
   )
 
+if(CMAKE_HOST_WIN32)
+  list(REMOVE_ITEM targets
+    # The KWSys translation map on Windows breaks case sensitivity.
+    aix-CXX-XL-13.1.3
+    sunos-CXX-SunPro-5.13.0
+    )
+else()
+  list(REMOVE_ITEM targets
+    # Windows drive letters are not recognized as absolute on other platforms.
+    mingw.org-C-GNU-4.9.3 mingw.org-CXX-GNU-4.9.3
+    )
+endif()
+
 include(${CMAKE_ROOT}/Modules/CMakeParseImplicitIncludeInfo.cmake)
 
 #
