@@ -16,6 +16,9 @@
 #include "cmLinkLineComputer.h"
 #include "cmLocalGenerator.h"
 #include "cmMakefile.h"
+#if defined(CMAKE_BUILD_WITH_CMAKE)
+#  include "cmMakefileProfilingData.h"
+#endif
 #include "cmMessenger.h"
 #include "cmState.h"
 #include "cmStateDirectory.h"
@@ -107,6 +110,7 @@
 #include <iterator>
 #include <memory> // IWYU pragma: keep
 #include <sstream>
+#include <stdexcept>
 #include <stdio.h>
 #include <stdlib.h>
 #include <utility>
@@ -617,6 +621,10 @@ void cmake::SetArgs(const std::vector<std::string>& args)
 {
   bool haveToolset = false;
   bool havePlatform = false;
+#if defined(CMAKE_BUILD_WITH_CMAKE)
+  std::string profilingFormat;
+  std::string profilingOutput;
+#endif
   for (unsigned int i = 1; i < args.size(); ++i) {
     std::string const& arg = args[i];
     if (arg.find("-H", 0) == 0 || arg.find("-S", 0) == 0) {
@@ -801,12 +809,48 @@ void cmake::SetArgs(const std::vector<std::string>& args)
         return;
       }
       this->SetGlobalGenerator(gen);
+#if defined(CMAKE_BUILD_WITH_CMAKE)
+    } else if (arg.find("--profiling-format", 0) == 0) {
+      profilingFormat = arg.substr(strlen("--profiling-format="));
+      if (profilingFormat.empty()) {
+        cmSystemTools::Error("No format specified for --profiling-format");
+      }
+    } else if (arg.find("--profiling-output", 0) == 0) {
+      profilingOutput = arg.substr(strlen("--profiling-output="));
+      profilingOutput = cmSystemTools::CollapseFullPath(profilingOutput);
+      cmSystemTools::ConvertToUnixSlashes(profilingOutput);
+      if (profilingOutput.empty()) {
+        cmSystemTools::Error("No path specified for --profiling-output");
+      }
+#endif
     }
     // no option assume it is the path to the source or an existing build
     else {
       this->SetDirectoriesFromFile(arg.c_str());
     }
   }
+
+#if defined(CMAKE_BUILD_WITH_CMAKE)
+  if (!profilingOutput.empty() || !profilingFormat.empty()) {
+    if (profilingOutput.empty()) {
+      cmSystemTools::Error(
+        "--profiling-format specified but no --profiling-output!");
+      return;
+    }
+    if (profilingFormat == "google-trace") {
+      try {
+        this->ProfilingOutput =
+          cm::make_unique<cmMakefileProfilingData>(profilingOutput);
+      } catch (std::runtime_error& e) {
+        cmSystemTools::Error("Could not open file ", profilingOutput.c_str());
+        return;
+      }
+    } else {
+      cmSystemTools::Error("Invalid format specified for --profiling-format");
+      return;
+    }
+  }
+#endif
 
   const bool haveSourceDir = !this->GetHomeDirectory().empty();
   const bool haveBinaryDir = !this->GetHomeOutputDirectory().empty();
@@ -2827,3 +2871,15 @@ void cmake::SetDeprecatedWarningsAsErrors(bool b)
                       " and functions.",
                       cmStateEnums::INTERNAL);
 }
+
+#if defined(CMAKE_BUILD_WITH_CMAKE)
+cmMakefileProfilingData& cmake::GetProfilingOutput()
+{
+  return *(this->ProfilingOutput);
+}
+
+bool cmake::IsProfilingEnabled() const
+{
+  return static_cast<bool>(this->ProfilingOutput);
+}
+#endif
