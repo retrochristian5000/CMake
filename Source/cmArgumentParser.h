@@ -87,6 +87,17 @@ public:
     }
   }
 
+  template <typename Iterator>
+  void Parse(Result& result, Iterator const& begin, Iterator const& end,
+             std::vector<std::string>* unparsedArguments = nullptr,
+             std::vector<std::string>* keywordsMissingValue = nullptr) const
+  {
+    ArgumentParser::Instance instance(this->Bindings);
+    for (Iterator it = begin; it != end; ++it) {
+      instance.Consume(*it, &result, unparsedArguments, keywordsMissingValue);
+    }
+  }
+
   template <typename Range>
   Result Parse(Range const& args,
                std::vector<std::string>* unparsedArguments = nullptr,
@@ -94,6 +105,16 @@ public:
   {
     Result result;
     this->Parse(result, args, unparsedArguments, keywordsMissingValue);
+    return result;
+  }
+
+  template <typename Iterator>
+  Result Parse(Iterator const& begin, Iterator const& end,
+               std::vector<std::string>* unparsedArguments = nullptr,
+               std::vector<std::string>* keywordsMissingValue = nullptr) const
+  {
+    Result result;
+    this->Parse(result, begin, end, unparsedArguments, keywordsMissingValue);
     return result;
   }
 
@@ -121,6 +142,17 @@ public:
     ArgumentParser::Instance instance(this->Bindings);
     for (cm::string_view arg : args) {
       instance.Consume(arg, nullptr, unparsedArguments, keywordsMissingValue);
+    }
+  }
+
+  template <typename Iterator>
+  void Parse(Iterator const& begin, Iterator const& end,
+             std::vector<std::string>* unparsedArguments = nullptr,
+             std::vector<std::string>* keywordsMissingValue = nullptr) const
+  {
+    ArgumentParser::Instance instance(this->Bindings);
+    for (Iterator it = begin; it != end; ++it) {
+      instance.Consume(*it, nullptr, unparsedArguments, keywordsMissingValue);
     }
   }
 

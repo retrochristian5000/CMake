@@ -30,7 +30,7 @@ struct Result
   std::vector<std::vector<std::string>> Multi3;
 };
 
-std::initializer_list<cm::string_view> const args = {
+std::initializer_list<cm::string_view> const rangeArgs = {
   /* clang-format off */
   "OPTION_1",                // option
   "STRING_1",                // string arg missing value
@@ -42,6 +42,23 @@ std::initializer_list<cm::string_view> const args = {
   "MULTI_2",                 // multi list with 0 lists
   "MULTI_3", "foo", "bar",   // multi list with first list with two elems
   "MULTI_3", "bar", "foo",   // multi list with second list with two elems
+  /* clang-format on */
+};
+
+std::initializer_list<cm::string_view> const iteratorArgs = {
+  /* clang-format off */
+  "before",                  // before
+  "OPTION_1",                // option
+  "STRING_1",                // string arg missing value
+  "STRING_2", "foo", "bar",  // string arg + unparsed value
+  "LIST_1",                  // list arg missing values
+  "LIST_2", "foo", "bar",    // list arg with 2 elems
+  "LIST_3", "bar",           // list arg ...
+  "LIST_3", "foo",           // ... with continuation
+  "MULTI_2",                 // multi list with 0 lists
+  "MULTI_3", "foo", "bar",   // multi list with first list with two elems
+  "MULTI_3", "bar", "foo",   // multi list with second list with two elems
+  "after",                   // after
   /* clang-format on */
 };
 
@@ -85,7 +102,7 @@ bool verifyResult(Result const& result,
   return true;
 }
 
-bool testArgumentParserDynamic()
+bool testArgumentParserDynamicRange()
 {
   Result result;
   std::vector<std::string> unparsedArguments;
@@ -102,12 +119,35 @@ bool testArgumentParserDynamic()
     .Bind("MULTI_1"_s, result.Multi1)
     .Bind("MULTI_2"_s, result.Multi2)
     .Bind("MULTI_3"_s, result.Multi3)
-    .Parse(args, &unparsedArguments, &keywordsMissingValue);
+    .Parse(rangeArgs, &unparsedArguments, &keywordsMissingValue);
 
   return verifyResult(result, unparsedArguments, keywordsMissingValue);
 }
 
-bool testArgumentParserStatic()
+bool testArgumentParserDynamicIterator()
+{
+  Result result;
+  std::vector<std::string> unparsedArguments;
+  std::vector<std::string> keywordsMissingValue;
+
+  cmArgumentParser<void>{}
+    .Bind("OPTION_1"_s, result.Option1)
+    .Bind("OPTION_2"_s, result.Option2)
+    .Bind("STRING_1"_s, result.String1)
+    .Bind("STRING_2"_s, result.String2)
+    .Bind("LIST_1"_s, result.List1)
+    .Bind("LIST_2"_s, result.List2)
+    .Bind("LIST_3"_s, result.List3)
+    .Bind("MULTI_1"_s, result.Multi1)
+    .Bind("MULTI_2"_s, result.Multi2)
+    .Bind("MULTI_3"_s, result.Multi3)
+    .Parse(iteratorArgs.begin() + 1, iteratorArgs.end() - 1,
+           &unparsedArguments, &keywordsMissingValue);
+
+  return verifyResult(result, unparsedArguments, keywordsMissingValue);
+}
+
+bool testArgumentParserStaticRange()
 {
   static auto const parser = //
     cmArgumentParser<Result>{}
@@ -125,7 +165,31 @@ bool testArgumentParserStatic()
   std::vector<std::string> unparsedArguments;
   std::vector<std::string> keywordsMissingValue;
   Result const result =
-    parser.Parse(args, &unparsedArguments, &keywordsMissingValue);
+    parser.Parse(rangeArgs, &unparsedArguments, &keywordsMissingValue);
+
+  return verifyResult(result, unparsedArguments, keywordsMissingValue);
+}
+
+bool testArgumentParserStaticIterator()
+{
+  static auto const parser = //
+    cmArgumentParser<Result>{}
+      .Bind("OPTION_1"_s, &Result::Option1)
+      .Bind("OPTION_2"_s, &Result::Option2)
+      .Bind("STRING_1"_s, &Result::String1)
+      .Bind("STRING_2"_s, &Result::String2)
+      .Bind("LIST_1"_s, &Result::List1)
+      .Bind("LIST_2"_s, &Result::List2)
+      .Bind("LIST_3"_s, &Result::List3)
+      .Bind("MULTI_1"_s, &Result::Multi1)
+      .Bind("MULTI_2"_s, &Result::Multi2)
+      .Bind("MULTI_3"_s, &Result::Multi3);
+
+  std::vector<std::string> unparsedArguments;
+  std::vector<std::string> keywordsMissingValue;
+  Result const result =
+    parser.Parse(iteratorArgs.begin() + 1, iteratorArgs.end() - 1,
+                 &unparsedArguments, &keywordsMissingValue);
 
   return verifyResult(result, unparsedArguments, keywordsMissingValue);
 }
@@ -134,13 +198,23 @@ bool testArgumentParserStatic()
 
 int testArgumentParser(int /*unused*/, char* /*unused*/ [])
 {
-  if (!testArgumentParserDynamic()) {
-    std::cout << "While executing testArgumentParserDynamic().\n";
+  if (!testArgumentParserDynamicRange()) {
+    std::cout << "While executing testArgumentParserDynamicRange().\n";
     return -1;
   }
 
-  if (!testArgumentParserStatic()) {
-    std::cout << "While executing testArgumentParserStatic().\n";
+  if (!testArgumentParserDynamicIterator()) {
+    std::cout << "While executing testArgumentParserDynamicIterator().\n";
+    return -1;
+  }
+
+  if (!testArgumentParserStaticRange()) {
+    std::cout << "While executing testArgumentParserStaticRange().\n";
+    return -1;
+  }
+
+  if (!testArgumentParserStaticIterator()) {
+    std::cout << "While executing testArgumentParserStaticIterator().\n";
     return -1;
   }
 
