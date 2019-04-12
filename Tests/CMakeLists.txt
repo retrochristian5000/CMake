@@ -1995,6 +1995,10 @@ ${CMake_BINARY_DIR}/bin/cmake -DDIR=dev -P ${CMake_SOURCE_DIR}/Utilities/Release
     if(NOT CMAKE_C_COMPILER_ID STREQUAL "Clang")
       ADD_TEST_MACRO(PrecompiledHeader foo)
     endif()
+    if(CMAKE_Fortran_COMPILER)
+      set(MSVCRuntimeLibrary_BUILD_OPTIONS -DTEST_FORTRAN=1)
+    endif()
+    ADD_TEST_MACRO(MSVCRuntimeLibrary)
   endif()
   if(MSVC OR
       "${CMAKE_GENERATOR}" MATCHES "(MSYS|MinGW) Makefiles")
