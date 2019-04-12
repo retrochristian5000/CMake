@@ -37,6 +37,10 @@ function (run_object_lib_build2 name)
   run_cmake_command(${name}-build ${CMAKE_COMMAND} --build .)
 endfunction ()
 
+run_object_lib_build(LibExecObjects)
+run_object_lib_build(LibSharedObjects)
+run_object_lib_build(LibStaticObjects)
+
 run_object_lib_build(LinkObjLHSShared)
 run_object_lib_build(LinkObjLHSStatic)
 run_object_lib_build(LinkObjRHSShared)
@@ -53,6 +57,7 @@ run_cmake(OwnSources)
 run_cmake(PostBuild)
 run_cmake(PreBuild)
 run_cmake(PreLink)
+
 
 function(run_Dependencies)
   set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/Dependencies-build)
