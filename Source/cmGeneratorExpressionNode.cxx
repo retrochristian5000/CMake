@@ -1020,6 +1020,27 @@ static const struct TargetPropertyNode : public cmGeneratorExpressionNode
   // This node handles errors on parameter count itself.
   int NumExpectedParameters() const override { return OneOrMoreParameters; }
 
+  static const char* GetErrorText(std::string const& targetName,
+                                  std::string const& propertyName)
+  {
+    static cmsys::RegularExpression propertyNameValidator("^[A-Za-z0-9_]+$");
+    if (targetName.empty() && propertyName.empty()) {
+      return "$<TARGET_PROPERTY:tgt,prop> expression requires a non-empty "
+             "target name and property name.";
+    }
+    if (targetName.empty()) {
+      return "$<TARGET_PROPERTY:tgt,prop> expression requires a non-empty "
+             "target name.";
+    }
+    if (!cmGeneratorExpression::IsValidTargetName(targetName)) {
+      if (!propertyNameValidator.find(propertyName)) {
+        return "Target name and property name not supported.";
+      }
+      return "Target name not supported.";
+    }
+    return nullptr;
+  }
+
   std::string Evaluate(
     const std::vector<std::string>& parameters,
     cmGeneratorExpressionContext* context,
@@ -1035,28 +1056,8 @@ static const struct TargetPropertyNode : public cmGeneratorExpressionNode
       targetName = parameters[0];
       propertyName = parameters[1];
 
-      if (targetName.empty() && propertyName.empty()) {
-        reportError(
-          context, content->GetOriginalExpression(),
-          "$<TARGET_PROPERTY:tgt,prop> expression requires a non-empty "
-          "target name and property name.");
-        return std::string();
-      }
-      if (targetName.empty()) {
-        reportError(
-          context, content->GetOriginalExpression(),
-          "$<TARGET_PROPERTY:tgt,prop> expression requires a non-empty "
-          "target name.");
-        return std::string();
-      }
-      if (!cmGeneratorExpression::IsValidTargetName(targetName)) {
-        if (!propertyNameValidator.find(propertyName)) {
-          reportError(context, content->GetOriginalExpression(),
-                      "Target name and property name not supported.");
-          return std::string();
-        }
-        reportError(context, content->GetOriginalExpression(),
-                    "Target name not supported.");
+      if (const char* e = GetErrorText(targetName, propertyName)) {
+        reportError(context, content->GetOriginalExpression(), e);
         return std::string();
       }
       if (propertyName == "ALIASED_TARGET") {
