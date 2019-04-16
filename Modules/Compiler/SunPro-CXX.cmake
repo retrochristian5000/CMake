@@ -58,4 +58,9 @@ else()
   set(CMAKE_CXX_LINK_WITH_STANDARD_COMPILE_OPTION 1)
 endif()
 
+if (NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5.14)
+  set(CMAKE_CXX14_STANDARD_COMPILE_OPTION "-std=c++14")
+  set(CMAKE_CXX14_EXTENSION_COMPILE_OPTION "-std=c++14")
+endif()
+
 __compiler_check_default_language_standard(CXX 1 98)
