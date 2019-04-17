@@ -98,19 +98,20 @@ static const struct ZeroNode installInterfaceNode;
 
 struct BooleanOpNode : public cmGeneratorExpressionNode
 {
-  BooleanOpNode(const char* op, const char* successVal, const char* failureVal)
-    : op(op)
-    , successVal(successVal)
-    , failureVal(failureVal)
+  BooleanOpNode(const char* op_, const char* successVal_,
+                const char* failureVal_)
+    : op(op_)
+    , successVal(successVal_)
+    , failureVal(failureVal_)
   {
   }
 
-  virtual int NumExpectedParameters() const { return OneOrMoreParameters; }
+  int NumExpectedParameters() const override { return OneOrMoreParameters; }
 
   std::string Evaluate(const std::vector<std::string>& parameters,
                        cmGeneratorExpressionContext* context,
                        const GeneratorExpressionContent* content,
-                       cmGeneratorExpressionDAGChecker*) const
+                       cmGeneratorExpressionDAGChecker*) const override
   {
     for (std::string const& param : parameters) {
       if (param == this->failureVal) {
@@ -623,8 +624,8 @@ static const CharacterNode<';'> semicolonNode;
 
 struct CompilerIdNode : public cmGeneratorExpressionNode
 {
-  CompilerIdNode(const char* lang)
-    : lang(lang)
+  CompilerIdNode(const char* compilerLang)
+    : compilerLanguage(compilerLang)
   {
   }
 
@@ -638,14 +639,14 @@ struct CompilerIdNode : public cmGeneratorExpressionNode
   {
     if (!context->HeadTarget) {
       std::ostringstream e;
-      e << "$<" << this->lang
+      e << "$<" << this->compilerLanguage
         << "_COMPILER_ID> may only be used with binary targets.  It may "
            "not be used with add_custom_command or add_custom_target.";
       reportError(context, content->GetOriginalExpression(), e.str());
       return {};
     }
     return this->EvaluateWithLanguage(parameters, context, content, dagChecker,
-                                      this->lang);
+                                      this->compilerLanguage);
   }
 
   std::string EvaluateWithLanguage(const std::vector<std::string>& parameters,
@@ -695,7 +696,7 @@ struct CompilerIdNode : public cmGeneratorExpressionNode
     return "0";
   }
 
-  const char* const lang;
+  const char* const compilerLanguage;
 };
 
 static const CompilerIdNode cCompilerIdNode("C"), cxxCompilerIdNode("CXX"),
@@ -703,8 +704,8 @@ static const CompilerIdNode cCompilerIdNode("C"), cxxCompilerIdNode("CXX"),
 
 struct CompilerVersionNode : public cmGeneratorExpressionNode
 {
-  CompilerVersionNode(const char* lang)
-    : lang(lang)
+  CompilerVersionNode(const char* compilerLang)
+    : compilerLanguage(compilerLang)
   {
   }
 
@@ -718,7 +719,7 @@ struct CompilerVersionNode : public cmGeneratorExpressionNode
   {
     if (!context->HeadTarget) {
       std::ostringstream e;
-      e << "$<" << this->lang
+      e << "$<" << this->compilerLanguage
         << "_COMPILER_VERSION> may only be used with binary targets.  It "
            "may not be used with add_custom_command or add_custom_target.";
       reportError(context, content->GetOriginalExpression(), e.str());
@@ -758,7 +759,7 @@ struct CompilerVersionNode : public cmGeneratorExpressionNode
       : "0";
   }
 
-  const char* const lang;
+  const char* const compilerLanguage;
 };
 
 static const CompilerVersionNode cCompilerVersionNode("C"),
