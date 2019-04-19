@@ -42,7 +42,16 @@ endfunction()
 function(verify lang src)
   add_library(default-${lang} ${src})
   target_compile_definitions(default-${lang} PRIVATE VERIFY_MT VERIFY_DLL "$<$<CONFIG:Debug>:VERIFY_DEBUG>")
+
   verify_combinations(MultiThreaded ${lang} ${src})
+
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "")
+  add_library(empty-${lang} ${src})
+  target_compile_definitions(empty-${lang} PRIVATE VERIFY_MT)
+  if(CMAKE_GENERATOR MATCHES "Visual Studio")
+    # Visual Studio projects have a different default runtime library than 'cl'.
+    target_compile_definitions(empty-${lang} PRIVATE VERIFY_DLL)
+  endif()
 endfunction()
 
 verify(C verify.c)
