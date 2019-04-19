@@ -26,4 +26,5 @@ macro(cmake_record_c_compile_features)
   list(APPEND CMAKE_C90_COMPILE_FEATURES c_std_90 c_function_prototypes)
   list(APPEND CMAKE_C99_COMPILE_FEATURES c_std_99 c_variadic_macros)
   list(APPEND CMAKE_C11_COMPILE_FEATURES c_std_11)
+  set(_result 0) # expected by cmake_determine_compile_features
 endmacro()
