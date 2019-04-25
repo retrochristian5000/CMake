@@ -2307,6 +2307,7 @@ class ArtifactFilePrefixTag;
 class ArtifactLinkerFilePrefixTag;
 class ArtifactFileSuffixTag;
 class ArtifactLinkerFileSuffixTag;
+class ArtifactFilePostfixTag;
 
 template <typename ArtifactT>
 struct TargetFileArtifactResultGetter
@@ -2380,6 +2381,16 @@ struct TargetFileArtifactResultGetter<ArtifactLinkerFileSuffixTag>
     return target->GetFileSuffix(context->Config, artifact);
   }
 };
+template <>
+struct TargetFileArtifactResultGetter<ArtifactFilePostfixTag>
+{
+  static std::string Get(cmGeneratorTarget* target,
+                         cmGeneratorExpressionContext* context,
+                         const GeneratorExpressionContent*)
+  {
+    return target->GetFilePostfix(context->Config);
+  }
+};
 
 template <typename ArtifactT>
 struct TargetFileArtifact : public TargetArtifactBase
@@ -2415,6 +2426,7 @@ static const TargetFileArtifact<ArtifactLinkerFilePrefixTag>
 static const TargetFileArtifact<ArtifactFileSuffixTag> targetFileSuffixNode;
 static const TargetFileArtifact<ArtifactLinkerFileSuffixTag>
   targetLinkerFileSuffixNode;
+static const TargetFileArtifact<ArtifactFilePostfixTag> targetFilePostfixNode;
 
 static const struct ShellPathNode : public cmGeneratorExpressionNode
 {
@@ -2487,6 +2499,7 @@ const cmGeneratorExpressionNode* cmGeneratorExpressionNode::GetNode(
     { "TARGET_LINKER_FILE_PREFIX", &targetLinkerFilePrefixNode },
     { "TARGET_FILE_SUFFIX", &targetFileSuffixNode },
     { "TARGET_LINKER_FILE_SUFFIX", &targetLinkerFileSuffixNode },
+    { "TARGET_FILE_POSTFIX", &targetFilePostfixNode },
     { "TARGET_FILE_NAME", &targetNodeGroup.FileName },
     { "TARGET_LINKER_FILE_NAME", &targetLinkerNodeGroup.FileName },
     { "TARGET_SONAME_FILE_NAME", &targetSoNameNodeGroup.FileName },
