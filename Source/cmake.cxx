@@ -718,6 +718,14 @@ void cmake::SetArgs(const std::vector<std::string>& args)
     } else if (arg.find("--debug-output", 0) == 0) {
       std::cout << "Running with debug output on.\n";
       this->SetDebugOutputOn(true);
+    } else if (arg.find("--loglevel=", 0) == 0) {
+      const auto logLevel =
+        StringToLogLevel(arg.substr(sizeof("--loglevel=") - 1));
+      if (logLevel == LOG_UNDEFINED) {
+        cmSystemTools::Error("Invalid level specified for --loglevel");
+        return;
+      }
+      this->SetLogLevel(logLevel);
     } else if (arg.find("--trace-expand", 0) == 0) {
       std::cout << "Running with expanded trace output on.\n";
       this->SetTrace(true);
@@ -826,6 +834,23 @@ void cmake::SetArgs(const std::vector<std::string>& args)
   if (!haveBinaryDir) {
     this->SetHomeOutputDirectory(cmSystemTools::GetCurrentWorkingDirectory());
   }
+}
+
+cmake::LogLevel cmake::StringToLogLevel(const std::string& levelStr)
+{
+  static const std::vector<std::pair<std::string, LogLevel>> levels = {
+    { "error", LogLevel::LOG_ERROR },     { "warning", LogLevel::LOG_WARNING },
+    { "notice", LogLevel::LOG_NOTICE },   { "status", LogLevel::LOG_STATUS },
+    { "verbose", LogLevel::LOG_VERBOSE }, { "debug", LogLevel::LOG_DEBUG },
+    { "trace", LogLevel::LOG_TRACE }
+  };
+
+  const auto levelStrLowCase = cmSystemTools::LowerCase(levelStr);
+
+  const auto it =
+    std::find_if(cbegin(levels), cend(levels),
+                 [&](const auto& p) { return p.first == levelStrLowCase; });
+  return (it != cend(levels)) ? it->second : LOG_UNDEFINED;
 }
 
 void cmake::SetDirectoriesFromFile(const char* arg)
