@@ -535,8 +535,12 @@ void cmNinjaTargetGenerator::WriteCompileRule(const std::string& lang)
     std::string ppRspContent;
     if (!responseFlag.empty()) {
       ppRspFile = "$RSP_FILE";
-      ppRspContent = std::string(" ") + ppVars.Defines + " " +
-        ppVars.Includes + " " + ppFlags;
+      ppRspContent = " ";
+      ppRspContent += ppVars.Defines;
+      ppRspContent += " ";
+      ppRspContent += ppVars.Includes;
+      ppRspContent += " ";
+      ppRspContent += ppFlags;
       ppFlags = responseFlag + ppRspFile;
       ppVars.Defines = "";
       ppVars.Includes = "";
