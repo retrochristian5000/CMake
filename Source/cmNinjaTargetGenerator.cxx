@@ -934,9 +934,9 @@ void cmNinjaTargetGenerator::WriteObjectBuildStatement(
     // The swift compiler needs all the sources besides the one being compiled
     // in order to do the type checking.  List all these "auxiliary" sources.
     std::string aux_sources;
-    cmGeneratorTarget::KindedSources const& sources =
-      this->GeneratorTarget->GetKindedSources(this->GetConfigName());
-    for (cmGeneratorTarget::SourceAndKind const& src : sources.Sources) {
+    for (cmGeneratorTarget::SourceAndKind const& src :
+         this->GeneratorTarget->GetKindedSources(this->GetConfigName())
+           .Sources) {
       if (src.Source.Value == source) {
         continue;
       }
@@ -1212,8 +1212,7 @@ void cmNinjaTargetGenerator::WriteTargetDependInfo(std::string const& lang)
 
   Json::Value& tdi_linked_target_dirs = tdi["linked-target-dirs"] =
     Json::arrayValue;
-  std::vector<std::string> linked = this->GetLinkedTargetDirectories();
-  for (std::string const& l : linked) {
+  for (std::string const& l : this->GetLinkedTargetDirectories()) {
     tdi_linked_target_dirs.append(l);
   }
 
