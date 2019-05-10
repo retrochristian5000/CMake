@@ -257,6 +257,8 @@ public:
   };
   MapToNinjaPathImpl MapToNinjaPath() { return MapToNinjaPathImpl(this); }
 
+  void AddAdditionalCleanFile(std::string fileName);
+
   void AddCXXCompileCommand(const std::string& commandLine,
                             const std::string& sourceFile);
 
@@ -398,6 +400,7 @@ private:
   void WriteBuiltinTargets(std::ostream& os);
   void WriteTargetAll(std::ostream& os);
   void WriteTargetRebuildManifest(std::ostream& os);
+  void WriteTargetCleanAdditional(std::ostream& os, std::string& targetName);
   void WriteTargetClean(std::ostream& os);
   void WriteTargetHelp(std::ostream& os);
 
@@ -470,6 +473,7 @@ private:
   std::string OutputPathPrefix;
   std::string TargetAll;
   std::string CMakeCacheFile;
+  std::set<std::string> AdditionalCleanFiles;
 };
 
 #endif // ! cmGlobalNinjaGenerator_h

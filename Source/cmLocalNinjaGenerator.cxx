@@ -14,6 +14,7 @@
 #include "cmCustomCommand.h"
 #include "cmCustomCommandGenerator.h"
 #include "cmGeneratedFileStream.h"
+#include "cmGeneratorExpression.h"
 #include "cmGeneratorTarget.h"
 #include "cmGlobalGenerator.h"
 #include "cmGlobalNinjaGenerator.h"
@@ -94,6 +95,7 @@ void cmLocalNinjaGenerator::Generate()
   }
 
   this->WriteCustomCommandBuildStatements();
+  this->AdditionalCleanFiles();
 }
 
 // TODO: Picked up from cmLocalUnixMakefileGenerator3.  Refactor it.
@@ -597,4 +599,28 @@ std::string cmLocalNinjaGenerator::MakeCustomLauncher(
   }
 
   return launcher;
+}
+
+void cmLocalNinjaGenerator::AdditionalCleanFiles()
+{
+  const char* ninja_clean_files =
+    this->Makefile->GetProperty("ADDITIONAL_NINJA_CLEAN_FILES");
+  if (ninja_clean_files == nullptr) {
+    return;
+  }
+
+  std::vector<std::string> cleanFiles;
+  {
+    std::string const& config =
+      this->Makefile->GetSafeDefinition("CMAKE_BUILD_TYPE");
+    cmGeneratorExpression ge;
+    auto cge = ge.Parse(ninja_clean_files);
+    cmSystemTools::ExpandListArgument(cge->Evaluate(this, config), cleanFiles);
+  }
+  std::string const& binaryDir = this->GetCurrentBinaryDirectory();
+  cmGlobalNinjaGenerator* gg = this->GetGlobalNinjaGenerator();
+  for (std::string const& cleanFile : cleanFiles) {
+    gg->AddAdditionalCleanFile(
+      cmSystemTools::CollapseFullPath(cleanFile, binaryDir));
+  }
 }

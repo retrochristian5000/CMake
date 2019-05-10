@@ -852,6 +852,11 @@ std::string const& cmGlobalNinjaGenerator::ConvertToNinjaPath(
     .first->second;
 }
 
+void cmGlobalNinjaGenerator::AddAdditionalCleanFile(std::string fileName)
+{
+  this->AdditionalCleanFiles.emplace(std::move(fileName));
+}
+
 void cmGlobalNinjaGenerator::AddCXXCompileCommand(
   const std::string& commandLine, const std::string& sourceFile)
 {
@@ -1464,8 +1469,68 @@ bool cmGlobalNinjaGenerator::SupportsMultilineDepfile() const
   return this->NinjaSupportsMultilineDepfile;
 }
 
+void cmGlobalNinjaGenerator::WriteTargetCleanAdditional(
+  std::ostream& os, std::string& targetName)
+{
+  std::string cmakeFile = this->LocalGenerators.at(0)->GetBinaryDirectory();
+  cmakeFile += "/CMakeFiles/cmake_clean.cmake";
+
+  // Check if there are additional files to clean
+  if (this->AdditionalCleanFiles.empty()) {
+    // Remove additional clean script file
+    cmSystemTools::RemoveFile(cmakeFile);
+    return;
+  }
+
+  // Write cmake script file
+  {
+    cmGeneratedFileStream fout(cmakeFile);
+    if (!fout) {
+      return;
+    }
+    fout << "# Additional clean files\n\n";
+    fout << "file(REMOVE_RECURSE\n";
+    for (std::string const& file : this->AdditionalCleanFiles) {
+      fout << "  " << cmOutputConverter::EscapeForCMake(file) << "\n";
+    }
+    fout << ")\n";
+  }
+
+  // Write rule
+  {
+    std::string cmd = CMakeCmd();
+    cmd += " -P ";
+    cmd += this->LocalGenerators.at(0)->ConvertToOutputFormat(
+      cmakeFile, cmOutputConverter::SHELL);
+    WriteRule(*this->RulesFileStream, "CLEAN_ADDITIONAL", cmd,
+              "Cleaning additional files...",
+              "Rule for cleaning additional files.",
+              /*depfile=*/"",
+              /*deptype=*/"",
+              /*rspfile=*/"",
+              /*rspcontent*/ "",
+              /*restat=*/"",
+              /*generator=*/false);
+  }
+
+  // Write build
+  targetName = "CMakeFiles/clean.additional";
+  WriteBuild(os, "Clean additional files.", "CLEAN_ADDITIONAL",
+             /*outputs=*/cmNinjaDeps(1, this->NinjaOutputPath(targetName)),
+             /*implicitOuts=*/cmNinjaDeps(),
+             /*explicitDeps=*/cmNinjaDeps(),
+             /*implicitDeps=*/cmNinjaDeps(),
+             /*orderOnlyDeps=*/cmNinjaDeps(),
+             /*variables=*/cmNinjaVars());
+}
+
 void cmGlobalNinjaGenerator::WriteTargetClean(std::ostream& os)
 {
+  // -- Additional clean target
+  std::string cleanAdditional;
+  WriteTargetCleanAdditional(os, cleanAdditional);
+
+  // -- Default clean target
   WriteRule(*this->RulesFileStream, "CLEAN", NinjaCmd() + " -t clean",
             "Cleaning all built files...",
             "Rule for cleaning all built files.",
@@ -1475,13 +1540,19 @@ void cmGlobalNinjaGenerator::WriteTargetClean(std::ostream& os)
             /*rspcontent*/ "",
             /*restat=*/"",
             /*generator=*/false);
-  WriteBuild(os, "Clean all the built files.", "CLEAN",
-             /*outputs=*/cmNinjaDeps(1, this->NinjaOutputPath("clean")),
-             /*implicitOuts=*/cmNinjaDeps(),
-             /*explicitDeps=*/cmNinjaDeps(),
-             /*implicitDeps=*/cmNinjaDeps(),
-             /*orderOnlyDeps=*/cmNinjaDeps(),
-             /*variables=*/cmNinjaVars());
+  {
+    cmNinjaDeps explicitDeps;
+    if (!cleanAdditional.empty()) {
+      explicitDeps.emplace_back(cleanAdditional);
+    }
+    WriteBuild(os, "Clean all the built files.", "CLEAN",
+               /*outputs=*/cmNinjaDeps(1, this->NinjaOutputPath("clean")),
+               /*implicitOuts=*/cmNinjaDeps(),
+               /*explicitDeps=*/explicitDeps,
+               /*implicitDeps=*/cmNinjaDeps(),
+               /*orderOnlyDeps=*/cmNinjaDeps(),
+               /*variables=*/cmNinjaVars());
+  }
 }
 
 void cmGlobalNinjaGenerator::WriteTargetHelp(std::ostream& os)
