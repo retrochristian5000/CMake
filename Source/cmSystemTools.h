@@ -43,9 +43,19 @@ public:
   static std::vector<std::string> ExpandedList(
     std::vector<std::string> const& argsIn);
 
+  /**
+   * Expand the ; separated string @a arg into multiple arguments.
+   * All found arguments are appended to @a argsOut.
+   */
   static void ExpandListArgument(const std::string& arg,
                                  std::vector<std::string>& argsOut,
                                  bool emptyArgs = false);
+
+  /**
+   * Same as ExpandListArgument but the list is returned.
+   */
+  static std::vector<std::string> ExpandedListArgument(const std::string& arg,
+                                                       bool emptyArgs = false);
 
   /**
    * Look for and replace registry values in a string
