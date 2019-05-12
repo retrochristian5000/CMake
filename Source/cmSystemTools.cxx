@@ -1208,12 +1208,22 @@ void cmSystemTools::GlobDirs(const std::string& path,
   }
 }
 
-void cmSystemTools::ExpandList(std::vector<std::string> const& arguments,
-                               std::vector<std::string>& newargs)
+void cmSystemTools::ExpandList(std::vector<std::string> const& argsIn,
+                               std::vector<std::string>& argsOut)
 {
-  for (std::string const& arg : arguments) {
-    cmSystemTools::ExpandListArgument(arg, newargs);
+  for (std::string const& arg : argsIn) {
+    cmSystemTools::ExpandListArgument(arg, argsOut);
   }
+}
+
+std::vector<std::string> cmSystemTools::ExpandedList(
+  std::vector<std::string> const& argsIn)
+{
+  std::vector<std::string> argsOut;
+  for (std::string const& arg : argsIn) {
+    cmSystemTools::ExpandListArgument(arg, argsOut);
+  }
+  return argsOut;
 }
 
 void cmSystemTools::ExpandListArgument(const std::string& arg,

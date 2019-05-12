@@ -29,12 +29,20 @@ public:
   typedef cmsys::SystemTools Superclass;
   typedef cmProcessOutput::Encoding Encoding;
 
-  /** Expand out any arguments in the vector that have ; separated
-   *  strings into multiple arguments.  A new vector is created
-   *  containing the expanded versions of all arguments in argsIn.
+  /**
+   * Expand out any arguments in the vector that have ; separated
+   * strings into multiple arguments.  A new vector is created
+   * containing the expanded versions of all arguments in argsIn.
    */
   static void ExpandList(std::vector<std::string> const& argsIn,
                          std::vector<std::string>& argsOut);
+
+  /**
+   * Same as ExpandList but the list is returned.
+   */
+  static std::vector<std::string> ExpandedList(
+    std::vector<std::string> const& argsIn);
+
   static void ExpandListArgument(const std::string& arg,
                                  std::vector<std::string>& argsOut,
                                  bool emptyArgs = false);
