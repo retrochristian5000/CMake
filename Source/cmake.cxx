@@ -848,7 +848,7 @@ void cmake::SetArgs(const std::vector<std::string>& args)
     }
     // no option assume it is the path to the source or an existing build
     else {
-      this->SetDirectoriesFromFile(arg.c_str());
+      this->SetDirectoriesFromFile(arg);
     }
     // Empty instance, platform and toolset if only a generator is specified
     if (this->GlobalGenerator) {
@@ -901,7 +901,7 @@ cmake::LogLevel cmake::StringToLogLevel(const std::string& levelStr)
   return (it != levels.cend()) ? it->second : LogLevel::LOG_UNDEFINED;
 }
 
-void cmake::SetDirectoriesFromFile(const char* arg)
+void cmake::SetDirectoriesFromFile(const std::string& arg)
 {
   // Check if the argument refers to a CMakeCache.txt or
   // CMakeLists.txt file.
@@ -1810,7 +1810,7 @@ int cmake::Generate()
   this->GlobalGenerator->Generate();
   if (!this->GraphVizFile.empty()) {
     std::cout << "Generate graphviz: " << this->GraphVizFile << std::endl;
-    this->GenerateGraphViz(this->GraphVizFile.c_str());
+    this->GenerateGraphViz(this->GraphVizFile);
   }
   if (this->WarnUnusedCli) {
     this->RunCheckForUnusedVariables();
@@ -2318,7 +2318,7 @@ void cmake::MarkCliAsUsed(const std::string& variable)
   this->UsedCliVariables[variable] = true;
 }
 
-void cmake::GenerateGraphViz(const char* fileName) const
+void cmake::GenerateGraphViz(const std::string& fileName) const
 {
 #ifdef CMAKE_BUILD_WITH_CMAKE
   cmGraphVizWriter gvWriter(this->GetGlobalGenerator());
@@ -2328,8 +2328,7 @@ void cmake::GenerateGraphViz(const char* fileName) const
   std::string fallbackSettingsFile = this->GetHomeDirectory();
   fallbackSettingsFile += "/CMakeGraphVizOptions.cmake";
 
-  gvWriter.ReadSettings(settingsFile.c_str(), fallbackSettingsFile.c_str());
-
+  gvWriter.ReadSettings(settingsFile, fallbackSettingsFile);
   gvWriter.WritePerTargetFiles(fileName);
   gvWriter.WriteTargetDependersFiles(fileName);
   gvWriter.WriteGlobalFile(fileName);
@@ -2707,7 +2706,7 @@ int cmake::Build(int jobs, const std::string& dir,
       // directories, which is required for running the generation step.
       std::string homeOrig = this->GetHomeDirectory();
       std::string homeOutputOrig = this->GetHomeOutputDirectory();
-      this->SetDirectoriesFromFile(cachePath.c_str());
+      this->SetDirectoriesFromFile(cachePath);
 
       this->AddProjectCommands();
 
