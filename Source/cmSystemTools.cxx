@@ -1577,6 +1577,9 @@ bool cmSystemTools::CreateTar(const char* outFileName,
     case TarCompressXZ:
       compress = cmArchiveWrite::CompressXZ;
       break;
+    case TarCompressZstd:
+      compress = cmArchiveWrite::CompressZstd;
+      break;
     case TarCompressNone:
       compress = cmArchiveWrite::CompressNone;
       break;
