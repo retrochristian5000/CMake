@@ -48,6 +48,14 @@ in directory:
   endif()
 endfunction()
 
+if(NOT APPLE AND NOT WIN32)
+  set(RunCMake-check-file CMP0095-check.cmake)
+  run_cmake(CMP0095-OLD)
+  run_cmake(CMP0095-WARN)
+  run_cmake(CMP0095-NEW)
+  unset(RunCMake-check-file)
+endif()
+
 run_cmake(DIRECTORY-MESSAGE_NEVER)
 run_cmake(DIRECTORY-PATTERN-MESSAGE_NEVER)
 run_cmake(DIRECTORY-message)
