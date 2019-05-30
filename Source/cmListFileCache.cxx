@@ -252,7 +252,7 @@ bool cmListFileParser::ParseFunction(const char* name, long line)
   std::ostringstream error;
   cmListFileContext lfc;
   lfc.FilePath = this->FileName;
-  lfc.Line = lastLine;
+  lfc.Line = line;
   cmListFileBacktrace lfbt = this->Backtrace;
   lfbt = lfbt.Push(lfc);
   error << "Parse error.  Function missing ending \")\".  "
