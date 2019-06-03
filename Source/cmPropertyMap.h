@@ -25,6 +25,9 @@ public:
 
   const char* GetPropertyValue(const std::string& name) const;
 
+  //! Remove the property @a name from the map
+  void Remove(const std::string& name);
+
   // -- Lists
   //! Get a sorted list of property keys
   std::vector<std::string> GetKeys() const;
