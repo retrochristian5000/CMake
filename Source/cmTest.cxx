@@ -51,7 +51,7 @@ bool cmTest::GetPropertyAsBool(const std::string& prop) const
 
 void cmTest::SetProperty(const std::string& prop, const char* value)
 {
-  this->Properties.SetProperty(prop, value);
+  this->Properties.Set(prop, value);
 }
 
 void cmTest::AppendProperty(const std::string& prop, const char* value,

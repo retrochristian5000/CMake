@@ -18,7 +18,8 @@ public:
   void Clear();
 
   // -- Properties
-  void SetProperty(const std::string& name, const char* value);
+  //! Sets the property @a name to the value @a value
+  void Set(const std::string& name, const char* value);
 
   void AppendProperty(const std::string& name, const char* value,
                       bool asString = false);

@@ -238,7 +238,7 @@ bool cmSourceFile::Matches(cmSourceFileLocation const& loc)
 
 void cmSourceFile::SetProperty(const std::string& prop, const char* value)
 {
-  this->Properties.SetProperty(prop, value);
+  this->Properties.Set(prop, value);
 
   // Update IsGenerated flag
   if (prop == propGENERATED) {

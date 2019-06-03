@@ -643,7 +643,7 @@ void cmCacheManager::CacheEntry::SetProperty(const std::string& prop,
   } else if (prop == "VALUE") {
     this->Value = value ? value : "";
   } else {
-    this->Properties.SetProperty(prop, value);
+    this->Properties.Set(prop, value);
   }
 }
 

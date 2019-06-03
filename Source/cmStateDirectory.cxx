@@ -529,7 +529,7 @@ void cmStateDirectory::SetProperty(const std::string& prop, const char* value,
     return;
   }
 
-  this->DirectoryState->Properties.SetProperty(prop, value);
+  this->DirectoryState->Properties.Set(prop, value);
 }
 
 void cmStateDirectory::AppendProperty(const std::string& prop,

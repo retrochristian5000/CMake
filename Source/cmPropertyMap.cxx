@@ -9,7 +9,7 @@ void cmPropertyMap::Clear()
   Map_.clear();
 }
 
-void cmPropertyMap::SetProperty(const std::string& name, const char* value)
+void cmPropertyMap::Set(const std::string& name, const char* value)
 {
   if (!value) {
     Map_.erase(name);

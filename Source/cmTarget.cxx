@@ -1186,7 +1186,7 @@ void cmTarget::SetProperty(const std::string& prop, const char* value)
     impl->Makefile->IssueMessage(MessageType::FATAL_ERROR, e.str());
     return;
   } else {
-    impl->Properties.SetProperty(prop, value);
+    impl->Properties.Set(prop, value);
   }
 }
 
