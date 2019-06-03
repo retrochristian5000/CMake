@@ -267,7 +267,7 @@ void cmState::RemoveCacheEntryProperty(std::string const& key,
 
 cmStateSnapshot cmState::Reset()
 {
-  this->GlobalProperties.clear();
+  this->GlobalProperties.Clear();
   this->PropertyDefinitions.clear();
   this->GlobVerificationManager->Reset();
 
@@ -289,7 +289,7 @@ cmStateSnapshot cmState::Reset()
     it->LinkDirectoriesBacktraces.clear();
     it->DirectoryEnd = pos;
     it->NormalTargetNames.clear();
-    it->Properties.clear();
+    it->Properties.Clear();
     it->Children.clear();
   }
 
@@ -521,13 +521,13 @@ void cmState::RemoveUserDefinedCommands()
 
 void cmState::SetGlobalProperty(const std::string& prop, const char* value)
 {
-  this->GlobalProperties.SetProperty(prop, value);
+  this->GlobalProperties.Set(prop, value);
 }
 
 void cmState::AppendGlobalProperty(const std::string& prop, const char* value,
                                    bool asString)
 {
-  this->GlobalProperties.AppendProperty(prop, value, asString);
+  this->GlobalProperties.Append(prop, value, asString);
 }
 
 const char* cmState::GetGlobalProperty(const std::string& prop)
@@ -579,7 +579,7 @@ const char* cmState::GetGlobalProperty(const std::string& prop)
   }
 
 #undef STRING_LIST_ELEMENT
-  return this->GlobalProperties.GetPropertyValue(prop);
+  return this->GlobalProperties.Get(prop);
 }
 
 bool cmState::GetGlobalPropertyAsBool(const std::string& prop)

@@ -238,7 +238,7 @@ bool cmSourceFile::Matches(cmSourceFileLocation const& loc)
 
 void cmSourceFile::SetProperty(const std::string& prop, const char* value)
 {
-  this->Properties.SetProperty(prop, value);
+  this->Properties.Set(prop, value);
 
   // Update IsGenerated flag
   if (prop == propGENERATED) {
@@ -249,7 +249,7 @@ void cmSourceFile::SetProperty(const std::string& prop, const char* value)
 void cmSourceFile::AppendProperty(const std::string& prop, const char* value,
                                   bool asString)
 {
-  this->Properties.AppendProperty(prop, value, asString);
+  this->Properties.Append(prop, value, asString);
 
   // Update IsGenerated flag
   if (prop == propGENERATED) {
@@ -292,7 +292,7 @@ const char* cmSourceFile::GetProperty(const std::string& prop) const
     return this->FullPath.c_str();
   }
 
-  const char* retVal = this->Properties.GetPropertyValue(prop);
+  const char* retVal = this->Properties.Get(prop);
   if (!retVal) {
     cmMakefile const* mf = this->Location.GetMakefile();
     const bool chain =

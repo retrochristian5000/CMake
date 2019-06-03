@@ -350,7 +350,7 @@ void cmStateSnapshot::SetDefaultDefinitions()
   this->SetDefinition("CMAKE_FILES_DIRECTORY", "/CMakeFiles");
 
   // Setup the default include file regular expression (match everything).
-  this->Position->BuildSystemDirectory->Properties.SetProperty(
+  this->Position->BuildSystemDirectory->Properties.Set(
     "INCLUDE_REGULAR_EXPRESSION", "^.*$");
 }
 
@@ -409,9 +409,8 @@ void cmStateSnapshot::InitializeFromParent()
     this->Position->LinkDirectoriesPosition);
 
   const char* include_regex =
-    parent->BuildSystemDirectory->Properties.GetPropertyValue(
-      "INCLUDE_REGULAR_EXPRESSION");
-  this->Position->BuildSystemDirectory->Properties.SetProperty(
+    parent->BuildSystemDirectory->Properties.Get("INCLUDE_REGULAR_EXPRESSION");
+  this->Position->BuildSystemDirectory->Properties.Set(
     "INCLUDE_REGULAR_EXPRESSION", include_regex);
 }
 

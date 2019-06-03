@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <assert.h>
 #include <iterator>
-#include <utility>
 
 #include "cmAlgorithms.h"
 #include "cmProperty.h"
@@ -530,7 +529,7 @@ void cmStateDirectory::SetProperty(const std::string& prop, const char* value,
     return;
   }
 
-  this->DirectoryState->Properties.SetProperty(prop, value);
+  this->DirectoryState->Properties.Set(prop, value);
 }
 
 void cmStateDirectory::AppendProperty(const std::string& prop,
@@ -558,7 +557,7 @@ void cmStateDirectory::AppendProperty(const std::string& prop,
     return;
   }
 
-  this->DirectoryState->Properties.AppendProperty(prop, value, asString);
+  this->DirectoryState->Properties.Append(prop, value, asString);
 }
 
 const char* cmStateDirectory::GetProperty(const std::string& prop) const
@@ -647,7 +646,7 @@ const char* cmStateDirectory::GetProperty(const std::string& prop,
     return output.c_str();
   }
 
-  const char* retVal = this->DirectoryState->Properties.GetPropertyValue(prop);
+  const char* retVal = this->DirectoryState->Properties.Get(prop);
   if (!retVal && chain) {
     cmStateSnapshot parentSnapshot =
       this->Snapshot_.GetBuildsystemDirectoryParent();
@@ -667,12 +666,7 @@ bool cmStateDirectory::GetPropertyAsBool(const std::string& prop) const
 
 std::vector<std::string> cmStateDirectory::GetPropertyKeys() const
 {
-  std::vector<std::string> keys;
-  keys.reserve(this->DirectoryState->Properties.size());
-  for (auto const& it : this->DirectoryState->Properties) {
-    keys.push_back(it.first);
-  }
-  return keys;
+  return this->DirectoryState->Properties.GetKeys();
 }
 
 void cmStateDirectory::AddNormalTargetName(std::string const& name)

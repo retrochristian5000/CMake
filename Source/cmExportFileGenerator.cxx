@@ -12,7 +12,6 @@
 #include "cmMessageType.h"
 #include "cmOutputConverter.h"
 #include "cmPolicies.h"
-#include "cmProperty.h"
 #include "cmPropertyMap.h"
 #include "cmStateTypes.h"
 #include "cmSystemTools.h"
@@ -1205,12 +1204,9 @@ bool cmExportFileGenerator::PopulateExportProperties(
   std::string& errorMessage)
 {
   auto& targetProperties = gte->Target->GetProperties();
-  const auto& exportProperties = targetProperties.find("EXPORT_PROPERTIES");
-  if (exportProperties != targetProperties.end()) {
-    std::vector<std::string> propsToExport;
-    cmSystemTools::ExpandListArgument(exportProperties->second.GetValue(),
-                                      propsToExport);
-    for (auto& prop : propsToExport) {
+  if (const char* exportProperties =
+        targetProperties.Get("EXPORT_PROPERTIES")) {
+    for (auto& prop : cmSystemTools::ExpandedListArgument(exportProperties)) {
       /* Black list reserved properties */
       if (cmSystemTools::StringStartsWith(prop, "IMPORTED_") ||
           cmSystemTools::StringStartsWith(prop, "INTERFACE_")) {
@@ -1221,7 +1217,7 @@ bool cmExportFileGenerator::PopulateExportProperties(
         errorMessage = e.str();
         return false;
       }
-      auto propertyValue = targetProperties.GetPropertyValue(prop);
+      auto propertyValue = targetProperties.Get(prop);
       if (propertyValue == nullptr) {
         // Asked to export a property that isn't defined on the target. Do not
         // consider this an error, there's just nothing to export.

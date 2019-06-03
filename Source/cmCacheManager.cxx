@@ -620,7 +620,7 @@ bool cmCacheManager::CacheIterator::GetValueAsBool() const
 
 std::vector<std::string> cmCacheManager::CacheEntry::GetPropertyList() const
 {
-  return this->Properties.GetPropertyList();
+  return this->Properties.GetKeys();
 }
 
 const char* cmCacheManager::CacheEntry::GetProperty(
@@ -632,7 +632,7 @@ const char* cmCacheManager::CacheEntry::GetProperty(
   if (prop == "VALUE") {
     return this->Value.c_str();
   }
-  return this->Properties.GetPropertyValue(prop);
+  return this->Properties.Get(prop);
 }
 
 void cmCacheManager::CacheEntry::SetProperty(const std::string& prop,
@@ -643,7 +643,7 @@ void cmCacheManager::CacheEntry::SetProperty(const std::string& prop,
   } else if (prop == "VALUE") {
     this->Value = value ? value : "";
   } else {
-    this->Properties.SetProperty(prop, value);
+    this->Properties.Set(prop, value);
   }
 }
 
@@ -661,7 +661,7 @@ void cmCacheManager::CacheEntry::AppendProperty(const std::string& prop,
       this->Value += value;
     }
   } else {
-    this->Properties.AppendProperty(prop, value, asString);
+    this->Properties.Append(prop, value, asString);
   }
 }
 

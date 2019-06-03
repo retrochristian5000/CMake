@@ -1186,7 +1186,7 @@ void cmTarget::SetProperty(const std::string& prop, const char* value)
     impl->Makefile->IssueMessage(MessageType::FATAL_ERROR, e.str());
     return;
   } else {
-    impl->Properties.SetProperty(prop, value);
+    impl->Properties.Set(prop, value);
   }
 }
 
@@ -1276,7 +1276,7 @@ void cmTarget::AppendProperty(const std::string& prop, const char* value,
     impl->Makefile->IssueMessage(MessageType::FATAL_ERROR,
                                  prop + " property may not be APPENDed.");
   } else {
-    impl->Properties.AppendProperty(prop, value, asString);
+    impl->Properties.Append(prop, value, asString);
   }
 }
 
@@ -1620,7 +1620,7 @@ const char* cmTarget::GetProperty(const std::string& prop) const
     }
   }
 
-  const char* retVal = impl->Properties.GetPropertyValue(prop);
+  const char* retVal = impl->Properties.Get(prop);
   if (!retVal) {
     const bool chain =
       impl->Makefile->GetState()->IsPropertyChained(prop, cmProperty::TARGET);

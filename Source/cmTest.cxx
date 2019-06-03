@@ -33,7 +33,7 @@ void cmTest::SetCommand(std::vector<std::string> const& command)
 
 const char* cmTest::GetProperty(const std::string& prop) const
 {
-  const char* retVal = this->Properties.GetPropertyValue(prop);
+  const char* retVal = this->Properties.Get(prop);
   if (!retVal) {
     const bool chain =
       this->Makefile->GetState()->IsPropertyChained(prop, cmProperty::TEST);
@@ -51,11 +51,11 @@ bool cmTest::GetPropertyAsBool(const std::string& prop) const
 
 void cmTest::SetProperty(const std::string& prop, const char* value)
 {
-  this->Properties.SetProperty(prop, value);
+  this->Properties.Set(prop, value);
 }
 
 void cmTest::AppendProperty(const std::string& prop, const char* value,
                             bool asString)
 {
-  this->Properties.AppendProperty(prop, value, asString);
+  this->Properties.Append(prop, value, asString);
 }
