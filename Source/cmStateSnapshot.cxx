@@ -409,8 +409,7 @@ void cmStateSnapshot::InitializeFromParent()
     this->Position->LinkDirectoriesPosition);
 
   const char* include_regex =
-    parent->BuildSystemDirectory->Properties.GetPropertyValue(
-      "INCLUDE_REGULAR_EXPRESSION");
+    parent->BuildSystemDirectory->Properties.Get("INCLUDE_REGULAR_EXPRESSION");
   this->Position->BuildSystemDirectory->Properties.SetProperty(
     "INCLUDE_REGULAR_EXPRESSION", include_regex);
 }

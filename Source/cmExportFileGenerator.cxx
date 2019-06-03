@@ -1205,7 +1205,7 @@ bool cmExportFileGenerator::PopulateExportProperties(
 {
   auto& targetProperties = gte->Target->GetProperties();
   if (const char* exportProperties =
-        targetProperties.GetPropertyValue("EXPORT_PROPERTIES")) {
+        targetProperties.Get("EXPORT_PROPERTIES")) {
     for (auto& prop : cmSystemTools::ExpandedListArgument(exportProperties)) {
       /* Black list reserved properties */
       if (cmSystemTools::StringStartsWith(prop, "IMPORTED_") ||
@@ -1217,7 +1217,7 @@ bool cmExportFileGenerator::PopulateExportProperties(
         errorMessage = e.str();
         return false;
       }
-      auto propertyValue = targetProperties.GetPropertyValue(prop);
+      auto propertyValue = targetProperties.Get(prop);
       if (propertyValue == nullptr) {
         // Asked to export a property that isn't defined on the target. Do not
         // consider this an error, there's just nothing to export.

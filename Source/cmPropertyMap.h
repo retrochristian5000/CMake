@@ -23,7 +23,8 @@ public:
   void AppendProperty(const std::string& name, const char* value,
                       bool asString = false);
 
-  const char* GetPropertyValue(const std::string& name) const;
+  //! Returns the value of the property @a name
+  const char* Get(const std::string& name) const;
 
   //! Remove the property @a name from the map
   void Remove(const std::string& name);

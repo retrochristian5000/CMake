@@ -41,7 +41,7 @@ void cmPropertyMap::Remove(const std::string& name)
   Map_.erase(name);
 }
 
-const char* cmPropertyMap::GetPropertyValue(const std::string& name) const
+const char* cmPropertyMap::Get(const std::string& name) const
 {
   {
     auto it = Map_.find(name);

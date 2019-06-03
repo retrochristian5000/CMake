@@ -33,7 +33,7 @@ void cmTest::SetCommand(std::vector<std::string> const& command)
 
 const char* cmTest::GetProperty(const std::string& prop) const
 {
-  const char* retVal = this->Properties.GetPropertyValue(prop);
+  const char* retVal = this->Properties.Get(prop);
   if (!retVal) {
     const bool chain =
       this->Makefile->GetState()->IsPropertyChained(prop, cmProperty::TEST);

@@ -579,7 +579,7 @@ const char* cmState::GetGlobalProperty(const std::string& prop)
   }
 
 #undef STRING_LIST_ELEMENT
-  return this->GlobalProperties.GetPropertyValue(prop);
+  return this->GlobalProperties.Get(prop);
 }
 
 bool cmState::GetGlobalPropertyAsBool(const std::string& prop)

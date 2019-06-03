@@ -1620,7 +1620,7 @@ const char* cmTarget::GetProperty(const std::string& prop) const
     }
   }
 
-  const char* retVal = impl->Properties.GetPropertyValue(prop);
+  const char* retVal = impl->Properties.Get(prop);
   if (!retVal) {
     const bool chain =
       impl->Makefile->GetState()->IsPropertyChained(prop, cmProperty::TARGET);

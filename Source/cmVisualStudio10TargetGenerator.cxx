@@ -972,7 +972,7 @@ void cmVisualStudio10TargetGenerator::WriteEmbeddedResourceGroup(Elem& e0)
           if (p.find(propNamePrefix) == 0) {
             std::string tagName = p.substr(propNamePrefix.length());
             if (!tagName.empty()) {
-              std::string value = props.GetPropertyValue(p);
+              std::string value = props.Get(p);
               if (!value.empty()) {
                 e2.Element(tagName.c_str(), value);
               }
@@ -4686,7 +4686,7 @@ void cmVisualStudio10TargetGenerator::GetCSharpSourceProperties(
       if (p.find(propNamePrefix) == 0) {
         std::string tagName = p.substr(propNamePrefix.length());
         if (!tagName.empty()) {
-          const std::string val = props.GetPropertyValue(p);
+          const std::string val = props.Get(p);
           if (!val.empty()) {
             tags[tagName] = val;
           } else {
