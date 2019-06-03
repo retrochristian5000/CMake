@@ -661,7 +661,7 @@ void cmCacheManager::CacheEntry::AppendProperty(const std::string& prop,
       this->Value += value;
     }
   } else {
-    this->Properties.AppendProperty(prop, value, asString);
+    this->Properties.Append(prop, value, asString);
   }
 }
 

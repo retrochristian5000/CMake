@@ -1276,7 +1276,7 @@ void cmTarget::AppendProperty(const std::string& prop, const char* value,
     impl->Makefile->IssueMessage(MessageType::FATAL_ERROR,
                                  prop + " property may not be APPENDed.");
   } else {
-    impl->Properties.AppendProperty(prop, value, asString);
+    impl->Properties.Append(prop, value, asString);
   }
 }
 

@@ -557,7 +557,7 @@ void cmStateDirectory::AppendProperty(const std::string& prop,
     return;
   }
 
-  this->DirectoryState->Properties.AppendProperty(prop, value, asString);
+  this->DirectoryState->Properties.Append(prop, value, asString);
 }
 
 const char* cmStateDirectory::GetProperty(const std::string& prop) const

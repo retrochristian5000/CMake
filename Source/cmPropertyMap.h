@@ -21,8 +21,9 @@ public:
   //! Sets the property @a name to the value @a value
   void Set(const std::string& name, const char* value);
 
-  void AppendProperty(const std::string& name, const char* value,
-                      bool asString = false);
+  //! Append @a value to the property @a name.
+  void Append(const std::string& name, const char* value,
+              bool asString = false);
 
   //! Returns the value of the property @a name
   const char* Get(const std::string& name) const;

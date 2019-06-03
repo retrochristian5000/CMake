@@ -249,7 +249,7 @@ void cmSourceFile::SetProperty(const std::string& prop, const char* value)
 void cmSourceFile::AppendProperty(const std::string& prop, const char* value,
                                   bool asString)
 {
-  this->Properties.AppendProperty(prop, value, asString);
+  this->Properties.Append(prop, value, asString);
 
   // Update IsGenerated flag
   if (prop == propGENERATED) {

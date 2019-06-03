@@ -527,7 +527,7 @@ void cmState::SetGlobalProperty(const std::string& prop, const char* value)
 void cmState::AppendGlobalProperty(const std::string& prop, const char* value,
                                    bool asString)
 {
-  this->GlobalProperties.AppendProperty(prop, value, asString);
+  this->GlobalProperties.Append(prop, value, asString);
 }
 
 const char* cmState::GetGlobalProperty(const std::string& prop)
