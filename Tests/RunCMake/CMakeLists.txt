@@ -408,7 +408,9 @@ else()
   set(NO_NAMELINK 0)
 endif()
 
-add_RunCMake_test(install -DNO_NAMELINK=${NO_NAMELINK} -DCYGWIN=${CYGWIN})
+add_RunCMake_test(install -DNO_NAMELINK=${NO_NAMELINK} -DCYGWIN=${CYGWIN}
+  -DCMAKE_SHARED_LIBRARY_RPATH_ORIGIN_TOKEN=${CMAKE_SHARED_LIBRARY_RPATH_ORIGIN_TOKEN}
+  -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME})
 add_RunCMake_test(CPackCommandLine)
 add_RunCMake_test(CPackConfig)
 add_RunCMake_test(CPackInstallProperties)

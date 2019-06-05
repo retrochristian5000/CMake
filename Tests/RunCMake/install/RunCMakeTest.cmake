@@ -48,6 +48,24 @@ in directory:
   endif()
 endfunction()
 
+# Wrapper for run_cmake() that skips non-ELF platforms
+function(run_cmake_ELF_only case)
+  # Run tests only on ELF-based platforms. We infer the 'ELF-based' platform quality from the support for the
+  # BUILD_RPATH_USE_ORIGIN target property with an origin token of value '$ORIGIN'.
+  if(NOT "x${CMAKE_SHARED_LIBRARY_RPATH_ORIGIN_TOKEN}x" STREQUAL "x\$ORIGINx")
+    # Sanity check against a platform known to be ELF-based
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+      message(FATAL_ERROR "Expected platform Linux to advertize itself as ELF-based, but it did not.")
+    else()
+      message(STATUS "${case} - SKIPPED (No ELF-based platform found)")
+    endif()
+  else()
+    run_cmake(${case})
+  endif()
+endfunction()
+
+run_cmake(TARGETS-FILE_RPATH_CHANGE-old_rpath)
+run_cmake_ELF_only(TARGETS-FILE_RPATH_CHANGE-new_rpath)
 run_cmake(DIRECTORY-MESSAGE_NEVER)
 run_cmake(DIRECTORY-PATTERN-MESSAGE_NEVER)
 run_cmake(DIRECTORY-message)
