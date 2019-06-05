@@ -323,8 +323,8 @@ bool cmVSSetupAPIHelper::EnumerateAndChooseVSInstance()
 
   std::vector<VSInstanceInfo> vecVSInstances;
   SmartCOMPtr<IEnumSetupInstances> enumInstances = NULL;
-  if (FAILED(
-        setupConfig2->EnumInstances((IEnumSetupInstances**)&enumInstances)) ||
+  if (FAILED(setupConfig2->EnumAllInstances(
+        (IEnumSetupInstances**)&enumInstances)) ||
       !enumInstances) {
     return false;
   }
