@@ -38,6 +38,21 @@ find_program(PROG_CWD
   )
 message(STATUS "PROG_CWD='${PROG_CWD}'")
 
+
+set(CMAKE_PREFIX_PATH ".")
+set(CMAKE_FIND_USE_CMAKE_PATH OFF)
+find_program(PROG_CWD
+  NAMES testCWD
+  )
+message(STATUS "PROG_CWD='${PROG_CWD}'")
+
+set(CMAKE_PREFIX_PATH ".")
+set(CMAKE_FIND_USE_CMAKE_PATH ON)
+find_program(PROG_CWD
+  NAMES testCWD
+  )
+message(STATUS "PROG_CWD='${PROG_CWD}'")
+
 find_program(PROG_CWD_NPD
   NAMES testCWD
   NAMES_PER_DIR
