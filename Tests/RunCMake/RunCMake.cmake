@@ -23,6 +23,11 @@ function(run_cmake test)
   endif()
 
   string(TOLOWER ${CMAKE_HOST_SYSTEM_NAME} platform_name)
+  if(platform_name MATCHES cygwin)
+    #remove all additional bits from cygwin name
+    set(platform_name cygwin)
+  endif()
+
   foreach(o out err)
     if(RunCMake-std${o}-file AND EXISTS ${top_src}/${RunCMake-std${o}-file})
       file(READ ${top_src}/${RunCMake-std${o}-file} expect_std${o})
