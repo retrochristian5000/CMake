@@ -443,7 +443,8 @@ this mode include:
  Specify the name of the project to build.
 
 ``--build-makeprogram``
- Override the make program chosen by CTest with a given one.
+ Specify the explicit make program to be used by CMake when configuring and
+ building the project.
 
 ``--build-noclean``
  Skip the make clean step.
