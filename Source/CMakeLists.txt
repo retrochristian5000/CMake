@@ -921,6 +921,7 @@ set(CTEST_SRCS cmCTest.cxx
   CTest/cmCTestMemCheckCommand.cxx
   CTest/cmCTestMemCheckHandler.cxx
   CTest/cmCTestMultiProcessHandler.cxx
+  CTest/cmCTestProcessesLexerHelper.cxx
   CTest/cmCTestReadCustomFilesCommand.cxx
   CTest/cmCTestRunScriptCommand.cxx
   CTest/cmCTestRunTest.cxx
@@ -952,6 +953,10 @@ set(CTEST_SRCS cmCTest.cxx
   CTest/cmCTestHG.h
   CTest/cmCTestP4.cxx
   CTest/cmCTestP4.h
+
+  LexerParser/cmCTestProcessesLexer.cxx
+  LexerParser/cmCTestProcessesLexer.h
+  LexerParser/cmCTestProcessesLexer.in.l
   )
 
 # Build CTestLib
