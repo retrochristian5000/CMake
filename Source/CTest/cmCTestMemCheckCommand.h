@@ -5,10 +5,12 @@
 
 #include "cmConfigure.h" // IWYU pragma: keep
 
+#include "cm_memory.hxx"
+
 #include "cmCTestTestCommand.h"
+#include "cmCommand.h"
 
 class cmCTestGenericHandler;
-class cmCommand;
 
 /** \class cmCTestMemCheck
  * \brief Run a ctest script
@@ -23,9 +25,10 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  cmCommand* Clone() override
+  std::unique_ptr<cmCommand> Clone() override
   {
-    cmCTestMemCheckCommand* ni = new cmCTestMemCheckCommand;
+    std::unique_ptr<cmCTestMemCheckCommand> ni =
+      cm::make_unique<cmCTestMemCheckCommand>();
     ni->CTest = this->CTest;
     ni->CTestScriptHandler = this->CTestScriptHandler;
     return ni;
