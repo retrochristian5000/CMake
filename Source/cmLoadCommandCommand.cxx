@@ -3,10 +3,14 @@
 #include "cmLoadCommandCommand.h"
 
 #include <signal.h>
+
 #include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <utility>
+
+#include "cm_memory.hxx"
 
 #include "cmCPluginAPI.cxx"
 #include "cmCPluginAPI.h"
@@ -39,9 +43,9 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  cmCommand* Clone() override
+  std::unique_ptr<cmCommand> Clone() override
   {
-    cmLoadedCommand* newC = new cmLoadedCommand;
+    std::unique_ptr<cmLoadedCommand> newC = cm::make_unique<cmLoadedCommand>();
     // we must copy when we clone
     memcpy(&newC->info, &this->info, sizeof(info));
     return newC;
@@ -237,9 +241,9 @@ bool cmLoadCommandCommand::InitialPass(std::vector<std::string> const& args,
   // function blocker
   if (initFunction) {
     // create a function blocker and set it up
-    cmLoadedCommand* f = new cmLoadedCommand();
+    std::unique_ptr<cmLoadedCommand> f = cm::make_unique<cmLoadedCommand>();
     (*initFunction)(&f->info);
-    this->Makefile->GetState()->AddScriptedCommand(args[0], f);
+    this->Makefile->GetState()->AddScriptedCommand(args[0], std::move(f));
     return true;
   }
   this->SetError("Attempt to load command failed. "

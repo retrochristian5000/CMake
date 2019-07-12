@@ -6,11 +6,13 @@
 #include "cmConfigure.h" // IWYU pragma: keep
 
 #include "cmCTestCommand.h"
+#include "cmCommand.h"
 
 #include <string>
 #include <vector>
 
-class cmCommand;
+#include "cm_memory.hxx"
+
 class cmExecutionStatus;
 
 /** \class cmCTestSleep
@@ -27,9 +29,10 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  cmCommand* Clone() override
+  std::unique_ptr<cmCommand> Clone() override
   {
-    cmCTestSleepCommand* ni = new cmCTestSleepCommand;
+    std::unique_ptr<cmCTestSleepCommand> ni =
+      cm::make_unique<cmCTestSleepCommand>();
     ni->CTest = this->CTest;
     ni->CTestScriptHandler = this->CTestScriptHandler;
     return ni;
