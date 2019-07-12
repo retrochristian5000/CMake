@@ -2,95 +2,88 @@
    file Copyright.txt or https://cmake.org/licensing for details.  */
 #include "cmFileLockPool.h"
 
-#include <assert.h>
-
-#include "cmAlgorithms.h"
 #include "cmFileLock.h"
 #include "cmFileLockResult.h"
+#include "cm_memory.hxx"
 
-cmFileLockPool::cmFileLockPool() = default;
+#include <assert.h>
+#include <utility>
+#include <vector>
 
-cmFileLockPool::~cmFileLockPool()
+namespace {
+
+/** \class ScopePool
+ */
+class ScopePool
 {
-  cmDeleteAll(this->FunctionScopes);
-  cmDeleteAll(this->FileScopes);
-}
+public:
+  ScopePool() = default;
+  ~ScopePool() = default;
 
-void cmFileLockPool::PushFunctionScope()
-{
-  this->FunctionScopes.push_back(new ScopePool());
-}
+  ScopePool(ScopePool const&) = delete;
+  ScopePool& operator=(ScopePool const&) = delete;
 
-void cmFileLockPool::PopFunctionScope()
-{
-  assert(!this->FunctionScopes.empty());
-  delete this->FunctionScopes.back();
-  this->FunctionScopes.pop_back();
-}
+  cmFileLockResult Lock(std::string const& filename, unsigned long timeoutSec);
+  cmFileLockResult Release(std::string const& filename);
+  bool IsAlreadyLocked(std::string const& filename) const;
 
-void cmFileLockPool::PushFileScope()
-{
-  this->FileScopes.push_back(new ScopePool());
-}
+private:
+  typedef std::vector<std::unique_ptr<cmFileLock>> List;
+  List Locks;
+};
 
-void cmFileLockPool::PopFileScope()
+cmFileLockResult ScopePool::Lock(std::string const& filename,
+                                 unsigned long timeoutSec)
 {
-  assert(!this->FileScopes.empty());
-  delete this->FileScopes.back();
-  this->FileScopes.pop_back();
-}
-
-cmFileLockResult cmFileLockPool::LockFunctionScope(const std::string& filename,
-                                                   unsigned long timeoutSec)
-{
-  if (this->IsAlreadyLocked(filename)) {
-    return cmFileLockResult::MakeAlreadyLocked();
-  }
-  if (this->FunctionScopes.empty()) {
-    return cmFileLockResult::MakeNoFunction();
-  }
-  return this->FunctionScopes.back()->Lock(filename, timeoutSec);
-}
-
-cmFileLockResult cmFileLockPool::LockFileScope(const std::string& filename,
-                                               unsigned long timeoutSec)
-{
-  if (this->IsAlreadyLocked(filename)) {
-    return cmFileLockResult::MakeAlreadyLocked();
-  }
-  assert(!this->FileScopes.empty());
-  return this->FileScopes.back()->Lock(filename, timeoutSec);
-}
-
-cmFileLockResult cmFileLockPool::LockProcessScope(const std::string& filename,
-                                                  unsigned long timeoutSec)
-{
-  if (this->IsAlreadyLocked(filename)) {
-    return cmFileLockResult::MakeAlreadyLocked();
-  }
-  return this->ProcessScope.Lock(filename, timeoutSec);
-}
-
-cmFileLockResult cmFileLockPool::Release(const std::string& filename)
-{
-  for (auto& funcScope : this->FunctionScopes) {
-    const cmFileLockResult result = funcScope->Release(filename);
+  std::unique_ptr<cmFileLock> lock = cm::make_unique<cmFileLock>();
+  {
+    cmFileLockResult const result = lock->Lock(filename, timeoutSec);
     if (!result.IsOk()) {
       return result;
     }
   }
-
-  for (auto& fileScope : this->FileScopes) {
-    const cmFileLockResult result = fileScope->Release(filename);
-    if (!result.IsOk()) {
-      return result;
-    }
-  }
-
-  return this->ProcessScope.Release(filename);
+  this->Locks.push_back(std::move(lock));
+  return cmFileLockResult::MakeOk();
 }
 
-bool cmFileLockPool::IsAlreadyLocked(const std::string& filename) const
+cmFileLockResult ScopePool::Release(std::string const& filename)
+{
+  for (auto& lock : this->Locks) {
+    if (lock->IsLocked(filename)) {
+      return lock->Release();
+    }
+  }
+  return cmFileLockResult::MakeOk();
+}
+
+bool ScopePool::IsAlreadyLocked(std::string const& filename) const
+{
+  for (auto const& lock : this->Locks) {
+    if (lock->IsLocked(filename)) {
+      return true;
+    }
+  }
+  return false;
+}
+};
+
+/** \class cmFileLockPool::Internal
+ * \brief Private implementation class for cmFileLockPool.
+ */
+class cmFileLockPool::Internal
+{
+public:
+  bool IsAlreadyLocked(std::string const& filename) const;
+
+public:
+  typedef std::vector<std::unique_ptr<ScopePool>> List;
+  List FunctionScopes;
+  List FileScopes;
+  ScopePool ProcessScope;
+};
+
+bool cmFileLockPool::Internal::IsAlreadyLocked(
+  std::string const& filename) const
 {
   for (auto const& funcScope : this->FunctionScopes) {
     const bool result = funcScope->IsAlreadyLocked(filename);
@@ -109,44 +102,85 @@ bool cmFileLockPool::IsAlreadyLocked(const std::string& filename) const
   return this->ProcessScope.IsAlreadyLocked(filename);
 }
 
-cmFileLockPool::ScopePool::ScopePool() = default;
-
-cmFileLockPool::ScopePool::~ScopePool()
+cmFileLockPool::cmFileLockPool()
+  : Impl(cm::make_unique<Internal>())
 {
-  cmDeleteAll(this->Locks);
 }
 
-cmFileLockResult cmFileLockPool::ScopePool::Lock(const std::string& filename,
-                                                 unsigned long timeoutSec)
+cmFileLockPool::cmFileLockPool(cmFileLockPool&&) noexcept = default;
+
+cmFileLockPool::~cmFileLockPool() = default;
+
+cmFileLockPool& cmFileLockPool::operator=(cmFileLockPool&&) noexcept = default;
+
+void cmFileLockPool::PushFunctionScope()
 {
-  cmFileLock* lock = new cmFileLock();
-  const cmFileLockResult result = lock->Lock(filename, timeoutSec);
-  if (result.IsOk()) {
-    this->Locks.push_back(lock);
-    return cmFileLockResult::MakeOk();
+  Impl->FunctionScopes.push_back(cm::make_unique<ScopePool>());
+}
+
+void cmFileLockPool::PopFunctionScope()
+{
+  assert(!Impl->FunctionScopes.empty());
+  Impl->FunctionScopes.pop_back();
+}
+
+void cmFileLockPool::PushFileScope()
+{
+  Impl->FileScopes.push_back(cm::make_unique<ScopePool>());
+}
+
+void cmFileLockPool::PopFileScope()
+{
+  assert(!Impl->FileScopes.empty());
+  Impl->FileScopes.pop_back();
+}
+
+cmFileLockResult cmFileLockPool::LockFunctionScope(std::string const& filename,
+                                                   unsigned long timeoutSec)
+{
+  if (Impl->IsAlreadyLocked(filename)) {
+    return cmFileLockResult::MakeAlreadyLocked();
   }
-  delete lock;
-  return result;
+  if (Impl->FunctionScopes.empty()) {
+    return cmFileLockResult::MakeNoFunction();
+  }
+  return Impl->FunctionScopes.back()->Lock(filename, timeoutSec);
 }
 
-cmFileLockResult cmFileLockPool::ScopePool::Release(
-  const std::string& filename)
+cmFileLockResult cmFileLockPool::LockFileScope(std::string const& filename,
+                                               unsigned long timeoutSec)
 {
-  for (auto& lock : this->Locks) {
-    if (lock->IsLocked(filename)) {
-      return lock->Release();
+  if (Impl->IsAlreadyLocked(filename)) {
+    return cmFileLockResult::MakeAlreadyLocked();
+  }
+  assert(!Impl->FileScopes.empty());
+  return Impl->FileScopes.back()->Lock(filename, timeoutSec);
+}
+
+cmFileLockResult cmFileLockPool::LockProcessScope(std::string const& filename,
+                                                  unsigned long timeoutSec)
+{
+  if (Impl->IsAlreadyLocked(filename)) {
+    return cmFileLockResult::MakeAlreadyLocked();
+  }
+  return Impl->ProcessScope.Lock(filename, timeoutSec);
+}
+
+cmFileLockResult cmFileLockPool::Release(std::string const& filename)
+{
+  for (auto& funcScope : Impl->FunctionScopes) {
+    cmFileLockResult const result = funcScope->Release(filename);
+    if (!result.IsOk()) {
+      return result;
     }
   }
-  return cmFileLockResult::MakeOk();
-}
 
-bool cmFileLockPool::ScopePool::IsAlreadyLocked(
-  const std::string& filename) const
-{
-  for (auto const& lock : this->Locks) {
-    if (lock->IsLocked(filename)) {
-      return true;
+  for (auto& fileScope : Impl->FileScopes) {
+    cmFileLockResult const result = fileScope->Release(filename);
+    if (!result.IsOk()) {
+      return result;
     }
   }
-  return false;
+
+  return Impl->ProcessScope.Release(filename);
 }
