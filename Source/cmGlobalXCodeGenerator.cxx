@@ -2872,6 +2872,8 @@ bool cmGlobalXCodeGenerator::CreateGroups(
         continue;
       }
 
+      generator->AddPchDependencies(gtgt, "");
+
       auto addSourceToGroup = [this, mf, gtgt,
                                &sourceGroups](std::string const& source) {
         cmSourceGroup* sourceGroup = mf->FindSourceGroup(source, sourceGroups);
