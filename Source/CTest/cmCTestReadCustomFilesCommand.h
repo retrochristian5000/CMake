@@ -6,11 +6,14 @@
 #include "cmConfigure.h" // IWYU pragma: keep
 
 #include "cmCTestCommand.h"
+#include "cmCommand.h"
 
 #include <string>
+#include <utility>
 #include <vector>
 
-class cmCommand;
+#include "cm_memory.hxx"
+
 class cmExecutionStatus;
 
 /** \class cmCTestReadCustomFiles
@@ -27,11 +30,12 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  cmCommand* Clone() override
+  std::unique_ptr<cmCommand> Clone() override
   {
-    cmCTestReadCustomFilesCommand* ni = new cmCTestReadCustomFilesCommand;
+    std::unique_ptr<cmCTestReadCustomFilesCommand> ni =
+      cm::make_unique<cmCTestReadCustomFilesCommand>();
     ni->CTest = this->CTest;
-    return ni;
+    return std::move(ni);
   }
 
   /**
