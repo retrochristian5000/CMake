@@ -3,7 +3,11 @@ project(PrecompileHeaders C)
 
 add_library(foo foo.c)
 target_include_directories(foo PUBLIC include)
-target_precompile_headers(foo PUBLIC foo.h)
+target_precompile_headers(foo PUBLIC
+  foo.h
+  <stdio.h>
+  \"string.h\"
+)
 
 add_library(bar INTERFACE)
 target_include_directories(bar INTERFACE include)

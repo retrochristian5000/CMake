@@ -249,6 +249,8 @@ cmVisualStudio10TargetGenerator::cmVisualStudio10TargetGenerator(
     this->LocalGenerator->GetTargetDirectory(this->GeneratorTarget);
   this->InSourceBuild = (this->Makefile->GetCurrentSourceDirectory() ==
                          this->Makefile->GetCurrentBinaryDirectory());
+
+  this->LocalGenerator->AddPchDependencies(target, "");
 }
 
 cmVisualStudio10TargetGenerator::~cmVisualStudio10TargetGenerator()
@@ -2162,19 +2164,6 @@ void cmVisualStudio10TargetGenerator::WriteAllSources(Elem& e0)
   if (this->IsMissingFiles) {
     this->WriteMissingFiles(e1);
   }
-
-  // Precompile Headers
-  const std::string& linkLanguage =
-    this->GeneratorTarget->GetLinkerLanguage("");
-  std::string pchSource =
-    this->GeneratorTarget->GetPchSource("", linkLanguage);
-  if (!pchSource.empty()) {
-    ConvertToWindowsSlash(pchSource);
-
-    Elem e2(e1, "ClCompile");
-    e2.Attribute("Include", pchSource);
-    e2.Element("PrecompiledHeader", "Create");
-  }
 }
 
 void cmVisualStudio10TargetGenerator::OutputSourceSpecificFlags(
@@ -2655,12 +2644,7 @@ bool cmVisualStudio10TargetGenerator::ComputeClOptions(
   // Precompile Headers
   std::string pchHeader =
     this->GeneratorTarget->GetPchHeader(configName, linkLanguage);
-  if (!pchHeader.empty()) {
-    ConvertToWindowsSlash(pchHeader);
-    clOptions.AddFlag("PrecompiledHeader", "Use");
-    clOptions.AddFlag("PrecompiledHeaderFile", pchHeader.c_str());
-    clOptions.AddFlag("ForcedIncludeFiles", pchHeader.c_str());
-  } else if (this->MSTools && vcxproj == this->ProjectType) {
+  if (this->MSTools && vcxproj == this->ProjectType && pchHeader.empty()) {
     clOptions.AddFlag("PrecompiledHeader", "NotUsing");
   }
 
