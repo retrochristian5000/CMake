@@ -3,37 +3,39 @@
 #ifndef cmTargetPrecompileHeadersCommand_h
 #define cmTargetPrecompileHeadersCommand_h
 
-#include "cmConfigure.h"
+#include "cmConfigure.h" // IWYU pragma: keep
 
 #include <string>
 #include <vector>
 
+#include "cm_memory.hxx"
+
+#include "cmCommand.h"
+
 #include "cmTargetPropCommandBase.h"
 
-class cmCommand;
 class cmExecutionStatus;
 class cmTarget;
 
 class cmTargetPrecompileHeadersCommand : public cmTargetPropCommandBase
 {
 public:
-  cmCommand* Clone() CM_OVERRIDE
+  std::unique_ptr<cmCommand> Clone() override
   {
-    return new cmTargetPrecompileHeadersCommand;
+    return cm::make_unique<cmTargetPrecompileHeadersCommand>();
   }
 
   bool InitialPass(std::vector<std::string> const& args,
-                   cmExecutionStatus& status) CM_OVERRIDE;
+                   cmExecutionStatus& status) override;
 
 private:
-  void HandleImportedTarget(const std::string& tgt) CM_OVERRIDE;
-  void HandleMissingTarget(const std::string& name) CM_OVERRIDE;
+  void HandleMissingTarget(const std::string& name) override;
 
   bool HandleDirectContent(cmTarget* tgt,
                            const std::vector<std::string>& content,
-                           bool prepend, bool system) CM_OVERRIDE;
+                           bool prepend, bool system) override;
 
-  std::string Join(const std::vector<std::string>& content) CM_OVERRIDE;
+  std::string Join(const std::vector<std::string>& content) override;
 };
 
 #endif

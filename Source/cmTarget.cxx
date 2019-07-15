@@ -351,6 +351,7 @@ cmTarget::cmTarget(std::string const& name, cmStateEnums::TargetType type,
     initProp("FOLDER");
     initProp("Swift_MODULE_DIRECTORY");
     initProp("VS_JUST_MY_CODE_DEBUGGING");
+    initProp("DISABLE_PRECOMPILE_HEADERS");
 #ifdef __APPLE__
     if (this->GetGlobalGenerator()->IsXcode()) {
       initProp("XCODE_GENERATE_SCHEME");
@@ -1027,12 +1028,12 @@ cmBacktraceRange cmTarget::GetCompileDefinitionsBacktraces() const
 
 cmStringRange cmTarget::GetPrecompileHeadersEntries() const
 {
-  return cmMakeRange(this->Internal->PrecompileHeadersEntries);
+  return cmMakeRange(impl->PrecompileHeadersEntries);
 }
 
 cmBacktraceRange cmTarget::GetPrecompileHeadersBacktraces() const
 {
-  return cmMakeRange(this->Internal->PrecompileHeadersBacktraces);
+  return cmMakeRange(impl->PrecompileHeadersBacktraces);
 }
 
 cmStringRange cmTarget::GetSourceEntries() const
@@ -1086,6 +1087,7 @@ void cmTarget::SetProperty(const std::string& prop, const char* value)
   MAKE_STATIC_PROP(COMPILE_DEFINITIONS);
   MAKE_STATIC_PROP(COMPILE_FEATURES);
   MAKE_STATIC_PROP(COMPILE_OPTIONS);
+  MAKE_STATIC_PROP(PRECOMPILE_HEADERS);
   MAKE_STATIC_PROP(CUDA_PTX_COMPILATION);
   MAKE_STATIC_PROP(EXPORT_NAME);
   MAKE_STATIC_PROP(IMPORTED_GLOBAL);
@@ -1186,11 +1188,13 @@ void cmTarget::SetProperty(const std::string& prop, const char* value)
       cmListFileBacktrace lfbt = impl->Makefile->GetBacktrace();
       impl->LinkDirectoriesBacktraces.push_back(lfbt);
     }
-  } else if (prop == "PRECOMPILE_HEADERS") {
-    if (value && *value) {
-      this->Internal->PrecompileHeadersEntries.push_back(value);
-      cmListFileBacktrace lfbt = this->Makefile->GetBacktrace();
-      this->Internal->PrecompileHeadersBacktraces.push_back(lfbt);
+  } else if (prop == propPRECOMPILE_HEADERS) {
+    impl->PrecompileHeadersEntries.clear();
+    impl->PrecompileHeadersBacktraces.clear();
+    if (value) {
+      impl->PrecompileHeadersEntries.emplace_back(value);
+      cmListFileBacktrace lfbt = impl->Makefile->GetBacktrace();
+      impl->PrecompileHeadersBacktraces.push_back(lfbt);
     }
   } else if (prop == propLINK_LIBRARIES) {
     impl->LinkImplementationPropertyEntries.clear();
@@ -1310,12 +1314,10 @@ void cmTarget::AppendProperty(const std::string& prop, const char* value,
       impl->LinkDirectoriesBacktraces.push_back(lfbt);
     }
   } else if (prop == "PRECOMPILE_HEADERS") {
-    this->Internal->PrecompileHeadersEntries.clear();
-    this->Internal->PrecompileHeadersBacktraces.clear();
-    if (value) {
-      this->Internal->PrecompileHeadersEntries.push_back(value);
-      cmListFileBacktrace lfbt = this->Makefile->GetBacktrace();
-      this->Internal->PrecompileHeadersBacktraces.push_back(lfbt);
+    if (value && *value) {
+      impl->PrecompileHeadersEntries.emplace_back(value);
+      cmListFileBacktrace lfbt = impl->Makefile->GetBacktrace();
+      impl->PrecompileHeadersBacktraces.push_back(lfbt);
     }
   } else if (prop == "LINK_LIBRARIES") {
     if (value && *value) {
@@ -1431,8 +1433,8 @@ void cmTarget::InsertLinkDirectory(std::string const& entry,
 void cmTarget::InsertPrecompileHeader(std::string const& entry,
                                       cmListFileBacktrace const& bt)
 {
-  this->Internal->PrecompileHeadersEntries.push_back(entry);
-  this->Internal->PrecompileHeadersBacktraces.push_back(bt);
+  impl->PrecompileHeadersEntries.push_back(entry);
+  impl->PrecompileHeadersBacktraces.push_back(bt);
 }
 
 static void cmTargetCheckLINK_INTERFACE_LIBRARIES(const std::string& prop,
@@ -1571,6 +1573,7 @@ const char* cmTarget::GetProperty(const std::string& prop) const
     propCOMPILE_FEATURES,
     propCOMPILE_OPTIONS,
     propCOMPILE_DEFINITIONS,
+    propPRECOMPILE_HEADERS,
     propLINK_OPTIONS,
     propLINK_DIRECTORIES,
     propIMPORTED,
@@ -1660,12 +1663,12 @@ const char* cmTarget::GetProperty(const std::string& prop) const
       return output.c_str();
     }
     if (prop == propPRECOMPILE_HEADERS) {
-      if (this->Internal->PrecompileHeadersEntries.empty()) {
-        return CM_NULLPTR;
+      if (impl->PrecompileHeadersEntries.empty()) {
+        return nullptr;
       }
 
       static std::string output;
-      output = cmJoin(this->Internal->PrecompileHeadersEntries, ";");
+      output = cmJoin(impl->PrecompileHeadersEntries, ";");
       return output.c_str();
     }
     if (prop == propIMPORTED) {

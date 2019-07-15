@@ -2150,6 +2150,9 @@ void cmVisualStudio10TargetGenerator::WriteAllSources(Elem& e0)
       if (si.Kind == cmGeneratorTarget::SourceKindObjectSource) {
         this->OutputSourceSpecificFlags(e2, si.Source);
       }
+      if (si.Source->GetPropertyAsBool("SKIP_PRECOMPILE_HEADERS")) {
+        e2.Element("PrecompiledHeader", "NotUsing");
+      }
       if (!exclude_configs.empty()) {
         this->WriteExcludeFromBuild(e2, exclude_configs);
       }
@@ -2161,18 +2164,17 @@ void cmVisualStudio10TargetGenerator::WriteAllSources(Elem& e0)
   }
 
   // Precompile Headers
-  const std::string& linkLanguage = this->GeneratorTarget->GetLinkerLanguage();
+  const std::string& linkLanguage =
+    this->GeneratorTarget->GetLinkerLanguage("");
   std::string pchSource =
     this->GeneratorTarget->GetPchSource("", linkLanguage);
   if (!pchSource.empty()) {
-    this->ConvertToWindowsSlash(pchSource);
-    this->WriteString("<ClCompile Include=\"", 2);
-    (*this->BuildFileStream) << cmVS10EscapeXML(pchSource) << "\">\n";
-    this->WriteString("<PrecompiledHeader>Create</PrecompiledHeader>\n", 3);
-    this->WriteString("</ClCompile>\n", 2);
-  }
+    ConvertToWindowsSlash(pchSource);
 
-  this->WriteString("</ItemGroup>\n", 1);
+    Elem e2(e1, "ClCompile");
+    e2.Attribute("Include", pchSource);
+    e2.Element("PrecompiledHeader", "Create");
+  }
 }
 
 void cmVisualStudio10TargetGenerator::OutputSourceSpecificFlags(
@@ -2654,7 +2656,7 @@ bool cmVisualStudio10TargetGenerator::ComputeClOptions(
   std::string pchHeader =
     this->GeneratorTarget->GetPchHeader(configName, linkLanguage);
   if (!pchHeader.empty()) {
-    this->ConvertToWindowsSlash(pchHeader);
+    ConvertToWindowsSlash(pchHeader);
     clOptions.AddFlag("PrecompiledHeader", "Use");
     clOptions.AddFlag("PrecompiledHeaderFile", pchHeader.c_str());
     clOptions.AddFlag("ForcedIncludeFiles", pchHeader.c_str());
@@ -2677,7 +2679,6 @@ bool cmVisualStudio10TargetGenerator::ComputeClOptions(
         // replace this setting with "true" below.
         clOptions.AddFlag("UseFullPaths", "false");
       }
-      clOptions.AddFlag("PrecompiledHeader", "NotUsing");
       clOptions.AddFlag("AssemblerListingLocation", "$(IntDir)");
     }
   }
