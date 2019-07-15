@@ -5,20 +5,23 @@
 
 #include "cmConfigure.h" // IWYU pragma: keep
 
+#include <memory>
 #include <string>
-#include <vector>
 
-class cmFileLock;
 class cmFileLockResult;
 
+/** \class cmFileLockPool
+ */
 class cmFileLockPool
 {
 public:
   cmFileLockPool();
+  cmFileLockPool(cmFileLockPool const&) = delete;
+  cmFileLockPool(cmFileLockPool&&) noexcept;
   ~cmFileLockPool();
 
-  cmFileLockPool(cmFileLockPool const&) = delete;
   cmFileLockPool& operator=(cmFileLockPool const&) = delete;
+  cmFileLockPool& operator=(cmFileLockPool&&) noexcept;
 
   //@{
   /**
@@ -41,52 +44,22 @@ public:
    * @brief Lock the file in given scope.
    * @param timeoutSec Lock timeout. If -1 try until success or fatal error.
    */
-  cmFileLockResult LockFunctionScope(const std::string& filename,
+  cmFileLockResult LockFunctionScope(std::string const& filename,
                                      unsigned long timeoutSec);
-  cmFileLockResult LockFileScope(const std::string& filename,
+  cmFileLockResult LockFileScope(std::string const& filename,
                                  unsigned long timeoutSec);
-  cmFileLockResult LockProcessScope(const std::string& filename,
+  cmFileLockResult LockProcessScope(std::string const& filename,
                                     unsigned long timeoutSec);
   //@}
 
   /**
    * @brief Unlock the file explicitly.
    */
-  cmFileLockResult Release(const std::string& filename);
+  cmFileLockResult Release(std::string const& filename);
 
 private:
-  bool IsAlreadyLocked(const std::string& filename) const;
-
-  class ScopePool
-  {
-  public:
-    ScopePool();
-    ~ScopePool();
-
-    ScopePool(ScopePool const&) = delete;
-    ScopePool& operator=(ScopePool const&) = delete;
-
-    cmFileLockResult Lock(const std::string& filename,
-                          unsigned long timeoutSec);
-    cmFileLockResult Release(const std::string& filename);
-    bool IsAlreadyLocked(const std::string& filename) const;
-
-  private:
-    typedef std::vector<cmFileLock*> List;
-    typedef List::iterator It;
-    typedef List::const_iterator CIt;
-
-    List Locks;
-  };
-
-  typedef std::vector<ScopePool*> List;
-
-  typedef List::iterator It;
-  typedef List::const_iterator CIt;
-
-  List FunctionScopes;
-  List FileScopes;
-  ScopePool ProcessScope;
+  class Internal;
+  std::unique_ptr<Internal> Impl;
 };
 
 #endif // cmFileLockPool_h

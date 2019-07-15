@@ -2,104 +2,135 @@
    file Copyright.txt or https://cmake.org/licensing for details.  */
 #include "cmSourceGroup.h"
 
+#include "cm_memory.hxx"
+#include "cmsys/RegularExpression.hxx"
+
+#include <set>
 #include <utility>
 
-class cmSourceGroupInternals
+class cmSourceGroup::Internal
 {
 public:
+  /**
+   * The name of the source group.
+   */
+  std::string Name;
+
+  /**
+   * Full path to group.
+   */
+  std::string FullName;
+
+  /**
+   * The regular expression matching the files in the group.
+   */
+  cmsys::RegularExpression GroupRegex;
+
+  /**
+   * Set of file names explicitly added to this group.
+   */
+  std::set<std::string> GroupFiles;
+
+  /**
+   * Vector of all source files that have been assigned to
+   * this group.
+   */
+  std::vector<cmSourceFile const*> SourceFiles;
+
+  /**
+   * Vector of all children source groups.
+   */
   std::vector<cmSourceGroup> GroupChildren;
 };
 
 cmSourceGroup::cmSourceGroup(std::string name, const char* regex,
                              const char* parentName)
-  : Name(std::move(name))
+  : Impl(cm::make_unique<Internal>())
 {
-  this->Internal = new cmSourceGroupInternals;
+  Impl->Name = std::move(name);
   this->SetGroupRegex(regex);
   if (parentName) {
-    this->FullName = parentName;
-    this->FullName += "\\";
+    Impl->FullName = parentName;
+    Impl->FullName += "\\";
   }
-  this->FullName += this->Name;
+  Impl->FullName += Impl->Name;
 }
 
-cmSourceGroup::~cmSourceGroup()
+cmSourceGroup::~cmSourceGroup() = default;
+
+cmSourceGroup::cmSourceGroup(cmSourceGroup const& grp)
+  : Impl(cm::make_unique<Internal>(*grp.Impl))
 {
-  delete this->Internal;
 }
 
-cmSourceGroup::cmSourceGroup(cmSourceGroup const& r)
-{
-  this->Name = r.Name;
-  this->FullName = r.FullName;
-  this->GroupRegex = r.GroupRegex;
-  this->GroupFiles = r.GroupFiles;
-  this->SourceFiles = r.SourceFiles;
-  this->Internal = new cmSourceGroupInternals(*r.Internal);
-}
+cmSourceGroup::cmSourceGroup(cmSourceGroup&& grp) noexcept = default;
 
-cmSourceGroup& cmSourceGroup::operator=(cmSourceGroup const& r)
+cmSourceGroup& cmSourceGroup::operator=(cmSourceGroup const& grp)
 {
-  this->Name = r.Name;
-  this->GroupRegex = r.GroupRegex;
-  this->GroupFiles = r.GroupFiles;
-  this->SourceFiles = r.SourceFiles;
-  *(this->Internal) = *(r.Internal);
+  Impl->operator=(*grp.Impl);
   return *this;
 }
+
+cmSourceGroup& cmSourceGroup::operator=(cmSourceGroup&& grp) noexcept =
+  default;
 
 void cmSourceGroup::SetGroupRegex(const char* regex)
 {
   if (regex) {
-    this->GroupRegex.compile(regex);
+    Impl->GroupRegex.compile(regex);
   } else {
-    this->GroupRegex.compile("^$");
+    Impl->GroupRegex.compile("^$");
   }
 }
 
-void cmSourceGroup::AddGroupFile(const std::string& name)
+void cmSourceGroup::AddGroupFile(std::string const& name)
 {
-  this->GroupFiles.insert(name);
+  Impl->GroupFiles.insert(name);
 }
 
 std::string const& cmSourceGroup::GetName() const
 {
-  return this->Name;
+  return Impl->Name;
 }
 
 std::string const& cmSourceGroup::GetFullName() const
 {
-  return this->FullName;
+  return Impl->FullName;
 }
 
-bool cmSourceGroup::MatchesRegex(const std::string& name)
+bool cmSourceGroup::MatchesRegex(std::string const& name)
 {
-  return this->GroupRegex.find(name);
+  return Impl->GroupRegex.find(name);
 }
 
-bool cmSourceGroup::MatchesFiles(const std::string& name) const
+bool cmSourceGroup::MatchesFiles(std::string const& name) const
 {
-  return this->GroupFiles.find(name) != this->GroupFiles.cend();
+  return Impl->GroupFiles.find(name) != Impl->GroupFiles.cend();
 }
 
-void cmSourceGroup::AssignSource(const cmSourceFile* sf)
+void cmSourceGroup::AssignSource(cmSourceFile const* sf)
 {
-  this->SourceFiles.push_back(sf);
+  Impl->SourceFiles.push_back(sf);
 }
 
-const std::vector<const cmSourceFile*>& cmSourceGroup::GetSourceFiles() const
+std::vector<cmSourceFile const*> const& cmSourceGroup::GetSourceFiles() const
 {
-  return this->SourceFiles;
+  return Impl->SourceFiles;
+}
+
+std::vector<cmSourceGroup> const& cmSourceGroup::GetGroupChildren() const
+{
+  return Impl->GroupChildren;
 }
 
 void cmSourceGroup::AddChild(cmSourceGroup const& child)
 {
-  this->Internal->GroupChildren.push_back(child);
+  Impl->GroupChildren.push_back(child);
 }
 
-cmSourceGroup* cmSourceGroup::LookupChild(const std::string& name)
+cmSourceGroup* cmSourceGroup::LookupChild(std::string const& name)
 {
-  for (cmSourceGroup& group : this->Internal->GroupChildren) {
+  for (cmSourceGroup& group : Impl->GroupChildren) {
     // look if descenened is the one were looking for
     if (group.GetName() == name) {
       return (&group); // if it so return it
@@ -110,12 +141,12 @@ cmSourceGroup* cmSourceGroup::LookupChild(const std::string& name)
   return nullptr;
 }
 
-cmSourceGroup* cmSourceGroup::MatchChildrenFiles(const std::string& name)
+cmSourceGroup* cmSourceGroup::MatchChildrenFiles(std::string const& name)
 {
   if (this->MatchesFiles(name)) {
     return this;
   }
-  for (cmSourceGroup& group : this->Internal->GroupChildren) {
+  for (cmSourceGroup& group : Impl->GroupChildren) {
     cmSourceGroup* result = group.MatchChildrenFiles(name);
     if (result) {
       return result;
@@ -124,9 +155,9 @@ cmSourceGroup* cmSourceGroup::MatchChildrenFiles(const std::string& name)
   return nullptr;
 }
 
-cmSourceGroup* cmSourceGroup::MatchChildrenRegex(const std::string& name)
+cmSourceGroup* cmSourceGroup::MatchChildrenRegex(std::string const& name)
 {
-  for (cmSourceGroup& group : this->Internal->GroupChildren) {
+  for (cmSourceGroup& group : Impl->GroupChildren) {
     cmSourceGroup* result = group.MatchChildrenRegex(name);
     if (result) {
       return result;
@@ -137,9 +168,4 @@ cmSourceGroup* cmSourceGroup::MatchChildrenRegex(const std::string& name)
   }
 
   return nullptr;
-}
-
-std::vector<cmSourceGroup> const& cmSourceGroup::GetGroupChildren() const
-{
-  return this->Internal->GroupChildren;
 }
