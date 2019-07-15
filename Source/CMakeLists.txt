@@ -898,6 +898,7 @@ include_directories(
 #
 set(CTEST_SRCS cmCTest.cxx
   CTest/cmProcess.cxx
+  CTest/cmCTestBinPacker.cxx
   CTest/cmCTestBuildAndTestHandler.cxx
   CTest/cmCTestBuildCommand.cxx
   CTest/cmCTestBuildHandler.cxx
