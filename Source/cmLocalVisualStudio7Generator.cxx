@@ -694,11 +694,16 @@ void cmLocalVisualStudio7Generator::WriteConfiguration(
   }
 
   // Precompile Headers
-  std::string pchHeader = target->GetPchHeader(configName, "CXX");
+  std::string pchHeader = target->GetPchHeader(configName, langForClCompile);
   if (!pchHeader.empty()) {
     pchHeader = this->ConvertToOutputFormat(pchHeader, SHELL);
-    flags += " /Yu\"" + pchHeader + "\"";
-    flags += " /FI\"" + pchHeader + "\"";
+    flags += " /Yu\"";
+    flags += pchHeader;
+    flags += "\"";
+
+    flags += " /FI\"";
+    flags += pchHeader;
+    flags += "\"";
   }
 
   // Get preprocessor definitions for this directory.
@@ -1426,7 +1431,10 @@ void cmLocalVisualStudio7Generator::WriteVCProjFile(std::ostream& fout,
   }
 
   // Precompile Headers
-  std::string pchSource = target->GetPchSource("", "CXX");
+  const std::string& linkLanguage =
+    (this->FortranProject ? std::string("Fortran")
+                          : target->GetLinkerLanguage(configs[0]));
+  std::string pchSource = target->GetPchSource("", linkLanguage);
   if (!pchSource.empty()) {
     pchSource = this->ConvertToOutputFormat(pchSource, SHELL);
     std::string platform =
@@ -1437,10 +1445,9 @@ void cmLocalVisualStudio7Generator::WriteVCProjFile(std::ostream& fout,
     fout << "\t\t\tFilter=\"\">\n";
     fout << "\t\t\t<File\n";
     fout << "\t\t\t\tRelativePath=\"" << pchSource << "\">\n";
-    for (std::vector<std::string>::iterator i = configs.begin();
-         i != configs.end(); ++i) {
+    for (std::string const& cfg : configs) {
       fout << "\t\t\t\t<FileConfiguration\n";
-      fout << "\t\t\t\t\tName=\"" << *i << '|' << platform << "\">\n";
+      fout << "\t\t\t\t\tName=\"" << cfg << '|' << platform << "\">\n";
       fout << "\t\t\t\t\t<Tool\n";
       fout << "\t\t\t\t\t\tName=\"VCCLCompilerTool\"\n";
       fout << "\t\t\t\t\t\tUsePrecompiledHeader=\"1\"/>\n";
@@ -1681,6 +1688,17 @@ bool cmLocalVisualStudio7Generator::WriteGroup(
       // Tell MS-Dev what the source is.  If the compiler knows how to
       // build it, then it will.
       fout << "\t\t\t\tRelativePath=\"" << d << "\">\n";
+      if (sf->GetPropertyAsBool("SKIP_PRECOMPILE_HEADERS")) {
+        for (std::string const& cfg : configs) {
+          fout << "\t\t\t\t<FileConfiguration\n";
+          fout << "\t\t\t\t\tName=\"" << cfg << '|' << gg->GetPlatformName()
+               << "\">\n";
+          fout << "\t\t\t\t\t<Tool\n";
+          fout << "\t\t\t\t\t\tName=\"VCCLCompilerTool\"\n";
+          fout << "\t\t\t\t\t\tUsePrecompiledHeader=\"0\"/>\n";
+          fout << "\t\t\t\t</FileConfiguration>\n";
+        }
+      }
       if (cmCustomCommand const* command = sf->GetCustomCommand()) {
         this->WriteCustomRule(fout, configs, source.c_str(), *command, fcinfo);
       } else if (!fcinfo.FileConfigMap.empty()) {

@@ -455,9 +455,8 @@ public:
   std::vector<BT<std::string>> GetLinkDepends(
     std::string const& config, std::string const& language) const;
 
-  void GetPrecompileHeaders(std::vector<std::string>& result,
-                            const std::string& config,
-                            const std::string& language) const;
+  std::vector<BT<std::string>> GetPrecompileHeaders(
+    const std::string& config, const std::string& language) const;
 
   std::string GetPchHeader(const std::string& config,
                            const std::string& language) const;

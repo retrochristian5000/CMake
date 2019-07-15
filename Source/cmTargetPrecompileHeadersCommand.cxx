@@ -4,23 +4,15 @@
 
 #include <sstream>
 
-#include "cmAlgorithms.h"
 #include "cmMakefile.h"
+#include "cmMessageType.h"
+#include "cmStringAlgorithms.h"
 #include "cmTarget.h"
 
 bool cmTargetPrecompileHeadersCommand::InitialPass(
   std::vector<std::string> const& args, cmExecutionStatus&)
 {
   return this->HandleArguments(args, "PRECOMPILE_HEADERS");
-}
-
-void cmTargetPrecompileHeadersCommand::HandleImportedTarget(
-  const std::string& tgt)
-{
-  std::ostringstream e;
-  e << "Cannot specify precompile headers for imported target \"" << tgt
-    << "\".";
-  this->Makefile->IssueMessage(cmake::FATAL_ERROR, e.str());
 }
 
 void cmTargetPrecompileHeadersCommand::HandleMissingTarget(
@@ -30,7 +22,7 @@ void cmTargetPrecompileHeadersCommand::HandleMissingTarget(
   e << "Cannot specify precompile headers for target \"" << name
     << "\" "
        "which is not built by this project.";
-  this->Makefile->IssueMessage(cmake::FATAL_ERROR, e.str());
+  this->Makefile->IssueMessage(MessageType::FATAL_ERROR, e.str());
 }
 
 std::string cmTargetPrecompileHeadersCommand::Join(
