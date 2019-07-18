@@ -19,12 +19,9 @@ if(CMAKE_BOOTSTRAP)
 endif()
 
 if(NOT CMake_TEST_EXTERNAL_CMAKE)
-  if(CMAKE_SYSTEM_NAME STREQUAL "HP-UX")
-    message(FATAL_ERROR
-      "CMake no longer compiles on HP-UX.  See\n"
-      "  https://gitlab.kitware.com/cmake/cmake/issues/17137\n"
-      "Use CMake 3.9 or lower instead."
-      )
+  if(CMAKE_SYSTEM_NAME STREQUAL "HP-UX"
+      AND NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.9))
+    message(FATAL_ERROR "CMake compiles on HP-UX only with GCC version 4.9 or higher.")
   endif()
 
   set(CMake_BIN_DIR ${CMake_BINARY_DIR}/bin)
