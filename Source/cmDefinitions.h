@@ -61,7 +61,7 @@ private:
     bool Exists = false;
     bool Used = false;
   };
-  static Def NoDef;
+  static Def const NoDef;
 
   typedef std::unordered_map<std::string, Def> MapType;
   MapType Map;
