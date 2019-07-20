@@ -8,6 +8,7 @@
 #include "cmRange.h"
 
 #include "cm_kwiml.h"
+#include "cm_string_view.hxx"
 #include <algorithm>
 #include <functional>
 #include <iterator>
@@ -18,42 +19,36 @@
 #include <utility>
 #include <vector>
 
-inline bool cmHasLiteralPrefixImpl(const std::string& str1, const char* str2,
-                                   size_t N)
+inline bool cmHasPrefix(cm::string_view str1, cm::string_view str2)
 {
-  return strncmp(str1.c_str(), str2, N) == 0;
+  return (str1.size() >= str2.size()) &&
+    (cm::string_view(str1.data(), str2.size()) == str2);
 }
 
-inline bool cmHasLiteralPrefixImpl(const char* str1, const char* str2,
-                                   size_t N)
+template <size_t N>
+bool cmHasLiteralPrefix(cm::string_view str1, const char (&str2)[N])
 {
-  return strncmp(str1, str2, N) == 0;
+  static_assert(N > 1, "Literal is empty string");
+  constexpr size_t len = (N - 1);
+  return (str1.size() >= len) &&
+    (cm::string_view(str1.data(), len) == cm::string_view(str2, len));
 }
 
-inline bool cmHasLiteralSuffixImpl(const std::string& str1, const char* str2,
-                                   size_t N)
+inline bool cmHasSuffix(cm::string_view str1, cm::string_view str2)
 {
-  size_t len = str1.size();
-  return len >= N && strcmp(str1.c_str() + len - N, str2) == 0;
+  return (str1.size() >= str2.size()) &&
+    (cm::string_view(str1.data() + str1.size() - str2.size(), str2.size()) ==
+     str2);
 }
 
-inline bool cmHasLiteralSuffixImpl(const char* str1, const char* str2,
-                                   size_t N)
+template <size_t N>
+bool cmHasLiteralSuffix(cm::string_view str1, const char (&str2)[N])
 {
-  size_t len = strlen(str1);
-  return len >= N && strcmp(str1 + len - N, str2) == 0;
-}
-
-template <typename T, size_t N>
-bool cmHasLiteralPrefix(const T& str1, const char (&str2)[N])
-{
-  return cmHasLiteralPrefixImpl(str1, str2, N - 1);
-}
-
-template <typename T, size_t N>
-bool cmHasLiteralSuffix(const T& str1, const char (&str2)[N])
-{
-  return cmHasLiteralSuffixImpl(str1, str2, N - 1);
+  static_assert(N > 1, "Literal is empty string");
+  constexpr size_t len = (N - 1);
+  return (str1.size() >= len) &&
+    (cm::string_view(str1.data() + str1.size() - len, len) ==
+     cm::string_view(str2, len));
 }
 
 struct cmStrCmp
