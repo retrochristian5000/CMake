@@ -129,11 +129,6 @@ fi
 
 # Determine whether this is HP-UX
 if echo "${cmake_system}" | grep HP-UX >/dev/null 2>&1; then
-  die 'CMake no longer compiles on HP-UX.  See
-
-  https://gitlab.kitware.com/cmake/cmake/issues/17137
-
-Use CMake 3.9 or lower instead.'
   cmake_system_hpux=true
 else
   cmake_system_hpux=false
@@ -1057,6 +1052,10 @@ echo '
 #error "On Solaris we need C99."
 #endif
 
+#if defined(__hpux) && !(defined(__GNUC__) && ((__GNUC__ * 100) + __GNUC_MINOR__) >= 409)
+#error "On HP-UX we need GCC 4.9 or higher."
+#endif
+
 #include <stdio.h>
 
 int main(int argc, char* argv[])
@@ -1123,6 +1122,10 @@ echo '
 
 #if defined(__SUNPRO_CC) && __SUNPRO_CC < 0x5140
 #error "SunPro <= 5.13 mode not supported due to bug in move semantics."
+#endif
+
+#if defined(__hpux) && !(defined(__GNUC__) && ((__GNUC__ * 100) + __GNUC_MINOR__) >= 409)
+#error "On HP-UX we need GCC 4.9 or higher."
 #endif
 
 #if __cplusplus > 201103L
@@ -1414,6 +1417,9 @@ else
       ;;
     *Darwin*)
       uv_c_flags="${uv_c_flags} -D_DARWIN_USE_64_BIT_INODE=1 -D_DARWIN_UNLIMITED_SELECT=1"
+      ;;
+    *HP-UX*)
+      uv_c_flags="${uv_c_flags} -D_XOPEN_SOURCE_EXTENDED"
       ;;
     *Linux*)
       uv_c_flags="${uv_c_flags} -D_GNU_SOURCE"
