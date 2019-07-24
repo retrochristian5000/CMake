@@ -3444,6 +3444,10 @@ std::string cmGeneratorTarget::GetPchHeader(const std::string& config,
     cmSystemTools::CopyFileIfDifferent(filename_tmp, filename);
     cmSystemTools::RemoveFile(filename_tmp);
   }
+
+  std::string property = "PCH_HEADER_" + language;
+  this->Target->SetProperty(property, inserted.first->second.c_str());
+
   return inserted.first->second;
 }
 
@@ -3480,6 +3484,10 @@ std::string cmGeneratorTarget::GetPchSource(const std::string& config,
     cmSystemTools::CopyFileIfDifferent(filename_tmp, filename);
     cmSystemTools::RemoveFile(filename_tmp);
   }
+
+  std::string property = "PCH_SOURCE_" + language;
+  this->Target->SetProperty(property, inserted.first->second.c_str());
+
   return inserted.first->second;
 }
 
