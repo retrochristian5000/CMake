@@ -292,6 +292,8 @@ Properties on Targets
    /prop_tgt/OSX_ARCHITECTURES
    /prop_tgt/OUTPUT_NAME_CONFIG
    /prop_tgt/OUTPUT_NAME
+   /prop_tgt/PCH_HEADER_LANG
+   /prop_tgt/PCH_SOURCE_LANG
    /prop_tgt/PDB_NAME_CONFIG
    /prop_tgt/PDB_NAME
    /prop_tgt/PDB_OUTPUT_DIRECTORY_CONFIG
