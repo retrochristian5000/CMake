@@ -183,17 +183,8 @@ foreach(line IN LISTS _ANDROID_TOOL_SETUP)
     endif()
   endif()
 endforeach()
-unset(_ANDROID_TOOL_NAME_ONLY)
 unset(_ANDROID_TOOL_LLVM_VERS)
 unset(_ANDROID_TOOL_SETUP)
-
-# Fall back to parsing the version and prefix from the tool name.
-if(NOT _ANDROID_TOOL_VERS AND "${_ANDROID_TOOL_NAME}" MATCHES "-([0-9.]+)$")
-  set(_ANDROID_TOOL_VERS "${CMAKE_MATCH_1}")
-endif()
-if(NOT _ANDROID_TOOL_PREFIX AND "${_ANDROID_TOOL_NAME}" MATCHES "^(.*-)[0-9.]+$")
-  set(_ANDROID_TOOL_PREFIX "${CMAKE_MATCH_1}")
-endif()
 
 # Identify the host platform.
 if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
@@ -217,6 +208,32 @@ elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
 else()
   message(FATAL_ERROR "Android: Builds hosted on '${CMAKE_HOST_SYSTEM_NAME}' not supported.")
 endif()
+
+if(_ANDROID_TOOL_NAME)
+  # Fall back to parsing the version and prefix from the tool name.
+  if(NOT _ANDROID_TOOL_VERS AND "${_ANDROID_TOOL_NAME}" MATCHES "-([0-9.]+)$")
+    set(_ANDROID_TOOL_VERS "${CMAKE_MATCH_1}")
+  endif()
+  if(NOT _ANDROID_TOOL_PREFIX AND "${_ANDROID_TOOL_NAME}" MATCHES "^(.*-)[0-9.]+$")
+    set(_ANDROID_TOOL_PREFIX "${CMAKE_MATCH_1}")
+  endif()
+elseif(_ANDROID_TOOL_NAME_ONLY)
+  # This NDK comes with only one toolchain.  The version is not relevant
+  # because it was only ever used to locate a versioned gnu-libstdc++.
+  set(_ANDROID_TOOL_VERS "")
+  set(_ANDROID_TOOL_PREFIX "${_ANDROID_TOOL_NAME_ONLY}-")
+
+  # Fall back to globbing for the GCC toolchain.
+  file(GLOB _ANDROID_TOOL_LD_LIST RELATIVE "${CMAKE_ANDROID_NDK}/toolchains"
+    ${CMAKE_ANDROID_NDK}/toolchains/*/prebuilt/${_ANDROID_HOST_DIR}/bin/${_ANDROID_TOOL_PREFIX}ld${_ANDROID_HOST_EXT}
+    )
+  list(FILTER _ANDROID_TOOL_LD_LIST EXCLUDE REGEX "^llvm")
+  if(_ANDROID_TOOL_LD_LIST MATCHES "^([^/]+)/prebuilt")
+    set(_ANDROID_TOOL_NAME "${CMAKE_MATCH_1}")
+  endif()
+  unset(_ANDROID_TOOL_LD_LIST)
+endif()
+unset(_ANDROID_TOOL_NAME_ONLY)
 
 # Help CMakeFindBinUtils locate things.
 set(_CMAKE_TOOLCHAIN_PREFIX "${_ANDROID_TOOL_PREFIX}")
