@@ -187,14 +187,6 @@ unset(_ANDROID_TOOL_NAME_ONLY)
 unset(_ANDROID_TOOL_LLVM_VERS)
 unset(_ANDROID_TOOL_SETUP)
 
-# Fall back to parsing the version and prefix from the tool name.
-if(NOT _ANDROID_TOOL_VERS AND "${_ANDROID_TOOL_NAME}" MATCHES "-([0-9.]+)$")
-  set(_ANDROID_TOOL_VERS "${CMAKE_MATCH_1}")
-endif()
-if(NOT _ANDROID_TOOL_PREFIX AND "${_ANDROID_TOOL_NAME}" MATCHES "^(.*-)[0-9.]+$")
-  set(_ANDROID_TOOL_PREFIX "${CMAKE_MATCH_1}")
-endif()
-
 # Identify the host platform.
 if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
   if(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "x86_64")
@@ -216,6 +208,14 @@ elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
   endif()
 else()
   message(FATAL_ERROR "Android: Builds hosted on '${CMAKE_HOST_SYSTEM_NAME}' not supported.")
+endif()
+
+# Fall back to parsing the version and prefix from the tool name.
+if(NOT _ANDROID_TOOL_VERS AND "${_ANDROID_TOOL_NAME}" MATCHES "-([0-9.]+)$")
+  set(_ANDROID_TOOL_VERS "${CMAKE_MATCH_1}")
+endif()
+if(NOT _ANDROID_TOOL_PREFIX AND "${_ANDROID_TOOL_NAME}" MATCHES "^(.*-)[0-9.]+$")
+  set(_ANDROID_TOOL_PREFIX "${CMAKE_MATCH_1}")
 endif()
 
 # Help CMakeFindBinUtils locate things.
