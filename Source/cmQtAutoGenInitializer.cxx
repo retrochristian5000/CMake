@@ -159,10 +159,7 @@ std::string cmQtAutoGenInitializer::InfoWriter::ListJoin(IT it_begin,
 std::string cmQtAutoGenInitializer::InfoWriter::ConfigKey(
   const char* key, std::string const& config)
 {
-  std::string ckey = key;
-  ckey += '_';
-  ckey += config;
-  return ckey;
+  return cmConcat(key, '_', config);
 }
 
 void cmQtAutoGenInitializer::InfoWriter::Write(const char* key,
