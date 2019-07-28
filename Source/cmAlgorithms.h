@@ -170,6 +170,39 @@ std::string cmJoin(Range const& r, std::string const& delimiter)
   return cmJoin(r, delimiter.c_str());
 }
 
+/** cmConcat utility functions.  */
+namespace {
+
+inline cm::string_view cmConcatV_(std::size_t& size, const char& arg)
+{
+  ++size;
+  return cm::string_view(&arg, 1);
+}
+
+template <typename T>
+inline cm::string_view cmConcatV_(std::size_t& size, const T& arg)
+{
+  cm::string_view sv = arg;
+  size += sv.size();
+  return sv;
+}
+
+} // end of namespace
+
+template <typename... Ts>
+std::string cmConcat(Ts&&... strs)
+{
+  std::string str;
+  std::size_t size = 0;
+  cm::string_view const views[sizeof...(Ts)] = { cmConcatV_(
+    size, std::forward<Ts>(strs))... };
+  str.reserve(size);
+  for (cm::string_view const& sv : views) {
+    str.append(sv.data(), sv.size());
+  }
+  return str;
+}
+
 template <typename Range>
 typename Range::const_iterator cmRemoveN(Range& r, size_t n)
 {
