@@ -2232,7 +2232,10 @@ void cmLocalGenerator::AddUnityBuild(cmGeneratorTarget* target,
         for (; begin != end; ++begin) {
           cmSourceFile* sf = filtered_sources[begin];
 
-          sf->SetProperty("HEADER_FILE_ONLY", "ON");
+          if (!this->GetGlobalGenerator()->IsMultiConfig()) {
+            sf->SetProperty("HEADER_FILE_ONLY", "ON");
+          }
+          sf->SetProperty("UNITY_SOURCE_FILE", filename.c_str());
 
           if (beforeInclude) {
             file << beforeInclude << "\n";
@@ -2247,6 +2250,10 @@ void cmLocalGenerator::AddUnityBuild(cmGeneratorTarget* target,
       }
       this->Makefile->ConfigureFile(filename_in, filename, true, false, false);
       target->AddSource(filename, true);
+
+      auto unity = this->Makefile->GetOrCreateSource(filename);
+      unity->SetProperty("SKIP_UNITY_BUILD_INCLUSION", "ON");
+      unity->SetProperty("UNITY_SOURCE_FILE", filename.c_str());
     }
   }
 }
