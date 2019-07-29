@@ -15,28 +15,21 @@
 #include <utility>
 #include <vector>
 
+/** String range type.  **/
 typedef cmRange<std::vector<std::string>::const_iterator> cmStringRange;
 
+/** Callable string comparison struct.  **/
 struct cmStrCmp
 {
-  cmStrCmp(const char* test)
-    : m_test(test)
-  {
-  }
-  cmStrCmp(std::string test)
-    : m_test(std::move(test))
+  cmStrCmp(std::string str)
+    : Test_(std::move(str))
   {
   }
 
-  bool operator()(const std::string& input) const { return m_test == input; }
-
-  bool operator()(const char* input) const
-  {
-    return strcmp(input, m_test.c_str()) == 0;
-  }
+  bool operator()(cm::string_view sv) const { return Test_ == sv; }
 
 private:
-  const std::string m_test;
+  std::string const Test_;
 };
 
 template <typename Range>
