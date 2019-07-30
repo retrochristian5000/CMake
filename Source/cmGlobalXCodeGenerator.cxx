@@ -2864,6 +2864,8 @@ bool cmGlobalXCodeGenerator::CreateGroups(
         continue;
       }
 
+      generator->AddUnityBuild(gtgt, "");
+
       auto addSourceToGroup = [this, mf, gtgt,
                                &sourceGroups](std::string const& source) {
         cmSourceGroup* sourceGroup = mf->FindSourceGroup(source, sourceGroups);
