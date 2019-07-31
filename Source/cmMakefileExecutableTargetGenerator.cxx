@@ -39,6 +39,8 @@ cmMakefileExecutableTargetGenerator::cmMakefileExecutableTargetGenerator(
   this->OSXBundleGenerator =
     cm::make_unique<cmOSXBundleGenerator>(target, this->ConfigName);
   this->OSXBundleGenerator->SetMacContentFolders(&this->MacContentFolders);
+
+  this->LocalGenerator->AddUnityBuild(target, this->ConfigName);
 }
 
 cmMakefileExecutableTargetGenerator::~cmMakefileExecutableTargetGenerator() =
