@@ -29,7 +29,7 @@ std::string CMakeToWixPath(const std::string& cygpath)
     return cygpath;
   }
 
-  return cmSystemTools::TrimWhitespace(winpath_chars.data());
+  return cmTrimWhitespace(winpath_chars.data());
 }
 #else
 std::string CMakeToWixPath(const std::string& path)
