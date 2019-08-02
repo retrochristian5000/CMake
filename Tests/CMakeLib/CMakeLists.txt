@@ -9,6 +9,7 @@ set(CMakeLib_TESTS
   testGeneratedFileStream.cxx
   testRST.cxx
   testRange.cxx
+  testOptional.cxx
   testString.cxx
   testSystemTools.cxx
   testUTF8.cxx
