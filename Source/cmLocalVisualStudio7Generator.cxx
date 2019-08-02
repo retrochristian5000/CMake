@@ -1352,6 +1352,8 @@ void cmLocalVisualStudio7Generator::WriteVCProjFile(std::ostream& fout,
                                                     const std::string& libName,
                                                     cmGeneratorTarget* target)
 {
+  this->AddUnityBuild(target, "");
+
   std::vector<std::string> configs;
   this->Makefile->GetConfigurations(configs);
 
@@ -1542,7 +1544,10 @@ cmLocalVisualStudio7GeneratorFCInfo::cmLocalVisualStudio7GeneratorFCInfo(
     // the project file
     fc.ExcludedFromBuild = sf.GetPropertyAsBool("HEADER_FILE_ONLY") ||
       std::find(acs.Configs.begin(), acs.Configs.end(), ci) ==
-        acs.Configs.end();
+        acs.Configs.end() ||
+      (gt->GetPropertyAsBool("UNITY_BUILD") &&
+       sf.GetProperty("UNITY_SOURCE_FILE") &&
+       !sf.GetPropertyAsBool("SKIP_UNITY_BUILD_INCLUSION"));
     if (fc.ExcludedFromBuild) {
       needfc = true;
     }
