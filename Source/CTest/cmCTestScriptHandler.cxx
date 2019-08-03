@@ -31,6 +31,7 @@
 #include "cmState.h"
 #include "cmStateDirectory.h"
 #include "cmStateSnapshot.h"
+#include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
 #include "cmake.h"
 
@@ -692,8 +693,8 @@ int cmCTestScriptHandler::PerformExtraUpdates()
         fullCommand, &output, &output, &retVal, cvsArgs[0].c_str(),
         this->HandlerVerbose, cmDuration::zero() /*this->TimeOut*/);
       if (!res || retVal != 0) {
-        cmSystemTools::Error("Unable to perform extra updates:\n" + eu +
-                             "\nWith output:\n" + output);
+        cmSystemTools::Error(cmStrCat("Unable to perform extra updates:\n", eu,
+                                      "\nWith output:\n", output));
         return 0;
       }
     }
@@ -963,7 +964,7 @@ bool cmCTestScriptHandler::TryToRemoveBinaryDirectoryOnce(
       continue;
     }
 
-    std::string fullPath = directoryPath + std::string("/") + path;
+    std::string fullPath = cmStrCat(directoryPath, "/", path);
 
     bool isDirectory = cmSystemTools::FileIsDirectory(fullPath) &&
       !cmSystemTools::FileIsSymlink(fullPath);
