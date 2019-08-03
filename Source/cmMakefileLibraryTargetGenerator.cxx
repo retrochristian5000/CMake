@@ -26,6 +26,7 @@
 #include "cmStateDirectory.h"
 #include "cmStateSnapshot.h"
 #include "cmStateTypes.h"
+#include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
 
 cmMakefileLibraryTargetGenerator::cmMakefileLibraryTargetGenerator(
@@ -375,7 +376,7 @@ void cmMakefileLibraryTargetGenerator::WriteDeviceLibraryRules(
 
     // Expand placeholders.
     for (std::string& real_link_command : real_link_commands) {
-      real_link_command = launcher + real_link_command;
+      real_link_command = cmStrCat(launcher, real_link_command);
       rulePlaceholderExpander->ExpandRuleVariables(this->LocalGenerator,
                                                    real_link_command, vars);
     }
@@ -893,7 +894,7 @@ void cmMakefileLibraryTargetGenerator::WriteLibraryRules(
 
       // Expand placeholders.
       for (std::string& real_link_command : real_link_commands) {
-        real_link_command = launcher + real_link_command;
+        real_link_command = cmStrCat(launcher, real_link_command);
         rulePlaceholderExpander->ExpandRuleVariables(this->LocalGenerator,
                                                      real_link_command, vars);
       }

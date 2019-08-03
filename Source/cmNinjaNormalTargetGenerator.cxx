@@ -230,7 +230,7 @@ void cmNinjaNormalTargetGenerator::WriteDeviceLinkRule(bool useResponseFile)
     // Rule for linking library/executable.
     std::vector<std::string> linkCmds = this->ComputeDeviceLinkCmd();
     for (std::string& linkCmd : linkCmds) {
-      linkCmd = launcher + linkCmd;
+      linkCmd = cmStrCat(launcher, linkCmd);
       rulePlaceholderExpander->ExpandRuleVariables(this->GetLocalGenerator(),
                                                    linkCmd, vars);
     }
@@ -369,7 +369,7 @@ void cmNinjaNormalTargetGenerator::WriteLinkRule(bool useResponseFile)
     // Rule for linking library/executable.
     std::vector<std::string> linkCmds = this->ComputeLinkCmd();
     for (std::string& linkCmd : linkCmds) {
-      linkCmd = launcher + linkCmd;
+      linkCmd = cmStrCat(launcher, linkCmd);
       rulePlaceholderExpander->ExpandRuleVariables(this->GetLocalGenerator(),
                                                    linkCmd, vars);
     }
