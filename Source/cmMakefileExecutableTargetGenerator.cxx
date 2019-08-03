@@ -26,6 +26,7 @@
 #include "cmStateDirectory.h"
 #include "cmStateSnapshot.h"
 #include "cmStateTypes.h"
+#include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
 
 cmMakefileExecutableTargetGenerator::cmMakefileExecutableTargetGenerator(
@@ -245,7 +246,7 @@ void cmMakefileExecutableTargetGenerator::WriteDeviceExecutableRule(
     // Expand placeholders in the commands.
     rulePlaceholderExpander->SetTargetImpLib(targetOutputReal);
     for (std::string& real_link_command : real_link_commands) {
-      real_link_command = launcher + real_link_command;
+      real_link_command = cmStrCat(launcher, real_link_command);
       rulePlaceholderExpander->ExpandRuleVariables(this->LocalGenerator,
                                                    real_link_command, vars);
     }
@@ -614,7 +615,7 @@ void cmMakefileExecutableTargetGenerator::WriteExecutableRule(bool relink)
     // Expand placeholders in the commands.
     rulePlaceholderExpander->SetTargetImpLib(targetOutPathImport);
     for (std::string& real_link_command : real_link_commands) {
-      real_link_command = launcher + real_link_command;
+      real_link_command = cmStrCat(launcher, real_link_command);
       rulePlaceholderExpander->ExpandRuleVariables(this->LocalGenerator,
                                                    real_link_command, vars);
     }
