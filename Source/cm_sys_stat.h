@@ -14,6 +14,6 @@ typedef unsigned short gid_t;
 
 #include <sys/types.h>
 // include sys/stat.h after sys/types.h
-#include <sys/stat.h>
+#include <sys/stat.h> // IWYU pragma: export
 
 #endif

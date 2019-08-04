@@ -7,15 +7,15 @@
 #include "cmsys/RegularExpression.hxx"
 #include <algorithm>
 #include <ctype.h>
-#include <iterator>
 #include <memory>
 #include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <cm/iterator>
+
 #include "cm_static_string_view.hxx"
 
-#include "cmAlgorithms.h"
 #include "cmCryptoHash.h"
 #include "cmExecutionStatus.h"
 #include "cmGeneratorExpression.h"
