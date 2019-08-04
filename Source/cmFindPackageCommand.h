@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-#include "cm_memory.hxx"
+#include <cm/memory>
 
 // IWYU insists we should forward-declare instead of including <functional>,
 // but we cannot forward-declare reliably because some C++ standard libraries

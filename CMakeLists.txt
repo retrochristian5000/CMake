@@ -368,10 +368,18 @@ macro (CMAKE_BUILD_UTILITIES)
   # Setup third-party libraries.
   # Everything in the tree should be able to include files from the
   # Utilities directory.
+  include_directories(BEFORE SYSTEM "${CMake_SOURCE_DIR}/Utilities/std")
+
   include_directories(
     ${CMake_BINARY_DIR}/Utilities
     ${CMake_SOURCE_DIR}/Utilities
     )
+
+  #---------------------------------------------------------------------
+  # Build CMake std library for CMake and CTest.
+  set(CMAKE_STD_LIBRARY cmstd)
+  add_subdirectory(Utilities/std)
+  CMAKE_SET_TARGET_FOLDER(cmstd "Utilities/std")
 
   # check for the use of system libraries versus builtin ones
   # (a macro defined in this file)

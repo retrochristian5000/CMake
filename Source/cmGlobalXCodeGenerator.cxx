@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "cm_memory.hxx"
+#include <cm/memory>
 
 #include "cmAlgorithms.h"
 #include "cmComputeLinkInformation.h"
