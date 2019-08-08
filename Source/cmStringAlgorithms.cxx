@@ -21,6 +21,22 @@ std::string cmTrimWhitespace(cm::string_view str)
   return std::string(start, stop + 1);
 }
 
+std::string cmRemoveQuotes(cm::string_view str)
+{
+  const char quote = '"';
+  // We accept only strings that have two quotes at least.
+  // Also front() and back() are only defined on non empty strings.
+  const cm::string_view::size_type min_length = 2 * sizeof(quote);
+  if (str.size() >= min_length && //
+      str.front() == quote &&     //
+      str.back() == quote) {
+    // Remove a quote from the front and the back
+    str.remove_prefix(sizeof(quote));
+    str.remove_suffix(sizeof(quote));
+  }
+  return std::string(str);
+}
+
 std::string cmEscapeQuotes(cm::string_view str)
 {
   std::string result;
