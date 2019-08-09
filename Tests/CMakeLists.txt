@@ -1597,7 +1597,7 @@ ${CMake_SOURCE_DIR}/Utilities/Release/push.bash --dir dev -- '${CMake_BUILD_NIGH
   endfunction()
 
   if(NOT CMake_TEST_EXTERNAL_CMAKE)
-    foreach(STP RANGE 1 11)
+    foreach(STP RANGE 2 11)
       add_tutorial_test(Step${STP} TRUE)
     endforeach()
     add_tutorial_test(Complete TRUE)
