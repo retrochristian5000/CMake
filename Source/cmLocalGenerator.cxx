@@ -1573,6 +1573,12 @@ void cmLocalGenerator::AddLanguageFlags(std::string& flags,
   this->AddConfigVariableFlags(flags, cmStrCat("CMAKE_", lang, "_FLAGS"),
                                config);
 
+  if (lang == "Swift") {
+    if (const char* v = target->GetProperty("Swift_LANGUAGE_VERSION")) {
+      this->AppendFlags(flags, "-swift-version " + std::string(v));
+    }
+  }
+
   // Add MSVC runtime library flags.  This is activated by the presence
   // of a default selection whether or not it is overridden by a property.
   const char* msvcRuntimeLibraryDefault =
