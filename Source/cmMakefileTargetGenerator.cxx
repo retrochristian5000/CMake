@@ -1738,6 +1738,11 @@ void cmMakefileTargetGenerator::GenDefFile(
     this->LocalGenerator->MaybeConvertToRelativePath(
       this->LocalGenerator->GetCurrentBinaryDirectory(), objlist_file),
     cmOutputConverter::SHELL);
+  const char* nm_executable = this->Makefile->GetDefinition("CMAKE_NM");
+  if (nm_executable && *nm_executable) {
+    cmd += " --nm=";
+    cmd += nm_executable;
+  }
   real_link_commands.insert(real_link_commands.begin(), cmd);
   // create a list of obj files for the -E __create_def to read
   cmGeneratedFileStream fout(objlist_file);
