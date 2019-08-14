@@ -23,6 +23,10 @@ include_directories(${CURSES_INCLUDE_PATH})
 add_executable(ccmake ${CURSES_SRCS} )
 target_link_libraries(ccmake CMakeLib)
 if(CMAKE_USE_SYSTEM_FORM)
+  if(CURSES_HAVE_NCURSES_NCURSES_H OR CURSES_HAVE_NCURSES_CURSES_H)
+    include_directories("${CURSES_INCLUDE_DIRS}/ncurses")
+  endif()
+
   target_link_libraries(ccmake
     ${CURSES_FORM_LIBRARY}
     ${CURSES_LIBRARY}
