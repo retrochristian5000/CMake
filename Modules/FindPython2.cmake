@@ -199,6 +199,46 @@ Hints
     recommended to also include the component ``Interpreter`` to get expected
     result.
 
+Artifacts Specification
+^^^^^^^^^^^^^^^^^^^^^^^
+
+To solve special cases, it is possible to specify directly the artifacts by
+setting the following variables:
+
+``Python2_REQUIRED_INTERPRETER``
+  The path to the interpreter. It will be used to compute the
+  variable ``Python2_EXECUTABLE``.
+
+``Python2_REQUIRED_COMPILER``
+  The path to the compiler. It will be used to compute the
+  variable ``Python2_COMPILER``.
+
+``Python2_REQUIRED_LIBRARY``
+  The path to the library. It will be used to compute the
+  variables ``Python2_LIBRARIES``, ``Python2_LIBRAY_DIRS`` and
+  ``Python2_RUNTIME_LIBRARY_DIRS``.
+
+``Python2_REQUIRED_INCLUDE_DIR``
+  The path to the directory of the ``Python`` headers. It will be used to
+  compute the variable ``Python2_INCLUDE_DIRS``.
+
+``Python2_REQUIRED_NumPy_INCLUDE_DIR``
+  The path to the directory of the ``NumPy`` headers. It will be used to
+  compute the variable ``Python2_NumPy_INCLUDE_DIRS``.
+
+.. note::
+
+  All paths must be absolute. Any artifact specified with a relative path
+  will be ignored.
+
+.. note::
+
+  When an artifact is specified, all ``HINTS`` will be ignored and no search
+  will be performed for this artifact.
+
+  If more than one artifact is specified, it is the user's responsability to
+  ensure the consistency of the various artifacts.
+
 Commands
 ^^^^^^^^
 
