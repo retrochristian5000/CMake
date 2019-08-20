@@ -249,6 +249,8 @@ cmVisualStudio10TargetGenerator::cmVisualStudio10TargetGenerator(
     this->LocalGenerator->GetTargetDirectory(this->GeneratorTarget);
   this->InSourceBuild = (this->Makefile->GetCurrentSourceDirectory() ==
                          this->Makefile->GetCurrentBinaryDirectory());
+
+  this->LocalGenerator->AddPchDependencies(target, "");
 }
 
 cmVisualStudio10TargetGenerator::~cmVisualStudio10TargetGenerator()
@@ -2150,6 +2152,9 @@ void cmVisualStudio10TargetGenerator::WriteAllSources(Elem& e0)
       if (si.Kind == cmGeneratorTarget::SourceKindObjectSource) {
         this->OutputSourceSpecificFlags(e2, si.Source);
       }
+      if (si.Source->GetPropertyAsBool("SKIP_PRECOMPILE_HEADERS")) {
+        e2.Element("PrecompiledHeader", "NotUsing");
+      }
       if (!exclude_configs.empty()) {
         this->WriteExcludeFromBuild(e2, exclude_configs);
       }
@@ -2635,6 +2640,13 @@ bool cmVisualStudio10TargetGenerator::ComputeClOptions(
     this->IPOEnabledConfigurations.insert(configName);
   }
 
+  // Precompile Headers
+  std::string pchHeader =
+    this->GeneratorTarget->GetPchHeader(configName, linkLanguage);
+  if (this->MSTools && vcxproj == this->ProjectType && pchHeader.empty()) {
+    clOptions.AddFlag("PrecompiledHeader", "NotUsing");
+  }
+
   // Get preprocessor definitions for this directory.
   std::string defineFlags = this->Makefile->GetDefineFlags();
   if (this->MSTools) {
@@ -2650,7 +2662,6 @@ bool cmVisualStudio10TargetGenerator::ComputeClOptions(
         // replace this setting with "true" below.
         clOptions.AddFlag("UseFullPaths", "false");
       }
-      clOptions.AddFlag("PrecompiledHeader", "NotUsing");
       clOptions.AddFlag("AssemblerListingLocation", "$(IntDir)");
     }
   }
