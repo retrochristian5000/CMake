@@ -526,6 +526,12 @@ void cmVisualStudio10TargetGenerator::Generate()
           }
           e1.Element("TargetFrameworkTargetsVersion", targetFrameworkVer);
         }
+        if (!this->GlobalGenerator->GetPlatformToolsetCudaString().empty()) {
+          e1.Element(
+            "CudaToolkitCustomDir",
+            this->GlobalGenerator->GetPlatformToolsetCudaCustomDirString() +
+              "nvcc");
+        }
       }
 
       // Disable the project upgrade prompt that is displayed the first time a
@@ -612,10 +618,17 @@ void cmVisualStudio10TargetGenerator::Generate()
       e1.SetHasElements();
 
       if (this->GlobalGenerator->IsCudaEnabled()) {
+        auto customDir =
+          this->GlobalGenerator->GetPlatformToolsetCudaCustomDirString();
+        std::string path = customDir.empty()
+          ? "$(VCTargetsPath)\\BuildCustomizations\\"
+          : customDir +
+            "CUDAVisualStudioIntegration\\extras\\"
+            "visual_studio_integration\\MSBuildExtensions\\";
         Elem(e1, "Import")
           .Attribute("Project",
-                     "$(VCTargetsPath)\\BuildCustomizations\\CUDA " +
-                       this->GlobalGenerator->GetPlatformToolsetCudaString() +
+                     std::move(path) + "CUDA " +
+                       this->GlobalGenerator->GetPlatformToolsetCuda() +
                        ".props");
       }
       if (this->GlobalGenerator->IsMasmEnabled()) {
@@ -698,10 +711,17 @@ void cmVisualStudio10TargetGenerator::Generate()
       e1.SetHasElements();
       this->WriteTargetsFileReferences(e1);
       if (this->GlobalGenerator->IsCudaEnabled()) {
+        auto customDir =
+          this->GlobalGenerator->GetPlatformToolsetCudaCustomDirString();
+        std::string path = customDir.empty()
+          ? "$(VCTargetsPath)\\BuildCustomizations\\"
+          : customDir +
+            "CUDAVisualStudioIntegration\\extras\\"
+            "visual_studio_integration\\MSBuildExtensions\\";
         Elem(e1, "Import")
           .Attribute("Project",
-                     "$(VCTargetsPath)\\BuildCustomizations\\CUDA " +
-                       this->GlobalGenerator->GetPlatformToolsetCudaString() +
+                     std::move(path) + "CUDA " +
+                       this->GlobalGenerator->GetPlatformToolsetCuda() +
                        ".targets");
       }
       if (this->GlobalGenerator->IsMasmEnabled()) {
