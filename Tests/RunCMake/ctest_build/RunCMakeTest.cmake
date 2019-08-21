@@ -1,6 +1,7 @@
 include(RunCTest)
 
 set(CASE_CTEST_BUILD_ARGS "")
+set(RunCMake_USE_LAUNCHERS TRUE)
 
 function(run_ctest_build CASE_NAME)
   set(CASE_CTEST_BUILD_ARGS "${ARGN}")
@@ -45,3 +46,8 @@ function(run_BuildChangeId)
   run_ctest(BuildChangeId)
 endfunction()
 run_BuildChangeId()
+
+set(RunCMake_BUILD_COMMAND "${COLOR_WARNING}")
+set(RunCMake_USE_LAUNCHERS FALSE)
+run_ctest(IgnoreColor)
+unset(RunCMake_BUILD_COMMAND)
