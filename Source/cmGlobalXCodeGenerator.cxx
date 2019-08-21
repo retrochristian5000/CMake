@@ -2394,6 +2394,16 @@ void cmGlobalXCodeGenerator::CreateBuildSettings(cmGeneratorTarget* gtgt,
     buildSettings->AddAttribute("DYLIB_COMPATIBILITY_VERSION",
                                 this->CreateString(vso.str()));
   }
+
+  // Precompile Headers
+  std::string pchHeader = gtgt->GetPchHeader(configName, llang);
+  if (!pchHeader.empty()) {
+    buildSettings->AddAttribute("GCC_PREFIX_HEADER",
+                                this->CreateString(pchHeader));
+    buildSettings->AddAttribute("GCC_PRECOMPILE_PREFIX_HEADER",
+                                this->CreateString("YES"));
+  }
+
   // put this last so it can override existing settings
   // Convert "XCODE_ATTRIBUTE_*" properties directly.
   {
@@ -2855,6 +2865,8 @@ bool cmGlobalXCodeGenerator::CreateGroups(
       if (gtgt->GetName() == CMAKE_CHECK_BUILD_SYSTEM_TARGET) {
         continue;
       }
+
+      generator->AddPchDependencies(gtgt, "");
 
       auto addSourceToGroup = [this, mf, gtgt,
                                &sourceGroups](std::string const& source) {
