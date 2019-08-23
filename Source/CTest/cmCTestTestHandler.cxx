@@ -2184,26 +2184,22 @@ bool cmCTestTestHandler::SetTestsProperties(
             cmExpandList(val, rt.AttachOnFail);
           }
           if (key == "RESOURCE_LOCK") {
-            std::vector<std::string> lval;
-            cmExpandList(val, lval);
+            std::vector<std::string> lval = cmExpandedList(val);
 
             rt.LockedResources.insert(lval.begin(), lval.end());
           }
           if (key == "FIXTURES_SETUP") {
-            std::vector<std::string> lval;
-            cmExpandList(val, lval);
+            std::vector<std::string> lval = cmExpandedList(val);
 
             rt.FixturesSetup.insert(lval.begin(), lval.end());
           }
           if (key == "FIXTURES_CLEANUP") {
-            std::vector<std::string> lval;
-            cmExpandList(val, lval);
+            std::vector<std::string> lval = cmExpandedList(val);
 
             rt.FixturesCleanup.insert(lval.begin(), lval.end());
           }
           if (key == "FIXTURES_REQUIRED") {
-            std::vector<std::string> lval;
-            cmExpandList(val, lval);
+            std::vector<std::string> lval = cmExpandedList(val);
 
             rt.FixturesRequired.insert(lval.begin(), lval.end());
           }
@@ -2221,15 +2217,13 @@ bool cmCTestTestHandler::SetTestsProperties(
             rt.RunSerial = cmIsOn(val);
           }
           if (key == "FAIL_REGULAR_EXPRESSION") {
-            std::vector<std::string> lval;
-            cmExpandList(val, lval);
+            std::vector<std::string> lval = cmExpandedList(val);
             for (std::string const& cr : lval) {
               rt.ErrorRegularExpressions.emplace_back(cr, cr);
             }
           }
           if (key == "SKIP_REGULAR_EXPRESSION") {
-            std::vector<std::string> lval;
-            cmExpandList(val, lval);
+            std::vector<std::string> lval = cmExpandedList(val);
             for (std::string const& cr : lval) {
               rt.SkipRegularExpressions.emplace_back(cr, cr);
             }
@@ -2256,8 +2250,7 @@ bool cmCTestTestHandler::SetTestsProperties(
             cmExpandList(val, rt.Environment);
           }
           if (key == "LABELS") {
-            std::vector<std::string> Labels;
-            cmExpandList(val, Labels);
+            std::vector<std::string> Labels = cmExpandedList(val);
             rt.Labels.insert(rt.Labels.end(), Labels.begin(), Labels.end());
             // sort the array
             std::sort(rt.Labels.begin(), rt.Labels.end());
@@ -2277,8 +2270,7 @@ bool cmCTestTestHandler::SetTestsProperties(
             }
           }
           if (key == "PASS_REGULAR_EXPRESSION") {
-            std::vector<std::string> lval;
-            cmExpandList(val, lval);
+            std::vector<std::string> lval = cmExpandedList(val);
             for (std::string const& cr : lval) {
               rt.RequiredRegularExpressions.emplace_back(cr, cr);
             }
@@ -2287,16 +2279,14 @@ bool cmCTestTestHandler::SetTestsProperties(
             rt.Directory = val;
           }
           if (key == "TIMEOUT_AFTER_MATCH") {
-            std::vector<std::string> propArgs;
-            cmExpandList(val, propArgs);
+            std::vector<std::string> propArgs = cmExpandedList(val);
             if (propArgs.size() != 2) {
               cmCTestLog(this->CTest, WARNING,
                          "TIMEOUT_AFTER_MATCH expects two arguments, found "
                            << propArgs.size() << std::endl);
             } else {
               rt.AlternateTimeout = cmDuration(atof(propArgs[0].c_str()));
-              std::vector<std::string> lval;
-              cmExpandList(propArgs[1], lval);
+              std::vector<std::string> lval = cmExpandedList(propArgs[1]);
               for (std::string const& cr : lval) {
                 rt.TimeoutRegularExpressions.emplace_back(cr, cr);
               }
@@ -2338,8 +2328,7 @@ bool cmCTestTestHandler::SetDirectoryProperties(
       std::string cwd = cmSystemTools::GetCurrentWorkingDirectory();
       if (cwd == rt.Directory) {
         if (key == "LABELS") {
-          std::vector<std::string> DirectoryLabels;
-          cmExpandList(val, DirectoryLabels);
+          std::vector<std::string> DirectoryLabels = cmExpandedList(val);
           rt.Labels.insert(rt.Labels.end(), DirectoryLabels.begin(),
                            DirectoryLabels.end());
 
