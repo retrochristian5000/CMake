@@ -81,7 +81,7 @@ public:
   static std::string QuotedCommand(std::vector<std::string> const& command);
 
   /// @brief Returns the parent directory of the file with a "/" suffix
-  static std::string SubDirPrefix(std::string const& filename);
+  static std::string SubDirPrefix(cm::string_view filename);
 
   /// @brief Appends the suffix to the filename before the last dot
   static std::string AppendFilenameSuffix(std::string const& filename,

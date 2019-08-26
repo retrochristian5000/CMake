@@ -182,13 +182,13 @@ std::string cmQtAutoGen::QuotedCommand(std::vector<std::string> const& command)
   return res;
 }
 
-std::string cmQtAutoGen::SubDirPrefix(std::string const& filename)
+std::string cmQtAutoGen::SubDirPrefix(cm::string_view filename)
 {
-  std::string::size_type slash_pos = filename.rfind('/');
-  if (slash_pos == std::string::npos) {
+  auto slashPos = filename.rfind('/');
+  if (slashPos == cm::string_view::npos) {
     return std::string();
   }
-  return filename.substr(0, slash_pos + 1);
+  return std::string(filename.substr(0, slashPos + 1));
 }
 
 std::string cmQtAutoGen::AppendFilenameSuffix(std::string const& filename,
