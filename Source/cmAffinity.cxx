@@ -12,6 +12,7 @@
 #    define CM_HAVE_CPU_AFFINITY
 #    include <pthread.h>
 #    include <sched.h>
+#    include <string.h> // IWYU pragma: keep
 #    if defined(__FreeBSD__)
 #      include <pthread_np.h>
 #      include <sys/cpuset.h>
