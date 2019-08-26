@@ -21,7 +21,7 @@
 /// @arg valueOpts list of options that accept a value
 void MergeOptions(std::vector<std::string>& baseOpts,
                   std::vector<std::string> const& newOpts,
-                  std::vector<std::string> const& valueOpts, bool isQt5)
+                  std::initializer_list<cm::string_view> valueOpts, bool isQt5)
 {
   typedef std::vector<std::string>::iterator Iter;
   typedef std::vector<std::string>::const_iterator CIter;
@@ -206,7 +206,7 @@ void cmQtAutoGen::UicMergeOptions(std::vector<std::string>& baseOpts,
                                   std::vector<std::string> const& newOpts,
                                   bool isQt5)
 {
-  static std::vector<std::string> const valueOpts = {
+  static std::initializer_list<cm::string_view> const valueOpts = {
     "tr",      "translate", "postfix", "generator",
     "include", // Since Qt 5.3
     "g"
@@ -218,9 +218,9 @@ void cmQtAutoGen::RccMergeOptions(std::vector<std::string>& baseOpts,
                                   std::vector<std::string> const& newOpts,
                                   bool isQt5)
 {
-  static std::vector<std::string> const valueOpts = { "name", "root",
-                                                      "compress",
-                                                      "threshold" };
+  static std::initializer_list<cm::string_view> const valueOpts = {
+    "name", "root", "compress", "threshold"
+  };
   MergeOptions(baseOpts, newOpts, valueOpts, isQt5);
 }
 
