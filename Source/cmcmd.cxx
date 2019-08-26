@@ -676,8 +676,10 @@ int cmcmd::ExecuteCMakeCommand(std::vector<std::string> const& args)
       // If an error occurs, we want to continue removing directories.
       bool return_value = false;
       for (auto const& arg : cmMakeRange(args).advance(2)) {
-        if (cmSystemTools::FileIsDirectory(arg) &&
-            !cmSystemTools::RemoveADirectory(arg)) {
+        if ((cmSystemTools::FileIsSymlink(arg) &&
+             !cmSystemTools::RemoveFile(arg)) ||
+            (cmSystemTools::FileIsDirectory(arg) &&
+             !cmSystemTools::RemoveADirectory(arg))) {
           std::cerr << "Error removing directory \"" << arg << "\".\n";
           return_value = true;
         }
