@@ -5,6 +5,8 @@
 
 #include "cmConfigure.h" // IWYU pragma: keep
 
+#include "cm_string_view.hxx"
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -74,7 +76,7 @@ public:
   static std::string Tools(bool moc, bool uic, bool rcc);
 
   /// @brief Returns the string escaped and enclosed in quotes
-  static std::string Quoted(std::string const& text);
+  static std::string Quoted(cm::string_view text);
 
   static std::string QuotedCommand(std::vector<std::string> const& command);
 

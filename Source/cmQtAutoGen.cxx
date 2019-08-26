@@ -11,7 +11,7 @@
 #include "cmsys/RegularExpression.hxx"
 
 #include <algorithm>
-#include <array>
+#include <initializer_list>
 #include <sstream>
 #include <utility>
 
@@ -150,27 +150,18 @@ std::string cmQtAutoGen::Tools(bool moc, bool uic, bool rcc)
   return res;
 }
 
-std::string cmQtAutoGen::Quoted(std::string const& text)
+std::string cmQtAutoGen::Quoted(cm::string_view text)
 {
-  const std::array<std::pair<const char*, const char*>, 9> replaces = {
-    { { "\\", "\\\\" },
-      { "\"", "\\\"" },
-      { "\a", "\\a" },
-      { "\b", "\\b" },
-      { "\f", "\\f" },
-      { "\n", "\\n" },
-      { "\r", "\\r" },
-      { "\t", "\\t" },
-      { "\v", "\\v" } }
-  };
+  static std::initializer_list<std::pair<const char*, const char*>> const
+    remplacements = { { "\\", "\\\\" }, { "\"", "\\\"" }, { "\a", "\\a" },
+                      { "\b", "\\b" },  { "\f", "\\f" },  { "\n", "\\n" },
+                      { "\r", "\\r" },  { "\t", "\\t" },  { "\v", "\\v" } };
 
-  std::string res = text;
-  for (auto const& pair : replaces) {
+  std::string res(text);
+  for (auto const& pair : remplacements) {
     cmSystemTools::ReplaceString(res, pair.first, pair.second);
   }
-  res = '"' + res;
-  res += '"';
-  return res;
+  return cmStrCat('"', res, '"');
 }
 
 std::string cmQtAutoGen::QuotedCommand(std::vector<std::string> const& command)
