@@ -316,9 +316,8 @@ bool cmQtAutoGen::RccLister::list(std::string const& qrcFile,
 
       // Log command
       if (verbose) {
-        std::string msg =
-          cmStrCat("Running command:\n", QuotedCommand(cmd), '\n');
-        cmSystemTools::Stdout(msg);
+        cmSystemTools::Stdout(
+          cmStrCat("Running command:\n", QuotedCommand(cmd), '\n'));
       }
 
       result = cmSystemTools::RunSingleCommand(
@@ -329,12 +328,10 @@ bool cmQtAutoGen::RccLister::list(std::string const& qrcFile,
       error =
         cmStrCat("The rcc list process failed for ", Quoted(qrcFile), '\n');
       if (!rccStdOut.empty()) {
-        error += rccStdOut;
-        error += "\n";
+        error += cmStrCat(rccStdOut, '\n');
       }
       if (!rccStdErr.empty()) {
-        error += rccStdErr;
-        error += "\n";
+        error += cmStrCat(rccStdErr, '\n');
       }
       return false;
     }
