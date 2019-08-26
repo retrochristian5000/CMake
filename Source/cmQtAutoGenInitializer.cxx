@@ -29,8 +29,8 @@
 #include "cmsys/SystemInformation.hxx"
 
 #include <algorithm>
-#include <array>
 #include <deque>
+#include <initializer_list>
 #include <map>
 #include <set>
 #include <string>
@@ -696,7 +696,7 @@ bool cmQtAutoGenInitializer::InitScanFiles()
     std::vector<MUFileHandle> extraHeaders;
     extraHeaders.reserve(this->AutogenTarget.Sources.size() * 2);
     // Header search suffixes and extensions
-    std::array<std::string, 2> const suffixes{ { "", "_p" } };
+    std::initializer_list<cm::string_view> const suffixes{ "", "_p" };
     auto const& exts = cm->GetHeaderExtensions();
     // Scan through sources
     for (auto const& pair : this->AutogenTarget.Sources) {
@@ -708,7 +708,7 @@ bool cmQtAutoGenInitializer::InitScanFiles()
           cmStrCat(cmQtAutoGen::SubDirPrefix(srcPath),
                    cmSystemTools::GetFilenameWithoutLastExtension(srcPath));
         for (auto const& suffix : suffixes) {
-          std::string const suffixedPath = basePath + suffix;
+          std::string const suffixedPath = cmStrCat(basePath, suffix);
           for (auto const& ext : exts) {
             std::string fullPath = cmStrCat(suffixedPath, '.', ext);
 
@@ -1454,7 +1454,7 @@ bool cmQtAutoGenInitializer::AddGeneratedSource(std::string const& filename,
 }
 
 bool cmQtAutoGenInitializer::AddToSourceGroup(std::string const& fileName,
-                                              std::string const& genNameUpper)
+                                              cm::string_view genNameUpper)
 {
   cmMakefile* makefile = this->Target->Target->GetMakefile();
   cmSourceGroup* sourceGroup = nullptr;
@@ -1464,13 +1464,14 @@ bool cmQtAutoGenInitializer::AddToSourceGroup(std::string const& fileName,
     std::string groupName;
     {
       // Prefer generator specific source group name
-      std::array<std::string, 2> props{ { genNameUpper + "_SOURCE_GROUP",
-                                          "AUTOGEN_SOURCE_GROUP" } };
-      for (std::string& prop : props) {
+      std::initializer_list<std::string> const props{
+        cmStrCat(genNameUpper, "_SOURCE_GROUP"), "AUTOGEN_SOURCE_GROUP"
+      };
+      for (std::string const& prop : props) {
         const char* propName = makefile->GetState()->GetGlobalProperty(prop);
         if ((propName != nullptr) && (*propName != '\0')) {
           groupName = propName;
-          property = std::move(prop);
+          property = prop;
           break;
         }
       }
@@ -1512,8 +1513,8 @@ static std::vector<cmQtAutoGen::IntegerVersion> GetKnownQtVersions(
   cmGeneratorTarget const* target)
 {
   // Qt version variable prefixes
-  static std::array<std::string, 3> const prefixes{ { "Qt6Core", "Qt5Core",
-                                                      "QT" } };
+  static std::initializer_list<std::string> const prefixes{ "Qt6Core",
+                                                            "Qt5Core", "QT" };
 
   std::vector<cmQtAutoGen::IntegerVersion> result;
   result.reserve(prefixes.size() * 2);
@@ -1580,7 +1581,7 @@ bool cmQtAutoGenInitializer::GetQtExecutable(GenVarsT& genVars,
 
   // Custom executable
   {
-    std::string const prop = genVars.GenNameUpper + "_EXECUTABLE";
+    std::string const prop = cmStrCat(genVars.GenNameUpper, "_EXECUTABLE");
     std::string const val = this->Target->Target->GetSafeProperty(prop);
     if (!val.empty()) {
       // Evaluate generator expression
