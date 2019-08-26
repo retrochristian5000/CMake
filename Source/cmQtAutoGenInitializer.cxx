@@ -814,32 +814,29 @@ bool cmQtAutoGenInitializer::InitScanFiles()
         this->AutogenTarget.DependFiles.insert(muf->RealPath);
       }
     } else if (this->CMP0071Warn) {
-      std::string msg =
-        cmStrCat(cmPolicies::GetPolicyWarning(cmPolicies::CMP0071), '\n');
-      std::string property;
+      cm::string_view property;
       if (this->Moc.Enabled && this->Uic.Enabled) {
-        property = kw.SKIP_AUTOGEN;
+        property = "SKIP_AUTOGEN";
       } else if (this->Moc.Enabled) {
-        property = kw.SKIP_AUTOMOC;
+        property = "SKIP_AUTOMOC";
       } else if (this->Uic.Enabled) {
-        property = kw.SKIP_AUTOUIC;
+        property = "SKIP_AUTOUIC";
       }
-      msg += "For compatibility, CMake is excluding the GENERATED source "
-             "file(s):\n";
+      std::string msg =
+        cmStrCat(cmPolicies::GetPolicyWarning(cmPolicies::CMP0071), '\n',
+                 "For compatibility, CMake is excluding the GENERATED source "
+                 "file(s):\n");
       for (MUFile* muf : this->AutogenTarget.FilesGenerated) {
-        msg += "  ";
-        msg += Quoted(muf->RealPath);
-        msg += '\n';
+        msg += cmStrCat("  ", Quoted(muf->RealPath), '\n');
       }
-      msg += "from processing by ";
-      msg += cmQtAutoGen::Tools(this->Moc.Enabled, this->Uic.Enabled, false);
-      msg += ". If any of the files should be processed, set CMP0071 to NEW. "
-             "If any of the files should not be processed, "
-             "explicitly exclude them by setting the source file property ";
-      msg += property;
-      msg += ":\n  set_property(SOURCE file.h PROPERTY ";
-      msg += property;
-      msg += " ON)\n";
+      msg += cmStrCat(
+        "from processing by ",
+        cmQtAutoGen::Tools(this->Moc.Enabled, this->Uic.Enabled, false),
+        ".  If any of the files should be processed, set CMP0071 to NEW. "
+        "If any of the files should not be processed, "
+        "explicitly exclude them by setting the source file property ",
+        property, ":\n  set_property(SOURCE file.h PROPERTY ", property,
+        " ON)\n");
       makefile->IssueMessage(MessageType::AUTHOR_WARNING, msg);
     }
   }
@@ -867,8 +864,8 @@ bool cmQtAutoGenInitializer::InitScanFiles()
       for (Qrc& qrc : this->Rcc.Qrcs) {
         qrc.PathChecksum = fpathCheckSum.getPart(qrc.QrcFile);
         // RCC output file name
-        qrc.RccFile = cmStrCat(this->Dir.Build + "/", qrc.PathChecksum,
-                               "/qrc_", qrc.QrcName, ".cpp");
+        qrc.RccFile = cmStrCat(this->Dir.Build, "/", qrc.PathChecksum, "/qrc_",
+                               qrc.QrcName, ".cpp");
         {
           std::string base = cmStrCat(this->Dir.Info, "/RCC", qrc.QrcName);
           if (!qrc.Unique) {
@@ -1131,8 +1128,7 @@ bool cmQtAutoGenInitializer::InitRccTargets()
       {
         ccName = cmStrCat(this->Target->GetName(), "_arcc_", qrc.QrcName);
         if (!qrc.Unique) {
-          ccName += "_";
-          ccName += qrc.PathChecksum;
+          ccName += cmStrCat('_', qrc.PathChecksum);
         }
 
         cmTarget* autoRccTarget = makefile->AddUtilityCommand(
@@ -1274,7 +1270,7 @@ bool cmQtAutoGenInitializer::SetupWriteAutogenInfo()
         if (muf->MocIt || muf->UicIt) {
           headers.emplace_back(muf->RealPath);
           headersFlags.emplace_back(
-            cmStrCat(muf->MocIt ? "M" : "m", muf->UicIt ? "U" : "u"));
+            cmStrCat(muf->MocIt ? 'M' : 'm', muf->UicIt ? 'U' : 'u'));
         }
       }
     }
@@ -1289,7 +1285,7 @@ bool cmQtAutoGenInitializer::SetupWriteAutogenInfo()
         for (int ii = 1; ii != 1024; ++ii) {
           std::string path = basePath;
           if (ii > 1) {
-            path += cmStrCat("_", ii);
+            path += cmStrCat('_', ii);
           }
           path += ".cpp";
           if (emitted.emplace(path).second) {
@@ -1329,7 +1325,7 @@ bool cmQtAutoGenInitializer::SetupWriteAutogenInfo()
         if (muf->MocIt || muf->UicIt) {
           sources.emplace_back(muf->RealPath);
           sourcesFlags.emplace_back(
-            cmStrCat(muf->MocIt ? "M" : "m", muf->UicIt ? "U" : "u"));
+            cmStrCat(muf->MocIt ? 'M' : 'm', muf->UicIt ? 'U' : 'u'));
         }
       }
     }
