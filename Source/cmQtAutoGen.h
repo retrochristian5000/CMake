@@ -84,8 +84,8 @@ public:
   static std::string SubDirPrefix(cm::string_view filename);
 
   /// @brief Appends the suffix to the filename before the last dot
-  static std::string AppendFilenameSuffix(std::string const& filename,
-                                          std::string const& suffix);
+  static std::string AppendFilenameSuffix(cm::string_view filename,
+                                          cm::string_view suffix);
 
   /// @brief Merges newOpts into baseOpts
   static void UicMergeOptions(std::vector<std::string>& baseOpts,

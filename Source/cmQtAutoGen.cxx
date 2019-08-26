@@ -191,21 +191,15 @@ std::string cmQtAutoGen::SubDirPrefix(cm::string_view filename)
   return std::string(filename.substr(0, slashPos + 1));
 }
 
-std::string cmQtAutoGen::AppendFilenameSuffix(std::string const& filename,
-                                              std::string const& suffix)
+std::string cmQtAutoGen::AppendFilenameSuffix(cm::string_view filename,
+                                              cm::string_view suffix)
 {
-  std::string res;
-  auto pos = filename.rfind('.');
-  if (pos != std::string::npos) {
-    const auto it_dot = filename.begin() + pos;
-    res.assign(filename.begin(), it_dot);
-    res.append(suffix);
-    res.append(it_dot, filename.end());
-  } else {
-    res = filename;
-    res.append(suffix);
+  auto dotPos = filename.rfind('.');
+  if (dotPos == cm::string_view::npos) {
+    return cmStrCat(filename, suffix);
   }
-  return res;
+  return cmStrCat(filename.substr(0, dotPos), suffix,
+                  filename.substr(dotPos, filename.size() - dotPos));
 }
 
 void cmQtAutoGen::UicMergeOptions(std::vector<std::string>& baseOpts,
