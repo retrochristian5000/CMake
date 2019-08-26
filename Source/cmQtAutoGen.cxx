@@ -11,6 +11,7 @@
 #include "cmsys/RegularExpression.hxx"
 
 #include <algorithm>
+#include <array>
 #include <initializer_list>
 #include <sstream>
 #include <utility>
@@ -107,37 +108,28 @@ cm::string_view cmQtAutoGen::GeneratorNameUpper(GenT genType)
 
 std::string cmQtAutoGen::Tools(bool moc, bool uic, bool rcc)
 {
-  std::string res;
-  std::vector<std::string> lst;
+  std::array<cm::string_view, 3> lst;
+  decltype(lst)::size_type num = 0;
   if (moc) {
-    lst.emplace_back("AUTOMOC");
+    lst.at(num++) = "AUTOMOC";
   }
   if (uic) {
-    lst.emplace_back("AUTOUIC");
+    lst.at(num++) = "AUTOUIC";
   }
   if (rcc) {
-    lst.emplace_back("AUTORCC");
+    lst.at(num++) = "AUTORCC";
   }
-  switch (lst.size()) {
+  switch (num) {
     case 1:
-      res += lst.at(0);
-      break;
+      return std::string(lst[0]);
     case 2:
-      res += lst.at(0);
-      res += " and ";
-      res += lst.at(1);
-      break;
+      return cmStrCat(lst[0], " and ", lst[1]);
     case 3:
-      res += lst.at(0);
-      res += ", ";
-      res += lst.at(1);
-      res += " and ";
-      res += lst.at(2);
-      break;
+      return cmStrCat(lst[0], ", ", lst[1], " and ", lst[2]);
     default:
       break;
   }
-  return res;
+  return std::string();
 }
 
 std::string cmQtAutoGen::Quoted(cm::string_view text)
