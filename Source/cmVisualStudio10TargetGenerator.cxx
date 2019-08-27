@@ -1117,7 +1117,10 @@ void cmVisualStudio10TargetGenerator::WriteProjectConfigurationValues(Elem& e0)
       std::string configType;
       if (const char* vsConfigurationType =
             this->GeneratorTarget->GetProperty("VS_CONFIGURATION_TYPE")) {
-        configType = vsConfigurationType;
+        cmGeneratorExpression ge;
+        std::unique_ptr<cmCompiledGeneratorExpression> cge =
+          ge.Parse(vsConfigurationType);
+        configType = cge->Evaluate(this->LocalGenerator, c);
       } else {
         switch (this->GeneratorTarget->GetType()) {
           case cmStateEnums::SHARED_LIBRARY:
