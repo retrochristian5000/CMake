@@ -18,9 +18,32 @@ endif()
 # build AutoExport
 run_cmake_command(AutoExportBuild ${CMAKE_COMMAND} --build
   ${RunCMake_TEST_BINARY_DIR} --config Debug --clean-first)
-# run the executable that uses symbols from the dll
+# save the current timestamp of exports.def
 if(WIN32)
+  set(EXPORTS_DEF "${RunCMake_TEST_BINARY_DIR}/say.dir/${INTDIR}exports.def")
+  if(NOT EXISTS "${EXPORTS_DEF}")
+    set(EXPORTS_DEF
+      "${RunCMake_TEST_BINARY_DIR}/CMakeFiles/say.dir/${INTDIR}exports.def")
+  endif()
+  file(TIMESTAMP "${EXPORTS_DEF}" timestamp)
+  if(NOT timestamp)
+    message(SEND_ERROR "Could not get timestamp for \"${EXPORTS_DEF}\"")
+  endif()
   set(EXE_EXT ".exe")
 endif()
+# run the executable that uses symbols from the dll
 run_cmake_command(AutoExportRun
-  ${RunCMake_BINARY_DIR}/AutoExport-build/bin/${INTDIR}say${EXE_EXT})
+  ${RunCMake_TEST_BINARY_DIR}/bin/${INTDIR}say${EXE_EXT})
+# build AutoExport again without modification
+run_cmake_command(AutoExportBuildAgain ${CMAKE_COMMAND} --build
+  ${RunCMake_TEST_BINARY_DIR} --config Debug)
+# compare timestamps of exports.def to make sure it has not been updated
+if(WIN32)
+  file(TIMESTAMP "${EXPORTS_DEF}" timestamp_after)
+  if(NOT timestamp_after)
+    message(SEND_ERROR "Could not get timestamp for \"${EXPORTS_DEF}\"")
+  endif()
+  if (NOT timestamp_after STREQUAL timestamp)
+    message(SEND_ERROR "\"${EXPORTS_DEF}\" has been updated.")
+  endif()
+endif()
