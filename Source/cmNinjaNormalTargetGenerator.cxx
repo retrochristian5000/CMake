@@ -977,6 +977,12 @@ void cmNinjaNormalTargetGenerator::WriteLinkStatement()
     std::string obj_list_file = mdi->DefFile + ".objs";
     cmd += this->GetLocalGenerator()->ConvertToOutputFormat(
       obj_list_file, cmOutputConverter::SHELL);
+
+    const char* nm_executable = GetMakefile()->GetDefinition("CMAKE_NM");
+    if (nm_executable && *nm_executable) {
+      cmd += " --nm=";
+      cmd += nm_executable;
+    }
     preLinkCmdLines.push_back(std::move(cmd));
 
     // create a list of obj files for the -E __create_def to read
