@@ -1348,7 +1348,7 @@ bool processSources(cmGeneratorTarget const* tgt,
     for (std::string& src : entry.Values) {
       cmSourceFile* sf = mf->GetOrCreateSource(src);
       std::string e;
-      std::string fullPath = sf->GetFullPath(&e);
+      std::string fullPath = sf->ResolveFullPath(&e);
       if (fullPath.empty()) {
         if (!e.empty()) {
           cmake* cm = tgt->GetLocalGenerator()->GetCMakeInstance();
@@ -1616,7 +1616,7 @@ void cmGeneratorTarget::ComputeKindedSources(KindedSources& files,
       // Both names would have been auto generated from Visual Studio
       // where the user supplied the file name and Visual Studio
       // appended the suffix.
-      std::string resx = sf->GetFullPath();
+      std::string resx = sf->ResolveFullPath();
       std::string hFileName = resx.substr(0, resx.find_last_of('.')) + ".h";
       files.ExpectedResxHeaders.insert(hFileName);
     } else if (ext == "appxmanifest") {
@@ -1632,12 +1632,12 @@ void cmGeneratorTarget::ComputeKindedSources(KindedSources& files,
       // Both names would have been auto generated from Visual Studio
       // where the user supplied the file name and Visual Studio
       // appended the suffix.
-      std::string xaml = sf->GetFullPath();
+      std::string xaml = sf->ResolveFullPath();
       std::string hFileName = xaml + ".h";
       std::string cppFileName = xaml + ".cpp";
       files.ExpectedXamlHeaders.insert(hFileName);
       files.ExpectedXamlSources.insert(cppFileName);
-    } else if (header_regex.find(sf->GetFullPath())) {
+    } else if (header_regex.find(sf->ResolveFullPath())) {
       kind = SourceKindHeader;
     } else {
       kind = SourceKindExtra;
@@ -2642,7 +2642,7 @@ cmTargetTraceDependencies::cmTargetTraceDependencies(cmGeneratorTarget* target)
           this->GlobalGenerator->GetFilenameTargetDepends(sf);
         if (cmContains(tgts, this->GeneratorTarget)) {
           std::ostringstream e;
-          e << "Evaluation output file\n  \"" << sf->GetFullPath()
+          e << "Evaluation output file\n  \"" << sf->ResolveFullPath()
             << "\"\ndepends on the sources of a target it is used in.  This "
                "is a dependency loop and is not allowed.";
           this->GeneratorTarget->LocalGenerator->IssueMessage(
@@ -2684,7 +2684,7 @@ void cmTargetTraceDependencies::Trace()
     }
 
     // Queue the source needed to generate this file, if any.
-    this->FollowName(sf->GetFullPath());
+    this->FollowName(sf->ResolveFullPath());
 
     // Queue dependencies added programmatically by commands.
     this->FollowNames(sf->GetDepends());
@@ -2705,7 +2705,7 @@ void cmTargetTraceDependencies::QueueSource(cmSourceFile* sf)
     this->SourceQueue.push(sf);
 
     // Make sure this file is in the target at the end.
-    this->NewSources.push_back(sf->GetFullPath());
+    this->NewSources.push_back(sf->ResolveFullPath());
   }
 }
 
@@ -6083,7 +6083,7 @@ bool cmGeneratorTarget::GetConfigCommonSourceFiles(
       const char* sep = "";
       for (cmSourceFile* f : files) {
         firstConfigFiles += sep;
-        firstConfigFiles += f->GetFullPath();
+        firstConfigFiles += f->ResolveFullPath();
         sep = "\n  ";
       }
 
@@ -6091,7 +6091,7 @@ bool cmGeneratorTarget::GetConfigCommonSourceFiles(
       sep = "";
       for (cmSourceFile* f : configFiles) {
         thisConfigFiles += sep;
-        thisConfigFiles += f->GetFullPath();
+        thisConfigFiles += f->ResolveFullPath();
         sep = "\n  ";
       }
       std::ostringstream e;
