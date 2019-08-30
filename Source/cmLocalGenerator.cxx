@@ -5,6 +5,7 @@
 #include "cmAlgorithms.h"
 #include "cmComputeLinkInformation.h"
 #include "cmCustomCommandGenerator.h"
+#include "cmCustomCommandLines.h"
 #include "cmGeneratedFileStream.h"
 #include "cmGeneratorExpression.h"
 #include "cmGeneratorExpressionEvaluationFile.h"
@@ -2151,22 +2152,93 @@ void cmLocalGenerator::AddPchDependencies(cmGeneratorTarget* target,
     return;
   }
 
+  const char* pchReuseFrom =
+    target->GetProperty("PRECOMPILE_HEADERS_REUSE_FROM");
+
   auto pch_sf = this->Makefile->GetOrCreateSource(
     pchSource, false, cmSourceFileLocationKind::Known);
   std::string pchFile = pchHeader;
 
   if (!this->GetGlobalGenerator()->IsXcode()) {
+    if (!pchReuseFrom) {
+      target->AddSource(pchSource, true);
+    }
+
     // Exclude the pch files from linking
     if (this->Makefile->IsOn("CMAKE_LINK_PCH")) {
-      cmSystemTools::ReplaceString(pchFile, (lang == "C" ? ".h" : ".hxx"),
-                                   pchExtension);
-      pch_sf->SetProperty("OBJECT_OUTPUTS", pchFile.c_str());
+
+      auto replaceExtension = [](const std::string& str,
+                                 const std::string& ext) -> std::string {
+        auto dot_pos = str.rfind('.');
+        std::string result;
+        if (dot_pos != std::string::npos) {
+          result = str.substr(0, dot_pos);
+        }
+        result += ext;
+        return result;
+      };
+
+      if (!pchReuseFrom) {
+        std::string pchSourceObj = target->GetPchFileObject(config, lang);
+
+        pchFile = replaceExtension(pchSourceObj, pchExtension);
+        pch_sf->SetProperty("OBJECT_OUTPUTS", pchFile.c_str());
+      } else {
+        auto reuseTarget =
+          this->GlobalGenerator->FindGeneratorTarget(pchReuseFrom);
+
+        const std::string reuse_compile_pdb = cmStrCat(
+          reuseTarget->GetLocalGenerator()->GetCurrentBinaryDirectory(), "/",
+          pchReuseFrom, ".dir", "/",
+          this->GetGlobalGenerator()->IsMultiConfig() ? "$(Configuration)/"
+                                                      : "",
+          pchReuseFrom, ".pdb");
+
+        const std::string target_compile_pdb = cmStrCat(
+          target->GetLocalGenerator()->GetCurrentBinaryDirectory(), "/",
+          this->GetGlobalGenerator()->IsMultiConfig() ? "$(Configuration)/"
+                                                      : "",
+          pchReuseFrom, ".pdb");
+
+        cmCustomCommandLines commandLines;
+        cmCustomCommandLine currentLine;
+        currentLine.push_back(cmSystemTools::GetCMakeCommand());
+        currentLine.push_back("-E");
+        currentLine.push_back("copy_if_different");
+        currentLine.push_back(reuse_compile_pdb);
+        currentLine.push_back(target_compile_pdb);
+        commandLines.push_back(std::move(currentLine));
+
+        std::string no_main_dependency;
+        const std::vector<std::string> no_deps;
+
+        cmSourceFile* pdb_file = this->Makefile->AddCustomCommandToOutput(
+          target_compile_pdb, no_deps, no_main_dependency, commandLines,
+          "Copying compile PDB", nullptr);
+
+        if (pdb_file) {
+          target->AddSource(pdb_file->ResolveFullPath());
+        }
+
+        target->Target->SetProperty(
+          "COMPILE_PDB_OUTPUT_DIRECTORY",
+          cmStrCat(target->GetLocalGenerator()->GetCurrentBinaryDirectory(),
+                   "/")
+            .c_str());
+
+        std::string pchSourceObj = reuseTarget->GetPchFileObject(config, lang);
+
+        // Link to the pch object file
+        target->Target->SetProperty(
+          "LINK_FLAGS",
+          this->ConvertToOutputFormat(pchSourceObj, SHELL).c_str());
+
+        pchFile = replaceExtension(pchSourceObj, pchExtension);
+      }
     } else {
       pchFile += pchExtension;
       pch_sf->SetProperty("PCH_EXTENSION", pchExtension.c_str());
     }
-
-    target->AddSource(pchSource, true);
 
     for (auto& str : { std::ref(useOptionList), std::ref(createOptionList) }) {
       cmSystemTools::ReplaceString(str, "<PCH_HEADER>", pchHeader);
