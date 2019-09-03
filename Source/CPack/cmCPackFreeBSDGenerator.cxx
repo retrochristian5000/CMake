@@ -21,7 +21,7 @@
 #include <utility>
 
 cmCPackFreeBSDGenerator::cmCPackFreeBSDGenerator()
-  : cmCPackArchiveGenerator(cmArchiveWrite::CompressXZ, "paxr")
+  : cmCPackArchiveGenerator(cmArchiveWrite::CompressXZ, "paxr", ".txz")
 {
 }
 
