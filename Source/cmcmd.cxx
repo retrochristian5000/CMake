@@ -481,7 +481,8 @@ int cmcmd::ExecuteCMakeCommand(std::vector<std::string> const& args)
       for (auto const& arg : cmMakeRange(args).advance(2).retreat(1)) {
         if (!cmsys::SystemTools::CopyFileAlways(arg, args.back())) {
           std::cerr << "Error copying file \"" << arg << "\" to \""
-                    << args.back() << "\".\n";
+                    << args.back()
+                    << "\": " << cmSystemTools::GetLastSystemError() << ".\n";
           return_value = true;
         }
       }
@@ -503,7 +504,8 @@ int cmcmd::ExecuteCMakeCommand(std::vector<std::string> const& args)
       for (auto const& arg : cmMakeRange(args).advance(2).retreat(1)) {
         if (!cmSystemTools::CopyFileIfDifferent(arg, args.back())) {
           std::cerr << "Error copying file (if different) from \"" << arg
-                    << "\" to \"" << args.back() << "\".\n";
+                    << "\" to \"" << args.back()
+                    << "\": " << cmSystemTools::GetLastSystemError() << ".\n";
           return_value = true;
         }
       }
@@ -517,7 +519,8 @@ int cmcmd::ExecuteCMakeCommand(std::vector<std::string> const& args)
       for (auto const& arg : cmMakeRange(args).advance(2).retreat(1)) {
         if (!cmSystemTools::CopyADirectory(arg, args.back())) {
           std::cerr << "Error copying directory from \"" << arg << "\" to \""
-                    << args.back() << "\".\n";
+                    << args.back()
+                    << "\": " << cmSystemTools::GetLastSystemError() << ".\n";
           return_value = true;
         }
       }
