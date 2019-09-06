@@ -12,7 +12,7 @@
 #include <string.h>
 #include <unordered_set>
 
-#include "cm_memory.hxx"
+#include <cm/memory>
 
 #include "cmAlgorithms.h"
 #include "cmCustomCommand.h"

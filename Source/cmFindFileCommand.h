@@ -5,7 +5,7 @@
 
 #include "cmConfigure.h" // IWYU pragma: keep
 
-#include "cm_memory.hxx"
+#include <cm/memory>
 
 #include "cmCommand.h"
 #include "cmFindPathCommand.h"
