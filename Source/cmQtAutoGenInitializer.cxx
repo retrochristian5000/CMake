@@ -396,15 +396,10 @@ bool cmQtAutoGenInitializer::InitCustomTargets()
     }
 
     // CMAKE_AUTOMOC_RELAXED_MODE deprecation warning
-    if (this->Moc.Enabled) {
-      if (makefile->IsOn("CMAKE_AUTOMOC_RELAXED_MODE")) {
-        makefile->IssueMessage(
-          MessageType::AUTHOR_WARNING,
-          cmStrCat("AUTOMOC: CMAKE_AUTOMOC_RELAXED_MODE is "
-                   "deprecated an will be removed in the future.  Consider "
-                   "disabling it and converting the target ",
-                   this->Target->GetName(), " to regular mode."));
-      }
+    if (this->Moc.Enabled && makefile->IsOn("CMAKE_AUTOMOC_RELAXED_MODE")) {
+      makefile->IssueMessage(
+        MessageType::AUTHOR_WARNING,
+        "AUTOMOC: CMAKE_AUTOMOC_RELAXED_MODE is no longer supported.");
     }
   }
 
@@ -1353,7 +1348,6 @@ bool cmQtAutoGenInitializer::SetupWriteAutogenInfo()
       ofs.WriteConfigStrings("AM_MOC_INCLUDES", this->Moc.ConfigIncludes);
       ofs.Write("AM_MOC_OPTIONS",
                 this->Target->GetSafeProperty("AUTOMOC_MOC_OPTIONS"));
-      ofs.Write("AM_MOC_RELAXED_MODE", MfDef("CMAKE_AUTOMOC_RELAXED_MODE"));
       ofs.Write("AM_MOC_MACRO_NAMES",
                 this->Target->GetSafeProperty("AUTOMOC_MACRO_NAMES"));
       ofs.Write("AM_MOC_DEPEND_FILTERS",
