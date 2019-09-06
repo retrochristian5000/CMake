@@ -26,6 +26,4 @@ void Blub::blubber()
   printf("Blub blub %d ! \n", bb.getValue());
 }
 
-// test the case that the wrong moc-file is included, it should
-// actually be "blub.moc"
-#include "moc_blub.cpp"
+#include "blub.moc"

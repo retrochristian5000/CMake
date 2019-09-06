@@ -147,7 +147,6 @@ Variables that Change Behavior
    /variable/BUILD_SHARED_LIBS
    /variable/CMAKE_ABSOLUTE_DESTINATION_FILES
    /variable/CMAKE_APPBUNDLE_PATH
-   /variable/CMAKE_AUTOMOC_RELAXED_MODE
    /variable/CMAKE_BACKWARDS_COMPATIBILITY
    /variable/CMAKE_BUILD_TYPE
    /variable/CMAKE_CODEBLOCKS_COMPILER_ID
@@ -643,6 +642,7 @@ are subject to change, and not recommended for use in project code.
 .. toctree::
    :maxdepth: 1
 
+   /variable/CMAKE_AUTOMOC_RELAXED_MODE
    /variable/CMAKE_HOME_DIRECTORY
    /variable/CMAKE_INTERNAL_PLATFORM_ABI
    /variable/CMAKE_LANG_COMPILER_ABI

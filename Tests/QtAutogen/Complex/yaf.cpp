@@ -15,5 +15,4 @@ void Yaf::doYaf()
   yafP.doYafP();
 }
 
-// check that including a moc file from a private header the wrong way works:
-#include "yaf_p.moc"
+#include "moc_yaf_p.cpp"

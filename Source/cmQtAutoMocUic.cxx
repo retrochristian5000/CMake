@@ -627,38 +627,6 @@ bool cmQtAutoMocUic::JobEvaluateT::MocEvalSource(
   std::string const sourceBase =
     cmSystemTools::GetFilenameWithoutLastExtension(sourceFile.FileName);
 
-  // For relaxed mode check if the own "moc_" or ".moc" file is included
-  bool const relaxedMode = MocConst().RelaxedMode;
-  bool sourceIncludesMocUnderscore = false;
-  bool sourceIncludesDotMoc = false;
-  // Check if the sources own "moc_" or ".moc" file is included
-  if (relaxedMode) {
-    for (IncludeKeyT const& incKey : parseData.Include.Underscore) {
-      if (incKey.Base == sourceBase) {
-        sourceIncludesMocUnderscore = true;
-        break;
-      }
-    }
-  }
-  for (IncludeKeyT const& incKey : parseData.Include.Dot) {
-    if (incKey.Base == sourceBase) {
-      sourceIncludesDotMoc = true;
-      break;
-    }
-  }
-
-  // Check if this source needs to be moc processed but doesn't.
-  if (!sourceIncludesDotMoc && !parseData.Macro.empty() &&
-      !(relaxedMode && sourceIncludesMocUnderscore)) {
-    LogFileError(GenT::MOC, sourceFile.FileName,
-                 cmStrCat("The file contains a ", Quoted(parseData.Macro),
-                          " macro, but does not include ",
-                          Quoted(sourceBase + ".moc"),
-                          "!\nConsider to\n  - add #include \"", sourceBase,
-                          ".moc\"\n  - enable SKIP_AUTOMOC for this file"));
-    return false;
-  }
-
   // Evaluate "moc_" includes
   for (IncludeKeyT const& incKey : parseData.Include.Underscore) {
     std::string const headerBase = incKey.Dir + incKey.Base;
@@ -672,34 +640,6 @@ bool cmQtAutoMocUic::JobEvaluateT::MocEvalSource(
                             MocMessageTestHeaders(headerBase)));
       return false;
     }
-    // The include might be handled differently in relaxed mode
-    if (relaxedMode && !sourceIncludesDotMoc && !parseData.Macro.empty() &&
-        (incKey.Base == sourceBase)) {
-      // The <BASE>.cpp file includes a Qt macro but does not include the
-      // <BASE>.moc file. In this case, the moc_<BASE>.cpp should probably
-      // be generated from <BASE>.cpp instead of <BASE>.h, because otherwise
-      // it won't build. But warn, since this is not how it is supposed to be
-      // used. This is for KDE4 compatibility.
-
-      // Issue a warning
-      Log().WarningFile(
-        GenT::MOC, sourceFile.FileName,
-        cmStrCat("The file contains a ", Quoted(parseData.Macro),
-                 " macro, but does not include ", Quoted(sourceBase + ".moc"),
-                 ".\nInstead it includes ", Quoted(incKey.Key),
-                 ".\nRunning moc on the source\n  ",
-                 Quoted(sourceFile.FileName), "!\nBetter include ",
-                 Quoted(sourceBase + ".moc"),
-                 " for compatibility with regular mode.\n",
-                 "This is a CMAKE_AUTOMOC_RELAXED_MODE warning.\n"));
-
-      // Create mapping
-      if (!MocRegisterIncluded(incKey.Key, source, source, false)) {
-        return false;
-      }
-      continue;
-    }
-
     // Check if header is skipped
     if (MocConst().skipped(header->FileName)) {
       continue;
@@ -711,92 +651,45 @@ bool cmQtAutoMocUic::JobEvaluateT::MocEvalSource(
   }
 
   // Evaluate ".moc" includes
-  if (relaxedMode) {
-    // Relaxed mode
-    for (IncludeKeyT const& incKey : parseData.Include.Dot) {
-      // Check if this is the sources own .moc file
-      bool const ownMoc = (incKey.Base == sourceBase);
-      if (ownMoc && !parseData.Macro.empty()) {
-        // Create mapping for the regular use case
-        if (!MocRegisterIncluded(incKey.Key, source, source, false)) {
-          return false;
-        }
-        continue;
-      }
-      // Try to find a header instead but issue a warning.
-      // This is for KDE4 compatibility.
-      std::string const headerBase = incKey.Dir + incKey.Base;
-      SourceFileHandleT header = MocFindIncludedHeader(sourceDir, headerBase);
-      if (!header) {
-        LogFileError(
-          GenT::MOC, sourceFile.FileName,
-          cmStrCat("The file includes the moc file ", Quoted(incKey.Key),
-                   ",\nwhich seems to be the moc file from a different source "
-                   "file.\nCMAKE_AUTOMOC_RELAXED_MODE: Also a matching header"
-                   "could not be found in the following locations\n",
-                   MocMessageTestHeaders(headerBase)));
-        return false;
-      }
-      // Check if header is skipped
-      if (MocConst().skipped(header->FileName)) {
-        continue;
-      }
-      // Issue a warning
-      if (ownMoc && parseData.Macro.empty()) {
-        Log().WarningFile(
-          GenT::MOC, sourceFile.FileName,
-          cmStrCat("The file includes the moc file ", Quoted(incKey.Key),
-                   ", but does not contain a\n", MocConst().MacrosString(),
-                   " macro.\nRunning moc on the header\n  ",
-                   Quoted(header->FileName), "!\nBetter include ",
-                   Quoted("moc_" + incKey.Base + ".cpp"),
-                   " for a compatibility with regular mode.\n",
-                   "This is a CMAKE_AUTOMOC_RELAXED_MODE warning.\n"));
-      } else {
-        Log().WarningFile(
-          GenT::MOC, sourceFile.FileName,
-          cmStrCat("The file includes the moc file ", Quoted(incKey.Key),
-                   " instead of ", Quoted("moc_" + incKey.Base + ".cpp"),
-                   ".\nRunning moc on the header\n  ",
-                   Quoted(header->FileName), "!\nBetter include ",
-                   Quoted("moc_" + incKey.Base + ".cpp"),
-                   " for compatibility with regular mode.\n",
-                   "This is a CMAKE_AUTOMOC_RELAXED_MODE warning.\n"));
-      }
-      // Create mapping
-      if (!MocRegisterIncluded(incKey.Key, source, std::move(header), true)) {
-        return false;
-      }
+  bool sourceIncludesDotMoc = false;
+  for (IncludeKeyT const& incKey : parseData.Include.Dot) {
+    // Check if this is the sources own .moc file
+    if (incKey.Base != sourceBase) {
+      // Don't allow <BASE>.moc include other than own in regular mode
+      LogFileError(
+        GenT::MOC, sourceFile.FileName,
+        cmStrCat("The file includes the moc file ", Quoted(incKey.Key),
+                 ",\nwhich seems to be the moc file from a different "
+                 "source file.\nThis is not supported.  Include ",
+                 Quoted(sourceBase + ".moc"),
+                 " to run moc on this source file."));
+      return false;
     }
-  } else {
-    // Strict mode
-    for (IncludeKeyT const& incKey : parseData.Include.Dot) {
-      // Check if this is the sources own .moc file
-      bool const ownMoc = (incKey.Base == sourceBase);
-      if (!ownMoc) {
-        // Don't allow <BASE>.moc include other than own in regular mode
-        LogFileError(
-          GenT::MOC, sourceFile.FileName,
-          cmStrCat("The file includes the moc file ", Quoted(incKey.Key),
-                   ",\nwhich seems to be the moc file from a different "
-                   "source file.\nThis is not supported.  Include ",
-                   Quoted(sourceBase + ".moc"),
-                   " to run moc on this source file."));
-        return false;
-      }
-      // Accept but issue a warning if moc isn't required
-      if (parseData.Macro.empty()) {
-        Log().WarningFile(GenT::MOC, sourceFile.FileName,
-                          cmStrCat("The file includes the moc file ",
-                                   Quoted(incKey.Key),
-                                   ", but does not contain a ",
-                                   MocConst().MacrosString(), " macro."));
-      }
-      // Create mapping
-      if (!MocRegisterIncluded(incKey.Key, source, source, false)) {
-        return false;
-      }
+    // Accept but issue a warning if moc isn't required
+    if (parseData.Macro.empty()) {
+      Log().WarningFile(GenT::MOC, sourceFile.FileName,
+                        cmStrCat("The file includes the moc file ",
+                                 Quoted(incKey.Key),
+                                 ", but does not contain a ",
+                                 MocConst().MacrosString(), " macro."));
     }
+    // Create mapping
+    if (!MocRegisterIncluded(incKey.Key, source, source, false)) {
+      return false;
+    }
+    // Remember the include
+    sourceIncludesDotMoc = true;
+  }
+
+  // Check if this source needs to be moc processed but doesn't.
+  if (!sourceIncludesDotMoc && !parseData.Macro.empty()) {
+    LogFileError(GenT::MOC, sourceFile.FileName,
+                 cmStrCat("The file contains a ", Quoted(parseData.Macro),
+                          " macro, but does not include ",
+                          Quoted(sourceBase + ".moc"),
+                          "!\nConsider to\n  - add #include \"", sourceBase,
+                          ".moc\"\n  - enable SKIP_AUTOMOC for this file"));
+    return false;
   }
 
   return true;
@@ -1601,7 +1494,6 @@ bool cmQtAutoMocUic::Init(cmMakefile* makefile)
     MocConst_.Definitions = InfoGetConfigList("AM_MOC_DEFINITIONS");
     MocConst_.IncludePaths = InfoGetConfigList("AM_MOC_INCLUDES");
     MocConst_.Options = InfoGetList("AM_MOC_OPTIONS");
-    MocConst_.RelaxedMode = InfoGetBool("AM_MOC_RELAXED_MODE");
     for (std::string const& item : InfoGetList("AM_MOC_MACRO_NAMES")) {
       MocConst_.MacroFilters.emplace_back(
         item, ("[\n][ \t]*{?[ \t]*" + item).append("[^a-zA-Z0-9_]"));
