@@ -5,8 +5,6 @@ include("../AutogenGuiTest.cmake")
 # -- Test: AUTOMOC AUTORCC AUTOUIC
 add_definitions(-DFOO -DSomeDefine="Barx")
 
-# enable relaxed mode so automoc can handle all the special cases:
-set(CMAKE_AUTOMOC_RELAXED_MODE TRUE)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 

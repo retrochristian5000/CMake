@@ -143,4 +143,4 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent* event)
   }
 }
 
-#include "codeeditor.moc"
+#include "moc_codeeditor.cpp"

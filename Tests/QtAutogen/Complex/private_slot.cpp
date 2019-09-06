@@ -13,4 +13,4 @@ PrivateSlot::PrivateSlot(QObject* parent)
 {
 }
 
-#include "private_slot.moc"
+#include "moc_private_slot.cpp"
