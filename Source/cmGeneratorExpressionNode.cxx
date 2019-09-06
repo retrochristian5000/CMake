@@ -29,10 +29,11 @@
 #include "cmsys/RegularExpression.hxx"
 #include "cmsys/String.h"
 
+#include <cm/iterator>
+
 #include <algorithm>
 #include <assert.h>
 #include <errno.h>
-#include <iterator>
 #include <map>
 #include <memory>
 #include <set>

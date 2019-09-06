@@ -5,8 +5,9 @@
 
 #include <algorithm>
 #include <assert.h>
-#include <iterator>
 #include <vector>
+
+#include <cm/iterator>
 
 #include "cmAlgorithms.h"
 #include "cmProperty.h"
@@ -179,7 +180,7 @@ cmStringRange GetPropertyContent(T const& content, U contentEndPosition)
     content.begin() + contentEndPosition;
 
   std::vector<std::string>::const_reverse_iterator rbegin =
-    cmMakeReverseIterator(end);
+    cm::make_reverse_iterator(end);
   rbegin = std::find(rbegin, content.rend(), cmPropertySentinal);
 
   return cmMakeRange(rbegin.base(), end);
@@ -193,7 +194,7 @@ cmBacktraceRange GetPropertyBacktraces(T const& content, U const& backtraces,
     content.begin() + contentEndPosition;
 
   std::vector<std::string>::const_reverse_iterator rbegin =
-    cmMakeReverseIterator(entryEnd);
+    cm::make_reverse_iterator(entryEnd);
   rbegin = std::find(rbegin, content.rend(), cmPropertySentinal);
 
   std::vector<cmListFileBacktrace>::const_iterator it =
@@ -278,7 +279,7 @@ void cmStateDirectory::PrependIncludeDirectoriesEntry(
   std::vector<std::string>::reverse_iterator rend =
     this->DirectoryState->IncludeDirectories.rend();
   std::vector<std::string>::reverse_iterator rbegin =
-    cmMakeReverseIterator(entryEnd);
+    cm::make_reverse_iterator(entryEnd);
   rbegin = std::find(rbegin, rend, cmPropertySentinal);
 
   std::vector<std::string>::iterator entryIt = rbegin.base();
@@ -453,7 +454,7 @@ void cmStateDirectory::PrependLinkDirectoriesEntry(
   std::vector<std::string>::reverse_iterator rend =
     this->DirectoryState->LinkDirectories.rend();
   std::vector<std::string>::reverse_iterator rbegin =
-    cmMakeReverseIterator(entryEnd);
+    cm::make_reverse_iterator(entryEnd);
   rbegin = std::find(rbegin, rend, cmPropertySentinal);
 
   std::vector<std::string>::iterator entryIt = rbegin.base();

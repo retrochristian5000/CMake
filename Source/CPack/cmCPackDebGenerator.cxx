@@ -10,9 +10,11 @@
 #include "cmGeneratedFileStream.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
-#include "cm_sys_stat.h"
 
 #include "cmsys/Glob.hxx"
+
+#include "cm_sys_stat.h"
+
 #include <map>
 #include <ostream>
 #include <set>
