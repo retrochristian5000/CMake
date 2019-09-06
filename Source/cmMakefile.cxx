@@ -8,12 +8,15 @@
 #include <assert.h>
 #include <cstring>
 #include <ctype.h>
-#include <iterator>
 #include <memory>
 #include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <utility>
+
+#include <cm/iterator>
+
+#include "cm_sys_stat.h"
 
 #include "cmAlgorithms.h"
 #include "cmCommandArgumentParserHelper.h"
@@ -43,7 +46,6 @@
 #include "cmTestGenerator.h" // IWYU pragma: keep
 #include "cmVersion.h"
 #include "cmWorkingDirectory.h"
-#include "cm_sys_stat.h"
 #include "cmake.h"
 
 #include "cmConfigure.h" // IWYU pragma: keep
