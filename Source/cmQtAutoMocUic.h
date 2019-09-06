@@ -230,7 +230,6 @@ public:
     // -- Attributes
     bool Enabled = false;
     bool SettingsChanged = false;
-    bool RelaxedMode = false;
     cmFileTime ExecutableTime;
     std::string Executable;
     std::string CompFileAbs;
