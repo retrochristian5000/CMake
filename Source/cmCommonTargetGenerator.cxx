@@ -167,19 +167,28 @@ std::vector<std::string> cmCommonTargetGenerator::GetLinkedTargetDirectories()
 
 std::string cmCommonTargetGenerator::ComputeTargetCompilePDB() const
 {
+  cmGeneratorTarget* generatorTarget = this->GeneratorTarget;
+
+  const char* pchReuseFrom =
+    generatorTarget->GetProperty("PRECOMPILE_HEADERS_REUSE_FROM");
+  if (pchReuseFrom) {
+    generatorTarget =
+      this->GlobalCommonGenerator->FindGeneratorTarget(pchReuseFrom);
+  }
+
   std::string compilePdbPath;
-  if (this->GeneratorTarget->GetType() > cmStateEnums::OBJECT_LIBRARY) {
+  if (generatorTarget->GetType() > cmStateEnums::OBJECT_LIBRARY) {
     return compilePdbPath;
   }
-  compilePdbPath =
-    this->GeneratorTarget->GetCompilePDBPath(this->GetConfigName());
+
+  compilePdbPath = generatorTarget->GetCompilePDBPath(this->GetConfigName());
   if (compilePdbPath.empty()) {
     // Match VS default: `$(IntDir)vc$(PlatformToolsetVersion).pdb`.
     // A trailing slash tells the toolchain to add its default file name.
-    compilePdbPath = this->GeneratorTarget->GetSupportDirectory() + "/";
-    if (this->GeneratorTarget->GetType() == cmStateEnums::STATIC_LIBRARY) {
+    compilePdbPath = generatorTarget->GetSupportDirectory() + "/";
+    if (generatorTarget->GetType() == cmStateEnums::STATIC_LIBRARY) {
       // Match VS default for static libs: `$(IntDir)$(ProjectName).pdb`.
-      compilePdbPath += this->GeneratorTarget->GetName();
+      compilePdbPath += generatorTarget->GetName();
       compilePdbPath += ".pdb";
     }
   }
