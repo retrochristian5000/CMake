@@ -31,6 +31,7 @@ public:
 
   std::string ComputeLinkLibraries(cmComputeLinkInformation& cli,
                                    std::string const& stdLibString) override;
+  using cmLinkLineComputer::ComputeLinkLibraries;
 
   std::string GetLinkerLanguage(cmGeneratorTarget* target,
                                 std::string const& config) override;
