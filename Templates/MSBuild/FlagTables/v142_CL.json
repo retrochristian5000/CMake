@@ -455,6 +455,20 @@
     "flags": []
   },
   {
+    "name": "LanguageStandard",
+    "switch": "Qstd=c++14",
+    "comment": "ISO C++14 Standard",
+    "value": "stdcpp14",
+    "flags": []
+  },
+  {
+    "name": "LanguageStandard",
+    "switch": "Qstd=c++17",
+    "comment": "ISO C++17 Standard",
+    "value": "stdcpp17",
+    "flags": []
+  },
+  {
     "name": "PrecompiledHeader",
     "switch": "Yc",
     "comment": "Create",

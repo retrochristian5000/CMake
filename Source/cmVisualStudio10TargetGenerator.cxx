@@ -2848,6 +2848,14 @@ bool cmVisualStudio10TargetGenerator::ComputeClOptions(
     clOptions.RemoveFlag("SpectreMitigation");
   }
 
+  std::string const& defaultLanguageStandard =
+    gg->GetPlatformToolsetDefaultLanguageStandard();
+  if (!defaultLanguageStandard.empty() &&
+      !clOptions.HasFlag("LanguageStandard")) {
+    gg->WarnPlatformToolsetDefaultLanguageStandard();
+    clOptions.AddFlag("LanguageStandard", defaultLanguageStandard);
+  }
+
   this->ClOptions[configName] = std::move(pOptions);
   return true;
 }
