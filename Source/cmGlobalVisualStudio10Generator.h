@@ -72,6 +72,13 @@ public:
     return this->PlatformToolsetNeedsDebugEnum;
   }
 
+  /** Return the default LanguageStandard needed by this toolset, if any.  */
+  std::string const& GetPlatformToolsetDefaultLanguageStandard() const
+  {
+    return this->PlatformToolsetDefaultLanguageStandard;
+  }
+  void WarnPlatformToolsetDefaultLanguageStandard();
+
   /** Return the CMAKE_SYSTEM_NAME.  */
   std::string const& GetSystemName() const { return this->SystemName; }
 
@@ -203,6 +210,8 @@ private:
   std::string GetVSMakeProgram() override { return this->GetMSBuildCommand(); }
 
   bool PlatformToolsetNeedsDebugEnum;
+  std::string PlatformToolsetDefaultLanguageStandard;
+  bool PlatformToolsetDefaultLanguageStandardWarned = false;
 
   bool ParseGeneratorToolset(std::string const& ts, cmMakefile* mf);
 

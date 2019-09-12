@@ -241,6 +241,7 @@ Id flags: ${testflags} ${CMAKE_${lang}_COMPILER_ID_FLAGS_ALWAYS}
     set(vs_version ${CMAKE_MATCH_1})
     set(id_platform ${CMAKE_VS_PLATFORM_NAME})
     set(id_lang "${lang}")
+    set(id_LanguageStandard "")
     set(id_PostBuildEvent_Command "")
     if(CMAKE_VS_PLATFORM_TOOLSET MATCHES "^[Ll][Ll][Vv][Mm](_v[0-9]+(_xp)?)?$")
       set(id_cl_var "ClangClExecutable")
@@ -282,6 +283,10 @@ Id flags: ${testflags} ${CMAKE_${lang}_COMPILER_ID_FLAGS_ALWAYS}
         set(id_toolset "<PlatformToolset>${CMAKE_VS_PLATFORM_TOOLSET}</PlatformToolset>")
         if(CMAKE_VS_PLATFORM_TOOLSET MATCHES "Intel")
           set(id_cl icl.exe)
+          if(NOT "${vs_version}" VERSION_LESS 16)
+            # The Intel Compiler 2019 VS integration fails on the "Default" value.
+            set(id_LanguageStandard "<LanguageStandard>stdcpp14</LanguageStandard>")
+          endif()
         endif()
         if(CMAKE_VS_PLATFORM_TOOLSET_VERSION)
           set(id_toolset_version_props "<Import Project=\"${CMAKE_GENERATOR_INSTANCE}\\VC\\Auxiliary\\Build\\${CMAKE_VS_PLATFORM_TOOLSET_VERSION}\\Microsoft.VCToolsVersion.${CMAKE_VS_PLATFORM_TOOLSET_VERSION}.props\" />")

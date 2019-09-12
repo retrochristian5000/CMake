@@ -229,6 +229,40 @@ bool cmGlobalVisualStudio10Generator::SetGeneratorToolset(
     }
   }
 
+  if (this->Version >= cmGlobalVisualStudioGenerator::VS16 &&
+      cmHasLiteralPrefix(this->GetPlatformToolsetString(), "Intel")) {
+    std::string const icl_xml = cmStrCat(
+      this->VCTargetsPath, "/Platforms/", this->GetPlatformName(),
+      "/PlatformToolsets/", this->GetPlatformToolsetString(), "/1033/icl.xml");
+    cmsys::ifstream fin(icl_xml.c_str());
+    std::string line;
+    bool haveLanguageStandard = false;
+    bool haveLanguageStandardDefault = false;
+    while (fin && cmSystemTools::GetLineFromStream(fin, line)) {
+      if (haveLanguageStandard) {
+        if (line.find("</EnumProperty>") != std::string::npos) {
+          break;
+        }
+        if (line.find("<EnumValue Name=\"Default\" ") != std::string::npos) {
+          haveLanguageStandardDefault = true;
+          break;
+        }
+      } else {
+        if (line.find("<EnumProperty Name=\"LanguageStandard\" ") !=
+            std::string::npos) {
+          haveLanguageStandard = true;
+        }
+      }
+    }
+    if (haveLanguageStandard && !haveLanguageStandardDefault) {
+      // VS 2019 converts an empty LanguageStandard value to "Default"
+      // but the Intel Compiler integration does not know about it.
+      // Use a value that passes '-std:c++14' which is close to the
+      // compiler default for C++ anyway.
+      this->PlatformToolsetDefaultLanguageStandard = "stdcpp14";
+    }
+  }
+
   if (this->GeneratorToolsetCuda.empty()) {
     // Find the highest available version of the CUDA tools.
     std::vector<std::string> cudaTools;
@@ -349,6 +383,29 @@ bool cmGlobalVisualStudio10Generator::SetGeneratorToolset(
     mf->AddDefinition("CMAKE_VS_PLATFORM_TOOLSET_CUDA_CUSTOM_DIR", cudaDir);
   }
   return true;
+}
+
+void cmGlobalVisualStudio10Generator::
+  WarnPlatformToolsetDefaultLanguageStandard()
+{
+  if (this->PlatformToolsetDefaultLanguageStandardWarned ||
+      this->CMakeInstance->GetIsInTryCompile()) {
+    return;
+  }
+  this->PlatformToolsetDefaultLanguageStandardWarned = true;
+  /* clang-format off */
+  std::string w = cmStrCat(
+    "The toolset '", this->GetPlatformToolsetString(), "' has a bug "
+    "in its Intel Compiler Visual Studio integration.  "
+    "It cannot build a '.vcxproj' file without one of the C++ standard level "
+    "flags '-std:c++{14,17,latest}' (even for C).  "
+    "CMake is working around this by forcing a default LanguageStandard "
+    "value '", this->PlatformToolsetDefaultLanguageStandard, "', "
+    "but this may cause warnings about conflicts with Qstd flags.  "
+    "Hopefully Intel fixes this in a newer version of their compiler."
+    );
+  /* clang-format on */
+  this->CMakeInstance->IssueMessage(MessageType::WARNING, w);
 }
 
 bool cmGlobalVisualStudio10Generator::ParseGeneratorToolset(
@@ -557,6 +614,7 @@ cmLocalGenerator* cmGlobalVisualStudio10Generator::CreateLocalGenerator(
 
 void cmGlobalVisualStudio10Generator::Generate()
 {
+  this->PlatformToolsetDefaultLanguageStandardWarned = false;
   this->LongestSource = LongestSourcePath();
   this->cmGlobalVisualStudio8Generator::Generate();
   if (this->LongestSource.Length > 0) {
