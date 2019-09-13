@@ -9,8 +9,26 @@ Add a list of header files to precompile.
     <INTERFACE|PUBLIC|PRIVATE> [header1...]
     [<INTERFACE|PUBLIC|PRIVATE> [header2...] ...])
 
+  target_precompile_headers(<target> REUSE_FROM <other_target>)
+
 Adds header files to :prop_tgt:`PRECOMPILE_HEADERS` or
 :prop_tgt:`INTERFACE_PRECOMPILE_HEADERS` target properties.
+
+The second signature will reuse an already precompiled header file artefact
+from another target. This is done by setting the
+:prop_tgt:`PRECOMPILE_HEADERS_REUSE_FROM` to ``<other_target>`` value.
+The ``<other_target>`` will become a dependency of ``<target>``.
+
+.. note::
+
+  The second signature will require the same set of compiler options,
+  compiler flags, compiler definitions for both ``<target>``, and
+  ``<other_target>``. Compilers (e.g. GCC) will issue a warning if the
+  precompiled header file cannot be used (``-Winvalid-pch``).
+
+  Visual Studio's "Rebuild Solution" command is incompatible with
+  ``REUSE_FROM`` signature. You will have to manually do "Clean Solution"
+  followed by "Build Solution".
 
 Precompiling header files can speed up compilation by creating a partially
 processed version of some header files, and then using that version during
