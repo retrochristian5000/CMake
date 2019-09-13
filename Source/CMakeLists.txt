@@ -224,8 +224,6 @@ set(SRCS
   cmExportTryCompileFileGenerator.cxx
   cmExportSet.h
   cmExportSet.cxx
-  cmExportSetMap.h
-  cmExportSetMap.cxx
   cmExternalMakefileProjectGenerator.cxx
   cmExternalMakefileProjectGenerator.h
   cmExtraCodeBlocksGenerator.cxx

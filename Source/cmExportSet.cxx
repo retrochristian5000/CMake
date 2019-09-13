@@ -30,3 +30,13 @@ void cmExportSet::AddInstallation(cmInstallExportGenerator const* installation)
 {
   this->Installations.push_back(installation);
 }
+
+cmExportSet& cmExportSetMap::operator[](const std::string& name)
+{
+  auto it = this->find(name);
+  if (it == this->end()) // Export set not found
+  {
+    it = this->emplace(name, name).first;
+  }
+  return it->second;
+}
