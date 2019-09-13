@@ -356,6 +356,56 @@ macro(_pkg_restore_path_internal)
   unset(_pkgconfig_path_old)
 endmacro()
 
+# pkg-config returns frameworks in --libs-only-other
+# they need to be in ${_prefix}LIBRARIES so "-framework a -framework b" does
+# not incorrectly be combined to "-framework a b"
+function(_pkgconfig_extract_frameworks _prefix)
+  set(ldflags "${${_prefix}_LDFLAGS_OTHER}")
+  string(FIND "${ldflags}" "-framework" FR_POS)
+  while (FR_POS GREATER -1)
+    string(SUBSTRING "${ldflags}" 0 ${FR_POS} HEAD)
+    if (HEAD MATCHES "[ \t]+$")
+      string(REGEX REPLACE "[ \t]+$" "" HEAD "${HEAD}")
+      set(BAD_MATCH FALSE)
+    elseif (HEAD)
+      # this means that "-framework" is part of a larger option, so skip it
+      set(BAD_MATCH TRUE)
+    endif ()
+    string(APPEND REMAINDER "${HEAD}")
+    string(SUBSTRING "${ldflags}" ${FR_POS} -1 ldflags)
+
+    # this is some argument that starts with "-framework", but has no space afterwards
+    if (NOT BAD_MATCH AND ldflags MATCHES "(^-framework[ \t]+)")
+      string(LENGTH "${CMAKE_MATCH_1}" FR_LEN)
+      string(SUBSTRING "${ldflags}" ${FR_LEN} -1 ldflags)
+    else ()
+      if (NOT BAD_MATCH)
+        string(APPEND REMAINDER " ")
+      endif ()
+      # append -framework to REMAINDER, then just search on, the rest will be
+      # appended in the next loop
+      string(APPEND REMAINDER "-framework")
+      string(SUBSTRING "${ldflags}" 10 -1 ldflags)
+      string(FIND "${ldflags}" "-framework" FR_POS)
+      continue()
+    endif ()
+
+    string(REGEX MATCH "^([^ \t]+)" FR_NAME "${ldflags}")
+    string(APPEND LIBS " -framework ${FR_NAME}")
+    string(LENGTH "${FR_NAME}" FR_LEN)
+    string(SUBSTRING "${ldflags}" ${FR_LEN} -1 ldflags)
+
+    string(FIND "${ldflags}" "-framework" FR_POS)
+  endwhile ()
+  string(APPEND REMAINDER "${ldflags}")
+  string(STRIP "${REMAINDER}" REMAINDER)
+  string(STRIP "${LIBS}" LIBS)
+  set(LIBS "${${_prefix}_LIBRARIES} ${LIBS}")
+  string(STRIP "${LIBS}" LIBS)
+  set(${_prefix}_LIBRARIES "${LIBS}" PARENT_SCOPE)
+  set(${_prefix}_LDFLAGS_OTHER "${REMAINDER}" PARENT_SCOPE)
+endfunction()
+
 ###
 macro(_pkg_check_modules_internal _is_required _is_silent _no_cmake_path _no_cmake_environment_path _imp_target _imp_target_global _prefix)
   _pkgconfig_unset(${_prefix}_FOUND)
@@ -493,6 +543,10 @@ macro(_pkg_check_modules_internal _is_required _is_silent _no_cmake_path _no_cma
       _pkgconfig_invoke_dyn("${_pkg_check_modules_packages}" "${_prefix}" LIBRARY_DIRS        "(^| )-L" --libs-only-L )
       _pkgconfig_invoke_dyn("${_pkg_check_modules_packages}" "${_prefix}" LDFLAGS             ""        --libs )
       _pkgconfig_invoke_dyn("${_pkg_check_modules_packages}" "${_prefix}" LDFLAGS_OTHER       ""        --libs-only-other )
+
+      if (APPLE AND LDFLAGS_OTHER MATCHES "-framework[ \t]")
+        _pkgconfig_extract_frameworks("${_prefix}")
+      endif()
 
       _pkgconfig_invoke_dyn("${_pkg_check_modules_packages}" "${_prefix}" INCLUDE_DIRS        "(^| )-I" --cflags-only-I )
       _pkgconfig_invoke_dyn("${_pkg_check_modules_packages}" "${_prefix}" CFLAGS              ""        --cflags )
