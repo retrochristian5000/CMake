@@ -1721,15 +1721,17 @@ ${CMake_SOURCE_DIR}/Utilities/Release/push.bash --dir dev -- '${CMake_BUILD_NIGH
       )
     list(APPEND TEST_BUILD_DIRS "${CMake_BINARY_DIR}/Tests/Jump")
 
-    add_test(Plugin ${CMAKE_CTEST_COMMAND}
-      --build-and-test
-      "${CMake_SOURCE_DIR}/Tests/Plugin"
-      "${CMake_BINARY_DIR}/Tests/Plugin"
-      ${build_generator_args}
-      --build-project Plugin
-      --build-two-config
-      --test-command bin/example)
-    list(APPEND TEST_BUILD_DIRS "${CMake_BINARY_DIR}/Tests/Plugin")
+    if(";${CMAKE_CXX_COMPILE_FEATURES};" MATCHES ";cxx_std_11;")
+      add_test(Plugin ${CMAKE_CTEST_COMMAND}
+        --build-and-test
+        "${CMake_SOURCE_DIR}/Tests/Plugin"
+        "${CMake_BINARY_DIR}/Tests/Plugin"
+        ${build_generator_args}
+        --build-project Plugin
+        --build-two-config
+        --test-command bin/example)
+      list(APPEND TEST_BUILD_DIRS "${CMake_BINARY_DIR}/Tests/Plugin")
+    endif()
 
     if(CMAKE_SHARED_LIBRARY_RUNTIME_C_FLAG)
       ADD_TEST_MACRO(RuntimePath RuntimePath)
