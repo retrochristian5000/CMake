@@ -1,0 +1,4 @@
+CMake Error at RerunCMake.cmake:[0-9]+ \(message\):
+  Rerun error 3
+Call Stack \(most recent call first\):
+  CMakeLists.txt:[0-9]+ \(include\)
