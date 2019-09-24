@@ -9,13 +9,17 @@ if(EXISTS ${RunCMake_TEST_BINARY_DIR}/check-debug.cmake)
       "${subinc_lib}"
       "${main_exe}"
       )
-    if(NOT EXISTS "${file}")
+    if(EXISTS "${file}")
+      # Remove for next step of test.
+      file(REMOVE "${file}")
+    else()
       set(RunCMake_TEST_FAILED
         "Artifact should exist but is missing:\n  ${file}")
       return()
     endif()
   endforeach()
   foreach(file
+      "${zot_lib}"
       "${bar_lib}"
       )
     if(EXISTS "${file}")
