@@ -1,0 +1,7 @@
+CMake Error at VsPrecompileHeadersReuseFromCompilePDBName.cmake:9 \(set_target_properties\):
+  PRECOMPILE_HEADERS_REUSE_FROM property is already set on target \("b"\).
+  Reusable precompile headers requires COMPILE_PDB_NAME property to have the
+  value "a"
+
+Call Stack \(most recent call first\):
+  CMakeLists.txt:3 \(include\)

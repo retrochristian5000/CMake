@@ -1081,6 +1081,7 @@ void cmTarget::SetProperty(const std::string& prop, const char* value)
   MAKE_STATIC_PROP(COMPILE_DEFINITIONS);
   MAKE_STATIC_PROP(COMPILE_FEATURES);
   MAKE_STATIC_PROP(COMPILE_OPTIONS);
+  MAKE_STATIC_PROP(COMPILE_PDB_NAME);
   MAKE_STATIC_PROP(PRECOMPILE_HEADERS);
   MAKE_STATIC_PROP(PRECOMPILE_HEADERS_REUSE_FROM);
   MAKE_STATIC_PROP(CUDA_PTX_COMPILATION);
@@ -1149,6 +1150,19 @@ void cmTarget::SetProperty(const std::string& prop, const char* value)
       cmListFileBacktrace lfbt = impl->Makefile->GetBacktrace();
       impl->CompileOptionsBacktraces.push_back(lfbt);
     }
+  } else if (prop == propCOMPILE_PDB_NAME) {
+    const char* reuseFrom = this->GetProperty("PRECOMPILE_HEADERS_REUSE_FROM");
+    if (reuseFrom && strcmp(reuseFrom, value) != 0) {
+      const std::string e = cmStrCat(
+        "PRECOMPILE_HEADERS_REUSE_FROM property is already set on target (\"",
+        impl->Name,
+        "\"). Reusable precompile headers requires COMPILE_PDB_NAME"
+        " property to have the value \"",
+        reuseFrom, "\"\n");
+      impl->Makefile->IssueMessage(MessageType::FATAL_ERROR, e);
+      return;
+    }
+    impl->Properties.SetProperty(prop, value);
   } else if (prop == propCOMPILE_FEATURES) {
     impl->CompileFeaturesEntries.clear();
     impl->CompileFeaturesBacktraces.clear();
