@@ -5,18 +5,19 @@
 
 #include "cmConfigure.h" // IWYU pragma: keep
 
+#include <map>
 #include <memory>
 #include <set>
 #include <stddef.h>
 #include <string>
 #include <vector>
 
+#include "cmCTestMultiProcessHandler.h"
 #include "cmCTestTestHandler.h"
 #include "cmDuration.h"
 #include "cmProcess.h"
 
 class cmCTest;
-class cmCTestMultiProcessHandler;
 
 /** \class cmRunTest
  * \brief represents a single test to be run
@@ -82,6 +83,16 @@ public:
 
   bool TimedOutForStopTime() const { return this->TimeoutIsForStopTime; }
 
+  void SetUseAllocatedHardware(bool use) { this->UseAllocatedHardware = use; }
+  void SetAllocatedHardware(
+    const std::vector<
+      std::map<std::string,
+               std::vector<cmCTestMultiProcessHandler::HardwareAllocation>>>&
+      hardware)
+  {
+    this->AllocatedHardware = hardware;
+  }
+
 private:
   bool NeedsToRerun();
   void DartProcessing();
@@ -92,6 +103,8 @@ private:
   void WriteLogOutputTop(size_t completed, size_t total);
   // Run post processing of the process output for MemCheck
   void MemCheckPostProcess();
+
+  void SetupHardwareEnvironment();
 
   // Returns "completed/total Test #Index: "
   std::string GetTestPrefix(size_t completed, size_t total) const;
@@ -111,6 +124,10 @@ private:
   std::string StartTime;
   std::string ActualCommand;
   std::vector<std::string> Arguments;
+  bool UseAllocatedHardware = false;
+  std::vector<std::map<
+    std::string, std::vector<cmCTestMultiProcessHandler::HardwareAllocation>>>
+    AllocatedHardware;
   bool RunUntilFail;
   int NumberOfRunsLeft;
   bool RunAgain;

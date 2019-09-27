@@ -5,6 +5,7 @@
 
 #include "cmConfigure.h" // IWYU pragma: keep
 
+#include "cmCTestHardwareAllocator.h"
 #include "cmCTestTestHandler.h"
 #include <map>
 #include <set>
@@ -16,6 +17,8 @@
 #include "cm_uv.h"
 
 class cmCTest;
+struct cmCTestBinPackerAllocation;
+class cmCTestHardwareSpec;
 class cmCTestRunTest;
 
 /** \class cmCTestMultiProcessHandler
@@ -41,6 +44,11 @@ public:
   struct PropertiesMap
     : public std::map<int, cmCTestTestHandler::cmCTestTestProperties*>
   {
+  };
+  struct HardwareAllocation
+  {
+    std::string Id;
+    unsigned int Slots;
   };
 
   cmCTestMultiProcessHandler();
@@ -76,6 +84,13 @@ public:
   cmCTestTestHandler* GetTestHandler() { return this->TestHandler; }
 
   void SetQuiet(bool b) { this->Quiet = b; }
+
+  void InitHardwareAllocator(const cmCTestHardwareSpec& spec)
+  {
+    this->HardwareAllocator.InitializeFromHardwareSpec(spec);
+  }
+
+  void CheckHardwareAvailable();
 
 protected:
   // Start the next test or tests as many as are allowed by
@@ -117,8 +132,17 @@ protected:
   bool CheckStopTimePassed();
   void SetStopTimePassed();
 
-  void LockResources(int index);
-  void UnlockResources(int index);
+  void AllocateResources(int index);
+  void DeallocateResources(int index);
+
+  bool AllocateHardware(int index);
+  bool TryAllocateHardware(
+    int index,
+    std::map<std::string, std::vector<cmCTestBinPackerAllocation>>&
+      allocations);
+  void DeallocateHardware(int index);
+  bool AllHardwareAvailable();
+
   // map from test number to set of depend tests
   TestMap Tests;
   TestList SortedTests;
@@ -139,6 +163,11 @@ protected:
   std::vector<std::string>* Failed;
   std::vector<std::string> LastTestsFailed;
   std::set<std::string> LockedResources;
+  std::map<int,
+           std::vector<std::map<std::string, std::vector<HardwareAllocation>>>>
+    AllocatedHardware;
+  std::map<int, bool> TestsHaveSufficientHardware;
+  cmCTestHardwareAllocator HardwareAllocator;
   std::vector<cmCTestTestHandler::cmCTestTestResult>* TestResults;
   size_t ParallelLevel; // max number of process that can be run at once
   unsigned long TestLoad;
