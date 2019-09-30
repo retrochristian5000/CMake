@@ -167,11 +167,9 @@ static Bool test_Xkb(void)
 #endif
 
 #ifdef HAVE_X11_xkbfile
-#  include <stdio.h>
-
 #  include <X11/XKBlib.h>
 #  include <X11/extensions/XKBfile.h>
-
+#  include <stdio.h>
 #  include <stdlib.h>
 
 static void test_xkbfile(void)
@@ -184,7 +182,6 @@ static void test_xkbfile(void)
 
 #ifdef HAVE_X11_Xmu
 #  include <X11/Xmu/Xmu.h>
-
 #  include <stdlib.h>
 
 static Bool test_Xmu(void)
