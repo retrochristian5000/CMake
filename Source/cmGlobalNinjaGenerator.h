@@ -15,13 +15,14 @@
 #include <utility>
 #include <vector>
 
+#include "cm_codecvt.hxx"
+
 #include "cmGeneratedFileStream.h"
 #include "cmGlobalCommonGenerator.h"
 #include "cmGlobalGenerator.h"
 #include "cmGlobalGeneratorFactory.h"
 #include "cmNinjaTypes.h"
 #include "cmPolicies.h"
-#include "cm_codecvt.hxx"
 
 class cmCustomCommand;
 class cmGeneratorTarget;

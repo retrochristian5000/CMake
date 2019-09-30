@@ -1,6 +1,6 @@
-#include "pch.h"
-
 #include "Direct3DBase.h"
+
+#include "pch.h"
 
 using namespace DirectX;
 using namespace Microsoft::WRL;

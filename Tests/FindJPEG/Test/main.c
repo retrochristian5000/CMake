@@ -1,7 +1,6 @@
 #include <assert.h>
-#include <stdio.h>
-
 #include <jpeglib.h>
+#include <stdio.h>
 
 int main()
 {
