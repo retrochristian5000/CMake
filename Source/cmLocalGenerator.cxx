@@ -2285,30 +2285,29 @@ void cmLocalGenerator::AddPchDependencies(cmGeneratorTarget* target,
 
   auto pch_sf = this->Makefile->GetOrCreateSource(
     pchSource, false, cmSourceFileLocationKind::Known);
-  std::string pchFile = pchHeader;
+  std::string pchFile;
 
   if (!this->GetGlobalGenerator()->IsXcode()) {
+
+    auto replaceExtension = [](const std::string& str,
+                               const std::string& ext) -> std::string {
+      auto dot_pos = str.rfind('.');
+      std::string result;
+      if (dot_pos != std::string::npos) {
+        result = str.substr(0, dot_pos);
+      }
+      result += ext;
+      return result;
+    };
+
     if (!pchReuseFrom) {
       target->AddSource(pchSource, true);
     }
 
     // Exclude the pch files from linking
     if (this->Makefile->IsOn("CMAKE_LINK_PCH")) {
-
-      auto replaceExtension = [](const std::string& str,
-                                 const std::string& ext) -> std::string {
-        auto dot_pos = str.rfind('.');
-        std::string result;
-        if (dot_pos != std::string::npos) {
-          result = str.substr(0, dot_pos);
-        }
-        result += ext;
-        return result;
-      };
-
       if (!pchReuseFrom) {
         std::string pchSourceObj = target->GetPchFileObject(config, lang);
-
         pchFile = replaceExtension(pchSourceObj, pchExtension);
         pch_sf->SetProperty("OBJECT_OUTPUTS", pchFile.c_str());
       } else {
@@ -2394,7 +2393,17 @@ void cmLocalGenerator::AddPchDependencies(cmGeneratorTarget* target,
         pchFile = replaceExtension(pchSourceObj, pchExtension);
       }
     } else {
-      pchFile += pchExtension;
+      cmGeneratorTarget* generatorTarget = target;
+      if (pchReuseFrom) {
+        generatorTarget =
+          this->GlobalGenerator->FindGeneratorTarget(pchReuseFrom);
+      }
+      // cmake_pch.h[xx].c[xx].o[bj] -> cmake_pch.h[xx].gch
+      const std::string pchSourceObj =
+        generatorTarget->GetPchFileObject(config, lang);
+      pchFile = replaceExtension(pchSourceObj, "");
+      pchFile = replaceExtension(pchFile, pchExtension);
+
       pch_sf->SetProperty("PCH_EXTENSION", pchExtension.c_str());
     }
 
@@ -2413,6 +2422,7 @@ void cmLocalGenerator::AddPchDependencies(cmGeneratorTarget* target,
   }
 
   pch_sf->SetProperty("COMPILE_OPTIONS", createOptionList.c_str());
+  const std::string pchFileDir = cmSystemTools::GetFilenamePath(pchFile);
 
   std::vector<cmSourceFile*> sources;
   target->GetSourceFiles(sources, buildType);
@@ -2433,6 +2443,7 @@ void cmLocalGenerator::AddPchDependencies(cmGeneratorTarget* target,
       sf->AppendProperty("OBJECT_DEPENDS", pchFile.c_str());
       sf->AppendProperty("OBJECT_DEPENDS", pchHeader.c_str());
       sf->SetProperty("COMPILE_OPTIONS", useOptionList.c_str());
+      sf->SetProperty("INCLUDE_DIRECTORIES", pchFileDir.c_str());
     }
   }
 }
