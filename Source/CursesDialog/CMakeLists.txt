@@ -5,6 +5,7 @@ add_executable(ccmake
   ccmake.cxx
   cmCursesBoolWidget.cxx
   cmCursesCacheEntryComposite.cxx
+  cmCursesColor.cxx
   cmCursesDummyWidget.cxx
   cmCursesFilePathWidget.cxx
   cmCursesForm.cxx
