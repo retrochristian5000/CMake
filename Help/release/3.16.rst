@@ -250,7 +250,7 @@ Other Changes
 
 * The :manual:`cmake(1)` ``-E remove_directory`` command-line tool,
   when given the path to a symlink to a directory, now removes just
-  the symlink.  It no longer removes content of the linked directory.
+  the symlink. It no longer removes content of the linked directory.
 
 * The :manual:`ctest(1)`  ``--build-makeprogram`` command-line option now
   specifies the make program used when configuring a project with the
