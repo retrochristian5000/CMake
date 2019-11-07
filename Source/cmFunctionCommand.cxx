@@ -89,6 +89,13 @@ bool cmFunctionHelperCommand::operator()(
   makefile.AddDefinition(ARGN, argnDef);
   makefile.MarkVariableAsUsed(ARGN);
 
+  // define CMAKE_CURRENT_FUNCTION
+  {
+    std::string const cf = "CMAKE_CURRENT_FUNCTION";
+    makefile.AddDefinition(cf, this->Args.front());
+    makefile.MarkVariableAsUsed(cf);
+  }
+
   // Invoke all the functions that were collected in the block.
   // for each function
   for (cmListFileFunction const& func : this->Functions) {

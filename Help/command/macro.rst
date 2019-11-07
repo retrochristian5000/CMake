@@ -91,6 +91,9 @@ just terminate execution of the macro; rather, control is returned
 from the scope of the macro call.  To avoid confusion, it is recommended
 to avoid :command:`return()` in macros altogether.
 
+Unlike a function, the :variable:`CMAKE_CURRENT_FUNCTION` variable is not
+set for macro.
+
 .. _`Argument Caveats`:
 
 Argument Caveats

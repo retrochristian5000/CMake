@@ -1,0 +1,3 @@
+if(NOT CMAKE_CURRENT_FUNCTION STREQUAL "foo")
+  message(SEND_ERROR "Bad value of `CMAKE_CURRENT_FUNCTION`")
+endif()
