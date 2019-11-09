@@ -333,9 +333,10 @@ cmTarget::cmTarget(std::string const& name, cmStateEnums::TargetType type,
     initProp("C_STANDARD");
     initProp("C_STANDARD_REQUIRED");
     initProp("C_EXTENSIONS");
-    initProp("OBJC_STANDARD");
-    initProp("OBJC_STANDARD_REQUIRED");
-    initProp("OBJC_EXTENSIONS");
+    initPropValue("OBJC_STANDARD", this->GetProperty("C_STANDARD"));
+    initPropValue("OBJC_STANDARD_REQUIRED",
+                  this->GetProperty("C_STANDARD_REQUIRED"));
+    initPropValue("OBJC_EXTENSIONS", this->GetProperty("C_EXTENSIONS"));
     initProp("CXX_CLANG_TIDY");
     initProp("CXX_COMPILER_LAUNCHER");
     initProp("CXX_CPPLINT");
@@ -344,9 +345,10 @@ cmTarget::cmTarget(std::string const& name, cmStateEnums::TargetType type,
     initProp("CXX_STANDARD");
     initProp("CXX_STANDARD_REQUIRED");
     initProp("CXX_EXTENSIONS");
-    initProp("OBJCXX_STANDARD");
-    initProp("OBJCXX_STANDARD_REQUIRED");
-    initProp("OBJCXX_EXTENSIONS");
+    initPropValue("OBJCXX_STANDARD", this->GetProperty("CXX_STANDARD"));
+    initPropValue("OBJCXX_STANDARD_REQUIRED",
+                  this->GetProperty("CXX_STANDARD_REQUIRED"));
+    initPropValue("OBJCXX_EXTENSIONS", this->GetProperty("CXX_EXTENSIONS"));
     initProp("CUDA_STANDARD");
     initProp("CUDA_STANDARD_REQUIRED");
     initProp("CUDA_EXTENSIONS");
