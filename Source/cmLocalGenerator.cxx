@@ -693,12 +693,43 @@ bool cmLocalGenerator::ComputeTargetCompileFeatures()
     configNames.emplace_back();
   }
 
+  std::set<std::string> objcEnabled;
+  for (std::string const& lang : { "OBJC", "OBJCXX" }) {
+    if (this->Makefile->GetState()->GetLanguageEnabled(lang)) {
+      objcEnabled.insert(lang);
+    }
+  }
+
   // Process compile features of all targets.
   const std::vector<cmGeneratorTarget*>& targets = this->GetGeneratorTargets();
   for (cmGeneratorTarget* target : targets) {
     for (std::string const& c : configNames) {
       if (!target->ComputeCompileFeatures(c)) {
         return false;
+      }
+    }
+
+    // Now that C/C++ _STANDARD values have been computed
+    // set the values to ObjC/ObjCXX _STANDARD variables
+    if (!objcEnabled.empty()) {
+      auto copyPropertyToObjLang = [&](std::string const& lang,
+                                       const char* propery) {
+        if (target->GetType() == cmStateEnums::INTERFACE_LIBRARY) {
+          return;
+        }
+        if (objcEnabled.find(cmStrCat("OBJ", lang)) == objcEnabled.end()) {
+          return;
+        }
+        if (!target->GetProperty(cmStrCat("OBJ", lang, propery))) {
+          target->Target->SetProperty(
+            cmStrCat("OBJ", lang, propery),
+            target->GetProperty(cmStrCat(lang, propery)));
+        }
+      };
+      for (std::string const& lang : { "C", "CXX" }) {
+        copyPropertyToObjLang(lang, "_STANDARD");
+        copyPropertyToObjLang(lang, "_STANDARD_REQUIRED");
+        copyPropertyToObjLang(lang, "_EXTENSIONS");
       }
     }
   }
