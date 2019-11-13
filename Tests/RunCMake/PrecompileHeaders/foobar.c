@@ -4,5 +4,6 @@
 
 int main()
 {
+  printf("");
   return foo() + foo2() + bar();
 }

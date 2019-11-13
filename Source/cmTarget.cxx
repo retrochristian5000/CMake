@@ -1260,7 +1260,8 @@ void cmTarget::SetProperty(const std::string& prop, const char* value)
     impl->Makefile->IssueMessage(MessageType::FATAL_ERROR, e.str());
     return;
   } else if (prop == propPRECOMPILE_HEADERS_REUSE_FROM) {
-    if (this->GetProperty("PRECOMPILE_HEADERS")) {
+    if (this->GetProperty("PRECOMPILE_HEADERS") &&
+        !this->GetProperty("PRECOMPILE_HEADERS_REUSE_FROM")) {
       std::ostringstream e;
       e << "PRECOMPILE_HEADERS property is already set on target (\""
         << impl->Name << "\")\n";
@@ -1292,7 +1293,6 @@ void cmTarget::SetProperty(const std::string& prop, const char* value)
                     "INTERFACE_PRECOMPILE_HEADERS" }) {
       this->SetProperty(p, reusedTarget->GetProperty(p));
     }
-
     this->AddUtility(reusedFrom, impl->Makefile);
   } else {
     impl->Properties.SetProperty(prop, value);
