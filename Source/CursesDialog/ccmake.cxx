@@ -155,10 +155,34 @@ int main(int argc, char const* const* argv)
     return 1;
   }
 
-  cmSystemTools::SetMessageCallback(
-    [myform](const std::string& message, const char* title) {
-      myform->AddError(message, title);
-    });
+  auto addErrorToOutput = [myform](const std::string& message,
+                                   const char* title = "") {
+    auto msg = message;
+    /*
+     * The message is stored in a list by the form which will be
+     * joined by '\n' before display.
+     * Removing any trailing '\n' avoid extra empty lines in the final results
+     */
+    if (!msg.empty() && msg.back() == '\n') {
+      msg.pop_back();
+    }
+    myform->AddError(msg, title);
+  };
+  cmSystemTools::SetMessageCallback(addErrorToOutput);
+  cmSystemTools::SetStderrCallback(addErrorToOutput);
+  auto addLogToOutput = [myform](const std::string& message) {
+    auto msg = message;
+    /*
+     * The message is stored in a list by the form which will be
+     * joined by '\n' before display.
+     * Removing any trailing '\n' avoid extra empty lines in the final results
+     */
+    if (!msg.empty() && msg.back() == '\n') {
+      msg.pop_back();
+    }
+    myform->UpdateProgress(msg, -1);
+  };
+  cmSystemTools::SetStdoutCallback(addLogToOutput);
 
   cmCursesForm::CurrentForm = myform;
 
