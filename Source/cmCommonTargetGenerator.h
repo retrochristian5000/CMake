@@ -52,12 +52,17 @@ protected:
                         const char* name, bool so);
 
   using ByLanguageMap = std::map<std::string, std::string>;
+  struct ByConfig
+  {
+    ByLanguageMap FlagsByLanguage;
+    ByLanguageMap DefinesByLanguage;
+    ByLanguageMap IncludesByLanguage;
+  };
+  std::map<std::string, ByConfig> Configs;
+
   std::string GetFlags(const std::string& l, const std::string& config);
-  ByLanguageMap FlagsByLanguage;
   std::string GetDefines(const std::string& l, const std::string& config);
-  ByLanguageMap DefinesByLanguage;
   std::string GetIncludes(std::string const& l, const std::string& config);
-  ByLanguageMap IncludesByLanguage;
   std::string GetManifests(const std::string& config);
 
   std::vector<std::string> GetLinkedTargetDirectories(
