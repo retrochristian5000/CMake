@@ -3110,6 +3110,12 @@ bool cmGlobalXCodeGenerator::CreateXCodeObjects(
     buildSettings->AddAttribute("GCC_VERSION",
                                 this->CreateString(this->GeneratorToolset));
   }
+  if (this->GetLanguageEnabled("OBJC") || this->GetLanguageEnabled("OBJCXX")) {
+    // Suppress Xcode default flag '-fobjc-link-runtime' for consistency with
+    // Makefile and Ninja generators.  Projects can add the flag if needed.
+    buildSettings->AddAttribute("CLANG_LINK_OBJC_RUNTIME",
+                                this->CreateString("NO"));
+  }
   if (this->GetLanguageEnabled("Swift")) {
     std::string swiftVersion;
     if (const char* vers = this->CurrentMakefile->GetDefinition(
