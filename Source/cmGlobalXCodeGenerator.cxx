@@ -944,6 +944,10 @@ std::string GetSourcecodeValueFromFileExtension(const std::string& _ext,
     sourcecode += ".cpp.cpp";
   } else if (lang == "C") {
     sourcecode += ".c.c";
+  } else if (lang == "OBJCXX") {
+    sourcecode += ".cpp.objcpp";
+  } else if (lang == "OBJC") {
+    sourcecode += ".c.objc";
   } else if (lang == "Fortran") {
     sourcecode += ".fortran.f90";
   } else if (lang == "ASM") {
@@ -3108,6 +3112,12 @@ bool cmGlobalXCodeGenerator::CreateXCodeObjects(
   if (!this->GeneratorToolset.empty()) {
     buildSettings->AddAttribute("GCC_VERSION",
                                 this->CreateString(this->GeneratorToolset));
+  }
+  if (this->GetLanguageEnabled("OBJC") || this->GetLanguageEnabled("OBJCXX")) {
+    // Suppress Xcode default flag '-fobjc-link-runtime' for consistency with
+    // Makefile and Ninja generators.  Projects can add the flag if needed.
+    buildSettings->AddAttribute("CLANG_LINK_OBJC_RUNTIME",
+                                this->CreateString("NO"));
   }
   if (this->GetLanguageEnabled("Swift")) {
     std::string swiftVersion;
