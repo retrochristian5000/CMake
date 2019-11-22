@@ -1,0 +1,4 @@
+^Invalid major version for resource spec file: 2
+CMake Error at [^
+]*/Tests/RunCMake/CTestResourceAllocation/invalid_version-ctest-s-res/test\.cmake:[0-9]+ \(message\):
+  Tests did not pass$

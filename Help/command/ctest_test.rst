@@ -17,7 +17,7 @@ Perform the :ref:`CTest Test Step` as a :ref:`Dashboard Client`.
              [EXCLUDE_FIXTURE_SETUP <regex>]
              [EXCLUDE_FIXTURE_CLEANUP <regex>]
              [PARALLEL_LEVEL <level>]
-             [RESOURCE_SPEC_FILE <file>]
+             [RESOURCE_SPEC_FILE [v1:]<file>]
              [TEST_LOAD <threshold>]
              [SCHEDULE_RANDOM <ON|OFF>]
              [STOP_TIME <time-of-day>]
@@ -83,10 +83,12 @@ The options are:
   Specify a positive number representing the number of tests to
   be run in parallel.
 
-``RESOURCE_SPEC_FILE <file>``
+``RESOURCE_SPEC_FILE [v1:]<file>``
   Specify a
-  :ref:`resource specification file <ctest-resource-specification-file>`. See
-  :ref:`ctest-resource-allocation` for more information.
+  :ref:`resource specification file <ctest-resource-specification-file>`,
+  optionally prefixed with ``v1:`` for major version 1. Any other version
+  prefix is an error. See :ref:`ctest-resource-allocation` for more
+  information.
 
 ``TEST_LOAD <threshold>``
   While running tests in parallel, try not to start tests when they

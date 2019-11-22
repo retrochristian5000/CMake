@@ -45,6 +45,8 @@
 
 namespace {
 
+const cmsys::RegularExpression versionPrefixRegex("^v([1-9][0-9]*):(.*)$");
+
 class cmCTestCommand
 {
 public:
@@ -513,9 +515,20 @@ bool cmCTestTestHandler::ProcessOptions()
   val = this->GetOption("ResourceSpecFile");
   if (val) {
     this->UseResourceSpec = true;
-    if (!this->ResourceSpec.ReadFromJSONFile(val)) {
+    std::string file = val;
+    cmsys::RegularExpressionMatch match;
+    if (versionPrefixRegex.find(val, match)) {
+      if (match.match(1) != "1") {
+        cmCTestLog(this->CTest, ERROR_MESSAGE,
+                   "Invalid major version for resource spec file: "
+                     << match.match(1) << std::endl);
+        return false;
+      }
+      file = match.match(2);
+    }
+    if (!this->ResourceSpec.ReadFromJSONFile(file)) {
       cmCTestLog(this->CTest, ERROR_MESSAGE,
-                 "Could not read resource spec file: " << val << std::endl);
+                 "Could not read resource spec file: " << file << std::endl);
       return false;
     }
   }

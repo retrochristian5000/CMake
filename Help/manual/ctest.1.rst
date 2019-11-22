@@ -90,11 +90,12 @@ Options
 
  See `Label and Subproject Summary`_.
 
-``--resource-spec-file <file>``
+``--resource-spec-file [v1:]<file>``
  Run CTest with :ref:`resource allocation <ctest-resource-allocation>` enabled,
  using the
  :ref:`resource specification file <ctest-resource-specification-file>`
- specified in ``<file>``.
+ specified in ``<file>``. The ``v1:`` prefix is an optional prefix indicating
+ major version 1. Any other major version is an error.
 
  When ``ctest`` is run as a `Dashboard Client`_ this sets the
  ``ResourceSpecFile`` option of the `CTest Test Step`_.
@@ -969,8 +970,9 @@ Configuration settings include:
 
 ``ResourceSpecFile``
   Specify a
-  :ref:`resource specification file <ctest-resource-specification-file>`. See
-  :ref:`ctest-resource-allocation` for more information.
+  :ref:`resource specification file <ctest-resource-specification-file>`, with
+  an optional ``v1:`` prefix for major version 1. Any other major version is an
+  error. See :ref:`ctest-resource-allocation` for more information.
 
 ``LabelsForSubprojects``
   Specify a semicolon-separated list of labels that will be treated as
