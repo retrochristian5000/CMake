@@ -3197,6 +3197,18 @@ std::string cmLocalGenerator::GetObjectFileNameWithoutTarget(
     *hasSourceExtension = keptSourceExtension;
   }
 
+  const char* unitySourceFile = source.GetProperty("UNITY_SOURCE_FILE");
+  if (unitySourceFile) {
+    // Make sure that for the CMakeFiles/<target>.dir/Unity/unity_[0-9]+.c|xx
+    // source file, we don't end up having
+    // CMakeFiles/<target>.dir/CMakeFiles/<target>.dir/Unity/
+    // unity_[0-9]+.o|bj files.
+    cmsys::RegularExpression var("(CMakeFiles/[^/]+.dir/)");
+    while (var.find(objectName)) {
+      objectName.erase(var.start(), var.end() - var.start());
+    }
+  }
+
   // Convert to a safe name.
   return this->CreateSafeUniqueObjectFileName(objectName, dir_max);
 }
