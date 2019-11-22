@@ -141,8 +141,8 @@ run_ctresalloc_verify(ctresalloc-verify-noend "test1")
 ###############################################################################
 
 function(run_ctest_resource name parallel random)
-  run_ctest("${name}-ctest-s-res" "-DCTEST_RESOURCE_ALLOC_ENABLED=1" "-DCTRESALLOC_COMMAND=${CTRESALLOC_COMMAND}" "-DCTEST_PARALLEL=${parallel}" "-DCTEST_RANDOM=${random}")
-  run_ctest("${name}-ctest-s-nores" "-DCTEST_RESOURCE_ALLOC_ENABLED=0" "-DCTRESALLOC_COMMAND=${CTRESALLOC_COMMAND}" "-DCTEST_PARALLEL=${parallel}" "-DCTEST_RANDOM=${random}")
+  run_ctest("${name}-ctest-s-res" "-DCTEST_RESOURCE_ALLOC_ENABLED=1" "-DCTRESALLOC_COMMAND=${CTRESALLOC_COMMAND}" "-DCTEST_PARALLEL=${parallel}" "-DCTEST_RANDOM=${random}" ${ARGN})
+  run_ctest("${name}-ctest-s-nores" "-DCTEST_RESOURCE_ALLOC_ENABLED=0" "-DCTRESALLOC_COMMAND=${CTRESALLOC_COMMAND}" "-DCTEST_PARALLEL=${parallel}" "-DCTEST_RANDOM=${random}" ${ARGN})
 endfunction()
 
 function(verify_ctest_resources)
@@ -160,7 +160,11 @@ run_ctest_resource(checkfree1 2 0)
 run_ctest_resource(checkfree2 1 0)
 run_ctest_resource(notenough1 1 0)
 run_ctest_resource(notenough2 1 0)
+run_ctest_resource(notenough3 1 0)
+run_ctest_resource(combine 1 0)
 run_ctest_resource(ensure_parallel 2 0)
+run_ctest_resource(valid_version 1 0 -DCTEST_RESOURCE_SPEC_VERSION_PREFIX=v1:)
+run_ctest_resource(invalid_version 1 0 -DCTEST_RESOURCE_SPEC_VERSION_PREFIX=v2:)
 
 set(ENV{CTEST_RESOURCE_GROUP_COUNT} 2)
 run_ctest_resource(process_count 1 0)

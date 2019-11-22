@@ -90,11 +90,12 @@ Options
 
  See `Label and Subproject Summary`_.
 
-``--resource-spec-file <file>``
+``--resource-spec-file [v1:]<file>``
  Run CTest with :ref:`resource allocation <ctest-resource-allocation>` enabled,
  using the
  :ref:`resource specification file <ctest-resource-specification-file>`
- specified in ``<file>``.
+ specified in ``<file>``. The ``v1:`` prefix is an optional prefix indicating
+ major version 1. Any other major version is an error.
 
  When ``ctest`` is run as a `Dashboard Client`_ this sets the
  ``ResourceSpecFile`` option of the `CTest Test Step`_.
@@ -986,8 +987,9 @@ Configuration settings include:
 
 ``ResourceSpecFile``
   Specify a
-  :ref:`resource specification file <ctest-resource-specification-file>`. See
-  :ref:`ctest-resource-allocation` for more information.
+  :ref:`resource specification file <ctest-resource-specification-file>`, with
+  an optional ``v1:`` prefix for major version 1. Any other major version is an
+  error. See :ref:`ctest-resource-allocation` for more information.
 
 ``LabelsForSubprojects``
   Specify a semicolon-separated list of labels that will be treated as
@@ -1348,6 +1350,23 @@ the :ref:`environment variables <ctest-resource-environment-variables>` to
 determine which resources have been allocated to each group.  For example,
 each group may correspond to a process the test will spawn when executed.
 
+Note that even if a test specifies a ``RESOURCE_GROUPS`` property, it is still
+possible for that to test to run without any resource allocation (and without
+the corresponding
+:ref:`environment variables <ctest-resource-environment-variables>` if the user
+does not pass a resource specification file. Passing this file, either through
+the ``--resource-spec-file`` command-line argument or the
+``RESOURCE_SPEC_FILE`` argument to :command:`ctest_test`, is what activates the
+resource allocation feature. Tests should check the
+``CTEST_RESOURCE_GROUP_COUNT`` environment variable to find out whether or not
+resource allocation is activated. This variable will always (and only) be
+defined if resource allocation is activated. If resource allocation is not
+activated, then the ``CTEST_RESOURCE_GROUP_COUNT`` variable will not exist,
+even if it exists for the parent ``ctest`` process. If a test absolutely must
+have resource allocation, then it can return a failing exit code or use the
+:prop_test:`SKIP_RETURN_CODE` or :prop_test:`SKIP_REGULAR_EXPRESSION`
+properties to indicate a skipped test.
+
 .. _`ctest-resource-specification-file`:
 
 Resource Specification File
@@ -1388,7 +1407,11 @@ the following resource specification file:
           }
         ]
       }
-    ]
+    ],
+    "version": {
+      "major": 1,
+      "minor": 0
+    }
   }
 
 The members are:
@@ -1434,6 +1457,20 @@ The members are:
     resource. For example, this could be megabytes of RAM on a GPU, or
     cryptography units available on a cryptography chip. If ``slots`` is not
     specified, a default value of ``1`` is assumed.
+
+``version``
+  An optional element. If present, it must be one of the following:
+    * An integer specifying a major version number, or
+    * An object containing a ``major`` integer field and a ``minor`` integer
+      field, or
+    * An array containing exactly two integers, with the first indicating the
+      major version and the second indicating the minor version.
+
+  Currently, the only supported version is major ``1``, minor ``0``. Any other
+  value is an error.
+
+  If no ``version`` field is specified, major ``1`` and minor ``0`` are
+  assumed.
 
 In the example file above, there are four GPUs with ID's 0 through 3. GPU 0 has
 2 slots, GPU 1 has 4, GPU 2 has 2, and GPU 3 has a default of 1 slot. There is
