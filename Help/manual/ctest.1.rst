@@ -1371,7 +1371,11 @@ the following resource specification file:
           }
         ]
       }
-    ]
+    ],
+    "version": {
+      "major": 1,
+      "minor": 0
+    }
   }
 
 The members are:
@@ -1417,6 +1421,20 @@ The members are:
     resource. For example, this could be megabytes of RAM on a GPU, or
     cryptography units available on a cryptography chip. If ``slots`` is not
     specified, a default value of ``1`` is assumed.
+
+``version``
+  An optional element. If present, it must be one of the following:
+    * An integer specifying a major version number, or
+    * An object containing a ``major`` integer field and a ``minor`` integer
+      field, or
+    * An array containing exactly two integers, with the first indicating the
+      major version and the second indicating the minor version.
+
+  Currently, the only supported version is major ``1``, minor ``0``. Any other
+  value is an error.
+
+  If no ``version`` field is specified, major ``1`` and minor ``0`` are
+  assumed.
 
 In the example file above, there are four GPUs with ID's 0 through 3. GPU 0 has
 2 slots, GPU 1 has 4, GPU 2 has 2, and GPU 3 has a default of 1 slot. There is
