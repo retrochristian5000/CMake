@@ -15,7 +15,7 @@ ctest_configure(OPTIONS
 ctest_build()
 
 if(CTEST_RESOURCE_ALLOC_ENABLED)
-  set(resspec RESOURCE_SPEC_FILE "@RunCMake_SOURCE_DIR@/resspec.json")
+  set(resspec RESOURCE_SPEC_FILE "${CTEST_RESOURCE_SPEC_VERSION_PREFIX}@RunCMake_SOURCE_DIR@/resspec.json")
 endif()
 ctest_test(${resspec} RETURN_VALUE retval PARALLEL_LEVEL ${CTEST_PARALLEL} SCHEDULE_RANDOM ${CTEST_RANDOM})
 if(retval)
