@@ -92,6 +92,8 @@ if(WIN32)
   # List names of ODBC libraries on Windows
   if(NOT MINGW)
     set(ODBC_LIBRARY odbc32.lib)
+  else()
+    set(ODBC_LIBRARY libodbc32.a)
   endif()
   set(_odbc_lib_names odbc32;)
 
@@ -155,11 +157,8 @@ endif()
 ### Find include directories ##################################################
 find_path(ODBC_INCLUDE_DIR
   NAMES sql.h
-  PATHS ${_odbc_include_paths})
-
-if(NOT ODBC_INCLUDE_DIR AND WIN32)
-  set(ODBC_INCLUDE_DIR "")
-endif()
+  PATHS ${_odbc_include_paths}
+  NO_DEFAULT_PATH)
 
 ### Find libraries ############################################################
 if(NOT ODBC_LIBRARY)
@@ -216,8 +215,10 @@ if(ODBC_FOUND)
       set_target_properties(ODBC::ODBC PROPERTIES
         IMPORTED_LIBNAME "${ODBC_LIBRARY}")
     endif()
-    set_target_properties(ODBC::ODBC PROPERTIES
-      INTERFACE_INCLUDE_DIRECTORIES "${ODBC_INCLUDE_DIR}")
+    if (ODBC_INCLUDE_DIR)
+      set_target_properties(ODBC::ODBC PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${ODBC_INCLUDE_DIR}")
+    endif()
 
     if(_odbc_required_libs_paths)
       set_property(TARGET ODBC::ODBC APPEND PROPERTY
