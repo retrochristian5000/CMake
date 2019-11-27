@@ -134,6 +134,13 @@ if(CMAKE_GENERATOR MATCHES "Ninja")
     list(APPEND Ninja_ARGS -DTEST_Fortran=1)
   endif()
   add_RunCMake_test(Ninja)
+  set(MultiConfigNinja_ARGS
+    -DCYGWIN=${CYGWIN}
+    )
+  if(CMake_TEST_Qt5 AND Qt5Core_FOUND)
+    list(APPEND MultiConfigNinja_ARGS -DCMake_TEST_Qt5=1)
+  endif()
+  add_RunCMake_test(MultiConfigNinja)
 endif()
 add_RunCMake_test(CTest)
 
