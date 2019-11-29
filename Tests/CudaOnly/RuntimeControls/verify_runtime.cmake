@@ -1,0 +1,14 @@
+
+file(GET_RUNTIME_DEPENDENCIES
+  RESOLVED_DEPENDENCIES_VAR resolved_libs
+  UNRESOLVED_DEPENDENCIES_VAR unresolved_libs
+  EXECUTABLES ${EXEC_PATH}
+  )
+
+list(FILTER resolved_libs INCLUDE REGEX ".*cudart.*")
+list(LENGTH resolved_libs has_cudart)
+
+if(has_cudart EQUAL 0)
+  message(FATAL_ERROR
+    "missing cudart shared library from runtime dependency output.")
+endif()

@@ -4,7 +4,9 @@ ADD_TEST_MACRO(CudaOnly.EnableStandard CudaOnlyEnableStandard)
 ADD_TEST_MACRO(CudaOnly.ExportPTX CudaOnlyExportPTX)
 ADD_TEST_MACRO(CudaOnly.GPUDebugFlag CudaOnlyGPUDebugFlag)
 ADD_TEST_MACRO(CudaOnly.ResolveDeviceSymbols CudaOnlyResolveDeviceSymbols)
+ADD_TEST_MACRO(CudaOnly.RuntimeControls CudaOnlyRuntimeControls)
 ADD_TEST_MACRO(CudaOnly.SeparateCompilation CudaOnlySeparateCompilation)
+ADD_TEST_MACRO(CudaOnly.SharedRuntimePlusToolkit CudaOnlySharedRuntimePlusToolkit)
 ADD_TEST_MACRO(CudaOnly.Standard98 CudaOnlyStandard98)
 ADD_TEST_MACRO(CudaOnly.Toolkit CudaOnlyToolkit)
 ADD_TEST_MACRO(CudaOnly.WithDefs CudaOnlyWithDefs)
@@ -19,6 +21,12 @@ add_test(NAME CudaOnly.DontResolveDeviceSymbols COMMAND
   --build-options ${build_options}
   --test-command ${CMAKE_CTEST_COMMAND} -V -C $<CONFIGURATION>
   )
+
+# The CUDA only ships the shared version of the toolkit libraries
+# on windows
+if(NOT WIN32)
+  ADD_TEST_MACRO(Cuda.StaticRuntimePlusToolkit StaticRuntimePlusToolkit)
+endif()
 
 if(MSVC)
   ADD_TEST_MACRO(CudaOnly.PDB CudaOnlyPDB)
