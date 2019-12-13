@@ -204,11 +204,13 @@ public:
   const char* GetLinkInterfaceDependentNumberMaxProperty(
     const std::string& p, const std::string& config) const;
 
-  cmLinkInterface const* GetLinkInterface(
-    const std::string& config, const cmGeneratorTarget* headTarget) const;
+  cmLinkInterface const* GetLinkInterface(const std::string& config,
+                                          const cmGeneratorTarget* headTarget,
+                                          bool secondPass = false) const;
   void ComputeLinkInterface(const std::string& config,
                             cmOptionalLinkInterface& iface,
-                            const cmGeneratorTarget* head) const;
+                            const cmGeneratorTarget* head,
+                            bool secondPass = false) const;
 
   cmLinkInterfaceLibraries const* GetLinkInterfaceLibraries(
     const std::string& config, const cmGeneratorTarget* headTarget,
@@ -357,10 +359,9 @@ public:
   };
 
   LinkClosure const* GetLinkClosure(const std::string& config) const;
-  void ComputeLinkClosure(const std::string& config, LinkClosure& lc) const;
 
   cmLinkImplementation const* GetLinkImplementation(
-    const std::string& config) const;
+    const std::string& config, bool secondPass = false) const;
 
   void ComputeLinkImplementationLanguages(
     const std::string& config, cmOptionalLinkImplementation& impl) const;
@@ -816,6 +817,7 @@ private:
                            std::string& outPrefix, std::string& outBase,
                            std::string& outSuffix) const;
 
+  mutable std::string LinkerLanguage;
   using LinkClosureMapType = std::map<std::string, LinkClosure>;
   mutable LinkClosureMapType LinkClosureMap;
 
@@ -849,6 +851,10 @@ private:
 
   void CheckPropertyCompatibility(cmComputeLinkInformation& info,
                                   const std::string& config) const;
+
+  void ComputeLinkClosure(const std::string& config, LinkClosure& lc) const;
+  bool ComputeLinkClosure(const std::string& config, LinkClosure& lc,
+                          bool secondPass) const;
 
   struct LinkImplClosure : public std::vector<cmGeneratorTarget const*>
   {
@@ -894,9 +900,10 @@ private:
       the link dependencies of this target.  */
   std::string CheckCMP0004(std::string const& item) const;
 
-  cmLinkInterface const* GetImportLinkInterface(
-    const std::string& config, const cmGeneratorTarget* head,
-    bool usage_requirements_only) const;
+  cmLinkInterface const* GetImportLinkInterface(const std::string& config,
+                                                const cmGeneratorTarget* head,
+                                                bool usage_requirements_only,
+                                                bool secondPass = false) const;
 
   using KindedSourcesMapType = std::map<std::string, KindedSources>;
   mutable KindedSourcesMapType KindedSourcesMap;
@@ -940,7 +947,8 @@ private:
                        const cmGeneratorTarget* headTarget,
                        bool usage_requirements_only,
                        std::vector<cmLinkItem>& items,
-                       bool& hadHeadSensitiveCondition) const;
+                       bool& hadHeadSensitiveCondition,
+                       bool& hadLinkLanguageSensitiveCondition) const;
   void LookupLinkItems(std::vector<std::string> const& names,
                        cmListFileBacktrace const& bt,
                        std::vector<cmLinkItem>& items) const;
