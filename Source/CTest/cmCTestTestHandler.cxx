@@ -513,9 +513,25 @@ bool cmCTestTestHandler::ProcessOptions()
   val = this->GetOption("ResourceSpecFile");
   if (val) {
     this->UseResourceSpec = true;
-    if (!this->ResourceSpec.ReadFromJSONFile(val)) {
-      cmCTestLog(this->CTest, ERROR_MESSAGE,
-                 "Could not read resource spec file: " << val << std::endl);
+    auto result = this->ResourceSpec.ReadFromJSONFile(val);
+    if (result != cmCTestResourceSpec::OK) {
+      switch (result) {
+        case cmCTestResourceSpec::FILE_NOT_FOUND:
+          cmCTestLog(this->CTest, ERROR_MESSAGE,
+                     "Could not read resource spec file "
+                       << val << ": "
+                       << cmCTestResourceSpec::ResultToString(result)
+                       << std::endl);
+          break;
+
+        default:
+          cmCTestLog(this->CTest, ERROR_MESSAGE,
+                     "Could not parse resource spec file "
+                       << val << ": "
+                       << cmCTestResourceSpec::ResultToString(result)
+                       << std::endl);
+          break;
+      }
       return false;
     }
   }

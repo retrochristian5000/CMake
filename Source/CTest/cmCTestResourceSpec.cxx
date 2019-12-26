@@ -16,21 +16,22 @@
 static const cmsys::RegularExpression IdentifierRegex{ "^[a-z_][a-z0-9_]*$" };
 static const cmsys::RegularExpression IdRegex{ "^[a-z0-9_]+$" };
 
-bool cmCTestResourceSpec::ReadFromJSONFile(const std::string& filename)
+cmCTestResourceSpec::ReadFileResult cmCTestResourceSpec::ReadFromJSONFile(
+  const std::string& filename)
 {
   cmsys::ifstream fin(filename.c_str());
   if (!fin) {
-    return false;
+    return FILE_NOT_FOUND;
   }
 
   Json::Value root;
   Json::CharReaderBuilder builder;
   if (!Json::parseFromStream(builder, fin, &root, nullptr)) {
-    return false;
+    return JSON_PARSE_ERROR;
   }
 
   if (!root.isObject()) {
-    return false;
+    return INVALID_ROOT;
   }
 
   int majorVersion = 1;
@@ -39,42 +40,42 @@ bool cmCTestResourceSpec::ReadFromJSONFile(const std::string& filename)
     auto const& version = root["version"];
     if (version.isObject()) {
       if (!version.isMember("major") || !version.isMember("minor")) {
-        return false;
+        return INVALID_VERSION;
       }
       auto const& major = version["major"];
       auto const& minor = version["minor"];
       if (!major.isInt() || !minor.isInt()) {
-        return false;
+        return INVALID_VERSION;
       }
       majorVersion = major.asInt();
       minorVersion = minor.asInt();
     } else {
-      return false;
+      return INVALID_VERSION;
     }
   } else {
-    return false;
+    return NO_VERSION;
   }
 
   if (majorVersion != 1 || minorVersion != 0) {
-    return false;
+    return UNSUPPORTED_VERSION;
   }
 
   auto const& local = root["local"];
   if (!local.isArray()) {
-    return false;
+    return INVALID_SOCKET_SPEC;
   }
   if (local.size() > 1) {
-    return false;
+    return INVALID_SOCKET_SPEC;
   }
 
   if (local.empty()) {
     this->LocalSocket.Resources.clear();
-    return true;
+    return OK;
   }
 
   auto const& localSocket = local[0];
   if (!localSocket.isObject()) {
-    return false;
+    return INVALID_SOCKET_SPEC;
   }
   std::map<std::string, std::vector<cmCTestResourceSpec::Resource>> resources;
   cmsys::RegularExpressionMatch match;
@@ -88,21 +89,21 @@ bool cmCTestResourceSpec::ReadFromJSONFile(const std::string& filename)
             cmCTestResourceSpec::Resource resource;
 
             if (!item.isMember("id")) {
-              return false;
+              return INVALID_RESOURCE;
             }
             auto const& id = item["id"];
             if (!id.isString()) {
-              return false;
+              return INVALID_RESOURCE;
             }
             resource.Id = id.asString();
             if (!IdRegex.find(resource.Id.c_str(), match)) {
-              return false;
+              return INVALID_RESOURCE;
             }
 
             if (item.isMember("slots")) {
               auto const& capacity = item["slots"];
               if (!capacity.isConvertibleTo(Json::uintValue)) {
-                return false;
+                return INVALID_RESOURCE;
               }
               resource.Capacity = capacity.asUInt();
             } else {
@@ -111,17 +112,55 @@ bool cmCTestResourceSpec::ReadFromJSONFile(const std::string& filename)
 
             r.push_back(resource);
           } else {
-            return false;
+            return INVALID_RESOURCE;
           }
         }
       } else {
-        return false;
+        return INVALID_RESOURCE_TYPE;
       }
     }
   }
 
   this->LocalSocket.Resources = std::move(resources);
-  return true;
+  return OK;
+}
+
+const char* cmCTestResourceSpec::ResultToString(ReadFileResult result)
+{
+  switch (result) {
+    case OK:
+      return "OK";
+
+    case FILE_NOT_FOUND:
+      return "File not found";
+
+    case JSON_PARSE_ERROR:
+      return "JSON parse error";
+
+    case INVALID_ROOT:
+      return "Invalid root object";
+
+    case NO_VERSION:
+      return "No version specified";
+
+    case INVALID_VERSION:
+      return "Invalid version object";
+
+    case UNSUPPORTED_VERSION:
+      return "Unsupported version";
+
+    case INVALID_SOCKET_SPEC:
+      return "Invalid socket object";
+
+    case INVALID_RESOURCE_TYPE:
+      return "Invalid resource type object";
+
+    case INVALID_RESOURCE:
+      return "Invalid resource object";
+
+    default:
+      return "Unknown";
+  }
 }
 
 bool cmCTestResourceSpec::operator==(const cmCTestResourceSpec& other) const
