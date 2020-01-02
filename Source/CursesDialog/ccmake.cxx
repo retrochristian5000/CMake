@@ -4,7 +4,9 @@
 #include <csignal>
 #include <cstring>
 #include <iostream>
+#include <mutex>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "cmsys/Encoding.hxx"
@@ -51,19 +53,31 @@ extern "C" {
 
 void onsig(int /*unused*/)
 {
-  if (cmCursesForm::CurrentForm) {
-    endwin();
-    initscr();            /* Initialization */
-    noecho();             /* Echo off */
-    cbreak();             /* nl- or cr not needed */
-    keypad(stdscr, true); /* Use key symbols as KEY_DOWN */
-    refresh();
-    int x;
-    int y;
-    getmaxyx(stdscr, y, x);
-    cmCursesForm::CurrentForm->Render(1, 1, x, y);
-    cmCursesForm::CurrentForm->UpdateStatusBar();
-  }
+  /*
+   * Use a separate thread to do the rescreen to avoid deadlocks.
+   * Signal can be triggered at any point in the code, including in a bloc
+   * where the screen mutex is already locked.
+   * By spawning and detaching a new thread, the signal handler will be able to
+   * complete and return control to the initial locked section that can then
+   * complete and allow this rescreen thread to do its job.
+   */
+  std::thread([]() {
+    std::lock_guard<std::mutex> lock(cmCursesForm::ScreenMutex);
+    if (cmCursesForm::CurrentForm) {
+      endwin();
+      initscr();            /* Initialization */
+      noecho();             /* Echo off */
+      cbreak();             /* nl- or cr not needed */
+      keypad(stdscr, true); /* Use key symbols as KEY_DOWN */
+      refresh();
+      int x;
+      int y;
+      getmaxyx(stdscr, y, x);
+      cmCursesForm::CurrentForm->Render(1, 1, x, y);
+      cmCursesForm::CurrentForm->UpdateStatusBar();
+    }
+  })
+    .detach();
   signal(SIGWINCH, onsig);
 }
 }
