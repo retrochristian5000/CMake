@@ -1,6 +1,10 @@
 # Needed for CMAKE_SYSTEM_NAME, CMAKE_LIBRARY_ARCHITECTURE, FIND_LIBRARY_USE_LIB32_PATHS and FIND_LIBRARY_USE_LIB64_PATHS
 enable_language(C)
 
+# We're using local variables here, so avoid the issue in the find module for
+# this case.
+cmake_policy(SET CMP0102 NEW)
+
 # Prepare environment and variables
 set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH TRUE)
 set(CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/pc-foo")

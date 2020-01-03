@@ -1,3 +1,7 @@
+# We're using local variables here, so avoid the issue in the find module for
+# this case.
+cmake_policy(SET CMP0102 NEW)
+
 set(CYGWIN 0)
 set(WIN32 0)
 set(APPLE 0)
