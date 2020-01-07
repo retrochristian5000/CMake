@@ -10,39 +10,73 @@
 #include <iterator>
 #include <memory>
 #include <utility>
-#include <vector>
 
 #include <cm/type_traits>
 #include <cmext/iterator>
+#include <cmext/type_traits>
 
 namespace cm {
 
-template <typename T>
-void append(std::vector<std::unique_ptr<T>>& v,
-            std::vector<std::unique_ptr<T>>&& r)
+template <
+  typename Container1, typename Container2,
+  cm::enable_if_t<
+    cm::is_sequence_container<Container1>::value &&
+      std::is_same<typename Container1::value_type,
+                   std::unique_ptr<
+                     typename Container1::value_type::element_type>>::value &&
+      std::is_same<typename Container2::value_type,
+                   std::unique_ptr<
+                     typename Container2::value_type::element_type>>::value &&
+      std::is_convertible<typename Container2::value_type::pointer,
+                          typename Container1::value_type::pointer>::value,
+    int> = 0>
+void append(Container1& v, Container2&& r)
 {
-  std::transform(r.begin(), r.end(), std::back_inserter(v),
-                 [](std::unique_ptr<T>& item) { return std::move(item); });
+  std::transform(
+    r.begin(), r.end(), std::back_inserter(v),
+    [](typename Container2::value_type& item) { return std::move(item); });
   r.clear();
 }
 
-template <typename T>
-void append(std::vector<T*>& v, std::vector<std::unique_ptr<T>> const& r)
+template <
+  typename Container1, typename Container2,
+  cm::enable_if_t<
+    cm::is_sequence_container<Container1>::value &&
+      std::is_pointer<typename Container1::value_type>::value &&
+      std::is_same<typename Container2::value_type,
+                   std::unique_ptr<
+                     typename Container2::value_type::element_type>>::value &&
+      std::is_convertible<typename Container2::value_type::pointer,
+                          typename Container1::value_type>::value,
+    int> = 0>
+void append(Container1& v, Container2 const& r)
 {
-  std::transform(r.begin(), r.end(), std::back_inserter(v),
-                 [](const std::unique_ptr<T>& item) { return item.get(); });
+  std::transform(
+    r.begin(), r.end(), std::back_inserter(v),
+    [](const typename Container2::value_type& item) { return item.get(); });
 }
 
-template <typename T, typename InputIt,
-          cm::enable_if_t<cm::is_input_iterator<InputIt>::value, int> = 0>
-void append(std::vector<T>& v, InputIt first, InputIt last)
+template <
+  typename Container, typename InputIt,
+  cm::enable_if_t<
+    cm::is_sequence_container<Container>::value &&
+      cm::is_input_iterator<InputIt>::value &&
+      std::is_convertible<typename std::iterator_traits<InputIt>::value_type,
+                          typename Container::value_type>::value,
+    int> = 0>
+void append(Container& v, InputIt first, InputIt last)
 {
   v.insert(v.end(), first, last);
 }
 
-template <typename T, typename Range,
-          cm::enable_if_t<cm::is_input_range<Range>::value, int> = 0>
-void append(std::vector<T>& v, Range const& r)
+template <
+  typename Container, typename Range,
+  cm::enable_if_t<cm::is_sequence_container<Container>::value &&
+                    cm::is_input_range<Range>::value &&
+                    std::is_convertible<typename Range::value_type,
+                                        typename Container::value_type>::value,
+                  int> = 0>
+void append(Container& v, Range const& r)
 {
   v.insert(v.end(), r.begin(), r.end());
 }
