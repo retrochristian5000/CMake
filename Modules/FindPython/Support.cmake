@@ -745,6 +745,7 @@ else()
     _python_get_abiflags (_${_PYTHON_PREFIX}_ABIFLAGS)
   endif()
 endif()
+unset (${_PYTHON_PREFIX}_SOABI)
 
 # Define lookup strategy
 if (_${_PYTHON_PREFIX}_LOOKUP_POLICY STREQUAL "NEW")
@@ -1267,7 +1268,6 @@ if ("Interpreter" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
 
     # retrieve various package installation directories
     execute_process (COMMAND "${_${_PYTHON_PREFIX}_EXECUTABLE}" -c "import sys; from distutils import sysconfig;sys.stdout.write(';'.join([sysconfig.get_python_lib(plat_specific=False,standard_lib=True),sysconfig.get_python_lib(plat_specific=True,standard_lib=True),sysconfig.get_python_lib(plat_specific=False,standard_lib=False),sysconfig.get_python_lib(plat_specific=True,standard_lib=False)]))"
-
                      RESULT_VARIABLE _${_PYTHON_PREFIX}_RESULT
                      OUTPUT_VARIABLE _${_PYTHON_PREFIX}_LIBPATHS
                      ERROR_QUIET)
@@ -1281,6 +1281,25 @@ if ("Interpreter" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
       unset (${_PYTHON_PREFIX}_STDARCH)
       unset (${_PYTHON_PREFIX}_SITELIB)
       unset (${_PYTHON_PREFIX}_SITEARCH)
+    endif()
+
+    if (_${_PYTHON_PREFIX}_REQUIRED_VERSION_MAJOR VERSION_GREATER_EQUAL 3)
+      # compute 'SOABI' information
+      execute_process (COMMAND "${_${_PYTHON_PREFIX}_EXECUTABLE}" -c "import sys; from distutils import sysconfig;sys.stdout.write(';'.join([sysconfig.get_config_var('SOABI') or '',sysconfig.get_config_var('EXT_SUFFIX') or '']))"
+                       RESULT_VARIABLE _${_PYTHON_PREFIX}_RESULT
+                       OUTPUT_VARIABLE _${_PYTHON_PREFIX}_EXT
+                       ERROR_QUIET)
+      if (NOT _${_PYTHON_PREFIX}_RESULT)
+        list (GET _${_PYTHON_PREFIX}_EXT 0 ${_PYTHON_PREFIX}_SOABI)
+        if (NOT ${_PYTHON_PREFIX}_SOABI)
+          # try to compute SOABI from EXT_SUFFIX
+          list (GET _${_PYTHON_PREFIX}_EXT 1 ${_PYTHON_PREFIX}_SOABI)
+          if (${_PYTHON_PREFIX}_SOABI)
+            # clean-up: remove prefix character and suffix
+            string (REGEX REPLACE "^[.-](.+)(${CMAKE_SHARED_LIBRARY_SUFFIX}|\.(so|pyd))$" "\\1" ${_PYTHON_PREFIX}_SOABI "${${_PYTHON_PREFIX}_SOABI}")
+          endif()
+        endif()
+      endif()
     endif()
   else()
     unset (_${_PYTHON_PREFIX}_INTERPRETER_SIGNATURE CACHE)
@@ -1522,9 +1541,13 @@ if ("Development" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS
       unset (_${_PYTHON_PREFIX}_LIBRARY_RELEASE CACHE)
       unset (_${_PYTHON_PREFIX}_LIBRARY_DEBUG CACHE)
       unset (_${_PYTHON_PREFIX}_INCLUDE_DIR CACHE)
-      unset (_${_PYTHON_PREFIX}_DEVELOPMENT_SIGNATURE CACHE)
     endif()
   endif()
+  if (NOT _${_PYTHON_PREFIX}_LIBRARY_RELEASE OR NOT _${_PYTHON_PREFIX}_INCLUDE_DIR)
+    unset (_${_PYTHON_PREFIX}_CONFIG CACHE)
+    unset (_${_PYTHON_PREFIX}_DEVELOPMENT_SIGNATURE CACHE)
+  endif()
+
   if (DEFINED ${_PYTHON_PREFIX}_LIBRARY
       AND IS_ABSOLUTE "${${_PYTHON_PREFIX}_LIBRARY}")
     set (_${_PYTHON_PREFIX}_LIBRARY_RELEASE "${${_PYTHON_PREFIX}_LIBRARY}" CACHE INTERNAL "")
@@ -2148,6 +2171,22 @@ if ("Development" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS
     endif()
   endif()
 
+  if (_${_PYTHON_PREFIX}_REQUIRED_VERSION_MAJOR VERSION_GREATER_EQUAL 3
+      AND NOT DEFINED ${_PYTHON_PREFIX}_SOABI AND DEFINED _${_PYTHON_PREFIX}_CONFIG)
+    # try to compute SOABI from the config tool
+    execute_process (COMMAND "${_${_PYTHON_PREFIX}_CONFIG}" --extension-suffix
+                     RESULT_VARIABLE _${_PYTHON_PREFIX}_RESULT
+                     OUTPUT_VARIABLE _${_PYTHON_PREFIX}_EXT
+                     OUTPUT_STRIP_TRAILING_WHITESPACE
+                     ERROR_QUIET)
+    if (NOT _${_PYTHON_PREFIX}_RESULT)
+      if (_${_PYTHON_PREFIX}_EXT)
+        # clean-up: remove prefix character and suffix
+        string (REGEX REPLACE "^[.-](.+)(${CMAKE_SHARED_LIBRARY_SUFFIX}|\.(so|pyd))$" "\\1" ${_PYTHON_PREFIX}_SOABI "${_${_PYTHON_PREFIX}_EXT}")
+      endif()
+    endif()
+  endif()
+
   if (${_PYTHON_PREFIX}_Development_FOUND)
     # compute and save development signature
     string (MD5 __${_PYTHON_PREFIX}_DEVELOPMENT_SIGNATURE "${_${_PYTHON_PREFIX}_SIGNATURE}:${_${_PYTHON_PREFIX}_LIBRARY_RELEASE}:${_${_PYTHON_PREFIX}_INCLUDE_DIR}")
@@ -2166,6 +2205,7 @@ if ("Development" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS
                     ${_PYTHON_PREFIX}_RUNTIME_LIBRARY_RELEASE
                     ${_PYTHON_PREFIX}_RUNTIME_LIBRARY_DEBUG
                     _${_PYTHON_PREFIX}_INCLUDE_DIR
+                    _${_PYTHON_PREFIX}_CONFIG
                     _${_PYTHON_PREFIX}_DEVELOPMENT_SIGNATURE)
 endif()
 
@@ -2425,5 +2465,3 @@ if (DEFINED _${_PYTHON_PREFIX}_CMAKE_FIND_FRAMEWORK)
 else()
   unset (CMAKE_FIND_FRAMEWORK)
 endif()
-
-unset (_${_PYTHON_PREFIX}_CONFIG CACHE)
