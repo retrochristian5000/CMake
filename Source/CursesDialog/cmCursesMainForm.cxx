@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
+#include <mutex>
 #include <utility>
 
 #include <cm/memory>
@@ -997,6 +998,7 @@ void cmCursesMainForm::ResetOutputs()
 
 void cmCursesMainForm::DisplayOutputs()
 {
+  std::lock_guard<std::mutex> lock(cmCursesForm::ScreenMutex);
   int xi;
   int yi;
   getmaxyx(stdscr, yi, xi);

@@ -5,6 +5,7 @@
 
 #include "cmConfigure.h" // IWYU pragma: keep
 
+#include <mutex>
 #include <string>
 
 #include "cmsys/FStream.hxx"
@@ -55,6 +56,20 @@ public:
   FORM* GetForm() { return this->Form; }
 
   static cmCursesForm* CurrentForm;
+
+  /*
+   * Mutex used to protect the global curses 'stdscr' object
+   *
+   * This is required to properly handle window resize as a signal (SIGWINCH)
+   * Since signals can interrupt code at any point, protecting and
+   * synchronizing the screen modifications is required.
+   *
+   * This is currently only used to protect the current log display during
+   * configure which is the most probable data race occurence.
+   * This should probably be done for all screen modification, but doing that
+   * correctly and properly may require a consequent refactoring.
+   */
+  static std::mutex ScreenMutex;
 
 protected:
   static cmsys::ofstream DebugFile;
