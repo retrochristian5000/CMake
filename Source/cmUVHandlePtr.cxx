@@ -230,6 +230,21 @@ int uv_timer_ptr::start(uv_timer_cb cb, uint64_t timeout, uint64_t repeat)
   return uv_timer_start(*this, cb, timeout, repeat);
 }
 
+uv_fs_ptr::uv_fs_ptr()
+  : request{}
+{
+}
+
+uv_fs_ptr::~uv_fs_ptr()
+{
+  uv_fs_req_cleanup(&request);
+}
+
+uv_fs_ptr::operator uv_fs_t*()
+{
+  return &request;
+}
+
 #ifndef CMAKE_BOOTSTRAP
 uv_tty_ptr::operator uv_stream_t*() const
 {

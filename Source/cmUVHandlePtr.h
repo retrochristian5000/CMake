@@ -240,6 +240,20 @@ struct uv_tty_ptr : public uv_handle_ptr_<uv_tty_t>
   int init(uv_loop_t& loop, int fd, int readable, void* data = nullptr);
 };
 
+struct uv_fs_ptr
+{
+  uv_fs_ptr();
+  uv_fs_ptr(uv_fs_ptr&&) = delete;
+  uv_fs_ptr& operator=(uv_fs_ptr&&) = delete;
+  uv_fs_ptr(const uv_fs_ptr&) = delete;
+  uv_fs_ptr& operator=(const uv_fs_ptr&) = delete;
+  ~uv_fs_ptr();
+  operator uv_fs_t*();
+
+private:
+  uv_fs_t request;
+};
+
 using uv_stream_ptr = uv_handle_ptr_<uv_stream_t>;
 using uv_handle_ptr = uv_handle_ptr_<uv_handle_t>;
 
