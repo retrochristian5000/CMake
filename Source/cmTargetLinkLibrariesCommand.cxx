@@ -401,16 +401,13 @@ static bool HandleLibrary(cmMakefile& mf, cmTarget* target,
 
   std::string libRef;
   if (encodeRemoteReference && !cmSystemTools::FileIsFullPath(lib)) {
-    // This is a library name added by a caller that is not in the
-    // same directory as the target was created.  Add a suffix to
-    // the name to tell ResolveLinkItem to look up the name in the
+    // This is a library name or genex added by a caller that is not in
+    // the same directory as the target was created.  Add a wrapper to
+    // the expression to tell LookupLinkItems to look up names in the
     // caller's directory.
     cmDirectoryId const dirId = mf.GetDirectoryId();
-    // FIXME: The "lib" may be a genex with a list inside it.
-    // After expansion this id will only attach to the last entry,
-    // or may attach to an empty string!  We will need another way
-    // to encode this that can apply to a whole list.  See issue #20204.
-    libRef = lib + CMAKE_DIRECTORY_ID_SEP + dirId.String;
+    libRef = cmStrCat(CMAKE_DIRECTORY_ID_SEP, dirId.String, ";", lib, ";",
+                      CMAKE_DIRECTORY_ID_SEP);
   } else {
     // This is an absolute path or a library name added by a caller
     // in the same directory as the target was created.  We can use
