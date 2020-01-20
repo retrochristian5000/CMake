@@ -15,31 +15,38 @@ project (Complex CXX CUDA)
 #and also building cpp targets that need cuda implicit libraries
 
 #verify that we can pass explicit cuda arch flags
-string(APPEND CMAKE_CUDA_FLAGS " -gencode arch=compute_30,code=compute_30")
+string(APPEND CMAKE_CUDA_FLAGS " -gencode arch=compute_61,code=compute_61")
 set(CMAKE_CUDA_STANDARD 11)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CUDA_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 add_library(CudaComplexCppBase SHARED dynamic.cpp)
-add_library(CudaComplexSeperableLib STATIC file1.cu file2.cu file3.cu)
-set_target_properties(CudaComplexSeperableLib
-                       PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-set_target_properties( CudaComplexSeperableLib
-                       PROPERTIES POSITION_INDEPENDENT_CODE ON)
-
 add_library(CudaComplexSharedLib SHARED dynamic.cu)
 target_link_libraries(CudaComplexSharedLib PUBLIC CudaComplexCppBase)
 
+add_library(CudaComplexSeperableLib STATIC file1.cu file2.cu file3.cu)
 add_library(CudaComplexMixedLib SHARED mixed.cpp mixed.cu)
-set_target_properties(CudaComplexMixedLib
-                       PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 target_link_libraries(CudaComplexMixedLib
                       PUBLIC CudaComplexSharedLib
                       PRIVATE CudaComplexSeperableLib)
 
 add_executable(CudaComplex main.cpp)
 target_link_libraries(CudaComplex PUBLIC CudaComplexMixedLib)
+
+
+set_target_properties(CudaComplexMixedLib
+                      CudaComplexSeperableLib
+                      PROPERTIES
+                        POSITION_INDEPENDENT_CODE  ON
+                        CUDA_SEPARABLE_COMPILATION ON
+                      )
+set_target_properties(CudaComplexMixedLib
+                      CudaComplexSharedLib
+                      PROPERTIES
+                        CUDA_RUNTIME_LIBRARY shared
+                      )
+
 
 if(APPLE)
   # Help the static cuda runtime find the driver (libcuda.dyllib) at runtime.
