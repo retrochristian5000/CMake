@@ -2,6 +2,8 @@
    file Copyright.txt or https://cmake.org/licensing for details.  */
 #include "cmInstallFilesGenerator.h"
 
+#include <utility>
+
 #include "cmGeneratorExpression.h"
 #include "cmInstallType.h"
 #include "cmStringAlgorithms.h"
