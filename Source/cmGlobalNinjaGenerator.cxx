@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdio>
+#include <initializer_list>
 #include <iterator>
 #include <sstream>
 
@@ -531,11 +532,13 @@ void cmGlobalNinjaGenerator::Generate()
     return;
   }
 
-  auto run_ninja_tool = [this](char const* tool) {
+  auto run_ninja_tool = [this](std::initializer_list<char const*> args) {
     std::vector<std::string> command;
     command.push_back(this->NinjaCommand);
     command.emplace_back("-t");
-    command.emplace_back(tool);
+    for (auto const& arg : args) {
+      command.emplace_back(arg);
+    }
     std::string error;
     if (!cmSystemTools::RunSingleCommand(command, nullptr, &error, nullptr,
                                          nullptr,
@@ -551,13 +554,17 @@ void cmGlobalNinjaGenerator::Generate()
   };
 
   if (this->NinjaSupportsCleanDeadTool) {
-    run_ninja_tool("cleandead");
+    run_ninja_tool({ "cleandead" });
   }
   if (this->NinjaSupportsUnconditionalRecompactTool) {
-    run_ninja_tool("recompact");
+    run_ninja_tool({ "recompact" });
   }
   if (this->NinjaSupportsRestatTool) {
-    run_ninja_tool("restat");
+    // XXX(ninja): We only list `build.ninja` here because CMake *always*
+    // rewrites `build.ninja` on a reconfigure. If CMake ever gets smarter
+    // about this, all CMake-time created/edited files will need to be listed
+    // here.
+    run_ninja_tool({ "restat", "build.ninja" });
   }
 }
 
