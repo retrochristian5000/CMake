@@ -280,6 +280,8 @@ Options
          "line": 0,
          "cmd": "add_executable",
          "args": ["foo", "bar"]
+         "time": 1579512535.9687231
+         "frame": 2
        }
 
      The members are:
@@ -288,7 +290,7 @@ Options
        The full path to the CMake source file where the function
        was called.
 
-      ``line``
+     ``line``
        The line in `file` of the function call.
 
      ``cmd``
@@ -296,6 +298,12 @@ Options
 
      ``args``
        A string list of all function parameters.
+
+     ``time``
+       Timestamp (seconds since epoch) of the function call.
+
+     ``frame``
+       Stack frame depth of the function that was called.
 
      Additionally, the first JSON document outputted contains the
      ``version`` key for the current major and minor version of the
