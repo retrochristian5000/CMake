@@ -680,6 +680,16 @@ void cmLocalUnixMakefileGenerator3::WriteSpecialTargetsTop(
                       "Disable implicit rules so canonical targets will work.",
                       ".SUFFIXES", no_depends, no_commands, false);
 
+  constexpr const char* vcs_rules[] = {
+    "%,v", "RCS/%", "RCS/%,v", "SCCS/s.%", "s.%",
+  };
+  for (auto vcs_rule : vcs_rules) {
+    std::vector<std::string> vcs_depend;
+    vcs_depend.emplace_back(vcs_rule);
+    this->WriteMakeRule(makefileStream, "Disable VCS-based implicit rules.",
+                        "%", vcs_depend, no_commands, false);
+  }
+
   if (!this->IsNMake() && !this->IsWatcomWMake() &&
       !this->BorlandMakeCurlyHack) {
     // turn off RCS and SCCS automatic stuff from gmake
