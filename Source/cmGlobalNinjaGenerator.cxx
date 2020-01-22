@@ -549,7 +549,11 @@ void cmGlobalNinjaGenerator::Generate()
     }
   };
 
-  if (this->NinjaSupportsCleanDeadTool) {
+  // The `cleandead` tool needs to know about all outputs in the build we just
+  // wrote out. Ninja-Multi doesn't have a single `build.ninja` we can use that
+  // is the union of all generated configurations, so we can't run it reliably
+  // in that case.
+  if (this->NinjaSupportsCleanDeadTool && !this->IsMultiConfig()) {
     run_ninja_tool({ "cleandead" });
   }
   if (this->NinjaSupportsUnconditionalRecompactTool) {
