@@ -1,7 +1,6 @@
 CMAKE_NINJA_MULTI_CROSS_CONFIGS
 -------------------------------
 
-Set which configurations get cross-built if
-:variable:`CMAKE_NINJA_MULTI_CROSS_CONFIG_ENABLE` is set. See the
-documentation for the :generator:`Ninja Multi-Config` generator for more
-information.
+Specifies a list of configurations available from all ``build-<Config>.ninja``
+files in the :generator:`Ninja Multi-Config` generator. See the generator's
+documentation for more details.
