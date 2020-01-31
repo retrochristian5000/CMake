@@ -1,0 +1,7 @@
+^CMake Error:
+  CMAKE_NINJA_MULTI_DEFAULT_CONFIGS cannot be used without
+  CMAKE_NINJA_MULTI_DEFAULT_BUILD_FILE_CONFIG or
+  CMAKE_NINJA_MULTI_CROSS_CONFIGS
+
+
+CMake Generate step failed\.  Build files cannot be regenerated correctly\.$
