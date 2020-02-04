@@ -1,0 +1,42 @@
+cmake_minimum_required (VERSION 3.14)
+
+if (IOS)
+  set (CMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED NO)
+  set (CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+endif ()
+
+enable_language (CXX)
+
+if(NOT "$ENV{CMAKE_OSX_ARCHITECTURES}" MATCHES "[;$]")
+  set(USE_SWIFT 1)
+else()
+  set(USE_SWIFT 0)
+endif()
+
+if(USE_SWIFT)
+  enable_language (Swift)
+  if(NOT XCODE_VERSION VERSION_LESS 10.2)
+    set(CMAKE_Swift_LANGUAGE_VERSION 5.0)
+  elseif(NOT XCODE_VERSION VERSION_LESS 8.0)
+    set(CMAKE_Swift_LANGUAGE_VERSION 3.0)
+  endif()
+endif()
+
+find_package(ZLIB REQUIRED)
+add_library (framework_dependency STATIC)
+target_sources (framework_dependency PRIVATE use_cmath.cpp)
+target_link_libraries(framework_dependency INTERFACE ZLIB::ZLIB)
+
+add_library (framework_test SHARED use_cmath.cpp)
+if(USE_SWIFT)
+  target_sources(framework_test PRIVATE foo.swift)
+endif()
+target_link_libraries (framework_test PRIVATE framework_dependency)
+
+set_target_properties (framework_test PROPERTIES
+    FRAMEWORK TRUE
+    FRAMEWORK_VERSION A
+    MACOSX_FRAMEWORK_IDENTIFIER "framework.test"
+    VERSION "1.0"
+    SOVERSION 1.0
+  )
