@@ -1229,8 +1229,9 @@ bool cmQtAutoGenInitializer::InitAutogenTarget()
 
     // Forward origin utilities to autogen target
     if (this->AutogenTarget.DependOrigin) {
-      for (BT<std::string> const& depName : this->GenTarget->GetUtilities()) {
-        autogenTarget->AddUtility(depName.Value, this->Makefile);
+      for (BT<std::pair<std::string, bool>> const& depName :
+           this->GenTarget->GetUtilities()) {
+        autogenTarget->AddUtility(depName.Value.first, this->Makefile);
       }
     }
     if (!useNinjaDepfile) {
