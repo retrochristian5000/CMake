@@ -2,7 +2,7 @@
 # file Copyright.txt or https://cmake.org/licensing for details.
 
 #[=======================================================================[.rst:
-UseJavaClassFilelist
+ClearClassFiles
 --------------------
 
 
@@ -42,8 +42,8 @@ if (CMAKE_JAVA_CLASS_OUTPUT_PATH)
         file(WRITE ${CMAKE_JAVA_CLASS_OUTPUT_PATH}/java_class_filelist ${_JAVA_CLASS_FILES})
 
     else ()
-        message(SEND_ERROR "FATAL: Java class output path doesn't exist")
+        message(FATAL_ERROR "Java class output path doesn't exist")
     endif ()
 else ()
-    message(SEND_ERROR "FATAL: Can't find CMAKE_JAVA_CLASS_OUTPUT_PATH")
+    message(FATAL_ERROR "Can't find CMAKE_JAVA_CLASS_OUTPUT_PATH")
 endif ()
