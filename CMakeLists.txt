@@ -196,6 +196,7 @@ macro(CMAKE_HANDLE_SYSTEM_LIBRARIES)
   option(CMAKE_USE_SYSTEM_JSONCPP "Use system-installed jsoncpp" "${CMAKE_USE_SYSTEM_LIBRARY_JSONCPP}")
   option(CMAKE_USE_SYSTEM_LIBRHASH "Use system-installed librhash" "${CMAKE_USE_SYSTEM_LIBRARY_LIBRHASH}")
   option(CMAKE_USE_SYSTEM_LIBUV "Use system-installed libuv" "${CMAKE_USE_SYSTEM_LIBRARY_LIBUV}")
+  option(CMAKE_USE_SYSTEM_FMT "Use system-installed fmt" "${CMAKE_USE_SYSTEM_LIBRARY_FMT}")
 
   # For now use system KWIML only if explicitly requested rather
   # than activating via the general system libs options.
@@ -603,6 +604,21 @@ macro (CMAKE_BUILD_UTILITIES)
     set(CMAKE_LIBUV_LIBRARIES cmlibuv)
     add_subdirectory(Utilities/cmlibuv)
     CMAKE_SET_TARGET_FOLDER(cmlibuv "Utilities/3rdParty")
+  endif()
+
+  #---------------------------------------------------------------------
+  # Build fmt library.
+  if(CMAKE_USE_SYSTEM_FMT)
+    find_package(fmt)
+    if(NOT fmt_FOUND)
+      message(FATAL_ERROR
+        "CMAKE_USE_SYSTEM_FMT is ON but a FMT is not found!")
+    endif()
+    set(CMAKE_FMT_LIBRARIES fmt::fmt)
+  else()
+    set(CMAKE_FMT_LIBRARIES cmfmt)
+    add_subdirectory(Utilities/cmfmt)
+    CMAKE_SET_TARGET_FOLDER(cmfmt "Utilities/3rdParty")
   endif()
 
   #---------------------------------------------------------------------
