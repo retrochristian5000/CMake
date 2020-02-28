@@ -230,10 +230,10 @@ FMT_API void assert_fail(const char* file, int line, const char* message);
 #  ifdef NDEBUG
 #    define FMT_ASSERT(condition, message)
 #  else
-#    define FMT_ASSERT(condition, message) \
-      ((condition)                         \
-           ? void()                        \
-           : fmt::internal::assert_fail(__FILE__, __LINE__, (message)))
+#    define FMT_ASSERT(condition, message)                                    \
+      ((condition) /* void() fails with -Winvalid-constexpr on clang 4.0.1 */ \
+           ? (void)0                                                          \
+           : ::fmt::internal::assert_fail(__FILE__, __LINE__, (message)))
 #  endif
 #endif
 
@@ -911,14 +911,10 @@ template <typename Context> struct arg_mapper {
       map(static_cast<typename std::underlying_type<T>::type>(val))) {
     return map(static_cast<typename std::underlying_type<T>::type>(val));
   }
-  template <
-      typename T,
-      FMT_ENABLE_IF(
-          !is_string<T>::value && !is_char<T>::value &&
-          !std::is_constructible<basic_string_view<char_type>, T>::value &&
-          (has_formatter<T, Context>::value ||
-           (has_fallback_formatter<T, Context>::value &&
-            !std::is_constructible<std_string_view<char_type>, T>::value)))>
+  template <typename T,
+            FMT_ENABLE_IF(!is_string<T>::value && !is_char<T>::value &&
+                          (has_formatter<T, Context>::value ||
+                           has_fallback_formatter<T, Context>::value))>
   FMT_CONSTEXPR const T& map(const T& val) {
     return val;
   }
