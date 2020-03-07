@@ -534,7 +534,7 @@ int do_build(int ac, char const* const* av)
       inputArgs.reserve(ac - 2);
       cm::append(inputArgs, av + 2, av + ac);
     } else {
-      dir = cmSystemTools::CollapseFullPath(av[2]);
+      dir = cmSystemTools::CollapseLogicalPath(av[2]);
 
       inputArgs.reserve(ac - 3);
       cm::append(inputArgs, av + 3, av + ac);
@@ -813,7 +813,7 @@ int do_install(int ac, char const* const* av)
   };
 
   if (ac >= 3) {
-    dir = cmSystemTools::CollapseFullPath(av[2]);
+    dir = cmSystemTools::CollapseLogicalPath(av[2]);
 
     std::vector<std::string> inputArgs;
     inputArgs.reserve(ac - 3);
@@ -926,7 +926,7 @@ int do_open(int ac, char const* const* av)
   for (int i = 2; i < ac; ++i) {
     switch (doing) {
       case DoingDir:
-        dir = cmSystemTools::CollapseFullPath(av[i]);
+        dir = cmSystemTools::CollapseLogicalPath(av[i]);
         doing = DoingNone;
         break;
       default:

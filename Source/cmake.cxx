@@ -549,9 +549,8 @@ bool cmake::SetCacheArgs(const std::vector<std::string>& args)
           return false;
         }
         cmSystemTools::Stdout("loading initial cache file " + value + "\n");
-        // Resolve script path specified on command line
-        // relative to $PWD.
-        auto path = cmSystemTools::CollapseFullPath(value);
+        // Resolve script path specified on command line relative to $PWD.
+        auto path = cmSystemTools::CollapseLogicalPath(value);
         state->ReadListFile(args, path);
         return true;
       } },
@@ -640,7 +639,7 @@ void cmake::ReadListFile(const std::vector<std::string>& args,
     snapshot.SetDefaultDefinitions();
     cmMakefile mf(gg, snapshot);
     if (this->GetWorkingMode() != NORMAL_MODE) {
-      std::string file(cmSystemTools::CollapseFullPath(path));
+      std::string file(cmSystemTools::CollapseLogicalPath(path));
       cmSystemTools::ConvertToUnixSlashes(file);
       mf.SetScriptModeFile(file);
 
@@ -813,9 +812,7 @@ void cmake::SetArgs(const std::vector<std::string>& args)
       cmSystemTools::Error("No source directory specified for -S");
       return false;
     }
-    std::string path = cmSystemTools::CollapseFullPath(value);
-    cmSystemTools::ConvertToUnixSlashes(path);
-
+    std::string path = cmSystemTools::CollapseLogicalPath(value);
     state->SetHomeDirectoryViaCommandLine(path);
     return true;
   };
@@ -825,8 +822,7 @@ void cmake::SetArgs(const std::vector<std::string>& args)
       cmSystemTools::Error("No build directory specified for -B");
       return false;
     }
-    std::string path = cmSystemTools::CollapseFullPath(value);
-    cmSystemTools::ConvertToUnixSlashes(path);
+    std::string path = cmSystemTools::CollapseLogicalPath(value);
     state->SetHomeOutputDirectory(path);
     haveBArg = true;
     return true;
@@ -932,8 +928,7 @@ void cmake::SetArgs(const std::vector<std::string>& args)
                      CommandArgument::Values::One,
                      [](std::string const& value, cmake* state) -> bool {
                        std::string path =
-                         cmSystemTools::CollapseFullPath(value);
-                       cmSystemTools::ConvertToUnixSlashes(path);
+                         cmSystemTools::CollapseLogicalPath(value);
                        state->GraphVizFile = path;
                        return true;
                      } },
@@ -1109,8 +1104,7 @@ void cmake::SetArgs(const std::vector<std::string>& args)
     "--profiling-output", "No path specified for --profiling-output",
     CommandArgument::Values::One,
     [&](std::string const& value, cmake*) -> bool {
-      profilingOutput = cmSystemTools::CollapseFullPath(value);
-      cmSystemTools::ConvertToUnixSlashes(profilingOutput);
+      profilingOutput = cmSystemTools::CollapseLogicalPath(value);
       return true;
     });
   arguments.emplace_back("--preset", "No preset specified for --preset",
@@ -1495,8 +1489,7 @@ bool cmake::SetDirectoriesFromFile(const std::string& arg)
   bool is_source_dir = false;
   bool is_empty_directory = false;
   if (cmSystemTools::FileIsDirectory(arg)) {
-    std::string path = cmSystemTools::CollapseFullPath(arg);
-    cmSystemTools::ConvertToUnixSlashes(path);
+    std::string path = cmSystemTools::CollapseLogicalPath(arg);
     std::string cacheFile = cmStrCat(path, "/CMakeCache.txt");
     std::string listFile = cmStrCat(path, "/CMakeLists.txt");
 
@@ -1511,7 +1504,7 @@ bool cmake::SetDirectoriesFromFile(const std::string& arg)
       is_source_dir = true;
     }
   } else if (cmSystemTools::FileExists(arg)) {
-    std::string fullPath = cmSystemTools::CollapseFullPath(arg);
+    std::string fullPath = cmSystemTools::CollapseLogicalPath(arg);
     std::string name = cmSystemTools::GetFilenameName(fullPath);
     name = cmSystemTools::LowerCase(name);
     if (name == "cmakecache.txt"_s) {
@@ -1522,7 +1515,7 @@ bool cmake::SetDirectoriesFromFile(const std::string& arg)
   } else {
     // Specified file or directory does not exist.  Try to set things
     // up to produce a meaningful error message.
-    std::string fullPath = cmSystemTools::CollapseFullPath(arg);
+    std::string fullPath = cmSystemTools::CollapseLogicalPath(arg);
     std::string name = cmSystemTools::GetFilenameName(fullPath);
     name = cmSystemTools::LowerCase(name);
     if (name == "cmakecache.txt"_s || name == "cmakelists.txt"_s) {
@@ -1577,12 +1570,12 @@ bool cmake::SetDirectoriesFromFile(const std::string& arg)
     if (no_source_tree) {
       // We didn't find a CMakeLists.txt and it wasn't specified
       // with -S. Assume it is the path to the source tree
-      std::string full = cmSystemTools::CollapseFullPath(arg);
+      std::string full = cmSystemTools::CollapseLogicalPath(arg);
       this->SetHomeDirectory(full);
     }
     if (no_build_tree && !no_source_tree && is_empty_directory) {
       // passed `-S <path> <build_dir> when build_dir is an empty directory
-      std::string full = cmSystemTools::CollapseFullPath(arg);
+      std::string full = cmSystemTools::CollapseLogicalPath(arg);
       this->SetHomeOutputDirectory(full);
     } else if (no_build_tree) {
       // We didn't find a CMakeCache.txt and it wasn't specified

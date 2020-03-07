@@ -1905,7 +1905,7 @@ void cmMakefile::AddCacheDefinition(const std::string& name, const char* value,
       nvalue.clear();
       for (cc = 0; cc < files.size(); cc++) {
         if (!cmIsOff(files[cc])) {
-          files[cc] = cmSystemTools::CollapseFullPath(files[cc]);
+          files[cc] = cmSystemTools::CollapseLogicalPath(files[cc]);
         }
         if (cc > 0) {
           nvalue += ";";

@@ -278,7 +278,7 @@ int main(int argc, char const* const* argv)
     }
 
     if (cmSystemTools::FileExists(cpackConfigFile)) {
-      cpackConfigFile = cmSystemTools::CollapseFullPath(cpackConfigFile);
+      cpackConfigFile = cmSystemTools::CollapseLogicalPath(cpackConfigFile);
       cmCPack_Log(&log, cmCPackLog::LOG_VERBOSE,
                   "Read CPack configuration file: " << cpackConfigFile
                                                     << std::endl);
@@ -330,7 +330,7 @@ int main(int argc, char const* const* argv)
     cpackProjectDirectory =
       globalMF.GetSafeDefinition("CPACK_PACKAGE_DIRECTORY");
     cpackProjectDirectory =
-      cmSystemTools::CollapseFullPath(cpackProjectDirectory);
+      cmSystemTools::CollapseLogicalPath(cpackProjectDirectory);
     globalMF.AddDefinition("CPACK_PACKAGE_DIRECTORY", cpackProjectDirectory);
 
     cmValue cpackModulesPath = globalMF.GetDefinition("CPACK_MODULE_PATH");

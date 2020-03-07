@@ -402,7 +402,7 @@ protected:
     }
 
     if (cmSystemTools::FileExists(fname, true)) {
-      std::string fp = cmSystemTools::CollapseFullPath(fname);
+      std::string fp = cmSystemTools::CollapseLogicalPath(fname);
       this->DirectoryToFileToPathMap[extraPath][fname] = fp;
       return fp;
     }
@@ -414,7 +414,7 @@ protected:
       path += fname;
       if (cmSystemTools::FileExists(path, true) &&
           !cmSystemTools::FileIsDirectory(path)) {
-        std::string fp = cmSystemTools::CollapseFullPath(path);
+        std::string fp = cmSystemTools::CollapseLogicalPath(path);
         this->DirectoryToFileToPathMap[extraPath][fname] = fp;
         return fp;
       }
@@ -428,7 +428,7 @@ protected:
       path = path + fname;
       if (cmSystemTools::FileExists(path, true) &&
           !cmSystemTools::FileIsDirectory(path)) {
-        std::string fp = cmSystemTools::CollapseFullPath(path);
+        std::string fp = cmSystemTools::CollapseLogicalPath(path);
         this->DirectoryToFileToPathMap[extraPath][fname] = fp;
         return fp;
       }

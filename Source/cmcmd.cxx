@@ -1268,10 +1268,10 @@ int cmcmd::ExecuteCMakeCommand(std::vector<std::string> const& args,
 
       // Create a local generator configured for the directory in
       // which dependencies will be scanned.
-      homeDir = cmSystemTools::CollapseFullPath(homeDir);
-      startDir = cmSystemTools::CollapseFullPath(startDir);
-      homeOutDir = cmSystemTools::CollapseFullPath(homeOutDir);
-      startOutDir = cmSystemTools::CollapseFullPath(startOutDir);
+      homeDir = cmSystemTools::CollapseLogicalPath(homeDir);
+      startDir = cmSystemTools::CollapseLogicalPath(startDir);
+      homeOutDir = cmSystemTools::CollapseLogicalPath(homeOutDir);
+      startOutDir = cmSystemTools::CollapseLogicalPath(startOutDir);
       cm.SetHomeDirectory(homeDir);
       cm.SetHomeOutputDirectory(homeOutDir);
       cm.GetCurrentSnapshot().SetDefaultDefinitions();
@@ -2336,7 +2336,7 @@ int cmVSLink::LinkIncremental()
 
   // Create a resource file referencing the manifest.
   std::string absManifestFile =
-    cmSystemTools::CollapseFullPath(this->ManifestFile);
+    cmSystemTools::CollapseLogicalPath(this->ManifestFile);
   if (this->Verbose) {
     std::cout << "Create " << this->ManifestFileRC << "\n";
   }

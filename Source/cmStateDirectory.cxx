@@ -38,8 +38,7 @@ void cmStateDirectory::SetCurrentSource(std::string const& dir)
 {
   std::string& loc = this->DirectoryState->Location;
   loc = dir;
-  cmSystemTools::ConvertToUnixSlashes(loc);
-  loc = cmSystemTools::CollapseFullPath(loc);
+  loc = cmSystemTools::CollapseLogicalPath(loc);
   this->Snapshot_.SetDefinition("CMAKE_CURRENT_SOURCE_DIR", loc);
 }
 
@@ -52,8 +51,7 @@ void cmStateDirectory::SetCurrentBinary(std::string const& dir)
 {
   std::string& loc = this->DirectoryState->OutputLocation;
   loc = dir;
-  cmSystemTools::ConvertToUnixSlashes(loc);
-  loc = cmSystemTools::CollapseFullPath(loc);
+  loc = cmSystemTools::CollapseLogicalPath(loc);
   this->Snapshot_.SetDefinition("CMAKE_CURRENT_BINARY_DIR", loc);
 }
 
