@@ -1497,6 +1497,76 @@ std::string cmSystemTools::RelativeIfUnder(std::string const& top,
   return out;
 }
 
+std::string cmSystemTools::CollapseLogicalPath(std::string inbuf)
+{
+  for (std::string::size_type i = 0; i != inbuf.size(); ++i) {
+    if (inbuf[i] == '\\') {
+      inbuf[i] = '/';
+    }
+  }
+  if (!cmSystemTools::FileIsFullPath(inbuf)) {
+    inbuf = cmStrCat(cmSystemTools::GetLogicalWorkingDirectory(), '/', inbuf);
+  }
+
+  cm::string_view in = inbuf;
+
+  // Look for the '/' that starts the first component
+  // not including the machine name on a network path.
+  std::string::size_type in_slash =
+    in.find('/', cmHasLiteralPrefix(in, "//") ? 2 : 0);
+  std::string out{ in.substr(0, in_slash) };
+
+  while (in_slash != std::string::npos) {
+    // Look for the '/' or end-of-input that ends this component.
+    std::string::size_type next_slash = in.find('/', in_slash + 1);
+    cm::string_view in_comp = next_slash != std::string::npos
+      ? in.substr(in_slash, next_slash - in_slash)
+      : in.substr(in_slash, std::string::npos);
+
+    if (in_comp == "/..") {
+      // Compute a path to the destination of '..' that preserves
+      // as much of the original logical path as possible.
+      std::string dest_rp = cmSystemTools::GetRealPath(out + "/..");
+      std::string lp = std::move(out);
+      std::string::size_type lp_base =
+        lp.find('/', cmHasLiteralPrefix(lp, "//") ? 2 : 0);
+      for (;;) {
+        // If the realpath of 'lp' is a prefix of 'dest_rp', replace
+        // that prefix with the logical path 'lp'.
+        std::string const rp = cmSystemTools::GetRealPath(lp);
+        if ((rp.size() == dest_rp.size() ||
+             (rp.size() < dest_rp.size() && dest_rp[rp.size()] == '/')) &&
+            dest_rp.compare(0, rp.size(), rp) == 0) {
+          out = cmStrCat(std::move(lp), dest_rp.substr(rp.size()));
+          break;
+        }
+
+        // If 'lp' has no more components to strip, use original 'dest_lp'.
+        std::string::size_type lp_slash = lp.rfind('/');
+        if (lp_slash == std::string::npos || lp_base == std::string::npos ||
+            lp_slash <= lp_base) {
+          out = std::move(dest_rp);
+          break;
+        }
+
+        // Strip a component off 'lp' to try again.
+        lp.erase(lp_slash);
+      }
+    } else if (in_comp == "/.") {
+      // Skip '.' component.
+    } else if (in_comp == "/") {
+      // Skip empty component.
+    } else {
+      // Accept normal component.
+      out.append(in_comp);
+    }
+
+    in_slash = next_slash;
+  }
+
+  return out;
+}
+
 #ifndef CMAKE_BOOTSTRAP
 bool cmSystemTools::UnsetEnv(const char* value)
 {

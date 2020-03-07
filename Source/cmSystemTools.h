@@ -367,6 +367,14 @@ public:
   static std::string RelativeIfUnder(std::string const& top,
                                      std::string const& in);
 
+  /** Convert an input path to an absolute path with no '/..' components.
+      Backslashes in the input path are converted to forward slashes.
+      Relative paths are interpreted w.r.t. GetLogicalWorkingDirectory.
+      Input '/..' components, when preceded by symbolic links, may jump
+      to arbitrary destinations.  This transformation preserves as much
+      of the original logical path as possible.  */
+  static std::string CollapseLogicalPath(std::string in);
+
 #ifndef CMAKE_BOOTSTRAP
   /** Remove an environment variable */
   static bool UnsetEnv(const char* value);
