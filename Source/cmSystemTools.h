@@ -459,6 +459,8 @@ public:
   static std::string const& GetCMClDepsCommand();
   static std::string const& GetCMakeRoot();
   static std::string const& GetHTMLDoc();
+  static std::string const& GetLogicalWorkingDirectory();
+  static cmsys::Status SetLogicalWorkingDirectory(std::string const& lwd);
 
   /** Get the CWD mapped through the KWSys translation map.  */
   static std::string GetCurrentWorkingDirectory();

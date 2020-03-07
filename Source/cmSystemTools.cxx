@@ -1590,7 +1590,7 @@ bool cmSystemTools::CreateTar(const std::string& outFileName,
                               std::string const& format, int compressionLevel)
 {
 #if !defined(CMAKE_BOOTSTRAP)
-  std::string cwd = cmSystemTools::GetCurrentWorkingDirectory();
+  std::string cwd = cmSystemTools::GetLogicalWorkingDirectory();
   cmsys::ofstream fout(outFileName.c_str(), std::ios::out | std::ios::binary);
   if (!fout) {
     std::string e = cmStrCat("Cannot open output file \"", outFileName,
@@ -2225,6 +2225,22 @@ unsigned int cmSystemTools::RandomSeed()
 #endif
 }
 
+namespace {
+std::string cmSystemToolsLogicalWorkingDirectory;
+void InitLogicalWorkingDirectory()
+{
+  std::string cwd = cmSystemTools::GetCurrentWorkingDirectory();
+  std::string pwd;
+  if (cmSystemTools::GetEnv("PWD", pwd)) {
+    std::string const pwd_real = cmSystemTools::GetRealPath(pwd);
+    if (pwd_real == cwd) {
+      cwd = std::move(pwd);
+    }
+  }
+  cmSystemToolsLogicalWorkingDirectory = std::move(cwd);
+}
+}
+
 static std::string cmSystemToolsCMakeCommand;
 static std::string cmSystemToolsCTestCommand;
 static std::string cmSystemToolsCPackCommand;
@@ -2235,6 +2251,7 @@ static std::string cmSystemToolsCMakeRoot;
 static std::string cmSystemToolsHTMLDoc;
 void cmSystemTools::FindCMakeResources(const char* argv0)
 {
+  InitLogicalWorkingDirectory();
   std::string exe_dir;
 #if defined(_WIN32) && !defined(__CYGWIN__)
   (void)argv0; // ignore this on windows
@@ -2403,6 +2420,20 @@ std::string const& cmSystemTools::GetCMakeRoot()
 std::string const& cmSystemTools::GetHTMLDoc()
 {
   return cmSystemToolsHTMLDoc;
+}
+
+std::string const& cmSystemTools::GetLogicalWorkingDirectory()
+{
+  return cmSystemToolsLogicalWorkingDirectory;
+}
+
+cmsys::Status cmSystemTools::SetLogicalWorkingDirectory(std::string const& lwd)
+{
+  cmsys::Status status = cmSystemTools::ChangeDirectory(lwd);
+  if (status) {
+    cmSystemToolsLogicalWorkingDirectory = lwd;
+  }
+  return status;
 }
 
 std::string cmSystemTools::GetCurrentWorkingDirectory()

@@ -195,7 +195,7 @@ void cmakemainProgressCallback(const std::string& m, float prog, cmake* cm)
 
 int do_cmake(int ac, char const* const* av)
 {
-  if (cmSystemTools::GetCurrentWorkingDirectory().empty()) {
+  if (cmSystemTools::GetLogicalWorkingDirectory().empty()) {
     std::cerr << "Current working directory cannot be established."
               << std::endl;
     return 1;
