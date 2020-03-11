@@ -4636,6 +4636,10 @@ bool cmMakefile::AddRequiredTargetFeature(cmTarget* target,
     return false;
   }
 
+  if (!this->GlobalGenerator->GetLanguageEnabled(lang)) {
+    return true;
+  }
+
   const char* features = this->CompileFeaturesAvailable(lang, error);
   if (!features) {
     return false;
