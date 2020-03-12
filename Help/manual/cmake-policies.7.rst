@@ -57,6 +57,7 @@ Policies Introduced by CMake 3.18
 .. toctree::
    :maxdepth: 1
 
+   CMP0104: Initialize CMAKE_CUDA_ARCHITECTURES for NVIDIA, disallow empty CUDA_ARCHITECTURES. </policy/CMP0104>
    CMP0103: Multiple export() with same FILE without APPEND is not allowed. </policy/CMP0103>
 
 Policies Introduced by CMake 3.17
