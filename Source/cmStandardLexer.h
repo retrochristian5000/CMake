@@ -3,6 +3,11 @@
 #ifndef cmStandardLexer_h
 #define cmStandardLexer_h
 
+#if !defined(_WIN32)
+/* POSIX APIs are needed */
+#  define _POSIX_C_SOURCE 200809L
+#endif
+
 #include "cmsys/Configure.h" // IWYU pragma: keep
 
 /* Disable some warnings.  */
