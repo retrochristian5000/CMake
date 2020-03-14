@@ -6,6 +6,9 @@
 #if defined(_MSC_VER)
 using mode_t = unsigned short;
 #endif
+#if defined(__CYGWIN__)
+#  define _DEFAULT_SOURCE
+#endif
 
 #include <sys/types.h>
 // include sys/stat.h after sys/types.h
