@@ -25,6 +25,7 @@ int main(int argc, char** argv)
   if (argc > 1 && std::string(argv[1]) == "--gtest_list_tests") {
     std::cout << "timeout." << std::endl;
     std::cout << "  case" << std::endl;
+    std::cout << std::flush;
 #ifdef discoverySleepSec
     sleepFor(discoverySleepSec);
 #endif
