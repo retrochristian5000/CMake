@@ -117,6 +117,9 @@ public:
 
   bool ReadListFile(const std::string& filename);
 
+  bool ReadListFileAsString(const std::string& content,
+                            const std::string& virtualFileName);
+
   bool ReadDependentFile(const std::string& filename,
                          bool noPolicyScope = true);
 
@@ -314,6 +317,12 @@ public:
   void AddCacheDefinition(const std::string& name, const char* value,
                           const char* doc, cmStateEnums::CacheEntryType type,
                           bool force = false);
+  void AddCacheDefinition(const std::string& name, const std::string& value,
+                          const char* doc, cmStateEnums::CacheEntryType type,
+                          bool force = false)
+  {
+    AddCacheDefinition(name, value.c_str(), doc, type, force);
+  }
 
   /**
    * Remove a variable definition from the build.  This is not valid

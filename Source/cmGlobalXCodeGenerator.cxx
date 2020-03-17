@@ -8,6 +8,7 @@
 #include <cstring>
 #include <iomanip>
 #include <sstream>
+#include <utility>
 
 #include <cm/memory>
 #include <cmext/algorithm>
@@ -642,7 +643,8 @@ void cmGlobalXCodeGenerator::CreateReRunCMakeFile(
                  << "\n";
 }
 
-static bool objectIdLessThan(cmXCodeObject* l, cmXCodeObject* r)
+static bool objectIdLessThan(const std::unique_ptr<cmXCodeObject>& l,
+                             const std::unique_ptr<cmXCodeObject>& r)
 {
   return l->GetId() < r->GetId();
 }
@@ -656,9 +658,6 @@ void cmGlobalXCodeGenerator::SortXCodeObjects()
 void cmGlobalXCodeGenerator::ClearXCodeObjects()
 {
   this->TargetDoneSet.clear();
-  for (auto& obj : this->XCodeObjects) {
-    delete obj;
-  }
   this->XCodeObjects.clear();
   this->XCodeObjectIDs.clear();
   this->XCodeObjectMap.clear();
@@ -668,7 +667,7 @@ void cmGlobalXCodeGenerator::ClearXCodeObjects()
   this->FileRefs.clear();
 }
 
-void cmGlobalXCodeGenerator::addObject(cmXCodeObject* obj)
+void cmGlobalXCodeGenerator::addObject(std::unique_ptr<cmXCodeObject> obj)
 {
   if (obj->GetType() == cmXCodeObject::OBJECT) {
     const std::string& id = obj->GetId();
@@ -683,22 +682,24 @@ void cmGlobalXCodeGenerator::addObject(cmXCodeObject* obj)
     this->XCodeObjectIDs.insert(id);
   }
 
-  this->XCodeObjects.push_back(obj);
+  this->XCodeObjects.push_back(std::move(obj));
 }
 
 cmXCodeObject* cmGlobalXCodeGenerator::CreateObject(
   cmXCodeObject::PBXType ptype)
 {
-  cmXCodeObject* obj = new cmXCode21Object(ptype, cmXCodeObject::OBJECT);
-  this->addObject(obj);
-  return obj;
+  auto obj = cm::make_unique<cmXCode21Object>(ptype, cmXCodeObject::OBJECT);
+  auto ptr = obj.get();
+  this->addObject(std::move(obj));
+  return ptr;
 }
 
 cmXCodeObject* cmGlobalXCodeGenerator::CreateObject(cmXCodeObject::Type type)
 {
-  cmXCodeObject* obj = new cmXCodeObject(cmXCodeObject::None, type);
-  this->addObject(obj);
-  return obj;
+  auto obj = cm::make_unique<cmXCodeObject>(cmXCodeObject::None, type);
+  auto ptr = obj.get();
+  this->addObject(std::move(obj));
+  return ptr;
 }
 
 cmXCodeObject* cmGlobalXCodeGenerator::CreateString(const std::string& s)
@@ -2410,8 +2411,9 @@ void cmGlobalXCodeGenerator::CreateBuildSettings(cmGeneratorTarget* gtgt,
         std::string attribute = prop.substr(16);
         this->FilterConfigurationAttribute(configName, attribute);
         if (!attribute.empty()) {
+          const char* pr = gtgt->GetProperty(prop);
           std::string processed = cmGeneratorExpression::Evaluate(
-            gtgt->GetProperty(prop), this->CurrentLocalGenerator, configName);
+            pr ? pr : "", this->CurrentLocalGenerator, configName);
           buildSettings->AddAttribute(attribute,
                                       this->CreateString(processed));
         }
@@ -3146,7 +3148,7 @@ bool cmGlobalXCodeGenerator::CreateXCodeObjects(
         this->FilterConfigurationAttribute(config.first, attribute);
         if (!attribute.empty()) {
           std::string processed = cmGeneratorExpression::Evaluate(
-            this->CurrentMakefile->GetDefinition(var),
+            this->CurrentMakefile->GetSafeDefinition(var),
             this->CurrentLocalGenerator, config.first);
           buildSettingsForCfg->AddAttribute(attribute,
                                             this->CreateString(processed));
@@ -3390,7 +3392,7 @@ bool cmGlobalXCodeGenerator::OutputXCodeSharedSchemes(
   // collect all tests for the targets
   std::map<std::string, cmXCodeScheme::TestObjects> testables;
 
-  for (auto obj : this->XCodeObjects) {
+  for (const auto& obj : this->XCodeObjects) {
     if (obj->GetType() != cmXCodeObject::OBJECT ||
         obj->GetIsA() != cmXCodeObject::PBXNativeTarget) {
       continue;
@@ -3405,7 +3407,7 @@ bool cmGlobalXCodeGenerator::OutputXCodeSharedSchemes(
       continue;
     }
 
-    testables[testee].push_back(obj);
+    testables[testee].push_back(obj.get());
   }
 
   // generate scheme
@@ -3414,14 +3416,14 @@ bool cmGlobalXCodeGenerator::OutputXCodeSharedSchemes(
   // Since the lowest available Xcode version for testing was 6.4,
   // I'm setting this as a limit then
   if (this->XcodeVersion >= 64) {
-    for (auto obj : this->XCodeObjects) {
+    for (const auto& obj : this->XCodeObjects) {
       if (obj->GetType() == cmXCodeObject::OBJECT &&
           (obj->GetIsA() == cmXCodeObject::PBXNativeTarget ||
            obj->GetIsA() == cmXCodeObject::PBXAggregateTarget) &&
           (root->GetMakefile()->GetCMakeInstance()->GetIsInTryCompile() ||
            obj->GetTarget()->GetPropertyAsBool("XCODE_GENERATE_SCHEME"))) {
         const std::string& targetName = obj->GetTarget()->GetName();
-        cmXCodeScheme schm(root, obj, testables[targetName],
+        cmXCodeScheme schm(root, obj.get(), testables[targetName],
                            this->CurrentConfigurationTypes,
                            this->XcodeVersion);
         schm.WriteXCodeSharedScheme(xcProjDir,

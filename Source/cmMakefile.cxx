@@ -60,6 +60,7 @@
 #include "cmake.h"
 
 #ifndef CMAKE_BOOTSTRAP
+#  include "cmMakefileProfilingData.h"
 #  include "cmVariableWatch.h"
 #endif
 
@@ -372,19 +373,30 @@ void cmMakefile::PrintCommandTrace(const cmListFileFunction& lff) const
 class cmMakefileCall
 {
 public:
-  cmMakefileCall(cmMakefile* mf, cmCommandContext const& cc,
+  cmMakefileCall(cmMakefile* mf, cmListFileFunction const& lff,
                  cmExecutionStatus& status)
     : Makefile(mf)
   {
     cmListFileContext const& lfc = cmListFileContext::FromCommandContext(
-      cc, this->Makefile->StateSnapshot.GetExecutionListFile());
+      lff, this->Makefile->StateSnapshot.GetExecutionListFile());
     this->Makefile->Backtrace = this->Makefile->Backtrace.Push(lfc);
     ++this->Makefile->RecursionDepth;
     this->Makefile->ExecutionStatusStack.push_back(&status);
+#if !defined(CMAKE_BOOTSTRAP)
+    if (this->Makefile->GetCMakeInstance()->IsProfilingEnabled()) {
+      this->Makefile->GetCMakeInstance()->GetProfilingOutput().StartEntry(lff,
+                                                                          lfc);
+    }
+#endif
   }
 
   ~cmMakefileCall()
   {
+#if !defined(CMAKE_BOOTSTRAP)
+    if (this->Makefile->GetCMakeInstance()->IsProfilingEnabled()) {
+      this->Makefile->GetCMakeInstance()->GetProfilingOutput().StopEntry();
+    }
+#endif
     this->Makefile->ExecutionStatusStack.pop_back();
     --this->Makefile->RecursionDepth;
     this->Makefile->Backtrace = this->Makefile->Backtrace.Pop();
@@ -674,6 +686,27 @@ bool cmMakefile::ReadListFile(const std::string& filename)
   cmListFile listFile;
   if (!listFile.ParseFile(filenametoread.c_str(), this->GetMessenger(),
                           this->Backtrace)) {
+    return false;
+  }
+
+  this->ReadListFile(listFile, filenametoread);
+  if (cmSystemTools::GetFatalErrorOccured()) {
+    scope.Quiet();
+  }
+  return true;
+}
+
+bool cmMakefile::ReadListFileAsString(const std::string& content,
+                                      const std::string& virtualFileName)
+{
+  std::string filenametoread = cmSystemTools::CollapseFullPath(
+    virtualFileName, this->GetCurrentSourceDirectory());
+
+  ListFileScope scope(this, filenametoread);
+
+  cmListFile listFile;
+  if (!listFile.ParseString(content.c_str(), virtualFileName.c_str(),
+                            this->GetMessenger(), this->Backtrace)) {
     return false;
   }
 
@@ -4492,7 +4525,7 @@ bool cmMakefile::SetPolicy(cmPolicies::PolicyID id,
 
   // Deprecate old policies, especially those that require a lot
   // of code to maintain the old behavior.
-  if (status == cmPolicies::OLD && id <= cmPolicies::CMP0069 &&
+  if (status == cmPolicies::OLD && id <= cmPolicies::CMP0071 &&
       !(this->GetCMakeInstance()->GetIsInTryCompile() &&
         (
           // Policies set by cmCoreTryCompile::TryCompileCode.
