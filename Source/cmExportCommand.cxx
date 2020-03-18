@@ -183,6 +183,12 @@ bool cmExportCommand(std::vector<std::string> const& args,
     return false;
   }
 
+  // if cmExportBuildFileGenerator is already defined for the file
+  // and APPEND is not specified, ignore previous definition.
+  if (auto* ebfg = gg->GetExportedTargetsFile(fname)) {
+    mf.RemoveExportBuildFileGeneratorCMP0024(ebfg);
+  }
+
   // Setup export file generation.
   std::unique_ptr<cmExportBuildFileGenerator> ebfg = nullptr;
   if (android) {
