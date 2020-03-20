@@ -1669,7 +1669,7 @@ const char* cmTarget::GetProperty(const std::string& prop) const
     }
     // the type property returns what type the target is
     if (prop == propTYPE) {
-      return cmState::GetTargetTypeName(this->GetType());
+      return cmState::GetTargetTypeName(this->GetType()).c_str();
     }
     if (prop == propINCLUDE_DIRECTORIES) {
       if (impl->IncludeDirectoriesEntries.empty()) {
