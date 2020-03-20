@@ -1,5 +1,11 @@
 /* Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
    file Copyright.txt or https://cmake.org/licensing for details.  */
+
+#if !defined(_WIN32)
+// POSIX APIs are needed
+#  define _POSIX_C_SOURCE 200809L
+#endif
+
 #include "cmTimestamp.h"
 
 #include <cstdlib>
