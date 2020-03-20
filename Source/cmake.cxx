@@ -292,7 +292,7 @@ bool cmake::SetCacheArgs(const std::vector<std::string>& args)
   bool findPackageMode = false;
   for (unsigned int i = 1; i < args.size(); ++i) {
     std::string const& arg = args[i];
-    if (arg.find("-D", 0) == 0) {
+    if (cmHasLiteralPrefix(arg, "-D")) {
       std::string entry = arg.substr(2);
       if (entry.empty()) {
         ++i;
