@@ -193,7 +193,8 @@ bool cmCTestGIT::UpdateByFetchAndReset()
       if (line.find("\tnot-for-merge\t") == std::string::npos) {
         std::string::size_type pos = line.find('\t');
         if (pos != std::string::npos) {
-          sha1 = line.substr(0, pos);
+          sha1 = std::move(line);
+          sha1.resize(pos);
         }
       }
     }
