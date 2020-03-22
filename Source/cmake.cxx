@@ -292,7 +292,7 @@ bool cmake::SetCacheArgs(const std::vector<std::string>& args)
   bool findPackageMode = false;
   for (unsigned int i = 1; i < args.size(); ++i) {
     std::string const& arg = args[i];
-    if (arg.find("-D", 0) == 0) {
+    if (cmHasLiteralPrefix(arg, "-D")) {
       std::string entry = arg.substr(2);
       if (entry.empty()) {
         ++i;
@@ -1978,9 +1978,10 @@ std::string cmake::StripExtension(const std::string& file) const
 {
   auto dotpos = file.rfind('.');
   if (dotpos != std::string::npos) {
-    auto ext = file.substr(dotpos + 1);
 #if defined(_WIN32) || defined(__APPLE__)
-    ext = cmSystemTools::LowerCase(ext);
+    auto ext = cmSystemTools::LowerCase(file.substr(dotpos + 1));
+#else
+    auto ext = cm::string_view(file).substr(dotpos + 1);
 #endif
     if (this->IsSourceExtension(ext) || this->IsHeaderExtension(ext)) {
       return file.substr(0, dotpos);
