@@ -702,6 +702,12 @@ void cmLocalUnixMakefileGenerator3::WriteSpecialTargetsTop(
       << "\n";
     /* clang-format on */
   }
+  /* clang-format off */
+  makefileStream
+    << "# Command-line flag to silence nested $(MAKE).\n"
+    << "$(VERBOSE)MAKESILENT = -s\n"
+    << "\n";
+  /* clang-format on */
   if (this->IsWatcomWMake()) {
     /* clang-format off */
     makefileStream <<
@@ -1910,7 +1916,7 @@ std::string cmLocalUnixMakefileGenerator3::GetRecursiveMakeCall(
 {
   // Call make on the given file.
   std::string cmd = cmStrCat(
-    "$(MAKE) -f ",
+    "$(MAKE) $(MAKESILENT) -f ",
     this->ConvertToOutputFormat(makefile, cmOutputConverter::SHELL), ' ');
 
   cmGlobalUnixMakefileGenerator3* gg =
