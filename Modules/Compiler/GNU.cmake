@@ -16,6 +16,15 @@ set(__pch_header_CXX "c++-header")
 set(__pch_header_OBJC "objective-c-header")
 set(__pch_header_OBJCXX "objective-c++-header")
 
+function(__compiler_gnu_detect_sysroot compiler _gnu_sysroot_var)
+  execute_process(COMMAND "${compiler}" -print-sysroot
+    OUTPUT_VARIABLE _gnu_sysroot_run_out OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_VARIABLE _gnu_sysroot_run_err)
+  if(NOT _gnu_sysroot_run_err)
+    set("${_gnu_sysroot_var}" "${_gnu_sysroot_run_out}" PARENT_SCOPE)
+  endif()
+endfunction()
+
 macro(__compiler_gnu lang)
   # Feature flags.
   set(CMAKE_${lang}_VERBOSE_FLAG "-v")
@@ -114,7 +123,17 @@ macro(__compiler_gnu lang)
   if (NOT CMAKE_GENERATOR MATCHES "Xcode")
     set(CMAKE_PCH_PROLOGUE "#pragma GCC system_header")
   endif()
+
   set(CMAKE_${lang}_COMPILE_OPTIONS_INVALID_PCH -Winvalid-pch)
   set(CMAKE_${lang}_COMPILE_OPTIONS_USE_PCH -include <PCH_HEADER>)
   set(CMAKE_${lang}_COMPILE_OPTIONS_CREATE_PCH -x ${__pch_header_${lang}} -include <PCH_HEADER>)
+
+  if(NOT DEFINED __COMPILER_GNU_SYSROOT)
+    set(__COMPILER_GNU_SYSROOT 1)
+    __compiler_gnu_detect_sysroot("${CMAKE_${lang}_COMPILER}" gnu_sysroot_path)
+    if(gnu_sysroot_path)
+      list(PREPEND CMAKE_SYSTEM_PREFIX_PATH "${gnu_sysroot_path}/usr")
+    endif()
+  endif()
+
 endmacro()
