@@ -35,6 +35,38 @@ cmCursesLongMessageForm::~cmCursesLongMessageForm()
   }
 }
 
+void cmCursesLongMessageForm::UpdateContent(std::string const& output,
+                                            std::string const& title)
+{
+  this->Title = title;
+
+  if (!output.empty() && this->Messages.size() < MAX_CONTENT_SIZE) {
+    this->Messages.append("\n" + output);
+    auto msg = output.c_str();
+
+    int i = 0;
+    form_driver(this->Form, REQ_NEW_LINE);
+    while (msg[i] != '\0' && i < MAX_CONTENT_SIZE) {
+      if (msg[i] == '\n' && msg[i + 1] != '\0') {
+        form_driver(this->Form, REQ_NEW_LINE);
+      } else {
+        form_driver(this->Form, msg[i]);
+      }
+      i++;
+    }
+
+    if (this->Scrolling == ScrollBehavior::ScrollDown) {
+      form_driver(this->Form, REQ_END_FIELD);
+    } else {
+      form_driver(this->Form, REQ_BEG_FIELD);
+    }
+  }
+
+  this->UpdateStatusBar();
+  touchwin(stdscr);
+  refresh();
+}
+
 void cmCursesLongMessageForm::UpdateStatusBar()
 {
   int x;
@@ -125,7 +157,7 @@ void cmCursesLongMessageForm::Render(int /*left*/, int /*top*/, int /*width*/,
 
   int i = 0;
   form_driver(this->Form, REQ_BEG_FIELD);
-  while (msg[i] != '\0' && i < 60000) {
+  while (msg[i] != '\0' && i < MAX_CONTENT_SIZE) {
     if (msg[i] == '\n' && msg[i + 1] != '\0') {
       form_driver(this->Form, REQ_NEW_LINE);
     } else {
