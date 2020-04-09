@@ -711,7 +711,7 @@ find_path(CUDAToolkit_INCLUDE_DIR
 # And find the CUDA Runtime Library libcudart
 find_library(CUDA_CUDART
   NAMES cudart
-  PATH_SUFFIXES lib64 lib64/stubs lib/x64
+  PATH_SUFFIXES lib64 lib/x64 lib64/stubs lib/x64/stubs
 )
 if (NOT CUDA_CUDART AND NOT CUDAToolkit_FIND_QUIETLY)
   message(STATUS "Unable to find cudart library.")
@@ -759,7 +759,7 @@ if(CUDAToolkit_FOUND)
       NAMES ${search_names}
       HINTS ${CUDAToolkit_LIBRARY_DIR}
             ENV CUDA_PATH
-      PATH_SUFFIXES nvidia/current lib64 lib64/stubs lib/x64 lib lib/stubs
+      PATH_SUFFIXES nvidia/current lib64 lib/x64 lib lib64/stubs lib/x64/stubs lib/stubs stubs
                     ${arg_EXTRA_PATH_SUFFIXES}
     )
     mark_as_advanced(CUDA_${lib_name}_LIBRARY)
