@@ -20,7 +20,6 @@
 
 #include "cmsys/RegularExpression.hxx"
 
-#include "cmAlgorithms.h"
 #include "cmComputeLinkInformation.h"
 #include "cmCustomCommand.h"
 #include "cmCustomCommandGenerator.h"
@@ -1254,7 +1253,7 @@ std::vector<BT<std::string>> cmLocalGenerator::GetIncludeDirectoriesImplicit(
     // directly.  In this case adding -I/usr/include can hide SDK headers so we
     // must still exclude it.
     if ((lang == "C" || lang == "CXX" || lang == "CUDA") &&
-        !cmContains(impDirVec, "/usr/include") &&
+        !cm::contains(impDirVec, "/usr/include") &&
         std::find_if(impDirVec.begin(), impDirVec.end(),
                      [](std::string const& d) {
                        return cmHasLiteralSuffix(d, "/usr/include");
@@ -1275,13 +1274,14 @@ std::vector<BT<std::string>> cmLocalGenerator::GetIncludeDirectoriesImplicit(
                       &lang](std::string const& dir) {
     return (
       // Do not exclude directories that are not in an excluded set.
-      ((!cmContains(implicitSet, this->GlobalGenerator->GetRealPath(dir))) &&
-       (!cmContains(implicitExclude, dir)))
+      ((!cm::contains(implicitSet, this->GlobalGenerator->GetRealPath(dir))) &&
+       (!cm::contains(implicitExclude, dir)))
       // Do not exclude entries of the CPATH environment variable even though
       // they are implicitly searched by the compiler.  They are meant to be
       // user-specified directories that can be re-ordered or converted to
       // -isystem without breaking real compiler builtin headers.
-      || ((lang == "C" || lang == "CXX") && cmContains(this->EnvCPATH, dir)));
+      ||
+      ((lang == "C" || lang == "CXX") && cm::contains(this->EnvCPATH, dir)));
   };
 
   // Get the target-specific include directories.
@@ -1328,7 +1328,7 @@ std::vector<BT<std::string>> cmLocalGenerator::GetIncludeDirectoriesImplicit(
   if (!stripImplicitDirs) {
     // Append implicit directories that were requested by the user only
     for (BT<std::string> const& udr : userDirs) {
-      if (cmContains(implicitSet, cmSystemTools::GetRealPath(udr.Value))) {
+      if (cm::contains(implicitSet, cmSystemTools::GetRealPath(udr.Value))) {
         emitBT(udr);
       }
     }

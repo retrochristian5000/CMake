@@ -15,7 +15,6 @@
 
 #include "cmsys/RegularExpression.hxx"
 
-#include "cmAlgorithms.h"
 #include "cmComputeLinkInformation.h"
 #include "cmCustomCommand.h"
 #include "cmCustomCommandGenerator.h"
@@ -363,7 +362,7 @@ cmGlobalXCodeGenerator::GenerateBuildCommand(
     std::string projectArg = cmStrCat(projectName, ".xcodeproj");
     makeCommand.Add(projectArg);
   }
-  if (cmContains(targetNames, "clean")) {
+  if (cm::contains(targetNames, "clean")) {
     makeCommand.Add("clean");
     makeCommand.Add("-target", "ALL_BUILD");
   } else {
@@ -906,7 +905,7 @@ void cmGlobalXCodeGenerator::AddXCodeProjBuildRule(
              "/CMakeLists.txt");
   cmSourceFile* srcCMakeLists = target->Makefile->GetOrCreateSource(
     listfile, false, cmSourceFileLocationKind::Known);
-  if (!cmContains(sources, srcCMakeLists)) {
+  if (!cm::contains(sources, srcCMakeLists)) {
     sources.push_back(srcCMakeLists);
   }
 }
@@ -1422,8 +1421,8 @@ void cmGlobalXCodeGenerator::ForceLinkerLanguage(cmGeneratorTarget* gtgt)
 
 bool cmGlobalXCodeGenerator::IsHeaderFile(cmSourceFile* sf)
 {
-  return cmContains(this->CMakeInstance->GetHeaderExtensions(),
-                    sf->GetExtension());
+  return cm::contains(this->CMakeInstance->GetHeaderExtensions(),
+                      sf->GetExtension());
 }
 
 cmXCodeObject* cmGlobalXCodeGenerator::CreateBuildPhase(
