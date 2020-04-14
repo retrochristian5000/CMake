@@ -435,8 +435,6 @@ cmGlobalNinjaGenerator::cmGlobalNinjaGenerator(cmake* cm)
 #ifdef _WIN32
   cm->GetState()->SetWindowsShell(true);
 #endif
-  // // Ninja is not ported to non-Unix OS yet.
-  // this->ForceUnixPaths = true;
   this->FindMakeProgramFile = "CMakeNinjaFindMake.cmake";
 }
 
