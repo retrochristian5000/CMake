@@ -60,7 +60,6 @@ if (JASPER_FOUND)
         add_library(JASPER::Jasper UNKNOWN IMPORTED)
         set_target_properties(JASPER::Jasper PROPERTIES
                               INTERFACE_INCLUDE_DIRECTORIES "${JASPER_INCLUDE_DIR}"
-                              INTERFACE_COMPILE_DEFINITIONS "JASPER_HAS_UUID"
                               IMPORTED_LINK_INTERFACE_LANGUAGES "C"
                               IMPORTED_LOCATION "${JASPER_LIBRARIES}")
     endif ()
