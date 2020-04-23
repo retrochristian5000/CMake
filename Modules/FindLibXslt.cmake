@@ -52,11 +52,20 @@ find_path(LIBXSLT_INCLUDE_DIR NAMES libxslt/xslt.h
    ${PC_LIBXSLT_INCLUDE_DIRS}
   )
 
-find_library(LIBXSLT_LIBRARIES NAMES xslt libxslt
+# CMake 3.17 and below used 'LIBXSLT_LIBRARIES' as the name of
+# the cache entry storing the find_library result.  Use the
+# value if it was set by the project or user.
+if(DEFINED LIBXSLT_LIBRARIES AND NOT DEFINED LIBXSLT_LIBRARY)
+  set(LIBXSLT_LIBRARY ${LIBXSLT_LIBRARIES})
+endif()
+
+find_library(LIBXSLT_LIBRARY NAMES xslt libxslt
     HINTS
    ${PC_LIBXSLT_LIBDIR}
    ${PC_LIBXSLT_LIBRARY_DIRS}
   )
+
+set(LIBXSLT_LIBRARIES ${LIBXSLT_LIBRARY})
 
 find_library(LIBXSLT_EXSLT_LIBRARY NAMES exslt libexslt
     HINTS
@@ -93,7 +102,7 @@ if(LIBXSLT_FOUND AND NOT TARGET LibXslt::LibXslt)
   add_library(LibXslt::LibXslt UNKNOWN IMPORTED)
   set_target_properties(LibXslt::LibXslt PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${LIBXSLT_INCLUDE_DIR}")
   set_target_properties(LibXslt::LibXslt PROPERTIES INTERFACE_COMPILE_OPTIONS "${LIBXSLT_DEFINITIONS}")
-  set_property(TARGET LibXslt::LibXslt APPEND PROPERTY IMPORTED_LOCATION "${LIBXSLT_LIBRARIES}")
+  set_property(TARGET LibXslt::LibXslt APPEND PROPERTY IMPORTED_LOCATION "${LIBXSLT_LIBRARY}")
 endif()
 
 if(LIBXSLT_FOUND AND NOT TARGET LibXslt::LibExslt)
