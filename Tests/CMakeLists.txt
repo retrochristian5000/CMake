@@ -1440,6 +1440,7 @@ ${CMake_SOURCE_DIR}/Utilities/Release/push.bash --dir dev -- '${CMake_BUILD_NIGH
             Libinput
             LibUV
             LibXml2
+            LibXslt
             LTTngUST
             ODBC
             OpenACC
