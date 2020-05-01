@@ -46,7 +46,7 @@ cmake_install_dest_default()
 
 cmake_toupper()
 {
-    echo "$1" | tr '[:lower:]' '[:upper:]'
+    echo "$1" | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 }
 
 # Detect system and directory information.
