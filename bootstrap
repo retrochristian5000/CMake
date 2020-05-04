@@ -247,7 +247,7 @@ CMAKE_PROBLEMATIC_FILES="\
   */CMakeCXXCompiler.cmake \
   Source/cmConfigure.h \
   Source/CTest/Curl/config.h \
-  Utilities/cmThirdParty.h \
+  Utilities/ThirdParties/cmThirdParty.h \
   Utilities/cmcurl/lib/curl_config.h \
   Utilities/cmlibarchive/config.h \
   Utilities/cmliblzma/config.h \
@@ -1566,6 +1566,7 @@ cmake_c_flags="${cmake_c_flags} \
   -I`cmake_escape \"${cmake_bootstrap_dir}\"` \
   -I`cmake_escape \"${cmake_source_dir}/Source\"` \
   -I`cmake_escape \"${cmake_source_dir}/Source/LexerParser\"` \
+  -I`cmake_escape \"${cmake_source_dir}/Utilities/ThirdParties\"` \
   -I`cmake_escape \"${cmake_source_dir}/Utilities\"`"
 cmake_cxx_flags="${cmake_cxx_flags} \
   -DCMAKE_BOOTSTRAP \
@@ -1574,6 +1575,7 @@ cmake_cxx_flags="${cmake_cxx_flags} \
   -I`cmake_escape \"${cmake_source_dir}/Source\"` \
   -I`cmake_escape \"${cmake_source_dir}/Source/LexerParser\"` \
   -I`cmake_escape \"${cmake_source_dir}/Utilities/std\"` \
+  -I`cmake_escape \"${cmake_source_dir}/Utilities/ThirdParties\"` \
   -I`cmake_escape \"${cmake_source_dir}/Utilities\"`"
 echo "cmake: ${objs}" > "${cmake_bootstrap_dir}/Makefile"
 echo "	${cmake_cxx_compiler} ${cmake_ld_flags} ${cmake_cxx_flags} ${objs} ${libs} -o cmake" >> "${cmake_bootstrap_dir}/Makefile"

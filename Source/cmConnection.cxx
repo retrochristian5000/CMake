@@ -5,7 +5,7 @@
 #include <cassert>
 #include <cstring>
 
-#include "cm_uv.h"
+#include <cm3p/uv.h>
 
 #include "cmServer.h"
 
