@@ -5,7 +5,7 @@
 #include <cassert>
 #include <cstring>
 
-#include "cm_uv.h"
+#include <cm3p/uv.h>
 
 #include "cmServer.h"
 
@@ -20,8 +20,13 @@ void cmEventBasedConnection::on_alloc_buffer(uv_handle_t* handle,
                                              uv_buf_t* buf)
 {
   (void)(handle);
+#ifndef __clang_analyzer__
   char* rawBuffer = new char[suggested_size];
   *buf = uv_buf_init(rawBuffer, static_cast<unsigned int>(suggested_size));
+#else
+  (void)(suggested_size);
+  (void)(buf);
+#endif /* __clang_analyzer__ */
 }
 
 void cmEventBasedConnection::on_read(uv_stream_t* stream, ssize_t nread,
@@ -84,12 +89,14 @@ void cmEventBasedConnection::WriteData(const std::string& _data)
 
   auto ds = data.size();
 
+#ifndef __clang_analyzer__
   write_req_t* req = new write_req_t;
   req->req.data = this;
   req->buf = uv_buf_init(new char[ds], static_cast<unsigned int>(ds));
   memcpy(req->buf.base, data.c_str(), ds);
   uv_write(reinterpret_cast<uv_write_t*>(req), this->WriteStream, &req->buf, 1,
            on_write);
+#endif /* __clang_analyzer__ */
 }
 
 void cmEventBasedConnection::ReadData(const std::string& data)
