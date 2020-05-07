@@ -46,6 +46,8 @@ endif()
 run_BuildDepends(Custom-Symbolic-and-Byproduct)
 run_BuildDepends(Custom-Always)
 
+run_BuildDepends(ExternalProjectCacheArgs)
+
 # Test header dependencies with a build tree underneath a source tree.
 set(RunCMake_TEST_SOURCE_DIR "${RunCMake_BINARY_DIR}/BuildUnderSource")
 set(RunCMake_TEST_BINARY_DIR "${RunCMake_BINARY_DIR}/BuildUnderSource/build")
