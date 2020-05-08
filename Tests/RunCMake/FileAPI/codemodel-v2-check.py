@@ -12,7 +12,7 @@ def read_codemodel_json_data(filename):
 def check_objects(o, g):
     assert is_list(o)
     assert len(o) == 1
-    check_index_object(o[0], "codemodel", 2, 0, check_object_codemodel(g))
+    check_index_object(o[0], "codemodel", 2, 1, check_object_codemodel(g))
 
 def check_backtrace(t, b, backtrace):
     btg = t["backtraceGraph"]
@@ -404,6 +404,23 @@ def check_target(c):
                                      missing_exception=lambda e: "Include path: %s" % e["path"],
                                      extra_exception=lambda a: "Include path: %s" % a["path"])
 
+                if "precompileHeaders" in expected:
+                    expected_keys.append("precompileHeaders")
+
+                    def check_precompile_header(actual, expected):
+                        assert is_dict(actual)
+                        expected_keys = ["backtrace", "header"]
+                        check_backtrace(obj, actual["backtrace"], expected["backtrace"])
+
+                        assert sorted(actual.keys()) == sorted(expected_keys)
+
+                    check_list_match(lambda a, e: matches(a["header"], e["header"]),
+                                     actual["precompileHeaders"], expected["precompileHeaders"],
+                                     check=check_precompile_header,
+                                     check_exception=lambda a, e: "Precompile header: %s" % a["header"],
+                                     missing_exception=lambda e: "Precompile header: %s" % e["header"],
+                                     extra_exception=lambda a: "Precompile header: %s" % a["header"])
+
                 if expected["defines"] is not None:
                     expected_keys.append("defines")
 
@@ -587,6 +604,117 @@ def gen_check_targets(c, g, inSource):
     if matches(g["name"], "^Visual Studio "):
         expected = filter_list(lambda e: e["name"] not in ("ZERO_CHECK") or e["id"] == "^ZERO_CHECK::@6890427a1f51a3e7e1df$", expected)
         for e in expected:
+            if e["name"] == "cxx_exe":
+                e["sources"] = [
+                    {
+                        "path": ".*cmake_pch\\.cxx$",
+                        "isGenerated": None,
+                        "sourceGroupName": "Source Files",
+                        "compileGroupLanguage": "CXX",
+                        "backtrace": [
+                            {
+                                "file": "^cxx/CMakeLists\\.txt$",
+                                "line": None,
+                                "command": None,
+                                "hasParent": False
+                            }
+                        ]
+                    },
+                    {
+                        "path": "^empty\\.cxx$",
+                        "isGenerated": None,
+                        "sourceGroupName": "Source Files",
+                        "compileGroupLanguage": "CXX",
+                        "backtrace": [
+                            {
+                                "file": "^cxx/CMakeLists\\.txt$",
+                                "line": 5,
+                                "command": "add_executable",
+                                "hasParent": True
+                            },
+                            {
+                                "file": "^cxx/CMakeLists\\.txt$",
+                                "line": None,
+                                "command": None,
+                                "hasParent": False
+                            }
+                        ]
+                    },
+                    {
+                        "path": ".*/Debug/cmake_pch\\.hxx$",
+                        "isGenerated": None,
+                        "sourceGroupName": "Precompile Header File",
+                        "compileGroupLanguage": None,
+                        "backtrace": [
+                            {
+                                "file": "^cxx/CMakeLists\\.txt$",
+                                "line": None,
+                                "command": None,
+                                "hasParent": False
+                            }
+                        ]
+                    },
+                    {
+                        "path": ".*/Release/cmake_pch\\.hxx$",
+                        "isGenerated": None,
+                        "sourceGroupName": "Precompile Header File",
+                        "compileGroupLanguage": None,
+                        "backtrace": [
+                            {
+                                "file": "^cxx/CMakeLists\\.txt$",
+                                "line": None,
+                                "command": None,
+                                "hasParent": False
+                            }
+                        ]
+                    },
+                    {
+                        "path": ".*/MinSizeRel/cmake_pch\\.hxx$",
+                        "isGenerated": None,
+                        "sourceGroupName": "Precompile Header File",
+                        "compileGroupLanguage": None,
+                        "backtrace": [
+                            {
+                                "file": "^cxx/CMakeLists\\.txt$",
+                                "line": None,
+                                "command": None,
+                                "hasParent": False
+                            }
+                        ]
+                    },
+                    {
+                        "path": ".*/RelWithDebInfo/cmake_pch\\.hxx$",
+                        "isGenerated": None,
+                        "sourceGroupName": "Precompile Header File",
+                        "compileGroupLanguage": None,
+                        "backtrace": [
+                            {
+                                "file": "^cxx/CMakeLists\\.txt$",
+                                "line": None,
+                                "command": None,
+                                "hasParent": False
+                            }
+                        ]
+                    },
+                ]
+                e["sourceGroups"] = [
+                    {
+                        "name": "Source Files",
+                        "sourcePaths": [
+                            ".*cmake_pch\\.cxx$",
+                            "^empty\\.cxx$"
+                        ]
+                    },
+                    {
+                        "name": "Precompile Header File",
+                        "sourcePaths": [
+                            ".*/Debug/cmake_pch\\.hxx$",
+                            ".*/Release/cmake_pch\\.hxx$",
+                            ".*/MinSizeRel/cmake_pch\\.hxx$",
+                            ".*/RelWithDebInfo/cmake_pch\\.hxx$",
+                        ]
+                    },
+                ]
             if e["type"] == "UTILITY":
                 if e["id"] == "^ZERO_CHECK::@6890427a1f51a3e7e1df$":
                     e["sources"] = [
