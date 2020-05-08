@@ -116,3 +116,18 @@ if(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
   set_property(TARGET IntelIfDef PROPERTY Fortran_FORMAT FIXED)
   target_compile_definitions(IntelIfDef PRIVATE SOME_DEF)
 endif()
+
+# Test that we can always preprocess a target
+add_executable(preprocess_target preprocess2.f)
+set_property(TARGET preprocess_target PROPERTY Fortran_PREPROCESS ON)
+
+# Test that we can preprocess a single source file
+add_executable(preprocess_source preprocess3.f)
+set_property(SOURCE preprocess3.f PROPERTY Fortran_PREPROCESS ON)
+
+# Test that we can explicitly not preprocess a target
+# Won't work on certain compilers
+if(NOT CMAKE_Fortran_COMPILER_ID MATCHES "(NAG|PGI|SunPro)")
+  add_executable(no_preprocess_target badpreproc.fpp)
+  set_property(TARGET no_preprocess_target PROPERTY Fortran_PREPROCESS OFF)
+endif()

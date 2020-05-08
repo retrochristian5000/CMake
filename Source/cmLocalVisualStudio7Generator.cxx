@@ -683,6 +683,20 @@ void cmLocalVisualStudio7Generator::WriteConfiguration(
     }
   }
 
+  if (this->FortranProject) {
+    switch (cmOutputConverter::GetFortranPreprocess(
+      target->GetSafeProperty("Fortran_PREPROCESS"))) {
+      case cmOutputConverter::FortranPreprocess::Needed:
+        flags += " -fpp";
+        break;
+      case cmOutputConverter::FortranPreprocess::NotNeeded:
+        flags += " -nofpp";
+        break;
+      default:
+        break;
+    }
+  }
+
   // Get preprocessor definitions for this directory.
   std::string defineFlags = this->Makefile->GetDefineFlags();
   Options::Tool t = Options::Compiler;
