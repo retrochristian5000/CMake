@@ -129,20 +129,18 @@ if(NOT ((CMAKE_Fortran_COMPILER_ID STREQUAL "GNU" AND CMAKE_Fortran_COMPILER_VER
   set_property(SOURCE preprocess3.f PROPERTY Fortran_PREPROCESS ON)
 endif()
 
-if(NOT CMAKE_GENERATOR MATCHES "Ninja")
-  # Test that neither the compiler nor CMake performs unnecessary preprocessing.
-  add_executable(nopreprocess nopreprocess.f)
-  target_compile_options(nopreprocess PRIVATE -DINTEGER=nonsense)
-  set_property(TARGET nopreprocess PROPERTY Fortran_PREPROCESS OFF)
+# Test that neither the compiler nor CMake performs unnecessary preprocessing.
+add_executable(nopreprocess nopreprocess.f)
+target_compile_options(nopreprocess PRIVATE -DINTEGER=nonsense)
+set_property(TARGET nopreprocess PROPERTY Fortran_PREPROCESS OFF)
 
-  # Test that we can explicitly not preprocess a target.
-  # Won't work on certain compilers due to either missing a "don't
-  # preprocess" flag, or due to choice of file extension
-  if(NOT CMAKE_Fortran_COMPILER_ID MATCHES "(Flang|NAG|PGI|SunPro|XL)")
-    add_library(no_preprocess_target STATIC badpreproc.F)
-    if(NOT CMAKE_Fortran_COMPILER_ID STREQUAL "Cray")
-      target_sources(no_preprocess_target PRIVATE badpreproc.fpp)
-    endif()
-    set_property(TARGET no_preprocess_target PROPERTY Fortran_PREPROCESS OFF)
+# Test that we can explicitly not preprocess a target.
+# Won't work on certain compilers due to either missing a "don't
+# preprocess" flag, or due to choice of file extension
+if(NOT CMAKE_Fortran_COMPILER_ID MATCHES "(Flang|NAG|PGI|SunPro|XL)")
+  add_library(no_preprocess_target STATIC badpreproc.F)
+  if(NOT CMAKE_Fortran_COMPILER_ID STREQUAL "Cray")
+    target_sources(no_preprocess_target PRIVATE badpreproc.fpp)
   endif()
+  set_property(TARGET no_preprocess_target PROPERTY Fortran_PREPROCESS OFF)
 endif()
