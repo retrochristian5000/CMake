@@ -55,3 +55,13 @@ target_compile_definitions(ConfigSourcesLinkIface PRIVATE
   "$<$<NOT:$<CONFIG:Debug>>:CFG_OTHER>"
   )
 target_link_libraries(ConfigSourcesLinkIface ConfigSourcesIface)
+
+# A target with sources in only one configuration that is not the
+# first in CMAKE_CONFIGURATION_TYPES.
+if(CMAKE_CONFIGURATION_TYPES MATCHES ";([^;]+)")
+  set(one_config "${CMAKE_MATCH_1}")
+else()
+  set(one_config Release)
+endif()
+add_library(OneConfigOnly OBJECT "$<$<CONFIG:${one_config}>:${CMAKE_CURRENT_SOURCE_DIR}/iface_src.cpp>")
+set_property(TARGET OneConfigOnly PROPERTY LINKER_LANGUAGE CXX)
