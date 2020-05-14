@@ -770,12 +770,17 @@ bool HandleGlobImpl(std::vector<std::string> const& args, bool recurse,
               MessageType::AUTHOR_WARNING,
               "Cyclic recursion detected while globbing for '" + *i + "':\n" +
                 globMessage.content);
-          } else {
+          } else if (globMessage.type == cmsys::Glob::error) {
             status.GetMakefile().IssueMessage(
               MessageType::FATAL_ERROR,
               "Error has occurred while globbing for '" + *i + "' - " +
                 globMessage.content);
             shouldExit = true;
+          } else {
+            status.GetMakefile().IssueMessage(MessageType::LOG,
+                                              "Error while globbing for '" +
+                                                *i + "':\n" +
+                                                globMessage.content);
           }
         }
         if (shouldExit) {
