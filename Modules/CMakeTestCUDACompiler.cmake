@@ -68,6 +68,25 @@ else()
   endif()
 
   if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
+    # Detect CMAKE_CUDA_RUNTIME_LIBRARY_DEFAULT from the compiler by looking at which
+    # cudart library exists in the implicit link libraries passed to the host linker.
+    # This is required when a project sets the cuda runtime library as part of the
+    # initial flags.
+    list(FIND CMAKE_CUDA_HOST_IMPLICIT_LINK_LIBRARIES cudart_static __cuda_rt_loc)
+    if(NOT __cuda_rt_loc EQUAL -1)
+      set(CMAKE_CUDA_RUNTIME_LIBRARY_DEFAULT "STATIC")
+    else()
+      list(FIND CMAKE_CUDA_HOST_IMPLICIT_LINK_LIBRARIES cudart __cuda_rt_loc)
+      if(NOT __cuda_rt_loc EQUAL -1)
+        set(CMAKE_CUDA_RUNTIME_LIBRARY_DEFAULT "SHARED")
+      else()
+        set(CMAKE_CUDA_RUNTIME_LIBRARY_DEFAULT "NONE")
+      endif()
+    endif()
+    unset(__cuda_rt_loc)
+    set(_SET_CMAKE_CUDA_RUNTIME_LIBRARY_DEFAULT
+      "set(CMAKE_CUDA_RUNTIME_LIBRARY_DEFAULT \"${CMAKE_CUDA_RUNTIME_LIBRARY_DEFAULT}\")")
+
     # Remove the CUDA Toolkit include directories from the set of
     # implicit system include directories.
     # This resolves the issue that NVCC doesn't specify these
