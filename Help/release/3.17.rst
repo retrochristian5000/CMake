@@ -346,3 +346,10 @@ Changes made since CMake 3.17.0 include the following.
   :prop_tgt:`INTERFACE_INCLUDE_DIRECTORIES` target properties.
   Previously they would be places in ``*_CFLAGS_OTHER`` variables and
   :prop_tgt:`INTERFACE_COMPILE_OPTIONS` target properties.
+
+* In CMake 3.17.0 through 3.17.2, if :variable:`CMAKE_CUDA_RUNTIME_LIBRARY`
+  is not defined, the default is hard-coded to ``STATIC``.
+  This could break projects that add ``-cudart shared`` to their
+  initial :variable:`CMAKE_CUDA_FLAGS <CMAKE_<LANG>_FLAGS>`.
+  Now the default CUDA runtime library for ``nvcc`` is selected
+  based on the compiler's behavior with the initial flags.
