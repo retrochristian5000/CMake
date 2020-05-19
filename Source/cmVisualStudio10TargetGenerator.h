@@ -105,8 +105,12 @@ private:
   void WriteTargetSpecificReferences(Elem& e0);
   void WriteTargetsFileReferences(Elem& e1);
 
-  std::vector<std::string> GetIncludes(std::string const& config,
-                                       std::string const& lang) const;
+  struct IncludeDirectories {
+    std::vector<std::string> IncludeDirectories;
+    std::vector<std::string> SystemIncludeDirectories;
+  };
+  IncludeDirectories GetIncludes(std::string const& config,
+                                 std::string const& lang) const;
 
   bool ComputeClOptions();
   bool ComputeClOptions(std::string const& configName);
