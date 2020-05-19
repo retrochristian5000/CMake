@@ -164,10 +164,12 @@ struct cmVisualStudio10TargetGenerator::OptionsHelper
   {
     O.OutputPreprocessorDefinitions(O.Parent->S, O.Parent->Indent + 1, lang);
   }
-  void OutputAdditionalIncludeDirectories(const std::string& lang)
+  void OutputAdditionalIncludeDirectories(cmMakefile& mf,
+                                          const std::string& lang)
   {
     O.OutputAdditionalIncludeDirectories(O.Parent->S, O.Parent->Indent + 1,
                                          lang);
+    O.HandleSystemIncludeDirectories(mf, lang);
   }
   void OutputFlagMap() { O.OutputFlagMap(O.Parent->S, O.Parent->Indent + 1); }
   void PrependInheritedString(std::string const& key)
@@ -2541,7 +2543,7 @@ void cmVisualStudio10TargetGenerator::OutputSourceSpecificFlags(
       clOptions.SetConfiguration(config);
       OptionsHelper oh(clOptions, e2);
       oh.PrependInheritedString("AdditionalOptions");
-      oh.OutputAdditionalIncludeDirectories(lang);
+      oh.OutputAdditionalIncludeDirectories(*this->Makefile, lang);
       oh.OutputFlagMap();
       oh.OutputPreprocessorDefinitions(lang);
     }
@@ -2746,15 +2748,43 @@ void cmVisualStudio10TargetGenerator::OutputLinkIncremental(
   }
 }
 
-std::vector<std::string> cmVisualStudio10TargetGenerator::GetIncludes(
-  std::string const& config, std::string const& lang) const
+cmVisualStudio10TargetGenerator::IncludeDirectories
+cmVisualStudio10TargetGenerator::GetIncludes(std::string const& config,
+                                             std::string const& lang) const
 {
-  std::vector<std::string> includes;
-  this->LocalGenerator->GetIncludeDirectories(includes, this->GeneratorTarget,
-                                              lang, config);
-  for (std::string& i : includes) {
+  std::vector<std::string> all_includes;
+  this->LocalGenerator->GetIncludeDirectories(
+    all_includes, this->GeneratorTarget, lang, config);
+
+  // Split into system and non-system directories.
+  cmProp sysIncludeFlag = this->Makefile->GetDefinition(
+    cmStrCat("CMAKE_INCLUDE_SYSTEM_FLAG_", lang));
+
+  IncludeDirectories includes;
+  if (sysIncludeFlag) {
+    auto begin = std::make_move_iterator(all_includes.begin());
+    auto end = std::make_move_iterator(all_includes.end());
+    for (auto i = begin; i != end; ++i) {
+      auto dir = *i;
+      bool is_system =
+        this->GeneratorTarget->IsSystemIncludeDirectory(dir, config, lang);
+      if (is_system) {
+        includes.System.emplace_back(std::move(dir));
+      } else {
+        includes.Regular.emplace_back(std::move(dir));
+      }
+    }
+  } else {
+    includes.Regular = std::move(all_includes);
+  }
+
+  for (std::string& i : includes.Regular) {
     ConvertToWindowsSlash(i);
   }
+  for (std::string& i : includes.System) {
+    ConvertToWindowsSlash(i);
+  }
+
   return includes;
 }
 
@@ -2915,8 +2945,9 @@ bool cmVisualStudio10TargetGenerator::ComputeClOptions(
 
   // Get includes for this target
   if (!this->LangForClCompile.empty()) {
-    clOptions.AddIncludes(
-      this->GetIncludes(configName, this->LangForClCompile));
+    auto includes = this->GetIncludes(configName, this->LangForClCompile);
+    clOptions.AddIncludes(includes.Regular);
+    clOptions.AddSystemIncludes(includes.System);
   }
 
   if (this->MSTools) {
@@ -3017,7 +3048,8 @@ void cmVisualStudio10TargetGenerator::WriteClOptions(
   Elem e2(e1, "ClCompile");
   OptionsHelper oh(clOptions, e2);
   oh.PrependInheritedString("AdditionalOptions");
-  oh.OutputAdditionalIncludeDirectories(this->LangForClCompile);
+  oh.OutputAdditionalIncludeDirectories(*this->Makefile,
+                                        this->LangForClCompile);
   oh.OutputFlagMap();
   oh.OutputPreprocessorDefinitions(this->LangForClCompile);
 
@@ -3106,7 +3138,9 @@ bool cmVisualStudio10TargetGenerator::ComputeRcOptions(
   rcOptions.AddDefines(clOptions.GetDefines());
 
   // Get includes for this target
-  rcOptions.AddIncludes(this->GetIncludes(configName, "RC"));
+  auto includes = this->GetIncludes(configName, "RC");
+  rcOptions.AddIncludes(includes.Regular);
+  rcOptions.AddSystemIncludes(includes.System);
 
   this->RcOptions[configName] = std::move(pOptions);
   return true;
@@ -3122,7 +3156,7 @@ void cmVisualStudio10TargetGenerator::WriteRCOptions(
 
   OptionsHelper rcOptions(*(this->RcOptions[configName]), e2);
   rcOptions.OutputPreprocessorDefinitions("RC");
-  rcOptions.OutputAdditionalIncludeDirectories("RC");
+  rcOptions.OutputAdditionalIncludeDirectories(*this->Makefile, "RC");
   rcOptions.PrependInheritedString("AdditionalOptions");
   rcOptions.OutputFlagMap();
 }
@@ -3253,7 +3287,9 @@ bool cmVisualStudio10TargetGenerator::ComputeCudaOptions(
   }
 
   // Get includes for this target
-  cudaOptions.AddIncludes(this->GetIncludes(configName, "CUDA"));
+  auto includes = this->GetIncludes(configName, "CUDA");
+  cudaOptions.AddIncludes(includes.Regular);
+  cudaOptions.AddSystemIncludes(includes.System);
   cudaOptions.AddFlag("UseHostInclude", "false");
 
   // Add runtime library selection flag.
@@ -3281,7 +3317,7 @@ void cmVisualStudio10TargetGenerator::WriteCudaOptions(
   Elem e2(e1, "CudaCompile");
 
   OptionsHelper cudaOptions(*(this->CudaOptions[configName]), e2);
-  cudaOptions.OutputAdditionalIncludeDirectories("CUDA");
+  cudaOptions.OutputAdditionalIncludeDirectories(*this->Makefile, "CUDA");
   cudaOptions.OutputPreprocessorDefinitions("CUDA");
   cudaOptions.PrependInheritedString("AdditionalOptions");
   cudaOptions.OutputFlagMap();
@@ -3454,7 +3490,9 @@ bool cmVisualStudio10TargetGenerator::ComputeMasmOptions(
   masmOptions.Parse(flags);
 
   // Get includes for this target
-  masmOptions.AddIncludes(this->GetIncludes(configName, "ASM_MASM"));
+  auto includes = this->GetIncludes(configName, "ASM_MASM");
+  masmOptions.AddIncludes(includes.Regular);
+  masmOptions.AddSystemIncludes(includes.System);
 
   this->MasmOptions[configName] = std::move(pOptions);
   return true;
@@ -3473,7 +3511,7 @@ void cmVisualStudio10TargetGenerator::WriteMasmOptions(
   clOptions.OutputPreprocessorDefinitions("ASM_MASM");
 
   OptionsHelper masmOptions(*(this->MasmOptions[configName]), e2);
-  masmOptions.OutputAdditionalIncludeDirectories("ASM_MASM");
+  masmOptions.OutputAdditionalIncludeDirectories(*this->Makefile, "ASM_MASM");
   masmOptions.PrependInheritedString("AdditionalOptions");
   masmOptions.OutputFlagMap();
 }
@@ -3507,7 +3545,9 @@ bool cmVisualStudio10TargetGenerator::ComputeNasmOptions(
   nasmOptions.Parse(flags);
 
   // Get includes for this target
-  nasmOptions.AddIncludes(this->GetIncludes(configName, "ASM_NASM"));
+  auto includes = this->GetIncludes(configName, "ASM_NASM");
+  nasmOptions.AddIncludes(includes.Regular);
+  nasmOptions.AddSystemIncludes(includes.System);
 
   this->NasmOptions[configName] = std::move(pOptions);
   return true;
@@ -3522,7 +3562,7 @@ void cmVisualStudio10TargetGenerator::WriteNasmOptions(
   Elem e2(e1, "NASM");
 
   OptionsHelper nasmOptions(*(this->NasmOptions[configName]), e2);
-  nasmOptions.OutputAdditionalIncludeDirectories("ASM_NASM");
+  nasmOptions.OutputAdditionalIncludeDirectories(*this->Makefile, "ASM_NASM");
   nasmOptions.OutputFlagMap();
   nasmOptions.PrependInheritedString("AdditionalOptions");
   nasmOptions.OutputPreprocessorDefinitions("ASM_NASM");
@@ -4085,10 +4125,13 @@ void cmVisualStudio10TargetGenerator::WriteMidlOptions(
   // up (for non-directory form, it ends up looking in project binary dir
   // only).  Perhaps there's something to be done to make this more automatic
   // on the CMake side?
-  std::vector<std::string> const includes =
-    this->GetIncludes(configName, "MIDL");
+  auto const includes = this->GetIncludes(configName, "MIDL");
   std::ostringstream oss;
-  for (std::string const& i : includes) {
+  for (std::string const& i : includes.Regular) {
+    oss << i << ";";
+  }
+  // TODO
+  for (std::string const& i : includes.System) {
     oss << i << ";";
   }
   oss << "%(AdditionalIncludeDirectories)";

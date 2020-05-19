@@ -6,6 +6,7 @@
 #include "cmGeneratorExpression.h"
 #include "cmGeneratorTarget.h"
 #include "cmLocalVisualStudioGenerator.h"
+#include "cmMakefile.h"
 #include "cmOutputConverter.h"
 #include "cmSystemTools.h"
 
@@ -40,6 +41,32 @@ cmVisualStudioGeneratorOptions::cmVisualStudioGeneratorOptions(
   this->FortranRuntimeMT = false;
 
   this->UnknownFlagField = "AdditionalOptions";
+}
+
+void cmVisualStudioGeneratorOptions::AddSystemInclude(
+  const std::string& include)
+{
+  this->SystemIncludes.push_back(include);
+}
+
+void cmVisualStudioGeneratorOptions::AddSystemIncludes(
+  std::string const& includes)
+{
+  if (!includes.empty()) {
+    // Expand the list of includes.
+    cmExpandList(includes, this->SystemIncludes);
+  }
+}
+void cmVisualStudioGeneratorOptions::AddSystemIncludes(
+  const std::vector<std::string>& includes)
+{
+  cm::append(this->SystemIncludes, includes);
+}
+
+std::vector<std::string> const&
+cmVisualStudioGeneratorOptions::GetSystemIncludes() const
+{
+  return this->SystemIncludes;
 }
 
 void cmVisualStudioGeneratorOptions::AddTable(cmVS7FlagTable const* table)
@@ -493,6 +520,56 @@ void cmVisualStudioGeneratorOptions::OutputAdditionalIncludeDirectories(
   }
 
   this->OutputFlag(fout, indent, tag, oss.str());
+}
+
+void cmVisualStudioGeneratorOptions::HandleSystemIncludeDirectories(
+  cmMakefile& mf, const std::string& lang)
+{
+  if (this->SystemIncludes.empty()) {
+    return;
+  }
+
+  cmProp sysIncludeFlag =
+    mf.GetDefinition(cmStrCat("CMAKE_INCLUDE_SYSTEM_FLAG_", lang));
+  if (!sysIncludeFlag) {
+    // INTERNAL ERROR: `SystemIncludes` should only be filled out if a
+    // sysinclude flag is given.
+    return;
+  }
+
+  cmProp sysIncludeFlagWarning = mf.GetDefinition(
+    cmStrCat("_CMAKE_INCLUDE_SYSTEM_FLAG_", lang, "_WARNING"));
+
+  if (sysIncludeFlagWarning) {
+    this->AppendFlagString(this->UnknownFlagField, *sysIncludeFlagWarning);
+  }
+
+  std::ostringstream oss;
+  const char* sep = "";
+  for (std::string include : this->SystemIncludes) {
+    // first convert all of the slashes
+    std::string::size_type pos = 0;
+    while ((pos = include.find('/', pos)) != std::string::npos) {
+      include[pos] = '\\';
+      pos++;
+    }
+
+    if (lang == "ASM_NASM") {
+      include += "\\";
+    }
+
+    // Escape this include for the MSBuild.
+    if (this->Version >= cmGlobalVisualStudioGenerator::VS10) {
+      cmVS10EscapeForMSBuild(include);
+    }
+    oss << sep << *sysIncludeFlagWarning << include;
+    sep = " ";
+
+    if (lang == "Fortran") {
+      include += "/$(ConfigurationName)";
+      oss << sep << include;
+    }
+  }
 }
 
 void cmVisualStudioGeneratorOptions::OutputFlagMap(std::ostream& fout,
