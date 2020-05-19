@@ -6,6 +6,7 @@
 
 #include <iosfwd>
 #include <string>
+#include <vector>
 
 #include "cmGlobalVisualStudioGenerator.h"
 #include "cmIDEFlagTable.h"
@@ -34,6 +35,11 @@ public:
   cmVisualStudioGeneratorOptions(cmLocalVisualStudioGenerator* lg, Tool tool,
                                  cmVS7FlagTable const* table = nullptr,
                                  cmVS7FlagTable const* extraTable = nullptr);
+
+  void AddSystemInclude(const std::string& includes);
+  void AddSystemIncludes(std::string const& includes);
+  void AddSystemIncludes(const std::vector<std::string>& includes);
+  std::vector<std::string> const& GetSystemIncludes() const;
 
   // Add a table of flags.
   void AddTable(cmVS7FlagTable const* table);
@@ -73,6 +79,7 @@ public:
                                      const std::string& lang);
   void OutputAdditionalIncludeDirectories(std::ostream& fout, int indent,
                                           const std::string& lang);
+  void HandleSystemIncludeDirectories(cmMakefile& mf, const std::string& lang);
   void OutputFlagMap(std::ostream& fout, int indent);
   void SetConfiguration(const std::string& config);
   const std::string& GetConfiguration() const;
@@ -88,6 +95,9 @@ private:
 
   std::string Configuration;
   Tool CurrentTool;
+
+  // System include directories.
+  std::vector<std::string> SystemIncludes;
 
   bool FortranRuntimeDebug;
   bool FortranRuntimeDLL;
