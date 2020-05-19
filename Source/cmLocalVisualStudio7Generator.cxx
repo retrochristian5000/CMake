@@ -681,6 +681,20 @@ void cmLocalVisualStudio7Generator::WriteConfiguration(
       default:
         break;
     }
+
+    const char* preprocessVar = nullptr;
+    switch (cmOutputConverter::GetFortranPreprocess(
+      target->GetSafeProperty("Fortran_PREPROCESS"))) {
+      case cmOutputConverter::FortranPreprocess::Needed:
+        preprocessVar = "CMAKE_Fortran_COMPILE_OPTIONS_PREPROCESS_ON";
+        break;
+      case cmOutputConverter::FortranPreprocess::NotNeeded:
+        preprocessVar = "CMAKE_Fortran_COMPILE_OPTIONS_PREPROCESS_OFF";
+        break;
+      default:
+        break;
+    }
+    flags += this->GetMakefile()->GetSafeDefinition(preprocessVar);
   }
 
   // Get preprocessor definitions for this directory.
@@ -1486,6 +1500,22 @@ cmLocalVisualStudio7GeneratorFCInfo::cmLocalVisualStudio7GeneratorFCInfo(
         default:
           break;
       }
+
+      const char* preprocessVar = nullptr;
+      switch (cmOutputConverter::GetFortranPreprocess(
+        sf.GetSafeProperty("Fortran_PREPROCESS"))) {
+        case cmOutputConverter::FortranPreprocess::Needed:
+          preprocessVar = "CMAKE_Fortran_COMPILE_OPTIONS_PREPROCESS_ON";
+          needfc = true;
+          break;
+        case cmOutputConverter::FortranPreprocess::NotNeeded:
+          preprocessVar = "CMAKE_Fortran_COMPILE_OPTIONS_PREPROCESS_OFF";
+          needfc = true;
+          break;
+        default:
+          break;
+      }
+      fc.CompileFlags += lg->GetMakefile()->GetSafeDefinition(preprocessVar);
     }
     const std::string COMPILE_DEFINITIONS("COMPILE_DEFINITIONS");
     if (cmProp cdefs = sf.GetProperty(COMPILE_DEFINITIONS)) {

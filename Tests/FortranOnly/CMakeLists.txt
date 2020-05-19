@@ -116,3 +116,31 @@ if(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
   set_property(TARGET IntelIfDef PROPERTY Fortran_FORMAT FIXED)
   target_compile_definitions(IntelIfDef PRIVATE SOME_DEF)
 endif()
+
+# Skip these tests if compiler/version doesn't have preprocessing flags
+if(NOT ((CMAKE_Fortran_COMPILER_ID STREQUAL "GNU" AND CMAKE_Fortran_COMPILER_VERSION VERSION_LESS 4.4)
+      OR (CMAKE_Fortran_COMPILER_ID STREQUAL "XL" AND CMAKE_Fortran_COMPILER_VERSION VERSION_LESS 15.1.6)))
+  # Test that we can always preprocess a target
+  add_executable(preprocess_target preprocess2.f)
+  set_property(TARGET preprocess_target PROPERTY Fortran_PREPROCESS ON)
+
+  # Test that we can preprocess a single source file
+  add_executable(preprocess_source preprocess3.f)
+  set_property(SOURCE preprocess3.f PROPERTY Fortran_PREPROCESS ON)
+endif()
+
+# Test that neither the compiler nor CMake performs unnecessary preprocessing.
+add_executable(nopreprocess nopreprocess.f)
+target_compile_options(nopreprocess PRIVATE -DINTEGER=nonsense)
+set_property(TARGET nopreprocess PROPERTY Fortran_PREPROCESS OFF)
+
+# Test that we can explicitly not preprocess a target.
+# Won't work on certain compilers due to either missing a "don't
+# preprocess" flag, or due to choice of file extension
+if(NOT CMAKE_Fortran_COMPILER_ID MATCHES "(Flang|NAG|PGI|SunPro|XL)")
+  add_library(no_preprocess_target STATIC badpreproc.F)
+  if(NOT CMAKE_Fortran_COMPILER_ID STREQUAL "Cray")
+    target_sources(no_preprocess_target PRIVATE badpreproc.fpp)
+  endif()
+  set_property(TARGET no_preprocess_target PROPERTY Fortran_PREPROCESS OFF)
+endif()
