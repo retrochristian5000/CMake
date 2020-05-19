@@ -63,3 +63,9 @@ endmacro()
 if (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 19.05)
   set(CMAKE_C_COMPILE_OPTIONS_JMC "-JMC")
 endif()
+
+# The `/external:I` flag was introduced in VS2017 v 15.6 preview 1
+if (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 19.13)
+  string(APPEND CMAKE_C_FLAGS " -experimental:external")
+  set(CMAKE_INCLUDE_SYSTEM_FLAG_C "-external:I ")
+endif ()
