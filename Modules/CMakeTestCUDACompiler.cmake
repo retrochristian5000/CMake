@@ -67,6 +67,39 @@ else()
     set(CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES "${CMAKE_CUDA_HOST_IMPLICIT_LINK_DIRECTORIES}")
   endif()
 
+  if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
+    # Detect CMAKE_CUDA_RUNTIME_LIBRARY_DEFAULT from the compiler by looking at which
+    # cudart library exists in the implicit link libraries passed to the host linker.
+    # This is required when a project sets the cuda runtime library as part of the
+    # initial flags.
+    list(FIND CMAKE_CUDA_HOST_IMPLICIT_LINK_LIBRARIES cudart_static __cuda_rt_loc)
+    if(NOT __cuda_rt_loc EQUAL -1)
+      set(CMAKE_CUDA_RUNTIME_LIBRARY_DEFAULT "STATIC")
+    else()
+      list(FIND CMAKE_CUDA_HOST_IMPLICIT_LINK_LIBRARIES cudart __cuda_rt_loc)
+      if(NOT __cuda_rt_loc EQUAL -1)
+        set(CMAKE_CUDA_RUNTIME_LIBRARY_DEFAULT "SHARED")
+      else()
+        set(CMAKE_CUDA_RUNTIME_LIBRARY_DEFAULT "NONE")
+      endif()
+    endif()
+    unset(__cuda_rt_loc)
+    set(_SET_CMAKE_CUDA_RUNTIME_LIBRARY_DEFAULT
+      "set(CMAKE_CUDA_RUNTIME_LIBRARY_DEFAULT \"${CMAKE_CUDA_RUNTIME_LIBRARY_DEFAULT}\")")
+
+    # Remove the CUDA Toolkit include directories from the set of
+    # implicit system include directories.
+    # This resolves the issue that NVCC doesn't specify these
+    # includes as SYSTEM includes when compiling device code, and sometimes
+    # they contain headers that generate warnings, so let users mark them
+    # as SYSTEM explicitly
+    if(CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES)
+      list(REMOVE_ITEM CMAKE_CUDA_IMPLICIT_INCLUDE_DIRECTORIES
+        ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
+        )
+    endif()
+  endif()
+
   # Remove the following libraries from CMAKE_CUDA_HOST_IMPLICIT_LINK_LIBRARIES and
   # CMAKE_CUDA_IMPLICIT_LINK_LIBRARIES
   #
@@ -82,20 +115,6 @@ else()
   # These are controlled by CMAKE_CUDA_RUNTIME_LIBRARY
   list(REMOVE_ITEM CMAKE_CUDA_IMPLICIT_LINK_LIBRARIES cudart cudart_static cudadevrt rt pthread dl)
   list(REMOVE_ITEM CMAKE_CUDA_HOST_IMPLICIT_LINK_LIBRARIES cudart cudart_static cudadevrt rt pthread dl)
-
-  if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
-    # Remove the CUDA Toolkit include directories from the set of
-    # implicit system include directories.
-    # This resolves the issue that NVCC doesn't specify these
-    # includes as SYSTEM includes when compiling device code, and sometimes
-    # they contain headers that generate warnings, so let users mark them
-    # as SYSTEM explicitly
-    if(CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES)
-      list(REMOVE_ITEM CMAKE_CUDA_IMPLICIT_INCLUDE_DIRECTORIES
-        ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
-        )
-    endif()
-  endif()
 
   # Re-configure to save learned information.
   configure_file(
