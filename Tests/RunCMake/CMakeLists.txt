@@ -282,6 +282,7 @@ if(NOT CMake_TEST_EXTERNAL_CMAKE)
 endif()
 add_RunCMake_test(execute_process)
 add_RunCMake_test(export)
+add_RunCMake_test(cmake_language)
 add_RunCMake_test(cmake_minimum_required)
 add_RunCMake_test(cmake_parse_arguments)
 add_RunCMake_test(continue)
@@ -677,5 +678,3 @@ add_RunCMake_test("CTestCommandExpandLists")
 
 add_RunCMake_test(PrecompileHeaders -DCMAKE_C_COMPILER_ID=${CMAKE_C_COMPILER_ID})
 add_RunCMake_test("UnityBuild")
-
-add_RunCMake_test(cmake_command)
