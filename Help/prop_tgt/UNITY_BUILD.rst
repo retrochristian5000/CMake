@@ -68,6 +68,9 @@ a number of measures to help address such problems:
   problems with specific files than disabling unity builds for an entire
   target.
 
+* Projects can set :prop_tgt:`UNITY_BUILD_ANON_PREFIX` to avoid problems
+  with anonymous namespaces in unity builds.
+
 * The :prop_tgt:`UNITY_BUILD_CODE_BEFORE_INCLUDE` and
   :prop_tgt:`UNITY_BUILD_CODE_AFTER_INCLUDE` target properties can be used
   to inject code into the unity source files before and after every
