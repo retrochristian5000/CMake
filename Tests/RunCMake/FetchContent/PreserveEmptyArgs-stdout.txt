@@ -1,0 +1,4 @@
+[ \t]*-- Number of arguments: 6
+[ \t]*-- Argument 3: 'before'
+[ \t]*-- Argument 4: ''
+[ \t]*-- Argument 5: 'after'

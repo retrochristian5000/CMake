@@ -1,0 +1,27 @@
+[ \t]*-- Number of arguments for download: 6
+[ \t]*-- download argument 4: ''
+[ \t]*-- download argument 5: 'after'
+.*
+[ \t]*-- Number of arguments for update: 6
+[ \t]*-- update argument 4: ''
+[ \t]*-- update argument 5: 'after'
+.*
+[ \t]*-- Number of arguments for patch: 6
+[ \t]*-- patch argument 4: ''
+[ \t]*-- patch argument 5: 'after'
+.*
+[ \t]*-- Number of arguments for configure: 6
+[ \t]*-- configure argument 4: ''
+[ \t]*-- configure argument 5: 'after'
+.*
+[ \t]*-- Number of arguments for build: 6
+[ \t]*-- build argument 4: ''
+[ \t]*-- build argument 5: 'after'
+.*
+[ \t]*-- Number of arguments for install: 6
+[ \t]*-- install argument 4: ''
+[ \t]*-- install argument 5: 'after'
+.*
+[ \t]*-- Number of arguments for test: 6
+[ \t]*-- test argument 4: ''
+[ \t]*-- test argument 5: 'after'
