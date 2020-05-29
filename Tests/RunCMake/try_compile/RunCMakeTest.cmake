@@ -81,6 +81,7 @@ if(RunCMake_GENERATOR MATCHES "Make|Ninja")
     endif()
   endif()
 
+  execute_process(COMMAND ${CMAKE_COMMAND} -E sleep 1) # handle 1s resolution
   message(STATUS "RerunCMake: first configuration...")
   run_cmake(RerunCMake)
   run_cmake_command(RerunCMake-nowork${ninja} ${CMAKE_COMMAND} --build .)
