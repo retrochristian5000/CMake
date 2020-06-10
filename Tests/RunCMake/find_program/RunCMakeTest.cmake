@@ -11,6 +11,14 @@ if(CMAKE_SYSTEM_NAME MATCHES "^(Windows|CYGWIN)$")
   run_cmake(WindowsExe)
 endif()
 
-if(UNIX)
-  run_cmake(ExeNoRead)
+if(UNIX AND NOT CYGWIN)
+  # test non readable file only if not root
+  execute_process(
+    COMMAND id -u $ENV{USER}
+    OUTPUT_VARIABLE uid
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+  if(NOT "${uid}" STREQUAL "0")
+    run_cmake(ExeNoRead)
+  endif()
 endif()
