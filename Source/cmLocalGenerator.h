@@ -78,8 +78,6 @@ public:
    */
   void ComputeTargetManifest();
 
-  bool ComputeTargetCompileFeatures();
-
   bool IsRootMakefile() const;
 
   //! Get the makefile for this generator
@@ -123,7 +121,8 @@ public:
                               const std::string& config);
   void AddCompilerRequirementFlag(std::string& flags,
                                   cmGeneratorTarget const* target,
-                                  const std::string& lang);
+                                  const std::string& lang,
+                                  const std::string& config);
   //! Append flags to a string.
   virtual void AppendFlags(std::string& flags,
                            const std::string& newFlags) const;
