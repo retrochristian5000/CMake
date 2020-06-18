@@ -23,7 +23,9 @@ function(check_python case)
   endif()
   file(GLOB index ${RunCMake_TEST_BINARY_DIR}/.cmake/api/v1/reply/index-*.json)
   execute_process(
-    COMMAND ${PYTHON_EXECUTABLE} "${RunCMake_SOURCE_DIR}/${case}-check.py" "${index}" "${CMAKE_CXX_COMPILER_ID}"
+    COMMAND ${PYTHON_EXECUTABLE} "${RunCMake_SOURCE_DIR}/${case}-check.py" "${index}"
+      "${CMAKE_CXX_COMPILER_ID}"
+      "${ENABLE_CXX11}"
     RESULT_VARIABLE result
     OUTPUT_VARIABLE output
     ERROR_VARIABLE output
@@ -50,13 +52,13 @@ run_cmake(ClientStateful)
 
 function(run_object object)
   set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/${object}-build)
-  run_cmake(${object})
+  run_cmake_with_options(${object} ${ARGN})
   set(RunCMake_TEST_NO_CLEAN 1)
   run_cmake_command(${object}-SharedStateless ${CMAKE_COMMAND} .)
   run_cmake_command(${object}-ClientStateless ${CMAKE_COMMAND} .)
   run_cmake_command(${object}-ClientStateful ${CMAKE_COMMAND} .)
 endfunction()
 
-run_object(codemodel-v2)
+run_object(codemodel-v2 "-DENABLE_CXX11=${ENABLE_CXX11}")
 run_object(cache-v2)
 run_object(cmakeFiles-v1)
