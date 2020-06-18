@@ -19,3 +19,12 @@ target_link_options(cxx_exe PUBLIC TargetLinkOptions)
 target_link_directories(cxx_exe PUBLIC "${CMAKE_BINARY_DIR}/TargetLinkDir")
 
 target_precompile_headers(cxx_exe PUBLIC ../empty.h)
+
+add_executable(cxx_standard_exe ../empty.cxx)
+set_property(TARGET cxx_standard_exe PROPERTY CXX_STANDARD 17)
+
+add_executable(cxx_standard_compile_feature_exe ../empty.cxx)
+set_property(TARGET cxx_standard_compile_feature_exe PROPERTY CXX_STANDARD 98)
+if(CMAKE_CXX_COMPILER_ID MATCHES "^(AppleClang|Clang|GNU|Intel|MSVC|PGI|SunPro|XL|XLClang)$")
+  target_compile_features(cxx_standard_compile_feature_exe PRIVATE cxx_std_11)
+endif()
