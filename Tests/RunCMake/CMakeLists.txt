@@ -209,8 +209,15 @@ endif()
 add_RunCMake_test(ExternalData)
 add_RunCMake_test(FeatureSummary)
 add_RunCMake_test(FPHSA)
+if(CMAKE_CXX_STANDARD_DEFAULT)
+  set(FileAPI_ENABLE_CXX11 1)
+else()
+  set(FileAPI_ENABLE_CXX11 0)
+endif()
 add_RunCMake_test(FileAPI -DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}
-                          -DCMAKE_CXX_COMPILER_ID=${CMAKE_CXX_COMPILER_ID})
+                          -DCMAKE_CXX_COMPILER_ID=${CMAKE_CXX_COMPILER_ID}
+                          -DENABLE_CXX11=${FileAPI_ENABLE_CXX11}
+                          )
 add_RunCMake_test(FindBoost)
 add_RunCMake_test(FindLua)
 add_RunCMake_test(FindOpenGL)

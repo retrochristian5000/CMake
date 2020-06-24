@@ -869,6 +869,21 @@ with members:
     A string specifying the language (e.g. ``C``, ``CXX``, ``Fortran``)
     of the toolchain is used to compile the source file.
 
+  ``languageStandard``
+    Optional member that is present when the language standard is set
+    explicitly (e.g. via :prop_tgt:`CXX_STANDARD`) or implicitly by
+    compile features.  Each entry is a JSON object with two members:
+
+    ``backtrace``
+      Optional member that is present when a CMake language backtrace to
+      the ``<LANG>_STANDARD`` setting is available.  If the language
+      standard was set implicitly by a compile feature that is used as
+      the backtrace.  The value is an unsigned integer 0-based index
+      into the ``backtraceGraph`` member's ``nodes`` array.
+
+    ``standard``
+      Integer representing the language standard.
+
   ``compileCommandFragments``
     Optional member that is present when fragments of the compiler command
     line invocation are available.  The value is a JSON array of entries
