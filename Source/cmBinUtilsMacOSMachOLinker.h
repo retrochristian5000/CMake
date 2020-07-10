@@ -54,6 +54,8 @@ private:
                               std::string const& loaderPath,
                               std::vector<std::string> const& rpaths,
                               std::string& path, bool& resolved);
+
+  bool IsMissingSystemDylib(std::string const& path);
 };
 
 #endif // cmBinUtilsMacOSMachOLinker_h
