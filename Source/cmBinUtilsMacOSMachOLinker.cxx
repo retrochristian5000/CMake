@@ -82,7 +82,8 @@ bool cmBinUtilsMacOSMachOLinker::GetFileDependencies(
         return false;
       }
       if (resolved) {
-        if (!this->Archive->IsPostExcluded(path)) {
+        if (!this->Archive->IsPostExcluded(path) &&
+            !this->IsMissingSystemDylib(path)) {
           auto filename = cmSystemTools::GetFilenameName(path);
           bool unique;
           this->Archive->AddResolvedPath(filename, path, unique);
@@ -228,4 +229,14 @@ bool cmBinUtilsMacOSMachOLinker::ResolveRPathDependency(
 
   resolved = false;
   return true;
+}
+
+bool cmBinUtilsMacOSMachOLinker::IsMissingSystemDylib(std::string const& path)
+{
+  // Starting on macOS 11, the dynamic loader has a builtin cache of
+  // system-provided dylib files that do not exist on the filesystem.
+  // Tell our caller that these are expected to be missing.
+  return ((cmHasLiteralPrefix(path, "/System/Library/") ||
+           cmHasLiteralPrefix(path, "/usr/lib/")) &&
+          !cmSystemTools::PathExists(path));
 }
