@@ -10,7 +10,7 @@ Get a property.
                 DIRECTORY [<dir>]  |
                 TARGET    <target> |
                 SOURCE    <source> |
-                          [TARGET_DIRECTORY <target> | DIRECTORY <dir>] |
+                          [DIRECTORY <dir> | TARGET_DIRECTORY <target>] |
                 INSTALL   <file>   |
                 TEST      <test>   |
                 CACHE     <entry>  |
@@ -50,14 +50,18 @@ It must be one of the following:
 ``VARIABLE``
   Scope is unique and does not accept a name.
 
-In the ``SOURCE`` case, the queried source file scope can be changed by
-specifying one of the additional options: ``DIRECTORY`` or ``TARGET_DIRECTORY``.
+In the ``SOURCE`` case, the queried directory scope can be changed by
+specifying one of the options ``DIRECTORY`` or ``TARGET_DIRECTORY``:
 
-``DIRECTORY`` takes a path to a processed directory, and the source file property
-will be read from that directory scope.
+  ``DIRECTORY`` takes a path to a directory and the source file property will
+  be read from that directory scope.  CMake must already know about that source
+  directory, either by having added it through a call to
+  :command:`add_subdirectory` or it being the top level source directory.
+  Relative paths are treated as relative to the current source directory.
 
-``TARGET_DIRECTORY`` takes the name of an existing target. The source file
-property will be read from this target's directory scope.
+  ``TARGET_DIRECTORY`` takes the name of an existing target. The source file
+  property will be read from the directory scope in which that target was
+  created.
 
 The required ``PROPERTY`` option is immediately followed by the name of
 the property to get.  If the property is not set an empty value is
