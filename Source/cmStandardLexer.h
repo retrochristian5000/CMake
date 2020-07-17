@@ -6,6 +6,8 @@
 #if !defined(_WIN32) && !defined(__sun)
 /* POSIX APIs are needed */
 #  define _POSIX_C_SOURCE 200809L
+/* Needed for glibc<2.12 */
+#  define _XOPEN_SOURCE 600
 #endif
 #if defined(__sun) && defined(__GNUC__) && !defined(__cplusplus)
 /* C sources: for fileno and strdup */
