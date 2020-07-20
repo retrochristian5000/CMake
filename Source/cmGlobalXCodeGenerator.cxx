@@ -1204,6 +1204,7 @@ bool cmGlobalXCodeGenerator::CreateXCodeTarget(
   }
 
   if (gtgt->GetType() == cmStateEnums::UTILITY ||
+      gtgt->GetType() == cmStateEnums::INTERFACE_LIBRARY ||
       gtgt->GetType() == cmStateEnums::GLOBAL_TARGET) {
     cmXCodeObject* t = this->CreateUtilityTarget(gtgt);
     if (!t) {
