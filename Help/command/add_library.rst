@@ -159,10 +159,11 @@ Interface Libraries
 
 .. code-block:: cmake
 
-  add_library(<name> INTERFACE [IMPORTED [GLOBAL]])
+  add_library(<name> INTERFACE [<source>...] [EXCLUDE_FROM_ALL])
 
-Creates an :ref:`Interface Library <Interface Libraries>`.  An ``INTERFACE``
-library target does not directly create build output, though it may
+Creates an :ref:`Interface Library <Interface Libraries>`.
+An ``INTERFACE`` library target does not compile sources and does
+not produce a library artifact on disk.  An ``INTERFACE`` library may
 have properties set on it and it may be installed, exported and
 imported. Typically the ``INTERFACE_*`` properties are populated on
 the interface target using the commands:
@@ -178,9 +179,25 @@ the interface target using the commands:
 and then it is used as an argument to :command:`target_link_libraries`
 like any other target.
 
-An ``INTERFACE`` :ref:`Imported Target <Imported Targets>` may also be
-created with this signature.  An ``IMPORTED`` library target references a
-library defined outside the project.  The target name has scope in the
+An ``INTERFACE`` library is not included in the generated buildsystem
+as a build target unless it has source files (i.e. the :prop_tgt:`SOURCES`
+target property is set).  Source files may be listed directly in the
+``add_library`` call or added later by calls to :command:`target_sources`.
+If an interface library has source files, it will appear in the generated
+buildsystem as a build target much like a target defined by the
+:command:`add_custom_target` command.  It does not compile any sources,
+but does contain build rules for custom commands created by the
+:command:`add_custom_command` command.
+
+An ``INTERFACE`` :ref:`Imported Target <Imported Targets>` may be created
+with the signature:
+
+.. code-block:: cmake
+
+  add_library(<name> INTERFACE IMPORTED [GLOBAL])
+
+An ``IMPORTED`` interface library target may define usage requirements for
+another package outside the project.  The target name has scope in the
 directory in which it is created and below, but the ``GLOBAL`` option
 extends visibility.  It may be referenced like any target built within
 the project.  ``IMPORTED`` libraries are useful for convenient reference
