@@ -530,10 +530,11 @@ void cmGlobalNinjaGenerator::Generate()
   this->CloseBuildFileStreams();
 
 #ifdef _WIN32
-  // The ninja tools will not be able to update metadata on Windows
+  // Older ninja tools will not be able to update metadata on Windows
   // when we are re-generating inside an existing 'ninja' invocation
   // because the outer tool has the files open for write.
-  if (!this->GetCMakeInstance()->GetRegenerateDuringBuild())
+  if (this->NinjaSupportsMetadataOnRegeneration ||
+      !this->GetCMakeInstance()->GetRegenerateDuringBuild())
 #endif
   {
     this->CleanMetaData();
@@ -679,6 +680,9 @@ void cmGlobalNinjaGenerator::CheckNinjaFeatures()
   this->NinjaSupportsRestatTool = !cmSystemTools::VersionCompare(
     cmSystemTools::OP_LESS, this->NinjaVersion.c_str(),
     RequiredNinjaVersionForRestatTool().c_str());
+  this->NinjaSupportsMetadataOnRegeneration = !cmSystemTools::VersionCompare(
+    cmSystemTools::OP_LESS, this->NinjaVersion.c_str(),
+    RequiredNinjaVersionForMetadataOnRegeneration().c_str());
 }
 
 bool cmGlobalNinjaGenerator::CheckLanguages(
