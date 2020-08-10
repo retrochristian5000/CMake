@@ -1,0 +1,15 @@
+CMake Warning \(dev\) at CTestTestfile.cmake:[0-9]+:
+  Syntax Warning in cmake code at column [0-9]+
+
+  Argument not separated from preceding token by whitespace\.
+This warning is for project developers\.  Use -Wno-dev to suppress it\.
+.*
+Unable to find executable:|CMake Error at CTestTestfile.cmake:[0-9]+:
+  Parse error\.  Function missing ending "\)"\.  Instead found unterminated
+  string with text "\\ NOT_AVAILABLE\)
+
+  endif\(\)
+
+  "\.
+.*
+No tests were found!!!

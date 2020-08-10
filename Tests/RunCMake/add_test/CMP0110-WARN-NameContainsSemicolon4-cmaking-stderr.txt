@@ -1,0 +1,8 @@
+CMake Error at CMakeLists\.txt:[0-9]+ \(add_test\):
+  add_test given unknown argument:
+
+    SuffixTest
+.*
+CMake Error at CMakeLists\.txt:[0-9]+ \(set_tests_properties\):
+  set_tests_properties Can not find test to add properties to:
+  PrefixTest;SuffixTest

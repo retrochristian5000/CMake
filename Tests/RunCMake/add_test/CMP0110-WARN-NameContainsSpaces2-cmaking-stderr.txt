@@ -1,0 +1,4 @@
+CMake Error at CMakeLists\.txt:[0-9]+ \(add_test\):
+  add_test given unknown argument:
+
+    SuffixTest
