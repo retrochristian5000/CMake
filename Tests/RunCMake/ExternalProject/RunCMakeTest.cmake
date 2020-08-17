@@ -27,6 +27,36 @@ function(__ep_test_with_build testName)
   run_cmake_command(${testName}-build ${CMAKE_COMMAND} --build .)
 endfunction()
 
+find_package(Python3)
+function(__ep_test_with_build_with_server testName)
+  if(NOT Python3_EXECUTABLE)
+    return()
+  endif()
+  set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/${testName}-build)
+  set(RunCMake_TEST_NO_CLEAN 1)
+  set(RunCMake_TEST_TIMEOUT 20)
+  set(RunCMake_TEST_OUTPUT_MERGE TRUE)
+  file(REMOVE_RECURSE "${RunCMake_TEST_BINARY_DIR}")
+  file(MAKE_DIRECTORY "${RunCMake_TEST_BINARY_DIR}")
+  set(URL_FILE ${CMAKE_CURRENT_BINARY_DIR}/${testName}.url)
+  if(EXISTS "${URL_FILE}")
+    file(REMOVE "${URL_FILE}")
+  endif()
+  execute_process(COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/ExternalProjectDownloadServer.py --file "${URL_FILE}" ${ARGN})
+
+  while(NOT EXISTS ${URL_FILE})
+    execute_process(COMMAND ${CMAKE_COMMAND} -E sleep 1)
+  endwhile()
+
+  file(READ ${URL_FILE} SERVER_URL)
+  message(STATUS "URL : ${URL_FILE} - ${SERVER_URL}")
+  run_cmake_with_options(${testName} ${CMAKE_COMMAND} -DSERVER_URL=${SERVER_URL} )
+  run_cmake_command(${testName}-clean ${CMAKE_COMMAND} --build . --target clean)
+  run_cmake_command(${testName}-build ${CMAKE_COMMAND} --build .)
+endfunction()
+
+
+
 __ep_test_with_build(MultiCommand)
 
 set(RunCMake_TEST_OUTPUT_MERGE 1)
@@ -38,6 +68,9 @@ set(RunCMake_TEST_OUTPUT_MERGE 0)
 if(NOT RunCMake_GENERATOR MATCHES "Visual Studio")
   __ep_test_with_build(LogOutputOnFailure)
   __ep_test_with_build(LogOutputOnFailureMerged)
+  __ep_test_with_build(DownloadTimeout)
+  __ep_test_with_build_with_server(DownloadInactivityTimeout --speed_limit --limit_duration 40)
+  __ep_test_with_build_with_server(DownloadInactivityResume --speed_limit --limit_duration 1)
 endif()
 
 # We can't test the substitution when using the old MSYS due to
