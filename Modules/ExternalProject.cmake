@@ -750,7 +750,7 @@ control needed to implement such step-level capabilities.
 
   ``<name>`` is the same as the name passed to the original call to
   :command:`ExternalProject_Add`. The specified ``<step>`` must not be one of
-  the pre-defined steps (``mkdir``, ``download``, ``update``, ``skip-update``,
+  the pre-defined steps (``mkdir``, ``download``, ``update``,
   ``patch``, ``configure``, ``build``, ``install`` or ``test``). The supported
   options are:
 
@@ -2774,21 +2774,6 @@ Update to Mercurial >= 2.1.1.
       )"
   )
 
-  if(update_disconnected)
-    _ep_get_step_stampfile(${name} skip-update skip-update_stamp_file)
-    string(REPLACE "Performing" "Skipping" comment "${comment}")
-    ExternalProject_Add_Step(${name} skip-update
-      COMMENT ${comment}
-      ALWAYS ${always}
-      EXCLUDE_FROM_MAIN 1
-      WORKING_DIRECTORY ${work_dir}
-      DEPENDEES download
-      ${log}
-      ${uses_terminal}
-    )
-    set_property(SOURCE ${skip-update_stamp_file} PROPERTY SYMBOLIC 1)
-  endif()
-
 endfunction()
 
 
@@ -2813,9 +2798,9 @@ function(_ep_add_patch_command name)
 
   _ep_get_update_disconnected(update_disconnected ${name})
   if(update_disconnected)
-    set(update_dep skip-update)
+    set(patch_dep download)
   else()
-    set(update_dep update)
+    set(patch_dep update)
   endif()
 
   set(__cmdQuoted)
@@ -2826,7 +2811,7 @@ function(_ep_add_patch_command name)
     ExternalProject_Add_Step(${name} patch
       COMMAND ${__cmdQuoted}
       WORKING_DIRECTORY \${work_dir}
-      DEPENDEES download \${update_dep}
+      DEPENDEES \${patch_dep}
       ${log}
       )"
   )
@@ -2982,13 +2967,6 @@ function(_ep_add_configure_command name)
     set(uses_terminal "")
   endif()
 
-  _ep_get_update_disconnected(update_disconnected ${name})
-  if(update_disconnected)
-    set(update_dep skip-update)
-  else()
-    set(update_dep update)
-  endif()
-
   set(__cmdQuoted)
   foreach(__item IN LISTS cmd)
     string(APPEND __cmdQuoted " [==[${__item}]==]")
@@ -2997,7 +2975,7 @@ function(_ep_add_configure_command name)
     ExternalProject_Add_Step(${name} configure
       COMMAND ${__cmdQuoted}
       WORKING_DIRECTORY \${binary_dir}
-      DEPENDEES \${update_dep} patch
+      DEPENDEES patch
       DEPENDS \${file_deps}
       ${log}
       ${uses_terminal}
