@@ -370,6 +370,10 @@ public:
     return "1.10";
   }
   static std::string RequiredNinjaVersionForCleanDeadTool() { return "1.10"; }
+  static std::string RequiredNinjaVersionForMetadataOnRegeneration()
+  {
+    return "1.10.1";
+  }
   bool SupportsConsolePool() const;
   bool SupportsImplicitOuts() const;
   bool SupportsManifestRestat() const;
@@ -533,6 +537,7 @@ private:
   bool NinjaSupportsRestatTool = false;
   bool NinjaSupportsUnconditionalRecompactTool = false;
   bool NinjaSupportsCleanDeadTool = false;
+  bool NinjaSupportsMetadataOnRegeneration = false;
 
 private:
   void InitOutputPathPrefix();
