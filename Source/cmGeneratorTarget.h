@@ -813,6 +813,11 @@ public:
 
   const std::string& GetSourcesProperty() const;
 
+  void AddISPCGeneratedHeader(std::string const& header,
+                              std::string const& config);
+  std::vector<std::string> GetGeneratedISPCHeaders(
+    std::string const& config) const;
+
 private:
   void AddSourceCommon(const std::string& src, bool before = false);
 
@@ -990,6 +995,9 @@ private:
   mutable std::map<std::string, std::string> PchUseCompileOptions;
 
   std::unordered_set<std::string> UnityBatchedSourceFiles;
+
+  std::unordered_map<std::string, std::vector<std::string>>
+    ISPCGeneratedHeaders;
 
   bool IsLinkLookupScope(std::string const& n,
                          cmLocalGenerator const*& lg) const;
