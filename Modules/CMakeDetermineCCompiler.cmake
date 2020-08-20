@@ -72,7 +72,6 @@ else()
   # Each entry in this list is a set of extra flags to try
   # adding to the compile line to see if it helps produce
   # a valid identification file.
-  set(CMAKE_C_COMPILER_ID_TEST_FLAGS_FIRST)
   set(CMAKE_C_COMPILER_ID_TEST_FLAGS
     # Try compiling to an object file only.
     "-c"
@@ -88,7 +87,7 @@ else()
     )
 endif()
 if(CMAKE_C_COMPILER_TARGET)
-  list(PREPEND CMAKE_C_COMPILER_ID_TEST_FLAGS "-c --target=${CMAKE_C_COMPILER_TARGET}")
+  set(CMAKE_C_COMPILER_ID_TEST_FLAGS_FIRST "-c --target=${CMAKE_C_COMPILER_TARGET}")
 endif()
 # Build a small source file to identify the compiler.
 if(NOT CMAKE_C_COMPILER_ID_RUN)
