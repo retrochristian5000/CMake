@@ -1,0 +1,18 @@
+{
+  "version": {
+    "major": 1,
+    "minor": 0
+  },
+  "configurePresets": [
+    {
+      "name": "DuplicatePresets",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build"
+    },
+    {
+      "name": "DuplicatePresets",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build"
+    }
+  ]
+}
