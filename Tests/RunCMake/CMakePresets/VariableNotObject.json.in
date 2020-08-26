@@ -1,0 +1,16 @@
+{
+  "version": {
+    "major": 1,
+    "minor": 0
+  },
+  "presets": [
+    {
+      "name": "VariableNotObject",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build",
+      "variables": [
+        []
+      ]
+    }
+  ]
+}
