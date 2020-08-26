@@ -1,0 +1,25 @@
+Preset CMake variables:
+
+  TEST_DOLLAR="\$"
+  TEST_ENVIRONMENT_VARIABLE="Environment variable is working"
+  TEST_EXPANSION="\\Good \${dollar} \$ \\\$ \$a"
+  TEST_GENERATOR="x[^
+]*x"
+  TEST_MULTIPLE_MACROS="Good [^
+]*"
+  TEST_NO_ENVIRONMENT_VARIABLE=""
+  TEST_OFF:BOOL="OFF"
+  TEST_OVERRIDE_3:STRING="Default value"
+  TEST_OVERRIDE_4:STRING="Default value"
+  TEST_PRESET_NAME:STRING="xGoodx"
+  TEST_SOURCE_DIR:PATH="[^
+]*/Tests/RunCMake/CMakePresets/Good"
+  TEST_SOURCE_LIST:FILEPATH="[^
+]*/Tests/RunCMake/CMakePresets/Good/CMakeLists\.txt"
+  TEST_SOURCE_PARENT_DIR:PATH="[^
+]*/Tests/RunCMake/CMakePresets"
+  TEST_TRAILING_BACKSLASH="a \\"
+  TEST_TRAILING_DOLLAR="a \$"
+  TEST_TRUE:BOOL="TRUE"
+
+-- Configuring done

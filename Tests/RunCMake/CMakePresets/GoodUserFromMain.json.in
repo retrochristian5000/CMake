@@ -1,0 +1,13 @@
+{
+  "version": {
+    "major": 1,
+    "minor": 0
+  },
+  "configurePresets": [
+    {
+      "name": "GoodUserFromMain",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build"
+    }
+  ]
+}
