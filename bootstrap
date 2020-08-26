@@ -291,6 +291,7 @@ CMAKE_CXX_SOURCES="\
   cmCMakePath \
   cmCMakePathCommand \
   cmCMakePolicyCommand \
+  cmCMakePresetsFile \
   cmCPackPropertiesGenerator \
   cmCacheManager \
   cmCheckCustomOutputs \
