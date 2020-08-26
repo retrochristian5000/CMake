@@ -1,0 +1,419 @@
+{
+  "version": {
+    "major": 1,
+    "minor": 0
+  },
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 18,
+    "patch": 0
+  },
+  "presets": [
+    {
+      "name": "Good",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build",
+      "cmakeExecutable": "/path/does/not/exist/cmake",
+      "variables": [
+        {
+          "name": "TEST_SOURCE_DIR",
+          "type": "PATH",
+          "value": "${sourceDir}"
+        },
+        {
+          "name": "TEST_SOURCE_LIST",
+          "type": "FILEPATH",
+          "value": "${sourceDir}/CMakeLists.txt"
+        },
+        {
+          "name": "TEST_TRUE",
+          "type": "BOOL",
+          "value": "TRUE"
+        },
+        {
+          "name": "TEST_OFF",
+          "type": "BOOL",
+          "value": "OFF"
+        },
+        {
+          "name": "TEST_PRESET_NAME",
+          "type": "STRING",
+          "value": "x${presetName}x"
+        },
+        {
+          "name": "TEST_GENERATOR",
+          "value": "x${generator}x"
+        },
+        {
+          "name": "TEST_DOLLAR",
+          "value": "${dollar}"
+        },
+        {
+          "name": "TEST_ENVIRONMENT_VARIABLE",
+          "value": "${env.TEST_ENVIRONMENT_VARIABLE}"
+        },
+        {
+          "name": "TEST_NO_ENVIRONMENT_VARIABLE",
+          "value": "${env.TEST_NO_ENVIRONMENT_VARIABLE}"
+        },
+        {
+          "name": "TEST_MULTIPLE_MACROS",
+          "value": "${presetName} ${generator}"
+        },
+        {
+          "name": "TEST_EXPANSION",
+          "value": "\\${presetName} ${dollar}{dollar} $ \\$ $a"
+        },
+        {
+          "name": "TEST_TRAILING_DOLLAR",
+          "value": "a $"
+        },
+        {
+          "name": "TEST_TRAILING_BACKSLASH",
+          "value": "a \\"
+        },
+        {
+          "name": "TEST_OVERRIDE_1",
+          "type": "STRING",
+          "value": "Default value"
+        },
+        {
+          "name": "TEST_OVERRIDE_2",
+          "value": "Default value"
+        },
+        {
+          "name": "TEST_OVERRIDE_3",
+          "type": "STRING",
+          "value": "Default value"
+        },
+        {
+          "name": "TEST_OVERRIDE_4",
+          "type": "STRING",
+          "value": "Default value"
+        }
+      ]
+    },
+    {
+      "name": "GoodNoArgs",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build"
+    },
+    {
+      "name": "GoodBinaryUp",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/../GoodBinaryUp-build"
+    },
+    {
+      "name": "Good Spaces",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build"
+    },
+    {
+      "name": "GoodWindowsBackslash",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}\\build"
+    },
+    {
+      "name": "GoodBinaryCmdLine",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build"
+    },
+    {
+      "name": "GoodGeneratorCmdLine",
+      "generator": "Invalid Generator",
+      "binaryDir": "${sourceDir}/build"
+    },
+    {
+      "name": "InvalidGeneratorCmdLine",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build"
+    },
+    {
+      "name": "GoodNoS",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build"
+    },
+    {
+      "name": "GoodInheritanceParentBase",
+      "hidden": true,
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build",
+      "variables": [
+        {
+          "name": "TEST_VARIABLE",
+          "type": "STRING",
+          "value": "Some string"
+        }
+      ]
+    },
+    {
+      "name": "GoodInheritanceParent",
+      "inherits": [
+        "GoodInheritanceParentBase"
+      ]
+    },
+    {
+      "name": "GoodInheritanceChildBase",
+      "hidden": true
+    },
+    {
+      "name": "GoodInheritanceChild",
+      "inherits": [
+        "GoodInheritanceChildBase"
+      ],
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build",
+      "variables": [
+        {
+          "name": "TEST_VARIABLE",
+          "type": "STRING",
+          "value": "Some string"
+        }
+      ]
+    },
+    {
+      "name": "GoodInheritanceOverrideBase",
+      "hidden": true,
+      "generator": "Invalid Generator",
+      "binaryDir": "${sourceDir}/../GoodInheritanceBase-build",
+      "variables": [
+        {
+          "name": "PARENT_VARIABLE",
+          "type": "STRING",
+          "value": "Parent variable"
+        },
+        {
+          "name": "OVERRIDDEN_VARIABLE",
+          "type": "BOOL",
+          "value": "ON"
+        }
+      ]
+    },
+    {
+      "name": "GoodInheritanceOverride",
+      "inherits": [
+        "GoodInheritanceOverrideBase"
+      ],
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build",
+      "variables": [
+        {
+          "name": "OVERRIDDEN_VARIABLE",
+          "type": "STRING",
+          "value": "Overridden variable"
+        },
+        {
+          "name": "CHILD_VARIABLE",
+          "type": "STRING",
+          "value": "Child variable"
+        }
+      ]
+    },
+    {
+      "name": "GoodInheritanceOverrideDummy",
+      "inherits": [
+        "GoodInheritanceOverride"
+      ]
+    },
+    {
+      "name": "GoodInheritanceMulti1",
+      "hidden": true,
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build",
+      "variables": [
+        {
+          "name": "FIRST_VARIABLE",
+          "type": "STRING",
+          "value": "First variable"
+        },
+        {
+          "name": "OVERRIDDEN_VARIABLE",
+          "type": "STRING",
+          "value": "Overridden variable"
+        }
+      ]
+    },
+    {
+      "name": "GoodInheritanceMulti2",
+      "hidden": true,
+      "generator": "Invalid Generator",
+      "binaryDir": "${sourceDir}/../GoodInheritanceMulti2-build",
+      "variables": [
+        {
+          "name": "SECOND_VARIABLE",
+          "type": "STRING",
+          "value": "Second variable"
+        },
+        {
+          "name": "OVERRIDDEN_VARIABLE",
+          "type": "BOOL",
+          "value": "ON"
+        }
+      ]
+    },
+    {
+      "name": "GoodInheritanceMulti",
+      "inherits": [
+        "GoodInheritanceMulti1",
+        "GoodInheritanceMulti2"
+      ]
+    },
+    {
+      "name": "GoodInheritanceMultiSecond1",
+      "hidden": true
+    },
+    {
+      "name": "GoodInheritanceMultiSecond2",
+      "hidden": true,
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build"
+    },
+    {
+      "name": "GoodInheritanceMultiSecond",
+      "inherits": [
+        "GoodInheritanceMultiSecond1",
+        "GoodInheritanceMultiSecond2"
+      ]
+    },
+    {
+      "name": "UnclosedMacro",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir"
+    },
+    {
+      "name": "NoSuchMacro",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${noexist}"
+    },
+    {
+      "name": "InvalidGenerator",
+      "generator": "Invalid Generator",
+      "binaryDir": "${sourceDir}/build"
+    },
+    {
+      "name": "UseHiddenPreset",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build",
+      "hidden": true
+    },
+    {
+      "name": "VisualStudioGeneratorArch",
+      "generator": "@RunCMake_GENERATOR@ Win64",
+      "binaryDir": "${sourceDir}/build"
+    },
+    {
+      "name": "VisualStudioWin32",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build",
+      "architecture": "Win32"
+    },
+    {
+      "name": "VisualStudioWin64",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build",
+      "architecture": "x64"
+    },
+    {
+      "name": "VisualStudioWin32Override",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build",
+      "architecture": "Win32"
+    },
+    {
+      "name": "VisualStudioToolset",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build",
+      "toolset": "Test Toolset"
+    },
+    {
+      "name": "VisualStudioToolsetOverride",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build",
+      "toolset": "Invalid Toolset"
+    },
+    {
+      "name": "VisualStudioInheritanceParentBase",
+      "hidden": true,
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build",
+      "architecture": "Test Platform",
+      "toolset": "Test Toolset"
+    },
+    {
+      "name": "VisualStudioInheritanceParent",
+      "inherits": [
+        "VisualStudioInheritanceParentBase"
+      ]
+    },
+    {
+      "name": "VisualStudioInheritanceChildBase",
+      "hidden": true
+    },
+    {
+      "name": "VisualStudioInheritanceChild",
+      "inherits": [
+        "VisualStudioInheritanceChildBase"
+      ],
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build",
+      "architecture": "Test Platform",
+      "toolset": "Test Toolset"
+    },
+    {
+      "name": "VisualStudioInheritanceOverrideBase",
+      "hidden": true,
+      "architecture": "Invalid Platform",
+      "toolset": "Invalid Toolset"
+    },
+    {
+      "name": "VisualStudioInheritanceOverride",
+      "inherits": [
+        "VisualStudioInheritanceOverrideBase"
+      ],
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build",
+      "architecture": "Test Platform",
+      "toolset": "Test Toolset"
+    },
+    {
+      "name": "VisualStudioInheritanceMulti1",
+      "hidden": true,
+      "architecture": "Test Platform",
+      "toolset": "Test Toolset"
+    },
+    {
+      "name": "VisualStudioInheritanceMulti2",
+      "hidden": true,
+      "architecture": "Invalid Platform",
+      "toolset": "Invalid Toolset"
+    },
+    {
+      "name": "VisualStudioInheritanceMulti",
+      "inherits": [
+        "VisualStudioInheritanceMulti1",
+        "VisualStudioInheritanceMulti2"
+      ],
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build"
+    },
+    {
+      "name": "VisualStudioInheritanceMultiSecond1",
+      "hidden": true
+    },
+    {
+      "name": "VisualStudioInheritanceMultiSecond2",
+      "hidden": true,
+      "architecture": "Test Platform",
+      "toolset": "Test Toolset"
+    },
+    {
+      "name": "VisualStudioInheritanceMultiSecond",
+      "inherits": [
+        "VisualStudioInheritanceMultiSecond1",
+        "VisualStudioInheritanceMultiSecond2"
+      ],
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build"
+    }
+  ]
+}
