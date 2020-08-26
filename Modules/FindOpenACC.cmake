@@ -12,7 +12,7 @@ Detect OpenACC support by the compiler.
 This module can be used to detect OpenACC support in a compiler.
 If the compiler supports OpenACC, the flags required to compile with
 OpenACC support are returned in variables for the different languages.
-Currently, only PGI, GNU and Cray compilers are supported.
+Currently, only NVHPC, PGI, GNU and Cray compilers are supported.
 
 Variables
 ^^^^^^^^^
@@ -132,6 +132,7 @@ endfunction()
 
 
 function(_OPENACC_GET_FLAGS_CANDIDATE LANG FLAG_VAR)
+  set(ACC_FLAG_NVHPC "-acc")
   set(ACC_FLAG_PGI "-acc")
   set(ACC_FLAG_GNU "-fopenacc")
   set(ACC_FLAG_Cray "-h acc")
@@ -148,6 +149,7 @@ endfunction()
 
 function(_OPENACC_GET_ACCEL_TARGET_FLAG LANG TARGET FLAG_VAR)
   # Find target accelerator flags.
+  set(ACC_TARGET_FLAG_NVHPC "-ta")
   set(ACC_TARGET_FLAG_PGI "-ta")
   if(DEFINED ACC_TARGET_FLAG_${CMAKE_${LANG}_COMPILER_ID})
     set("${FLAG_VAR}" "${ACC_TARGET_FLAG_${CMAKE_${LANG}_COMPILER_ID}}=${TARGET}" PARENT_SCOPE)
@@ -157,6 +159,7 @@ endfunction()
 
 function(_OPENACC_GET_VERBOSE_FLAG LANG FLAG_VAR)
   # Find compiler's verbose flag for OpenACC.
+  set(ACC_VERBOSE_FLAG_NVHPC "-Minfo=accel")
   set(ACC_VERBOSE_FLAG_PGI "-Minfo=accel")
   if(DEFINED ACC_VERBOSE_FLAG_${CMAKE_${LANG}_COMPILER_ID})
     set("${FLAG_VAR}" "${ACC_VERBOSE_FLAG_${CMAKE_${LANG}_COMPILER_ID}}" PARENT_SCOPE)
