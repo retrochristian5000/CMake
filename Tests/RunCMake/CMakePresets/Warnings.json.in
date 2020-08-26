@@ -1,0 +1,53 @@
+{
+  "version": {
+    "major": 1,
+    "minor": 0
+  },
+  "configurePresets": [
+    {
+      "name": "NoWarningFlags",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build",
+      "variables": {
+        "UNUSED_VARIABLE": "Unused"
+      }
+    },
+    {
+      "name": "WarningFlags",
+      "inherits": "NoWarningFlags",
+      "warnings": {
+        "dev": true,
+        "deprecated": true,
+        "uninitialized": true,
+        "unusedCli": false,
+        "systemVars": true
+      }
+    },
+    {
+      "name": "DisableWarningFlags",
+      "inherits": "NoWarningFlags",
+      "warnings": {
+        "dev": false,
+        "deprecated": false,
+        "unusedCli": false
+      }
+    },
+    {
+      "name": "ErrorDev",
+      "inherits": "NoWarningFlags",
+      "errors": {
+        "dev": true
+      }
+    },
+    {
+      "name": "ErrorDeprecated",
+      "inherits": "NoWarningFlags",
+      "warnings": {
+        "dev": false
+      },
+      "errors": {
+        "deprecated": true
+      }
+    }
+  ]
+}

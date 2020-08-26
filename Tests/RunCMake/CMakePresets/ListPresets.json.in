@@ -1,0 +1,39 @@
+{
+  "version": {
+    "major": 1,
+    "minor": 0
+  },
+  "configurePresets": [
+    {
+      "name": "zzzzzz",
+      "description": "Sleepy",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build/zzzzzz"
+    },
+    {
+      "name": "aaaaaaaa",
+      "description": "Screaming",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build/aaaaaaaa"
+    },
+    {
+      "name": "mmmmmm",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build/mmmmmm"
+    },
+    {
+      "name": "invalid-generator",
+      "generator": "Invalid Generator",
+      "binaryDir": "${sourceDir}/build/invalid"
+    },
+    {
+      "name": "invalid-macro",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${noexist}"
+    },
+    {
+      "name": "ListPresetsHidden",
+      "hidden": true
+    }
+  ]
+}
