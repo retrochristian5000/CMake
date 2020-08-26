@@ -1,0 +1,12 @@
+{
+  "version": {
+    "major": 1,
+    "minor": 0
+  },
+  "presets": [
+    {
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build"
+    }
+  ]
+}
