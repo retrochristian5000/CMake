@@ -18,4 +18,7 @@ private:
 private slots:
   void sourceBinaryArgs();
   void sourceBinaryArgs_data();
+  void presetArg();
+  void presetArg_data();
+  void changingPresets();
 };
