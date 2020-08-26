@@ -12,6 +12,7 @@ Synopsis
   cmake [<options>] <path-to-source>
   cmake [<options>] <path-to-existing-build>
   cmake [<options>] -S <path-to-source> -B <path-to-build>
+  cmake [<options>] -S <path-to-source> --preset=<preset-name>
 
  `Build a Project`_
   cmake --build <dir> [<options>] [-- <build-tool-options>]
@@ -147,6 +148,249 @@ source and build trees and generate a buildsystem:
   .. code-block:: console
 
     $ cmake -S src -B build
+
+``cmake [<options>] -S <path-to-source> --preset=<preset-name>``
+  Uses ``<path-to-source>`` as the source tree and reads a preset from
+  ``<path-to-source>/CMakePresets.json`` and
+  ``<path-to-source>/CMakeUserPresets.json``. The preset specifies the
+  generator and the build directory, and optionally a list of variables and
+  other arguments to pass to CMake. The :manual:`CMake GUI <cmake-gui(1)>` can
+  also recognize ``CMakePresets.json`` and ``CMakeUserPresets.json`` files.
+
+  ``CMakePresets.json`` and ``CMakeUserPresets.json`` have exactly the same
+  format, and both are optional (though at least one must be present if
+  ``--preset`` is specified.) ``CMakePresets.json`` is meant to save
+  project-wide builds, while ``CMakeUserPresets.json`` is meant for developers
+  to save their own local builds. ``CMakePresets.json`` may be checked into a
+  version control system, and ``CMakeUserPresets.json`` should NOT be checked
+  in. For example, if a project is using Git, ``CMakePresets.json`` may be
+  tracked, and ``CMakeUserPresets.json`` should be added to the ``.gitignore``.
+
+  The presets are read before all other command line options. The options
+  specified by the preset (variables, generator, etc.) can all be overridden by
+  manually specifying them on the command line. For example, if the preset sets
+  a variable called ``MYVAR`` to ``1``, but the user sets it to ``2`` with a
+  ``-D`` argument, the value ``2`` is preferred.
+
+  The files are a JSON document with an object as the root:
+
+  .. code-block:: json
+
+    {
+      "version": 1,
+      "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 19,
+        "patch": 0
+      },
+      "presets": [
+        {
+          "name": "default",
+          "description": "Default Config",
+          "longDescription": "Default build using Ninja generator",
+          "generator": "Ninja",
+          "binaryDir": "${sourceDir}/build/default",
+          "variables": [
+            {
+              "name": "MY_CACHE_VARIABLE",
+              "type": "BOOL",
+              "value": "OFF"
+            }
+          ]
+        }
+      ]
+    }
+
+  The root object recognizes the following fields:
+
+  ``version``
+
+    A required object representing the version of the JSON schema. Currently,
+    the only supported version is major 1, minor 0. This object consists of the
+    following fields:
+
+    ``major``
+
+      A required integer representing the major version.
+
+    ``minor``
+
+      A required integer representing the minor version.
+
+  ``cmakeMinimumRequired``
+
+    An optional object representing the minimum version of CMake needed to
+    build this project. This object consists of the following fields:
+
+    ``major``
+
+      An optional integer representing the major version.
+
+    ``minor``
+
+      An optional integer representing the minor version.
+
+    ``patch``
+
+      An optional integer representing the patch version.
+
+  ``vendor``
+
+    An optional map containing vendor-specific information. CMake does not
+    interpret the contents of this field except to verify that it is a map if
+    it does exist. However, the keys should be a vendor-specific domain name
+    followed by a ``/``-separated path. For example, the Example IDE 1.0 could
+    use ``example.com/ExampleIDE/1.0``. The value of each field can be anything
+    desired by the vendor, though will typically be a map. For example:
+
+    .. code-block:: json
+
+      {
+        "version": {
+          "major": 1,
+          "minor": 0
+        },
+        "vendor": {
+          "example.com/ExampleIDE/1.0": {
+            "autoFormat": true
+          }
+        },
+        "presets": []
+      }
+
+  ``configurePresets``
+
+    An optional array of configure preset objects. Each preset may contain the
+    following fields:
+
+    ``name``
+
+      A required string representing the machine-friendly name of the preset.
+      This identifier is used in the ``--preset`` argument. There must not be
+      two presets in the union of ``CMakePresets.json`` and
+      ``CMakeUserPresets.json`` in the same directory with the same name.
+
+    ``hidden``
+
+      An optional boolean specifying whether or not a preset should be hidden.
+      If a preset is hidden, it cannot be used in the ``--preset=`` argument,
+      will not show up in the :manual:`CMake GUI <cmake-gui(1)>`, and does not
+      have to have a valid ``generator`` or ``binaryDir``, even from
+      inheritance. ``hidden`` presets are intended to be used as a base for
+      other presets to inherit via the ``inherits`` field.
+
+    ``inherits``
+
+      An optional array of strings representing the names of presets to inherit
+      from. The preset will inherit all of the fields from the ``inherits``
+      presets by default (except ``name``, ``hidden``, ``inherits``,
+      ``description``, and ``longDescription``), but can override them as
+      desired. If multiple ``inherits`` presets provide conflicting values for
+      the same field, the earlier preset in the ``inherits`` list will be
+      preferred. Presets in ``CMakePresets.json`` may not inherit from presets
+      in ``CMakeUserPresets.json``.
+
+      This field can also be a string, which is equivalent to an array
+      containing one string.
+
+    ``vendor``
+
+      An optional map containing vendor-specific information. CMake does not
+      interpret the contents of this field except to verify that it is a map
+      if it does exist. However, it should follow the same conventions as the
+      root-level ``vendor`` field.
+
+    ``description``
+
+      An optional string with a human-friendly name of the preset.
+
+    ``longDescription``
+
+      An optional string with a human-friendly description of the preset.
+
+    ``generator``
+
+      An optional string representing the generator to use for the preset. If
+      ``generator`` is not specified, it must be inherited from the
+      ``inherits`` preset (unless this preset is ``hidden``).
+
+      Note that for Visual Studio generators, unlike in the command line ``-G``
+      argument, you cannot include the platform name in the generator name. Use
+      the ``architecture`` field instead.
+
+    ``architecture``
+
+      An optional string representing the platform name to use for Visual
+      Studio generators.
+
+    ``toolset``
+
+      An optional string representing the toolset name to use for Visual Studio
+      generators.
+
+    ``binaryDir``
+
+      An optional string representing the path to the output binary directory.
+      This field supports macro expansion. If a relative path is specified, it
+      is calculated relative to the source directory. If ``binaryDir`` is not
+      specified, it must be inherited from the ``inherits`` preset (unless this
+      preset is ``hidden``).
+
+    ``cmakeExecutable``
+
+      An optional string representing the path to the CMake executable to use
+      for this preset. This is reserved for use by IDEs, and is not used by
+      CMake itself.
+
+    ``variables``
+
+      An optional map of variables. The key is the variable name, and the value
+      is either a string representing the value of the variable (which supports
+      macro expansion) or an object with the following fields:
+
+      ``type``
+
+        An optional string representing the type of the variable.
+
+      ``value``
+
+        A required string representing the value of the variable. This field
+        supports macro expansion.
+
+  As mentioned above, some fields support macro expansion. Macros are
+  recognized in the form ``${<macro-name>}``. All macros are evaluated in the
+  context of the preset being used, even if the macro is in a field that was
+  inherited from another preset. For example, if the ``Base`` preset sets
+  variable ``PRESET_NAME`` to ``${presetName}``, and the ``Derived`` preset
+  inherits from ``Base``, ``PRESET_NAME`` will be set to ``Derived``.
+
+  It is an error to not put a closing brace at the end of a macro name. For
+  example, ``${sourceDir`` is invalid. A dollar sign (``$``) followed by
+  anything other than a left curly brace (``{``) is interpreted as a literal
+  dollar sign.
+
+  Recognized macro names include:
+
+  ``sourceDir``
+
+    Path to the project source directory.
+
+  ``presetName``
+
+    Name specified in the preset's ``name`` field.
+
+  ``generator``
+
+    Generator specified in the preset's ``generator`` field.
+
+  ``dollar``
+
+    A literal dollar sign (``$``).
+
+  ``env.<variable-name>``
+
+    Environment variable with name ``<variable-name>``. If the environment
+    variable is not defined, this evaluates as an empty string.
 
 In all cases the ``<options>`` may be zero or more of the `Options`_ below.
 
@@ -808,6 +1052,11 @@ with one of the following options:
 
 .. include:: OPTIONS_HELP.txt
 
+To view the presets available for a project, use
+
+.. code-block::shell
+
+  cmake <source-dir> --list-presets
 
 See Also
 ========
