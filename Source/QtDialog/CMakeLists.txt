@@ -90,6 +90,12 @@ set(SRCS
   QCMake.h
   QCMakeCacheView.cxx
   QCMakeCacheView.h
+  QCMakePreset.cxx
+  QCMakePreset.h
+  QCMakePresetComboBox.cxx
+  QCMakePresetComboBox.h
+  QCMakePresetItemModel.cxx
+  QCMakePresetItemModel.h
   QCMakeWidgets.cxx
   QCMakeWidgets.h
   RegexExplorer.cxx
@@ -112,6 +118,8 @@ qt5_wrap_cpp(MOC_SRCS
   FirstConfigure.h
   QCMake.h
   QCMakeCacheView.h
+  QCMakePresetComboBox.h
+  QCMakePresetItemModel.h
   QCMakeWidgets.h
   RegexExplorer.h
   WarningMessagesDialog.h

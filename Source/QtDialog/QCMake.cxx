@@ -2,10 +2,14 @@
    file Copyright.txt or https://cmake.org/licensing for details.  */
 #include "QCMake.h"
 
+#include <algorithm>
+
 #include <cm/memory>
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QString>
+#include <QVector>
 
 #include "cmExternalMakefileProjectGenerator.h"
 #include "cmGlobalGenerator.h"
@@ -23,6 +27,7 @@ QCMake::QCMake(QObject* p)
   this->WarnUninitializedMode = false;
   qRegisterMetaType<QCMakeProperty>();
   qRegisterMetaType<QCMakePropertyList>();
+  qRegisterMetaType<QVector<QCMakePreset>>();
 
   cmSystemTools::DisableRunCommandOutput();
   cmSystemTools::SetRunCommandHideConsole(true);
@@ -71,6 +76,37 @@ void QCMake::setSourceDirectory(const QString& _dir)
   if (this->SourceDirectory != dir) {
     this->SourceDirectory = QDir::fromNativeSeparators(dir);
     emit this->sourceDirChanged(this->SourceDirectory);
+
+    this->CMakePresetsFile.ReadProjectPresets(
+      this->SourceDirectory.toLocal8Bit().data());
+    QVector<QCMakePreset> presets;
+    for (auto const& name : this->CMakePresetsFile.PresetOrder) {
+      auto const& p = this->CMakePresetsFile.Presets[name];
+      if (p.Hidden) {
+        continue;
+      }
+
+      QCMakePreset preset;
+      preset.name = std::move(QString::fromLocal8Bit(p.Name.data()));
+      preset.description =
+        std::move(QString::fromLocal8Bit(p.Description.data()));
+      preset.longDescription =
+        std::move(QString::fromLocal8Bit(p.LongDescription.data()));
+      preset.generator = std::move(QString::fromLocal8Bit(p.Generator.data()));
+      preset.architecture =
+        std::move(QString::fromLocal8Bit(p.Architecture.data()));
+      preset.toolset = std::move(QString::fromLocal8Bit(p.Toolset.data()));
+      preset.enabled = std::find_if(this->AvailableGenerators.begin(),
+                                    this->AvailableGenerators.end(),
+                                    [&p](const cmake::GeneratorInfo& g) {
+                                      return g.name == p.Generator;
+                                    }) != this->AvailableGenerators.end() &&
+        this->CMakePresetsFile.ExpandMacros(p);
+      presets.push_back(preset);
+    }
+    emit this->presetsChanged(presets);
+
+    this->setPreset(QString{});
   }
 }
 
@@ -124,6 +160,26 @@ void QCMake::setBinaryDirectory(const QString& _dir)
     }
 
     checkOpenPossible();
+  }
+}
+
+void QCMake::setPreset(const QString& name)
+{
+  if (this->PresetName != name) {
+    this->PresetName = name;
+    emit this->presetChanged(this->PresetName);
+
+    if (!name.isNull()) {
+      std::string presetName(name.toLocal8Bit());
+      auto const& preset = this->CMakePresetsFile.Presets[presetName];
+      auto expandedPreset = this->CMakePresetsFile.ExpandMacros(preset);
+      if (expandedPreset) {
+        QString binaryDir =
+          QString::fromLocal8Bit(expandedPreset->BinaryDir.data());
+        this->setBinaryDirectory(binaryDir);
+      }
+    }
+    emit this->propertiesChanged(this->properties());
   }
 }
 
@@ -326,6 +382,53 @@ QCMakePropertyList QCMake::properties() const
     }
 
     ret.append(prop);
+  }
+
+  if (!this->PresetName.isNull()) {
+    std::string presetName(this->PresetName.toLocal8Bit());
+    auto p = this->CMakePresetsFile.ExpandMacros(
+      this->CMakePresetsFile.Presets.at(presetName));
+    if (p) {
+      for (auto const& v : p->Variables) {
+        QCMakeProperty prop;
+        prop.Key = QString::fromLocal8Bit(v.Name.data());
+        prop.Value = QString::fromLocal8Bit(v.Value.data());
+        prop.Type = QCMakeProperty::STRING;
+        if (!v.Type.empty()) {
+          auto type = cmState::StringToCacheEntryType(v.Type);
+          switch (type) {
+            case cmStateEnums::BOOL:
+              prop.Type = QCMakeProperty::BOOL;
+              prop.Value = cmIsOn(v.Value);
+              break;
+            case cmStateEnums::PATH:
+              prop.Type = QCMakeProperty::PATH;
+              break;
+            case cmStateEnums::FILEPATH:
+              prop.Type = QCMakeProperty::FILEPATH;
+              break;
+            default:
+              prop.Type = QCMakeProperty::STRING;
+              break;
+          }
+        }
+
+        // QCMakeCacheModel prefers variables earlier in the list rather than
+        // later, so overwrite them if they already exist rather than simply
+        // appending
+        bool found = false;
+        for (auto& orig : ret) {
+          if (orig.Key == prop.Key) {
+            orig = prop;
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          ret.append(prop);
+        }
+      }
+    }
   }
 
   return ret;
