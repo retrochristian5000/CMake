@@ -1,0 +1,17 @@
+#include <qglobal.h>
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+#  include <qapplication.h>
+#else
+#  include <qcoreapplication.h>
+#endif
+@main_cpp_includes@
+
+int main(int argc, char *argv[])
+{
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+    QApplication app(argc, argv);
+#else
+    QCoreApplication app(argc, argv);
+#endif
+    return app.exec();
+}
