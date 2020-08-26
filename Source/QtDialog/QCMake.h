@@ -4,6 +4,7 @@
 
 #include "cmConfigure.h" // IWYU pragma: keep
 
+#include "cmCMakePresetsFile.h"
 #include "cmake.h"
 
 #ifdef _MSC_VER
@@ -14,6 +15,7 @@
 #include <memory>
 #include <vector>
 
+#include "QCMakePreset.h"
 #include <QAtomicInt>
 #include <QList>
 #include <QMetaType>
@@ -72,6 +74,8 @@ public slots:
   void setSourceDirectory(const QString& dir);
   /// set the binary directory to build in
   void setBinaryDirectory(const QString& dir);
+  /// set the preset name to use
+  void setPreset(const QString& name, bool setBinary = true);
   /// set the desired generator to use
   void setGenerator(const QString& generator);
   /// set the desired generator to use
@@ -141,6 +145,10 @@ signals:
   void sourceDirChanged(const QString& dir);
   /// signal when the binary directory changes
   void binaryDirChanged(const QString& dir);
+  /// signal when the preset list changes
+  void presetsChanged(const QVector<QCMakePreset>& presets);
+  /// signal when the selected preset changes
+  void presetChanged(const QString& name);
   /// signal for progress events
   void progressChanged(const QString& msg, float percent);
   /// signal when configure is done
@@ -178,6 +186,8 @@ protected:
   QString Platform;
   QString Toolset;
   std::vector<cmake::GeneratorInfo> AvailableGenerators;
+  cmCMakePresetsFile CMakePresetsFile;
+  QString PresetName;
   QString CMakeExecutable;
   QAtomicInt InterruptFlag;
 };

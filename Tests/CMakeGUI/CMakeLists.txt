@@ -24,6 +24,8 @@ add_test(NAME CMakeGUI COMMAND ${CMAKE_CMAKE_COMMAND}
   "-DCMakeGUITest_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
   "-DCMakeGUITest_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
   "-DCMakeGUITest_GENERATOR=${CMAKE_GENERATOR}"
+  "-DCMake_SOURCE_DIR=${CMake_SOURCE_DIR}"
+  "-DCMake_BINARY_DIR=${CMake_BINARY_DIR}"
   -P "${CMAKE_CURRENT_LIST_DIR}/CMakeGUITest.cmake"
   )
 
@@ -46,4 +48,18 @@ add_cmake_gui_lib_test(QCMakeCacheModel
     QCMakeCacheModelTest.h
   MOC_SOURCES
     QCMakeCacheModelTest.h
+  )
+add_cmake_gui_lib_test(QCMakePreset
+  SOURCES
+    QCMakePresetTest.cxx
+    QCMakePresetTest.h
+  MOC_SOURCES
+    QCMakePresetTest.h
+  )
+add_cmake_gui_lib_test(QCMakePresetItemModel
+  SOURCES
+    QCMakePresetItemModelTest.cxx
+    QCMakePresetItemModelTest.h
+  MOC_SOURCES
+    QCMakePresetItemModelTest.h
   )
