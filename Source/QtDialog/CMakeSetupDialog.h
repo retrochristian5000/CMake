@@ -5,12 +5,15 @@
 #include <memory>
 
 #include "QCMake.h"
+#include "QCMakePreset.h"
 #include <QEventLoop>
 #include <QMainWindow>
 #include <QThread>
+#include <QVector>
 
 #include "ui_CMakeSetupDialog.h"
 
+class QCMakePresetItemModel;
 class QCMakeThread;
 class CMakeCacheModel;
 class QProgressBar;
@@ -33,6 +36,7 @@ public:
 public slots:
   void setBinaryDirectory(const QString& dir);
   void setSourceDirectory(const QString& dir);
+  void setDeferredPreset(const QString& preset);
 
 protected slots:
   void initialize();
@@ -52,6 +56,8 @@ protected slots:
   void doDeleteCache();
   void updateSourceDirectory(const QString& dir);
   void updateBinaryDirectory(const QString& dir);
+  void updatePresets(const QVector<QCMakePreset>& presets);
+  void updatePreset(const QString& name);
   void showProgress(const QString& msg, float percent);
   void setEnabledState(bool);
   bool setupFirstConfigure();
@@ -62,6 +68,7 @@ protected slots:
   void saveBuildPaths(const QStringList&);
   void onBinaryDirectoryChanged(const QString& dir);
   void onSourceDirectoryChanged(const QString& dir);
+  void onBuildPresetChanged(const QString& name);
   void setCacheModified();
   void removeSelectedCacheEntries();
   void selectionChanged();
@@ -112,6 +119,7 @@ protected:
   QAction* WarnUninitializedAction;
   QAction* InstallForCommandLineAction;
   State CurrentState;
+  QString DeferredPreset;
 
   QTextCharFormat ErrorFormat;
   QTextCharFormat MessageFormat;

@@ -1,0 +1,12 @@
+{
+  "version": {
+    "major": 1,
+    "minor": 0
+  },
+  "presets": [
+    {
+      "name": "NoPresetBinaryDir",
+      "generator": "@RunCMake_GENERATOR@"
+    }
+  ]
+}

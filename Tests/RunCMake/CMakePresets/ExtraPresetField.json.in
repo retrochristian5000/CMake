@@ -1,0 +1,14 @@
+{
+  "version": {
+    "major": 1,
+    "minor": 0
+  },
+  "presets": [
+    {
+      "name": "ExtraPresetField",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build",
+      "invalid": true
+    }
+  ]
+}

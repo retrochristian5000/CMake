@@ -17,6 +17,7 @@
 
 #include <cm/string_view>
 
+#include "cmCMakePresetsFile.h"
 #include "cmGeneratedFileStream.h"
 #include "cmInstalledFile.h"
 #include "cmListFileCache.h"
@@ -88,13 +89,22 @@ public:
   enum WorkingMode
   {
     NORMAL_MODE, ///< Cmake runs to create project files
-                 /** \brief Script mode (started by using -P).
-                  *
-                  * In script mode there is no generator and no cache. Also,
-                  * languages are not enabled, so add_executable and things do
-                  * nothing.
-                  */
+
+    /** \brief Script mode (started by using -P).
+     *
+     * In script mode there is no generator and no cache. Also,
+     * languages are not enabled, so add_executable and things do
+     * nothing.
+     */
     SCRIPT_MODE,
+
+    /** \brief Help mode
+     *
+     * Used to print help for things that can only be determined after finding
+     * the source directory, for example, the list of presets.
+     */
+    HELP_MODE,
+
     /** \brief A pkg-config like mode
      *
      * In this mode cmake just searches for a package and prints the results to
@@ -221,6 +231,12 @@ public:
   std::unique_ptr<cmGlobalGenerator> CreateGlobalGenerator(
     const std::string& name, bool allowArch = true);
 
+  //! Create a GlobalGenerator and set it as our own
+  bool CreateAndSetGlobalGenerator(const std::string& name, bool allowArch);
+
+  //! Print list of presets
+  void PrintPresetList(const cmCMakePresetsFile& file) const;
+
   //! Return the global generator assigned to this instance of cmake
   cmGlobalGenerator* GetGlobalGenerator()
   {
@@ -329,8 +345,13 @@ public:
   bool GetIsInTryCompile() const;
   void SetIsInTryCompile(bool b);
 
+  void ProcessPresetVariables();
+
   //! Parse command line arguments that might set cache values
   bool SetCacheArgs(const std::vector<std::string>&);
+
+  void ProcessCacheArg(const std::string& var, const std::string& value,
+                       cmStateEnums::CacheEntryType type);
 
   using ProgressCallbackType = std::function<void(const std::string&, float)>;
   /**
@@ -625,6 +646,8 @@ private:
   std::unique_ptr<cmFileTimeCache> FileTimeCache;
   std::string GraphVizFile;
   InstalledFilesMap InstalledFiles;
+  std::map<std::string, cmCMakePresetsFile::Variable>
+    UnprocessedPresetVariables;
 
 #if !defined(CMAKE_BOOTSTRAP)
   std::unique_ptr<cmVariableWatch> VariableWatch;
@@ -664,6 +687,8 @@ private:
 #define CMAKE_STANDARD_OPTIONS_TABLE                                          \
   { "-S <path-to-source>", "Explicitly specify a source directory." },        \
     { "-B <path-to-build>", "Explicitly specify a build directory." },        \
+    { "--preset=<preset-name>", "Explicitly specify a preset." },             \
+    { "--list-presets", "List available presets." },                          \
     { "-C <initial-cache>", "Pre-load a script to populate the cache." },     \
     { "-D <var>[:<type>]=<value>", "Create or update a cmake cache entry." }, \
     { "-U <globbing_expr>", "Remove matching entries from CMake cache." },    \
