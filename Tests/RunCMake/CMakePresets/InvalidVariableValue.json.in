@@ -1,0 +1,18 @@
+{
+  "version": {
+    "major": 1,
+    "minor": 0
+  },
+  "presets": [
+    {
+      "name": "InvalidVariableValue",
+      "generator": "@RunCMake_GENERATOR@",
+      "binaryDir": "${sourceDir}/build",
+      "variables": {
+        "VAR": {
+          "value": []
+        }
+      }
+    }
+  ]
+}
