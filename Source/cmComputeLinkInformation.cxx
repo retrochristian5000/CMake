@@ -577,10 +577,10 @@ void cmComputeLinkInformation::AddImplicitLinkInfo()
     this->Target->GetLinkClosure(this->Config);
   for (std::string const& li : lc->Languages) {
 
-    if (li == "CUDA") {
+    if (li == "CUDA" || li == "HIP") {
       // These need to go before the other implicit link information
       // as they could require symbols from those other library
-      // Currently restricted to CUDA as it is the only language
+      // Currently restricted to CUDA and HIP as they are the languages
       // we have documented runtime behavior controls for
       this->AddRuntimeLinkLibrary(li);
     }
