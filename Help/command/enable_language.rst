@@ -10,7 +10,7 @@ Enables support for the named language in CMake.  This is
 the same as the :command:`project` command but does not create any of the extra
 variables that are created by the project command.  Example languages
 are ``CXX``, ``C``, ``CUDA``, ``OBJC``, ``OBJCXX``, ``Fortran``,
-``ISPC``, and ``ASM``.
+``HIP``, ``ISPC``, and ``ASM``.
 
 .. versionadded:: 3.8
   Added ``CUDA`` support.
