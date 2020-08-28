@@ -81,6 +81,7 @@ function(compiler_id_detection outvar lang)
       ARMCC
       AppleClang
       ARMClang
+      ROCMClang
       Clang
       GNU
       MSVC
