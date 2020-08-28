@@ -974,7 +974,7 @@ cmProp cmGeneratorTarget::GetPropertyWithPairedLanguageSupport(
     // Check if we should use the value set by another language.
     if (lang == "OBJC") {
       propertyValue = this->GetPropertyWithPairedLanguageSupport("C", suffix);
-    } else if (lang == "OBJCXX" || lang == "CUDA") {
+    } else if (lang == "OBJCXX" || lang == "CUDA" || lang == "HIP") {
       propertyValue =
         this->GetPropertyWithPairedLanguageSupport("CXX", suffix);
     }
@@ -1115,7 +1115,7 @@ void cmGeneratorTarget::AppendLanguageSideEffects(
   std::map<std::string, std::set<cmGeneratorTarget const*>>& sideEffects) const
 {
   static const std::set<cm::string_view> LANGS_WITH_NO_SIDE_EFFECTS = {
-    "C"_s, "CXX"_s, "OBJC"_s, "OBJCXX"_s, "ASM"_s, "CUDA"_s,
+    "C"_s, "CXX"_s, "OBJC"_s, "OBJCXX"_s, "ASM"_s, "CUDA"_s, "HIP"_s
   };
 
   for (auto const& lang : this->GetAllConfigCompileLanguages()) {
@@ -3337,6 +3337,23 @@ void cmGeneratorTarget::AddISPCTargetFlags(std::string& flags) const
   }
 }
 
+void cmGeneratorTarget::AddHIPArchitectureFlags(std::string& flags) const
+{
+  const std::string& property = this->GetSafeProperty("HIP_ARCHITECTURES");
+
+  // If HIP_ARCHITECTURES is false we don't add any architectures.
+  if (cmIsOff(property)) {
+    return;
+  }
+
+  std::vector<std::string> options;
+  cmExpandList(property, options);
+
+  for (std::string& option : options) {
+    flags += " --cuda-gpu-arch=" + option;
+  }
+}
+
 void cmGeneratorTarget::AddCUDAToolkitFlags(std::string& flags) const
 {
   std::string const& compiler =
@@ -4728,7 +4745,8 @@ bool cmGeneratorTarget::ComputeCompileFeatures(
       }
 
       // Custom updates for the CUDA standard.
-      if (generatorTargetLanguageStandard && language.first == "CUDA") {
+      if (generatorTargetLanguageStandard != nullptr &&
+          (language.first == "CUDA")) {
         if (generatorTargetLanguageStandard->Value == "98") {
           this->LanguageStandardMap[key].Value = "03";
         }
