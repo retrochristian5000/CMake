@@ -604,6 +604,11 @@ function(write_compiler_detection_header
       string(APPEND file_content "\n#ifndef __cplusplus\n")
     endif()
 
+    string(APPEND file_content
+"#if !defined(__has_include)
+#  define __has_include(x) 0
+#endif\n")
+
     compiler_id_detection(ID_CONTENT ${_lang} PREFIX ${prefix_arg}_
       ID_DEFINE
     )
