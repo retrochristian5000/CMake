@@ -67,6 +67,13 @@ public:
   EventLogger& operator=(EventLogger&& other);
   EventLogger& operator=(int value);
 
+  bool operator==(const EventLogger& other) const;
+  bool operator!=(const EventLogger& other) const;
+  bool operator<(const EventLogger& other) const;
+  bool operator<=(const EventLogger& other) const;
+  bool operator>(const EventLogger& other) const;
+  bool operator>=(const EventLogger& other) const;
+
   void Reference() &;
   void Reference() const&;
   void Reference() &&;
@@ -159,6 +166,36 @@ EventLogger& EventLogger::operator=(int value)
   events.push_back({ Event::VALUE_ASSIGN, this, nullptr, value });
   this->Value = value;
   return *this;
+}
+
+bool EventLogger::operator==(const EventLogger& other) const
+{
+  return this->Value == other.Value;
+}
+
+bool EventLogger::operator!=(const EventLogger& other) const
+{
+  return this->Value != other.Value;
+}
+
+bool EventLogger::operator<(const EventLogger& other) const
+{
+  return this->Value < other.Value;
+}
+
+bool EventLogger::operator<=(const EventLogger& other) const
+{
+  return this->Value <= other.Value;
+}
+
+bool EventLogger::operator>(const EventLogger& other) const
+{
+  return this->Value > other.Value;
+}
+
+bool EventLogger::operator>=(const EventLogger& other) const
+{
+  return this->Value >= other.Value;
 }
 
 void EventLogger::Reference() &
@@ -452,6 +489,74 @@ static bool testValueOr()
   return true;
 }
 
+static bool testComparison()
+{
+  const cm::optional<EventLogger> o1{ 1 };
+  const cm::optional<EventLogger> o2{ 2 };
+  const cm::optional<EventLogger> o3{ 2 };
+  const cm::optional<EventLogger> o4{};
+  const cm::optional<EventLogger> o5{};
+  const EventLogger e1{ 2 };
+
+  ASSERT_TRUE(!(o1 == o2) && o1 != o2);
+  ASSERT_TRUE(o1 < o2 && !(o1 >= o2));
+  ASSERT_TRUE(o1 <= o2 && !(o1 > o2));
+
+  ASSERT_TRUE(o2 == o3 && !(o2 != o3));
+  ASSERT_TRUE(!(o2 < o3) && o2 >= o3);
+  ASSERT_TRUE(!(o2 > o3) && o2 <= o3);
+
+  ASSERT_TRUE(!(o3 == o4) && o3 != o4);
+  ASSERT_TRUE(!(o3 < o4) && o3 >= o4);
+  ASSERT_TRUE(o3 > o4 && !(o3 <= o4));
+
+  ASSERT_TRUE(o4 == o5 && !(o4 != o5));
+  ASSERT_TRUE(!(o4 < o5) && o4 >= o5);
+  ASSERT_TRUE(!(o4 > o5) && o4 >= o5);
+
+  ASSERT_TRUE(!(o1 == cm::nullopt) && o1 != cm::nullopt);
+  ASSERT_TRUE(!(o1 < cm::nullopt) && o1 >= cm::nullopt);
+  ASSERT_TRUE(o1 > cm::nullopt && !(o1 <= cm::nullopt));
+
+  ASSERT_TRUE(!(cm::nullopt == o1) && cm::nullopt != o1);
+  ASSERT_TRUE(cm::nullopt < o1 && !(cm::nullopt >= o1));
+  ASSERT_TRUE(!(cm::nullopt > o1) && cm::nullopt <= o1);
+
+  ASSERT_TRUE(o4 == cm::nullopt && !(o4 != cm::nullopt));
+  ASSERT_TRUE(!(o4 < cm::nullopt) && o4 >= cm::nullopt);
+  ASSERT_TRUE(!(o4 > cm::nullopt) && o4 <= cm::nullopt);
+
+  ASSERT_TRUE(cm::nullopt == o4 && !(cm::nullopt != o4));
+  ASSERT_TRUE(!(cm::nullopt < o4) && cm::nullopt >= o4);
+  ASSERT_TRUE(!(cm::nullopt > o4) && cm::nullopt <= o4);
+
+  ASSERT_TRUE(!(o1 == e1) && o1 != e1);
+  ASSERT_TRUE(o1 < e1 && !(o1 >= e1));
+  ASSERT_TRUE(!(o1 > e1) && o1 <= e1);
+
+  ASSERT_TRUE(o2 == e1 && !(o2 != e1));
+  ASSERT_TRUE(!(o2 < e1) && o2 >= e1);
+  ASSERT_TRUE(!(o2 > e1) && o2 <= e1);
+
+  ASSERT_TRUE(!(o4 == e1) && o4 != e1);
+  ASSERT_TRUE(o4 < e1 && !(o4 >= e1));
+  ASSERT_TRUE(!(o4 > e1) && o4 <= e1);
+
+  ASSERT_TRUE(!(e1 == o1) && e1 != o1);
+  ASSERT_TRUE(!(e1 < o1) && e1 >= o1);
+  ASSERT_TRUE(e1 > o1 && !(e1 <= o1));
+
+  ASSERT_TRUE(e1 == o2 && !(e1 != o2));
+  ASSERT_TRUE(!(e1 < o2) && e1 >= o2);
+  ASSERT_TRUE(!(e1 > o2) && e1 <= o2);
+
+  ASSERT_TRUE(!(e1 == o4) && e1 != o4);
+  ASSERT_TRUE(!(e1 < o4) && e1 >= o4);
+  ASSERT_TRUE(e1 > o4 && !(e1 <= o4));
+
+  return true;
+}
+
 static bool testSwap(std::vector<Event>& expected)
 {
   cm::optional<EventLogger> o1{ 4 };
@@ -612,6 +717,7 @@ int testOptional(int /*unused*/, char* /*unused*/ [])
   DO_EVENT_TEST(testHasValue);
   DO_EVENT_TEST(testValue);
   DO_TEST(testValueOr);
+  DO_TEST(testComparison);
   DO_EVENT_TEST(testSwap);
   DO_EVENT_TEST(testReset);
   DO_EVENT_TEST(testEmplace);
