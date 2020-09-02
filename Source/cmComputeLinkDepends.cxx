@@ -343,6 +343,13 @@ void cmComputeLinkDepends::FollowLinkEntry(BFSEntry qe)
         entry.Target->GetType() == cmStateEnums::INTERFACE_LIBRARY;
       // This target provides its own link interface information.
       this->AddLinkEntries(depender_index, iface->Libraries);
+      for(auto const& language : iface->Languages) {
+        auto runtimeEntries = iface->LanguageRuntimeLibraries.find(language);
+        if(runtimeEntries != iface->LanguageRuntimeLibraries.end()) {
+          this->AddLinkEntries(depender_index, runtimeEntries->second);
+        }
+      }
+
 
       if (isIface) {
         return;
@@ -487,6 +494,13 @@ void cmComputeLinkDepends::AddDirectLinkEntries()
   cmLinkImplementation const* impl =
     this->Target->GetLinkImplementation(this->Config);
   this->AddLinkEntries(-1, impl->Libraries);
+
+  for(auto const& language : impl->Languages) {
+    auto runtimeEntries = impl->LanguageRuntimeLibraries.find(language);
+    if(runtimeEntries != impl->LanguageRuntimeLibraries.end()) {
+      this->AddLinkEntries(-1, runtimeEntries->second);
+    }
+  }
   for (cmLinkItem const& wi : impl->WrongConfigLibraries) {
     this->CheckWrongConfigItem(wi);
   }

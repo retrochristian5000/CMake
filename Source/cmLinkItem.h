@@ -8,6 +8,7 @@
 #include <ostream>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include <cmext/algorithm>
 
@@ -74,6 +75,7 @@ struct cmLinkInterface : public cmLinkInterfaceLibraries
 {
   // Languages whose runtime libraries must be linked.
   std::vector<std::string> Languages;
+  std::unordered_map<std::string, std::vector<cmLinkItem>> LanguageRuntimeLibraries;
 
   // Shared library dependencies needed for linking on some platforms.
   std::vector<cmLinkItem> SharedDeps;
@@ -109,6 +111,7 @@ struct cmLinkImplementation : public cmLinkImplementationLibraries
 {
   // Languages whose runtime libraries must be linked.
   std::vector<std::string> Languages;
+  std::unordered_map<std::string, std::vector<cmLinkImplItem>> LanguageRuntimeLibraries;
 
   // Whether the list depends on a link language genex.
   bool HadLinkLanguageSensitiveCondition = false;

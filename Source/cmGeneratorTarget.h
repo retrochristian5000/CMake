@@ -246,6 +246,7 @@ public:
                                      const cmGeneratorTarget* head,
                                      bool usage_requirements_only) const;
 
+
   /** Get the library name for an imported interface library.  */
   std::string GetImportedLibName(std::string const& config) const;
 
@@ -399,6 +400,7 @@ public:
   void ComputeLinkImplementationLibraries(const std::string& config,
                                           cmOptionalLinkImplementation& impl,
                                           const cmGeneratorTarget* head) const;
+
 
   struct TargetOrString
   {
@@ -1110,6 +1112,12 @@ private:
 
   cmProp GetPropertyWithPairedLanguageSupport(std::string const& lang,
                                               const char* suffix) const;
+
+  void ComputeLinkImplementationRuntimeLibraries(const std::string& config,
+                                            cmOptionalLinkImplementation& impl) const;
+
+  void ComputeLinkInterfaceRuntimeLibraries(const std::string& config,
+                                     cmOptionalLinkInterface& iface) const;
 
 public:
   const std::vector<const cmGeneratorTarget*>& GetLinkImplementationClosure(
