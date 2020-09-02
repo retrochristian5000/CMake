@@ -185,6 +185,18 @@ function(CMAKE_DETERMINE_COMPILER_ID lang flagvar src)
       if(result EQUAL 0)
         set(_CMAKE_HIP_COMPILER_ROCM_ROOT "${output}" PARENT_SCOPE)
       endif()
+      if(lang STREQUAL "HIP")
+        execute_process(
+          COMMAND "${_hipcc_dir}/hipconfig"
+          --rocmpath
+          OUTPUT_VARIABLE output ERROR_VARIABLE output
+          RESULT_VARIABLE result
+          TIMEOUT 10
+        )
+        if(result EQUAL 0)
+          set(_CMAKE_HIP_COMPILER_ROCM_ROOT "${output}" PARENT_SCOPE)
+        endif()
+      endif()
     endif()
   endif()
 
