@@ -161,9 +161,8 @@ function(CMAKE_DETERMINE_COMPILER_ID lang flagvar src)
     execute_process(
       COMMAND "${_hipcc_dir}/hipconfig"
       --hipclangpath
-      OUTPUT_VARIABLE output ERROR_VARIABLE output
+      OUTPUT_VARIABLE output
       RESULT_VARIABLE result
-      TIMEOUT 10
     )
     if(result EQUAL 0 AND EXISTS "${output}")
       if(lang STREQUAL "C")
@@ -178,9 +177,8 @@ function(CMAKE_DETERMINE_COMPILER_ID lang flagvar src)
       execute_process(
         COMMAND "${_hipcc_dir}/hipconfig"
         --rocmpath
-        OUTPUT_VARIABLE output ERROR_VARIABLE output
+        OUTPUT_VARIABLE output
         RESULT_VARIABLE result
-        TIMEOUT 10
       )
       if(result EQUAL 0)
         set(_CMAKE_HIP_COMPILER_ROCM_ROOT "${output}" PARENT_SCOPE)
