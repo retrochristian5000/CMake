@@ -134,7 +134,7 @@ class cmGlobalXCodeGenerator::Factory : public cmGlobalGeneratorFactory
 {
 public:
   std::unique_ptr<cmGlobalGenerator> CreateGlobalGenerator(
-    const std::string& name, cmake* cm) const override;
+    const std::string& name, bool allowArch, cmake* cm) const override;
 
   void GetDocumentation(cmDocumentationEntry& entry) const override
   {
@@ -191,6 +191,7 @@ std::unique_ptr<cmGlobalGeneratorFactory> cmGlobalXCodeGenerator::NewFactory()
 
 std::unique_ptr<cmGlobalGenerator>
 cmGlobalXCodeGenerator::Factory::CreateGlobalGenerator(const std::string& name,
+                                                       bool /*allowArch*/,
                                                        cmake* cm) const
 {
   if (name != GetActualName()) {
