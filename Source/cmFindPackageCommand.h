@@ -158,14 +158,27 @@ private:
 
   std::map<std::string, cmPolicies::PolicyID> DeprecatedFindModules;
 
+  static const std::string_view VERSION_ENDPOINT_INCLUDED;
+  static const std::string_view VERSION_ENDPOINT_EXCLUDED;
+
   std::string Name;
   std::string Variable;
+  std::string VersionComplete;
+  std::string VersionRange;
+  std::string VersionRangeMin;
+  std::string VersionRangeMax;
   std::string Version;
   unsigned int VersionMajor = 0;
   unsigned int VersionMinor = 0;
   unsigned int VersionPatch = 0;
   unsigned int VersionTweak = 0;
   unsigned int VersionCount = 0;
+  std::string VersionMax;
+  unsigned int VersionMaxMajor = 0;
+  unsigned int VersionMaxMinor = 0;
+  unsigned int VersionMaxPatch = 0;
+  unsigned int VersionMaxTweak = 0;
+  unsigned int VersionMaxCount = 0;
   bool VersionExact = false;
   std::string FileFound;
   std::string VersionFound;
