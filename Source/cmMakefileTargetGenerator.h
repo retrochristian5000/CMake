@@ -104,6 +104,9 @@ protected:
   void WriteObjectDependRules(cmSourceFile const& source,
                               std::vector<std::string>& depends);
 
+  // CUDA device linking.
+  void WriteDeviceLinkRule(bool relink, std::vector<std::string>& commands, const std::string& output);
+
   // write the build rule for a custom command
   void GenerateCustomRuleFile(cmCustomCommandGenerator const& ccg);
 
@@ -127,7 +130,7 @@ protected:
   void DriveCustomCommands(std::vector<std::string>& depends);
 
   // append intertarget dependencies
-  void AppendTargetDepends(std::vector<std::string>& depends);
+  void AppendTargetDepends(std::vector<std::string>& depends, bool ignoreType = false);
 
   // Append object file dependencies.
   void AppendObjectDepends(std::vector<std::string>& depends);
