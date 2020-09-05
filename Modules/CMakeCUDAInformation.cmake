@@ -145,7 +145,7 @@ endif()
 #Specify how to compile when separable compilation has been requested
 if(NOT CMAKE_CUDA_COMPILE_SEPARABLE_COMPILATION)
   set(CMAKE_CUDA_COMPILE_SEPARABLE_COMPILATION
-    "<CMAKE_CUDA_COMPILER> ${_CMAKE_CUDA_EXTRA_FLAGS} <DEFINES> <INCLUDES> <FLAGS> ${_CMAKE_COMPILE_AS_CUDA_FLAG} -dc <SOURCE> -o <OBJECT>")
+    "<CMAKE_CUDA_COMPILER> ${_CMAKE_CUDA_EXTRA_FLAGS} <DEFINES> <INCLUDES> <FLAGS> ${_CMAKE_COMPILE_AS_CUDA_FLAG} ${_CMAKE_CUDA_DEVICE_CODE} <SOURCE> -o <OBJECT>")
 endif()
 
 #Specify how to compile when whole compilation has been requested
