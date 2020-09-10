@@ -19,6 +19,7 @@
   Var ADD_TO_PATH_CURRENT_USER
   Var INSTALL_DESKTOP
   Var IS_DEFAULT_INSTALLDIR
+  Var SECTION_NAMES
 ;--------------------------------
 ;Include Modern UI
 
@@ -26,6 +27,175 @@
 
   ;Default installation folder
   InstallDir "@CPACK_NSIS_INSTALL_ROOT@\@CPACK_PACKAGE_INSTALL_DIRECTORY@"
+
+;--------------------------------
+; Customized stuff
+
+; GetParameters
+; input, none
+; output, top of stack (replaces, with e.g. whatever)
+; modifies no other variables.
+
+Function GetParameters
+
+  !define GetParameters `!insertmacro GetParametersCall`
+
+  !macro GetParametersCall _RESULT
+    Call GetParameters
+    Pop ${_RESULT}
+  !macroend
+
+  Push $R0
+  Push $R1
+  Push $R2
+  Push $R3
+
+  StrCpy $R2 1
+  StrLen $R3 $CMDLINE
+
+  ;Check for quote or space
+  StrCpy $R0 $CMDLINE $R2
+  StrCmp $R0 '"' 0 +3
+    StrCpy $R1 '"'
+    Goto loop
+  StrCpy $R1 " "
+
+  loop:
+    IntOp $R2 $R2 + 1
+    StrCpy $R0 $CMDLINE 1 $R2
+    StrCmp $R0 $R1 get
+    StrCmp $R2 $R3 get
+    Goto loop
+
+  get:
+    IntOp $R2 $R2 + 1
+    StrCpy $R0 $CMDLINE 1 $R2
+    StrCmp $R0 " " get
+    StrCpy $R0 $CMDLINE "" $R2
+
+  Pop $R3
+  Pop $R2
+  Pop $R1
+  Exch $R0
+
+FunctionEnd
+
+;Get options from command line parameters.
+;Syntax:
+  ;${GetOptions} "[Parameters]" "[Option]" $var
+  ;"[Parameters]"     ; command line parameters
+  ;"[Option]"         ; option name
+  ;$var               ; Result: option string
+;Note:
+  ;Error flag if option not found
+  ;First option symbol it is delimiter
+
+Function GetOptions
+  !define GetOptions `!insertmacro GetOptionsCall`
+
+  !macro GetOptionsCall _PARAMETERS _OPTION _RESULT
+    Push `${_PARAMETERS}`
+    Push `${_OPTION}`
+    Call GetOptions
+    Pop ${_RESULT}
+  !macroend
+
+  Exch $1
+  Exch
+  Exch $0
+  Exch
+  Push $2
+  Push $3
+  Push $4
+  Push $5
+  Push $6
+  Push $7
+  ClearErrors
+
+  StrCpy $2 $1 '' 1
+  StrCpy $1 $1 1
+  StrLen $3 $2
+  StrCpy $7 0
+
+  begin:
+  StrCpy $4 -1
+  StrCpy $6 ''
+
+  quote:
+  IntOp $4 $4 + 1
+  StrCpy $5 $0 1 $4
+  StrCmp $5$7 '0' notfound
+  StrCmp $5 '' trimright
+  StrCmp $5 '"' 0 +7
+  StrCmp $6 '' 0 +3
+  StrCpy $6 '"'
+  goto quote
+  StrCmp $6 '"' 0 +3
+  StrCpy $6 ''
+  goto quote
+  StrCmp $5 `'` 0 +7
+  StrCmp $6 `` 0 +3
+  StrCpy $6 `'`
+  goto quote
+  StrCmp $6 `'` 0 +3
+  StrCpy $6 ``
+  goto quote
+  StrCmp $5 '`' 0 +7
+  StrCmp $6 '' 0 +3
+  StrCpy $6 '`'
+  goto quote
+  StrCmp $6 '`' 0 +3
+  StrCpy $6 ''
+  goto quote
+  StrCmp $6 '"' quote
+  StrCmp $6 `'` quote
+  StrCmp $6 '`' quote
+  StrCmp $5 $1 0 quote
+  StrCmp $7 0 trimleft trimright
+
+  trimleft:
+  IntOp $4 $4 + 1
+  StrCpy $5 $0 $3 $4
+  StrCmp $5 '' notfound
+  StrCmp $5 $2 0 quote
+  IntOp $4 $4 + $3
+  StrCpy $0 $0 '' $4
+  StrCpy $4 $0 1
+  StrCmp $4 ' ' 0 +3
+  StrCpy $0 $0 '' 1
+  goto -3
+  StrCpy $7 1
+  goto begin
+
+  trimright:
+  StrCpy $0 $0 $4
+  StrCpy $4 $0 1 -1
+  StrCmp $4 ' ' 0 +3
+  StrCpy $0 $0 -1
+  goto -3
+  StrCpy $3 $0 1
+  StrCpy $4 $0 1 -1
+  StrCmp $3 $4 0 end
+  StrCmp $3 '"' +3
+  StrCmp $3 `'` +2
+  StrCmp $3 '`' 0 end
+  StrCpy $0 $0 -1 1
+  goto end
+
+  notfound:
+  SetErrors
+  StrCpy $0 ''
+
+  end:
+  Pop $7
+  Pop $6
+  Pop $5
+  Pop $4
+  Pop $3
+  Pop $2
+  Pop $1
+  Exch $0
+FunctionEnd
 
 ;--------------------------------
 ;General
@@ -57,8 +227,19 @@ Var AR_RegFlags
 ; Loads the "selected" flag for the section named SecName into the
 ; variable VarName.
 !macro LoadSectionSelectedIntoVar SecName VarName
- SectionGetFlags ${${SecName}} $${VarName}
- IntOp $${VarName} $${VarName} & ${SF_SELECTED}  ;Turn off all other bits
+  SectionGetFlags ${${SecName}} $${VarName}
+  IntOp $${VarName} $${VarName} & ${SF_SELECTED}  ;Turn off all other bits
+  ; override selected based on commandline
+  ${GetParameters} $0
+  ${GetOptions} "$0" "/${SecName}" $0
+  IfErrors 0 +2
+  Goto +7
+    IntCmp $0 1 0 +3
+      IntOp $${VarName} $${VarName} | ${SF_SELECTED}
+    Goto +3
+      IntOp $1 ${SF_SELECTED} ~
+      IntOp $${VarName} $${VarName} & $1
+  SectionSetFlags ${${SecName}} $${VarName}
 !macroend
 
 ; Loads the value of a variable... can we get around this?
@@ -96,6 +277,12 @@ Var AR_RegFlags
 
  "default_${SecName}:"
  !insertmacro LoadSectionSelectedIntoVar ${SecName} ${SecName}_selected
+
+  ; store all available sections with their current settings for the /help argument
+  IntCmp $${SecName}_selected ${SF_SELECTED} 0 +3
+    StrCpy $SECTION_NAMES "/${SecName} 1$\r$\n$SECTION_NAMES"
+  Goto +2
+    StrCpy $SECTION_NAMES "/${SecName} 0$\r$\n$SECTION_NAMES"
 !macroend
 
 !macro FinishSection SecName
@@ -931,6 +1118,14 @@ uninst_failed:
 inst:
   ; Reads components status for registry
   !insertmacro SectionList "InitSection"
+
+  ; list all sections names
+  ${GetParameters} $0
+  ${GetOptions} "$0" "/help" $0
+  IfErrors 0 +2
+  Goto +3
+    MessageBox MB_OK "$SECTION_NAMES"
+  Abort
 
   ; check to see if /D has been used to change
   ; the install directory by comparing it to the
