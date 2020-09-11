@@ -9,3 +9,6 @@ cuda-check-support
 
 * The :module:`CheckCUDACompilerFlag` module was added to
   provide a ``CHECK_CUDA_COMPILER_FLAG`` macro.
+
+* The :module:`CheckLinkerFlag` module has been extended to
+  support the validity of CUDA link flags.
