@@ -386,6 +386,28 @@ if (APPLE)
 
 endif()
 
+if (CMake_TEST_CUDA)
+  enable_language(CUDA)
+  #
+  # also test that the CHECK_CUDA_SOURCE_COMPILES
+  # and CHECK_CUDA_SOURCE_RUNS macros work
+
+  include(CheckCUDASourceCompiles)
+  include(CheckCUDASourceRuns)
+
+  CHECK_CUDA_SOURCE_COMPILES("I don't build" CUDA_BUILD_SHOULD_FAIL)
+  CHECK_CUDA_SOURCE_COMPILES("__host__ int main() {return 0;}" CUDA_BUILD_SHOULD_WORK)
+  CHECK_CUDA_SOURCE_RUNS("__host__ int main() {return 2;}" CUDA_RUN_SHOULD_FAIL)
+  CHECK_CUDA_SOURCE_RUNS("__host__ int main() {return 0;}" CUDA_RUN_SHOULD_WORK)
+
+
+  TEST_FAIL(CUDA_BUILD_SHOULD_FAIL "CHECK_CUDA_SOURCE_COMPILES() succeeded, but should have failed")
+  TEST_ASSERT(CUDA_BUILD_SHOULD_WORK "CHECK_CUDA_SOURCE_COMPILES() failed")
+  TEST_FAIL(CUDA_RUN_SHOULD_FAIL "CHECK_CUDA_SOURCE_RUNS() succeeded, but should have failed")
+  TEST_ASSERT(CUDA_RUN_SHOULD_WORK "CHECK_CUDA_SOURCE_RUNS() failed")
+endif()
+
+
 #######################################################################
 #
 # also test that the check_prototype_definition macro works
