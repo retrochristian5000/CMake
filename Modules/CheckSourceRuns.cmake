@@ -15,7 +15,8 @@ subsequently be run.
 
   .. code-block:: cmake
 
-    check_source_runs(<lang> <code> <resultVar>)
+    check_source_runs(<lang> <code> <resultVar>
+                      [SRC_EXT <extension>])
 
   Check that the source supplied in ``<code>`` can be compiled as a source
   file for the requested language, linked as an executable and then run.

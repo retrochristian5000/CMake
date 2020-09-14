@@ -90,5 +90,5 @@ include_guard(GLOBAL)
 include(CheckSourceCompiles)
 
 macro(CHECK_Fortran_SOURCE_COMPILES SOURCE VAR)
-  cmake_check_source_compiles(Fortran "${SOURCE}" ${VAR} ${ARGN})
+  check_source_compiles(Fortran "${SOURCE}" ${VAR} ${ARGN})
 endmacro()
