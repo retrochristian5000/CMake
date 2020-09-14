@@ -51,7 +51,7 @@ macro (CHECK_OBJCXX_COMPILER_FLAG _FLAG _RESULT)
   CHECK_COMPILER_FLAG_COMMON_PATTERNS(_CheckOBJCXXCompilerFlag_COMMON_PATTERNS)
   CHECK_OBJCXX_SOURCE_COMPILES("#ifndef __OBJC__\n#  error \"Not an Objective-C++ compiler\"\n#endif\nint main(void) { return 0; }" ${_RESULT}
     # Some compilers do not fail with a bad flag
-    FAIL_REGEX "command line option .* is valid for .* but not for Objective-C\\\\+\\\\+" # GNU
+    FAIL_REGEX "command line option .* is valid for .* but not for Objective-C\\\\\\\\+\\\\\\\\+" # GNU
     FAIL_REGEX "argument unused during compilation: .*" # Clang
     ${_CheckOBJCXXCompilerFlag_COMMON_PATTERNS}
     )
