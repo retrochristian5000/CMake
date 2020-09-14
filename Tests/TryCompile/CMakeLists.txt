@@ -293,6 +293,20 @@ TEST_ASSERT(CXX_BUILD_SHOULD_WORK "CHECK_CXX_SOURCE_COMPILES() failed")
 TEST_FAIL(CXX_RUN_SHOULD_FAIL "CHECK_CXX_SOURCE_RUNS() succeeded, but should have failed")
 TEST_ASSERT(CXX_RUN_SHOULD_WORK "CHECK_CXX_SOURCE_RUNS() failed")
 
+check_source_compiles(C "I don't build" BUILD_SHOULD_FAIL_C)
+check_source_compiles(C "int main() {return 0;}" BUILD_SHOULD_WORK_C)
+check_source_compiles(C "int main(){ char* tmp = \"\\\\n\"; return 0;}" BUILD_SHOULD_WORK_COMPLEX_C)
+
+TEST_FAIL(BUILD_SHOULD_FAIL_C "CHECK_SOURCE_COMPILES(C) succeeded, but should have failed")
+TEST_ASSERT(BUILD_SHOULD_WORK_C "CHECK_SOURCE_COMPILES(C) failed")
+TEST_ASSERT(BUILD_SHOULD_WORK_COMPLEX_C "CHECK_SOURCE_COMPILES(C) failed")
+
+check_source_compiles(CXX "I don't build" BUILD_SHOULD_FAIL_CXX)
+check_source_compiles(CXX "int main() {return 0;}" BUILD_SHOULD_WORK_CXX)
+
+TEST_FAIL(BUILD_SHOULD_FAIL_CXX "CHECK_SOURCE_COMPILES(CXX) succeeded, but should have failed")
+TEST_ASSERT(BUILD_SHOULD_WORK_CXX "CHECK_SOURCE_COMPILES(CXX) failed")
+
 foreach(lang C CXX)
   if(NOT CMAKE_${lang}_COMPILER_ID STREQUAL "PathScale")
     set(${lang}_DD --)
