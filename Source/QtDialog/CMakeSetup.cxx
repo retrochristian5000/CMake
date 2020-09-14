@@ -21,7 +21,6 @@
 #include "cmDocumentationEntry.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h" // IWYU pragma: keep
-#include "cmVersion.h"
 #include "cmake.h"
 
 static const char* cmDocumentationName[][2] = { { nullptr,
@@ -54,6 +53,8 @@ Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin);
 Q_IMPORT_PLUGIN(QWindowsVistaStylePlugin);
 #  endif
 #endif
+
+int CMakeGUIMainTest();
 
 int main(int argc, char** argv)
 {
@@ -213,6 +214,11 @@ int main(int argc, char** argv)
           cmSystemTools::CollapseFullPath(".").c_str()));
       }
     }
+  }
+
+  int testResult = CMakeGUIMainTest();
+  if (testResult) {
+    return testResult;
   }
 
   return QApplication::exec();
