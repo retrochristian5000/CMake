@@ -1,0 +1,3 @@
+[Settings]
+StartPath\WhereBuild0=@CMake_BINARY_DIR@/Tests/CMakeGUI/no/exist/1
+StartPath\WhereBuild1=@CMake_BINARY_DIR@/Tests/CMakeGUI/no/exist/2
