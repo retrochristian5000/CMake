@@ -103,6 +103,8 @@ test:fedora31-ninja:
         - build:fedora31-ninja
     needs:
         - build:fedora31-ninja
+    tags:
+        - x11
 
 test:fedora31-ninja-multi:
     extends:
