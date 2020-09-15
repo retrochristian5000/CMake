@@ -63,6 +63,15 @@
         - xcode-11.5
         - nonconcurrent
 
+.macos_builder_tags_testing:
+    tags:
+        - cmake # Since this is a bare runner, pin to a project.
+        - macos
+        - shell
+        - xcode-11.5
+        - nonconcurrent
+        - temp
+
 .macos_builder_ext_tags:
     tags:
         - cmake # Since this is a bare runner, pin to a project.

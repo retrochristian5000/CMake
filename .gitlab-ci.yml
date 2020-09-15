@@ -181,7 +181,7 @@ package:macos:
         - .macos_package
         - .cmake_build_macos_package
         - .cmake_release_artifacts
-        - .macos_builder_tags
+        - .macos_builder_tags_testing
         - .run_only_for_package
     dependencies:
         - build:fedora31-sphinx-package
