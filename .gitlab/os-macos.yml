@@ -37,6 +37,13 @@
         CTEST_NO_WARNINGS_ALLOWED: 1
         CMAKE_GENERATOR: "Unix Makefiles"
 
+.macos_package:
+    extends: .macos_build
+
+    variables:
+        CMAKE_CONFIGURATION: macos_package
+        CTEST_NO_WARNINGS_ALLOWED: 1
+
 ### External testing
 
 .macos_xcode:
@@ -88,6 +95,23 @@
         - ctest -VV -S .gitlab/ci/ctest_configure.cmake
         - ctest -VV -S .gitlab/ci/ctest_build.cmake
         - sccache --show-stats
+
+    interruptible: true
+
+.cmake_build_macos_package:
+    stage: package
+
+    script:
+        - *before_script_macos
+        - .gitlab/ci/sccache.sh
+        # Allow the server to already be running.
+        - "sccache --start-server || :"
+        - sccache --show-stats
+        - ctest -VV -S .gitlab/ci/ctest_configure.cmake
+        - ctest -VV -S .gitlab/ci/ctest_build.cmake
+        - sccache --show-stats
+        - cpack -G TGZ
+        - cpack -G DragNDrop
 
     interruptible: true
 
