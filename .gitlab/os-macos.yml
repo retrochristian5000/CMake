@@ -121,8 +121,8 @@
         - ctest -VV -S .gitlab/ci/ctest_build.cmake
         - sccache --show-stats
         - cd build
-        - cpack -G TGZ
-        - cpack -G DragNDrop
+        - cpack -V -G TGZ
+        - cpack -V -G DragNDrop
 
     interruptible: true
 
