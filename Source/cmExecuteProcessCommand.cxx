@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <vector>
 
 #include <cmext/algorithm>
@@ -63,6 +64,7 @@ bool cmExecuteProcessCommand(std::vector<std::string> const& args,
     bool EchoOutputVariable = false;
     bool EchoErrorVariable = false;
     std::string Encoding;
+    std::string CommandErrorIsFatal;
   };
 
   static auto const parser =
@@ -86,7 +88,8 @@ bool cmExecuteProcessCommand(std::vector<std::string> const& args,
             &Arguments::ErrorStripTrailingWhitespace)
       .Bind("ENCODING"_s, &Arguments::Encoding)
       .Bind("ECHO_OUTPUT_VARIABLE"_s, &Arguments::EchoOutputVariable)
-      .Bind("ECHO_ERROR_VARIABLE"_s, &Arguments::EchoErrorVariable);
+      .Bind("ECHO_ERROR_VARIABLE"_s, &Arguments::EchoErrorVariable)
+      .Bind("COMMAND_ERROR_IS_FATAL"_s, &Arguments::CommandErrorIsFatal);
 
   std::vector<std::string> unparsedArguments;
   std::vector<std::string> keywordsMissingValue;
@@ -128,6 +131,16 @@ bool cmExecuteProcessCommand(std::vector<std::string> const& args,
   if (!arguments.Timeout.empty()) {
     if (sscanf(arguments.Timeout.c_str(), "%lg", &timeout) != 1) {
       status.SetError(" called with TIMEOUT value that could not be parsed.");
+      return false;
+    }
+  }
+
+  status.SetError(" COMMAND_ERROR_IS_FATAL : " +
+                  arguments.CommandErrorIsFatal);
+  if (!arguments.CommandErrorIsFatal.empty()) {
+    if (arguments.CommandErrorIsFatal.compare("ANY") != 0 &&
+        arguments.CommandErrorIsFatal.compare("LAST") != 0) {
+      status.SetError(" COMMAND_ERROR_IS_FATAL option can be ANY or LAST");
       return false;
     }
   }
@@ -360,6 +373,50 @@ bool cmExecuteProcessCommand(std::vector<std::string> const& args,
         status.GetMakefile().AddDefinition(
           arguments.ResultsVariable, "Process terminated due to timeout");
         break;
+    }
+  }
+
+  if (arguments.CommandErrorIsFatal.compare("ANY") == 0) {
+    if (cmsysProcess_GetState(cp) == cmsysProcess_State_Exited) {
+      std::vector<int> failedIndexes;
+      for (int i = 0; i < static_cast<int>(arguments.Commands.size()); ++i) {
+        if (cmsysProcess_GetStateByIndex(cp, i) ==
+            kwsysProcess_StateByIndex_Exited) {
+          int exitCode = cmsysProcess_GetExitValueByIndex(cp, i);
+          if (exitCode) {
+            failedIndexes.push_back(i);
+          }
+        }
+      }
+      if (!failedIndexes.empty()) {
+        std::ostringstream oss;
+        oss << "failed command indexes: ";
+        for (auto i = 0u; i < failedIndexes.size(); i++) {
+          if (i == failedIndexes.size() - 1) {
+            oss << failedIndexes[i] + 1;
+          } else {
+            oss << failedIndexes[i] + 1 << ", ";
+          }
+        }
+        status.SetError(oss.str());
+        cmSystemTools::SetFatalErrorOccured();
+        return false;
+      }
+    }
+  }
+
+  if (arguments.CommandErrorIsFatal.compare("LAST") == 0) {
+    if (cmsysProcess_GetState(cp) == cmsysProcess_State_Exited) {
+      int lastIndex = static_cast<int>(arguments.Commands.size() - 1);
+      if (cmsysProcess_GetStateByIndex(cp, lastIndex) ==
+          kwsysProcess_StateByIndex_Exited) {
+        int exitCode = cmsysProcess_GetExitValueByIndex(cp, lastIndex);
+        if (exitCode) {
+          status.SetError("last command failed");
+          cmSystemTools::SetFatalErrorOccured();
+          return false;
+        }
+      }
     }
   }
 
