@@ -1,9 +1,8 @@
 
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.18)
 project (GPUDebugFlag CUDA)
 
 set(CMAKE_CUDA_STANDARD 11)
-set(CMAKE_CUDA_ARCHITECTURES 30)
 
 # Goal for this example:
 # Verify that enabling device debug works.
