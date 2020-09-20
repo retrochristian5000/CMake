@@ -23,7 +23,9 @@ Execute one or more child processes.
                   [ERROR_STRIP_TRAILING_WHITESPACE]
                   [ENCODING <name>]
                   [ECHO_OUTPUT_VARIABLE]
-                  [ECHO_ERROR_VARIABLE])
+                  [ECHO_ERROR_VARIABLE]
+                  [ANY_COMMAND_ERROR_IS_FATAL]
+                  [LAST_COMMAND_ERROR_IS_FATAL])
 
 Runs the given sequence of one or more commands.
 
@@ -115,6 +117,12 @@ Options:
   and also on standard output or standard error.
 
   This is analogous to the ``tee`` Unix command.
+
+``ANY_COMMAND_ERROR_IS_FATAL``, ``LAST_COMMAND_ERROR_IS_FATAL``
+  ``ANY_COMMAND_ERROR_IS_FATAL`` option stops processing if any command fails.
+  ``LAST_COMMAND_ERROR_IS_FATAL`` option stops processing if the last command
+  in the command list fails. Either of these options can be specified, but
+  not both.
 
 If more than one ``OUTPUT_*`` or ``ERROR_*`` option is given for the
 same pipe the precedence is not specified.
