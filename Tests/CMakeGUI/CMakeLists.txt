@@ -65,6 +65,21 @@ add_cmake_gui_test(sourceBinaryArgs:binaryDir
 add_cmake_gui_test(sourceBinaryArgs:binaryDirNoExist
   "${CMAKE_CURRENT_BINARY_DIR}/NoExist"
   )
+add_cmake_gui_test(presetArg:preset
+  -S "${CMAKE_CURRENT_SOURCE_DIR}/SimpleProject"
+  "--preset=ninja"
+  )
+add_cmake_gui_test(presetArg:presetInBuildDirectory
+  -S "${CMAKE_CURRENT_SOURCE_DIR}/SimpleProject"
+  "--preset=ninja"
+  )
+set_property(TEST CMakeGUI.presetArg:presetInBuildDirectory
+  PROPERTY WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+  )
+add_cmake_gui_test(presetArg:noexist
+  -S "${CMAKE_CURRENT_SOURCE_DIR}/SimpleProject"
+  "--preset=noexist"
+  )
 
 add_cmake_gui_lib_test(QCMakeCacheModel
   SOURCES

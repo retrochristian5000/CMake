@@ -188,7 +188,7 @@ int main(int argc, char** argv)
         cmSystemTools::CollapseFullPath(path.toLocal8Bit().data());
       cmSystemTools::ConvertToUnixSlashes(binaryDirectory);
     } else if (arg.startsWith("--preset=")) {
-      QString preset = arg.mid(9);
+      QString preset = arg.mid(cmStrLen("--preset="));
       if (preset.isEmpty()) {
         std::cerr << "No preset specified for --preset" << std::endl;
         return 1;
@@ -196,17 +196,12 @@ int main(int argc, char** argv)
       presetName = preset.toLocal8Bit().data();
     }
   }
-  if (!sourceDirectory.empty() && !presetName.empty()) {
-    if (!binaryDirectory.empty()) {
-      std::cerr << "Cannot specify both a build directory and a preset name"
-                << std::endl;
-      return 1;
-    }
-    dialog.setSourceDirectory(QString::fromLocal8Bit(sourceDirectory.c_str()));
-    dialog.setDeferredPreset(QString::fromLocal8Bit(presetName.c_str()));
-  } else if (!sourceDirectory.empty() && !binaryDirectory.empty()) {
+  if (!sourceDirectory.empty() && !binaryDirectory.empty()) {
     dialog.setSourceDirectory(QString::fromLocal8Bit(sourceDirectory.c_str()));
     dialog.setBinaryDirectory(QString::fromLocal8Bit(binaryDirectory.c_str()));
+  } else if (!sourceDirectory.empty() && !presetName.empty()) {
+    dialog.setSourceDirectory(QString::fromLocal8Bit(sourceDirectory.c_str()));
+    dialog.setDeferredPreset(QString::fromLocal8Bit(presetName.c_str()));
   } else {
     if (args.count() == 2) {
       std::string filePath =

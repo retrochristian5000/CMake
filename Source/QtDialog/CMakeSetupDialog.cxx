@@ -298,6 +298,10 @@ void CMakeSetupDialog::initialize()
                    this->CMakeThread->cmakeInstance(),
                    SLOT(setWarnUninitializedMode(bool)));
 
+  /*if (!this->SourceDirectory->text().isEmpty() &&
+      !this->DeferredPreset.isNull()) {
+    this->onSourceDirectoryChanged(this->SourceDirectory->text());
+  } else*/
   if (!this->SourceDirectory->text().isEmpty() ||
       !this->BinaryDirectory->lineEdit()->text().isEmpty()) {
     this->onSourceDirectoryChanged(this->SourceDirectory->text());

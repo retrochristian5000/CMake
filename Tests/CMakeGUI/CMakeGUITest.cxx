@@ -3,6 +3,7 @@
 #include "CMakeGUITest.h"
 
 #include <QApplication>
+#include <QEventLoop>
 #include <QSettings>
 #include <QString>
 #include <QStringList>
@@ -45,6 +46,106 @@ void CMakeGUITest::sourceBinaryArgs_data()
   QTest::newRow("binaryDir") << "" << CMake_BINARY_DIR;
   QTest::newRow("binaryDirNoExist")
     << "" << CMake_BINARY_DIR "/Tests/CMakeGUI/no/exist/1";
+}
+
+void CMakeGUITest::presetArg()
+{
+  QFETCH(QString, presetName);
+  QFETCH(QString, sourceDir);
+  QFETCH(QString, binaryDir);
+  QFETCH(QCMakePropertyList, properties);
+
+  QEventLoop loop;
+  QTimer::singleShot(5000, &loop, &QEventLoop::quit);
+  loop.exec();
+
+  QCOMPARE(this->m_window->BuildPreset->presetName(), presetName);
+  QCOMPARE(this->m_window->SourceDirectory->text(), sourceDir);
+  QCOMPARE(this->m_window->BinaryDirectory->currentText(), binaryDir);
+
+  auto actualProperties =
+    this->m_window->CacheValues->cacheModel()->properties();
+  QCOMPARE(actualProperties.size(), properties.size());
+  for (int i = 0; i < actualProperties.size(); ++i) {
+    // operator==() only compares Key, we need to compare Value and Type too
+    QCOMPARE(actualProperties[i].Key, properties[i].Key);
+    QCOMPARE(actualProperties[i].Value, properties[i].Value);
+    QCOMPARE(actualProperties[i].Type, properties[i].Type);
+  }
+}
+
+void CMakeGUITest::presetArg_data()
+{
+  QTest::addColumn<QString>("presetName");
+  QTest::addColumn<QString>("sourceDir");
+  QTest::addColumn<QString>("binaryDir");
+  QTest::addColumn<QCMakePropertyList>("properties");
+
+  QCMakePropertyList presetProperties{
+    QCMakeProperty{
+      /*Key=*/"FALSE_VARIABLE",
+      /*Value=*/false,
+      /*Strings=*/{},
+      /*Help=*/"",
+      /*Type=*/QCMakeProperty::BOOL,
+      /*Advanced=*/false,
+    },
+    QCMakeProperty{
+      /*Key=*/"FILEPATH_VARIABLE",
+      /*Value=*/
+      CMake_SOURCE_DIR "/Tests/CMakeGUI/SimpleProject/CMakeLists.txt",
+      /*Strings=*/{},
+      /*Help=*/"",
+      /*Type=*/QCMakeProperty::FILEPATH,
+      /*Advanced=*/false,
+    },
+    QCMakeProperty{
+      /*Key=*/"ON_VARIABLE",
+      /*Value=*/true,
+      /*Strings=*/{},
+      /*Help=*/"",
+      /*Type=*/QCMakeProperty::BOOL,
+      /*Advanced=*/false,
+    },
+    QCMakeProperty{
+      /*Key=*/"PATH_VARIABLE",
+      /*Value=*/CMake_SOURCE_DIR "/Tests/CMakeGUI/SimpleProject",
+      /*Strings=*/{},
+      /*Help=*/"",
+      /*Type=*/QCMakeProperty::PATH,
+      /*Advanced=*/false,
+    },
+    QCMakeProperty{
+      /*Key=*/"STRING_VARIABLE",
+      /*Value=*/"String value",
+      /*Strings=*/{},
+      /*Help=*/"",
+      /*Type=*/QCMakeProperty::STRING,
+      /*Advanced=*/false,
+    },
+    QCMakeProperty{
+      /*Key=*/"UNINITIALIZED_VARIABLE",
+      /*Value=*/"Uninitialized value",
+      /*Strings=*/{},
+      /*Help=*/"",
+      /*Type=*/QCMakeProperty::STRING,
+      /*Advanced=*/false,
+    },
+  };
+
+  QTest::newRow("preset") << "ninja"
+                          << CMake_SOURCE_DIR "/Tests/CMakeGUI/SimpleProject"
+                          << CMake_SOURCE_DIR
+    "/Tests/CMakeGUI/SimpleProject/build"
+                          << presetProperties;
+  QTest::newRow("presetInBuildDirectory")
+    << "ninja" << CMake_SOURCE_DIR "/Tests/CMakeGUI/SimpleProject"
+    << CMake_SOURCE_DIR "/Tests/CMakeGUI/SimpleProject/build"
+    << presetProperties;
+  QTest::newRow("noexist") << QString{}
+                           << CMake_SOURCE_DIR "/Tests/CMakeGUI/SimpleProject"
+                           << CMake_BINARY_DIR "/Tests/CMakeGUI/no/exist/1"
+                           << QCMakePropertyList{};
 }
 
 void SetupDefaultQSettings()
