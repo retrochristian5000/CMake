@@ -72,6 +72,7 @@ public:
   std::string Name;
   std::string FilePath;
   long Line = 0;
+  static long const DeferPlaceholderLine = -1;
 
   static cmListFileContext FromCommandContext(cmCommandContext const& lfcc,
                                               std::string const& fileName)
