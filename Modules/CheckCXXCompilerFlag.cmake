@@ -48,7 +48,7 @@ function(check_cxx_compiler_flag _flag _var)
   check_compiler_flag_common_patterns(_common_patterns)
   check_cxx_source_compiles("int main() { return 0; }" ${_var}
     # Some compilers do not fail with a bad flag
-    FAIL_REGEX "command line option .* is valid for .* but not for C\\\\+\\\\+" # GNU
+    FAIL_REGEX "command line option .* is valid for .* but not for C\\\\\\\\+\\\\\\\\+" # GNU
     ${_common_patterns}
     )
   foreach(v IN LISTS _locale_vars)
