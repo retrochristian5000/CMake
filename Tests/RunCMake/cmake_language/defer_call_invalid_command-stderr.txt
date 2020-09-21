@@ -1,0 +1,84 @@
+^CMake Error at defer_call_invalid_command.cmake:[0-9]+ \(cmake_language\):
+  cmake_language invalid command specified: function
+Call Stack \(most recent call first\):
+  CMakeLists.txt:3 \(include\)
++
+CMake Error at defer_call_invalid_command.cmake:[0-9]+ \(cmake_language\):
+  cmake_language invalid command specified: endfunction
+Call Stack \(most recent call first\):
+  CMakeLists.txt:3 \(include\)
++
+CMake Error at defer_call_invalid_command.cmake:[0-9]+ \(cmake_language\):
+  cmake_language invalid command specified: macro
+Call Stack \(most recent call first\):
+  CMakeLists.txt:3 \(include\)
++
+CMake Error at defer_call_invalid_command.cmake:[0-9]+ \(cmake_language\):
+  cmake_language invalid command specified: endmacro
+Call Stack \(most recent call first\):
+  CMakeLists.txt:3 \(include\)
++
+CMake Error at defer_call_invalid_command.cmake:[0-9]+ \(cmake_language\):
+  cmake_language invalid command specified: if
+Call Stack \(most recent call first\):
+  CMakeLists.txt:3 \(include\)
++
+CMake Error at defer_call_invalid_command.cmake:[0-9]+ \(cmake_language\):
+  cmake_language invalid command specified: elseif
+Call Stack \(most recent call first\):
+  CMakeLists.txt:3 \(include\)
++
+CMake Error at defer_call_invalid_command.cmake:[0-9]+ \(cmake_language\):
+  cmake_language invalid command specified: else
+Call Stack \(most recent call first\):
+  CMakeLists.txt:3 \(include\)
++
+CMake Error at defer_call_invalid_command.cmake:[0-9]+ \(cmake_language\):
+  cmake_language invalid command specified: endif
+Call Stack \(most recent call first\):
+  CMakeLists.txt:3 \(include\)
++
+CMake Error at defer_call_invalid_command.cmake:[0-9]+ \(cmake_language\):
+  cmake_language invalid command specified: while
+Call Stack \(most recent call first\):
+  CMakeLists.txt:3 \(include\)
++
+CMake Error at defer_call_invalid_command.cmake:[0-9]+ \(cmake_language\):
+  cmake_language invalid command specified: endwhile
+Call Stack \(most recent call first\):
+  CMakeLists.txt:3 \(include\)
++
+CMake Error at defer_call_invalid_command.cmake:[0-9]+ \(cmake_language\):
+  cmake_language invalid command specified: foreach
+Call Stack \(most recent call first\):
+  CMakeLists.txt:3 \(include\)
++
+CMake Error at defer_call_invalid_command.cmake:[0-9]+ \(cmake_language\):
+  cmake_language invalid command specified: endforeach
+Call Stack \(most recent call first\):
+  CMakeLists.txt:3 \(include\)
++
+CMake Error at defer_call_invalid_command.cmake:[0-9]+ \(cmake_language\):
+  cmake_language invalid command specified: add_subdirectory
+Call Stack \(most recent call first\):
+  CMakeLists.txt:3 \(include\)
++
+CMake Error at defer_call_invalid_command.cmake:[0-9]+ \(cmake_language\):
+  cmake_language invalid command specified: enable_language
+Call Stack \(most recent call first\):
+  CMakeLists.txt:3 \(include\)
++
+CMake Error at defer_call_invalid_command.cmake:[0-9]+ \(cmake_language\):
+  cmake_language invalid command specified: project
+Call Stack \(most recent call first\):
+  CMakeLists.txt:3 \(include\)
++
+CMake Error at defer_call_invalid_command.cmake:[0-9]+ \(cmake_language\):
+  cmake_language invalid command specified: return
+Call Stack \(most recent call first\):
+  CMakeLists.txt:3 \(include\)
++
+CMake Error at defer_call_invalid_command.cmake:[0-9]+ \(cmake_language\):
+  cmake_language invalid command specified: subdirs
+Call Stack \(most recent call first\):
+  CMakeLists.txt:3 \(include\)$

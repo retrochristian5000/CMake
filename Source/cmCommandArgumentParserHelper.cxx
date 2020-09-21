@@ -91,7 +91,13 @@ const char* cmCommandArgumentParserHelper::ExpandVariable(const char* var)
     return nullptr;
   }
   if (this->FileLine >= 0 && strcmp(var, "CMAKE_CURRENT_LIST_LINE") == 0) {
-    return this->AddString(std::to_string(this->FileLine));
+    std::string line;
+    if (!this->Makefile->IsDeferRunning()) {
+      line = std::to_string(this->FileLine);
+    } else {
+      line = "DEFERRED";
+    }
+    return this->AddString(std::move(line));
   }
   cmProp value = this->Makefile->GetDefinition(var);
   if (!value) {
