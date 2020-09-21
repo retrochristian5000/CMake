@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include <cm/optional>
 #include <cm/string_view>
 
 #include "cmsys/RegularExpression.hxx"
@@ -972,6 +973,12 @@ public:
   int GetRecursionDepth() const;
   void SetRecursionDepth(int recursionDepth);
 
+  std::string NewDeferId();
+  bool DeferCall(std::string id, cmListFileFunction lff);
+  bool DeferCancelCall(std::string const& id);
+  cm::optional<std::string> DeferGetCallIds() const;
+  cm::optional<std::string> DeferGetCall(std::string const& id) const;
+
 protected:
   // add link libraries and directories to the target
   void AddGlobalLinkInformation(cmTarget& target);
@@ -1033,10 +1040,23 @@ private:
   cmListFileBacktrace Backtrace;
   int RecursionDepth;
 
+  struct DeferCommand
+  {
+    // Id is empty for an already-executed or cancelled operation.
+    std::string Id;
+    cmListFileFunction Command;
+  };
+  struct DeferCommands
+  {
+    std::vector<DeferCommand> Commands;
+  };
+  std::unique_ptr<DeferCommands> Defer;
+
   void DoGenerate(cmLocalGenerator& lg);
 
   void RunListFile(cmListFile const& listFile,
-                   const std::string& filenametoread);
+                   const std::string& filenametoread,
+                   DeferCommands* defer = nullptr);
 
   bool ParseDefineFlag(std::string const& definition, bool remove);
 

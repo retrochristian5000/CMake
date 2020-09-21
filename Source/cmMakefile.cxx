@@ -724,7 +724,8 @@ bool cmMakefile::ReadListFileAsString(const std::string& content,
 }
 
 void cmMakefile::RunListFile(cmListFile const& listFile,
-                             std::string const& filenametoread)
+                             std::string const& filenametoread,
+                             DeferCommands* defer)
 {
   // add this list file to the list of dependencies
   this->ListFiles.push_back(filenametoread);
@@ -752,6 +753,27 @@ void cmMakefile::RunListFile(cmListFile const& listFile,
     if (status.GetReturnInvoked()) {
       // Exit early due to return command.
       break;
+    }
+  }
+
+  // Run any deferred commands.
+  if (defer) {
+    // Iterate by index in case one deferred call schedules another.
+    // NOLINTNEXTLINE(modernize-loop-convert)
+    for (size_t i = 0; i < defer->Commands.size(); ++i) {
+      DeferCommand& d = defer->Commands[i];
+      if (d.Id.empty()) {
+        // Cancelled.
+        continue;
+      }
+      // Mark as executed.
+      d.Id.clear();
+
+      cmExecutionStatus status(*this);
+      this->ExecuteCommand(d.Command, status);
+      if (cmSystemTools::GetFatalErrorOccured()) {
+        break;
+      }
     }
   }
 
@@ -1697,7 +1719,9 @@ void cmMakefile::Configure()
     }
   }
 
-  this->RunListFile(listFile, currentStart);
+  this->Defer = cm::make_unique<DeferCommands>();
+  this->RunListFile(listFile, currentStart, this->Defer.get());
+  this->Defer.reset();
   if (cmSystemTools::GetFatalErrorOccured()) {
     scope.Quiet();
   }
@@ -2977,6 +3001,67 @@ int cmMakefile::GetRecursionDepth() const
 void cmMakefile::SetRecursionDepth(int recursionDepth)
 {
   this->RecursionDepth = recursionDepth;
+}
+
+std::string cmMakefile::NewDeferId()
+{
+  return this->GetGlobalGenerator()->NewDeferId();
+}
+
+bool cmMakefile::DeferCall(std::string id, cmListFileFunction lff)
+{
+  if (!this->Defer) {
+    return false;
+  }
+  this->Defer->Commands.emplace_back(
+    DeferCommand{ std::move(id), std::move(lff) });
+  return true;
+}
+
+bool cmMakefile::DeferCancelCall(std::string const& id)
+{
+  if (!this->Defer) {
+    return false;
+  }
+  for (DeferCommand& dc : this->Defer->Commands) {
+    if (dc.Id == id) {
+      dc.Id.clear();
+    }
+  }
+  return true;
+}
+
+cm::optional<std::string> cmMakefile::DeferGetCallIds() const
+{
+  cm::optional<std::string> ids;
+  if (this->Defer) {
+    ids = cmJoin(
+      cmMakeRange(this->Defer->Commands)
+        .filter([](DeferCommand const& dc) -> bool { return !dc.Id.empty(); })
+        .transform(
+          [](DeferCommand const& dc) -> std::string const& { return dc.Id; }),
+      ";");
+  }
+  return ids;
+}
+
+cm::optional<std::string> cmMakefile::DeferGetCall(std::string const& id) const
+{
+  cm::optional<std::string> call;
+  if (this->Defer) {
+    std::string tmp;
+    for (DeferCommand const& dc : this->Defer->Commands) {
+      if (dc.Id == id) {
+        tmp = dc.Command.Name.Original;
+        for (cmListFileArgument const& arg : dc.Command.Arguments) {
+          tmp = cmStrCat(tmp, ';', arg.Value);
+        }
+        break;
+      }
+    }
+    call = std::move(tmp);
+  }
+  return call;
 }
 
 MessageType cmMakefile::ExpandVariablesInStringNew(
