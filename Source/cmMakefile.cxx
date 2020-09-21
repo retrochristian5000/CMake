@@ -641,7 +641,7 @@ bool cmMakefile::ReadDependentFile(const std::string& filename,
     return false;
   }
 
-  this->ReadListFile(listFile, filenametoread);
+  this->RunListFile(listFile, filenametoread);
   if (cmSystemTools::GetFatalErrorOccured()) {
     incScope.Quiet();
   }
@@ -695,7 +695,7 @@ bool cmMakefile::ReadListFile(const std::string& filename)
     return false;
   }
 
-  this->ReadListFile(listFile, filenametoread);
+  this->RunListFile(listFile, filenametoread);
   if (cmSystemTools::GetFatalErrorOccured()) {
     scope.Quiet();
   }
@@ -716,15 +716,15 @@ bool cmMakefile::ReadListFileAsString(const std::string& content,
     return false;
   }
 
-  this->ReadListFile(listFile, filenametoread);
+  this->RunListFile(listFile, filenametoread);
   if (cmSystemTools::GetFatalErrorOccured()) {
     scope.Quiet();
   }
   return true;
 }
 
-void cmMakefile::ReadListFile(cmListFile const& listFile,
-                              std::string const& filenametoread)
+void cmMakefile::RunListFile(cmListFile const& listFile,
+                             std::string const& filenametoread)
 {
   // add this list file to the list of dependencies
   this->ListFiles.push_back(filenametoread);
@@ -1697,7 +1697,7 @@ void cmMakefile::Configure()
     }
   }
 
-  this->ReadListFile(listFile, currentStart);
+  this->RunListFile(listFile, currentStart);
   if (cmSystemTools::GetFatalErrorOccured()) {
     scope.Quiet();
   }
