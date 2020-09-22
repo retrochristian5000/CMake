@@ -76,3 +76,11 @@ else()
 endif()
 add_library(OneConfigOnly OBJECT "$<$<CONFIG:${one_config}>:${CMAKE_CURRENT_SOURCE_DIR}/iface_src.cpp>")
 set_property(TARGET OneConfigOnly PROPERTY LINKER_LANGUAGE CXX)
+
+
+# ---------------------------------------------------------------------------
+# Makes sure that each configuration uses the correct generated file.
+add_library(ObjLibFromGeneratedSources OBJECT)
+target_sources(ObjLibFromGeneratedSources PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/config_$<CONFIG>.cpp)
+add_library(SharedLibFromObjLibFromGeneratedSources SHARED)
+target_link_libraries(SharedLibFromObjLibFromGeneratedSources PRIVATE ObjLibFromGeneratedSources)
