@@ -759,6 +759,11 @@ if("x${CMAKE_TESTS_CDASH_SERVER}" STREQUAL "x" AND NOT CMake_TEST_NO_NETWORK)
   set(CMAKE_TESTS_CDASH_SERVER "http://open.cdash.org")
 endif()
 
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SIZEOF_VOID_P EQUAL 4)
+  # ensure 64bit offsets are used for filesystem accesses for 32bit compilation
+  add_definitions(-D_FILE_OFFSET_BITS=64)
+endif()
+
 if(CMake_TEST_EXTERNAL_CMAKE)
   set(KWIML_TEST_ENABLE 1)
   add_subdirectory(Utilities/KWIML)
