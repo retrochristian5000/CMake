@@ -231,6 +231,11 @@ if(BUILD_TESTING)
   #---------------------------------------------------------------------------
   # Add tests below here.
 
+  if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SIZEOF_VOID_P EQUAL 4)
+    # ensure 64bit offsets are used for filesystem accesses for 32bit compilation
+    add_definitions(-D_FILE_OFFSET_BITS=64)
+  endif()
+
   if(NOT DEFINED CMake_TEST_Qt5)
     set(CMake_TEST_Qt5 1)
   endif()

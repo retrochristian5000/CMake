@@ -62,6 +62,11 @@ if(WIN32)
   add_definitions(-DWIN32_LEAN_AND_MEAN)
 endif()
 
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SIZEOF_VOID_P EQUAL 4)
+  # ensure 64bit offsets are used for filesystem accesses for 32bit compilation
+  add_definitions(-D_FILE_OFFSET_BITS=64)
+endif()
+
 # configure the .dox.in file
 if(CMake_BUILD_DEVELOPER_REFERENCE)
   configure_file(

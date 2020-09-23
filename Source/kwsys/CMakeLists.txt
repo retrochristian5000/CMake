@@ -917,6 +917,11 @@ if(WIN32)
   add_definitions(-DUNICODE -D_UNICODE)
 endif()
 
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SIZEOF_VOID_P EQUAL 4)
+  # ensure 64bit offsets are used for filesystem accesses for 32bit compilation
+  add_definitions(-D_FILE_OFFSET_BITS=64)
+endif()
+
 if(KWSYS_USE_String)
   # Activate code in "String.c".  See the comment in the source.
   set_source_files_properties(String.c PROPERTIES
