@@ -44,6 +44,11 @@ endif()
 if(CMAKE_GENERATOR MATCHES "Visual Studio ([^9]|9[0-9])")
   add_CMakeOnly_test(CompilerIdCSharp)
 endif()
+if(CMake_TEST_ISPC)
+  add_CmakeOnly_test(CheckISPCCompilerFlag)
+  set_property(TEST CMakeOnly.CheckISPCCompilerFlag APPEND
+    PROPERTY LABELS "ISPC")
+endif()
 
 add_test(CMakeOnly.AllFindModules ${CMAKE_CMAKE_COMMAND}
   -DTEST=AllFindModules
