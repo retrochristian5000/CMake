@@ -18,6 +18,7 @@
 #include <QList>
 #include <QMetaType>
 #include <QObject>
+#include <QProcessEnvironment>
 #include <QString>
 #include <QStringList>
 #include <QVariant>
@@ -78,6 +79,8 @@ public slots:
   void setPlatform(const QString& platform);
   /// set the desired generator to use
   void setToolset(const QString& toolset);
+  /// set the configure and generate environment
+  void setEnvironment(const QProcessEnvironment& environment);
   /// do the configure step
   void configure();
   /// generate the files
@@ -125,6 +128,8 @@ public:
   QString sourceDirectory() const;
   /// get the current generator
   QString generator() const;
+  /// get the configure and generate environment
+  QProcessEnvironment environment() const;
   /// get the available generators
   std::vector<cmake::GeneratorInfo> const& availableGenerators() const;
   /// get whether to do debug output
@@ -170,6 +175,7 @@ protected:
   void messageCallback(std::string const& msg, const char* title);
   void stdoutCallback(std::string const& msg);
   void stderrCallback(std::string const& msg);
+  void setUpEnvironment() const;
 
   bool WarnUninitializedMode;
   QString SourceDirectory;
@@ -180,4 +186,5 @@ protected:
   std::vector<cmake::GeneratorInfo> AvailableGenerators;
   QString CMakeExecutable;
   QAtomicInt InterruptFlag;
+  QProcessEnvironment Environment;
 };
