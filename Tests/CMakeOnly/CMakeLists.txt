@@ -38,6 +38,12 @@ if (APPLE AND CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
   add_CMakeOnly_test(CheckOBJCXXCompilerFlag)
 endif()
 
+if(CMake_TEST_CUDA)
+  add_CMakeOnly_test(CompilerIdCUDA)
+  add_CMakeOnly_test(CheckCUDACompilerFlag)
+endif()
+
+
 if(CMAKE_Fortran_COMPILER)
   add_CMakeOnly_test(CompilerIdFortran)
 endif()
