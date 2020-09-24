@@ -14,3 +14,7 @@ endif()
 if (CMAKE_Fortran_COMPILER_ID)
   run_cmake(CheckFortranCompilerFlag)
 endif()
+
+if (CMake_TEST_CUDA)
+  run_cmake(CheckCUDACompilerFlag)
+endif()
