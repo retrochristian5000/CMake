@@ -16,6 +16,7 @@
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QMimeData>
+#include <QProcessEnvironment>
 #include <QProgressBar>
 #include <QSettings>
 #include <QShortcut>
@@ -35,6 +36,7 @@
 #include "cmVersion.h"
 
 #include "AddCacheEntry.h"
+#include "EnvironmentDialog.h"
 #include "FirstConfigure.h"
 #include "RegexExplorer.h"
 #include "WarningMessagesDialog.h"
@@ -283,6 +285,9 @@ void CMakeSetupDialog::initialize()
                    SLOT(removeSelectedCacheEntries()));
   QObject::connect(this->AddEntry, SIGNAL(clicked(bool)), this,
                    SLOT(addCacheEntry()));
+
+  QObject::connect(this->Environment, SIGNAL(clicked(bool)), this,
+                   SLOT(editEnvironment()));
 
   QObject::connect(this->WarnUninitializedAction, SIGNAL(triggered(bool)),
                    this->CMakeThread->cmakeInstance(),
@@ -732,6 +737,7 @@ void CMakeSetupDialog::setEnabledState(bool enabled)
   this->ConfigureAction->setEnabled(enabled);
   this->AddEntry->setEnabled(enabled);
   this->RemoveEntry->setEnabled(false); // let selection re-enable it
+  this->Environment->setEnabled(enabled);
 }
 
 bool CMakeSetupDialog::setupFirstConfigure()
@@ -1061,6 +1067,15 @@ void CMakeSetupDialog::enterState(CMakeSetupDialog::State s)
     this->ConfigureButton->setEnabled(true);
     this->ConfigureButton->setText(tr("&Configure"));
     this->GenerateButton->setText(tr("&Generate"));
+  }
+}
+
+void CMakeSetupDialog::editEnvironment()
+{
+  EnvironmentDialog dialog(this->CMakeThread->cmakeInstance()->environment(),
+                           this);
+  if (dialog.exec() == QDialog::Accepted) {
+    this->CMakeThread->cmakeInstance()->setEnvironment(dialog.environment());
   }
 }
 

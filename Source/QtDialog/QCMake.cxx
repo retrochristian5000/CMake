@@ -19,6 +19,7 @@
 
 QCMake::QCMake(QObject* p)
   : QObject(p)
+  , Environment(QProcessEnvironment::systemEnvironment())
 {
   this->WarnUninitializedMode = false;
   qRegisterMetaType<QCMakeProperty>();
@@ -151,8 +152,16 @@ void QCMake::setToolset(const QString& toolset)
   }
 }
 
+void QCMake::setEnvironment(const QProcessEnvironment& environment)
+{
+  this->Environment = environment;
+}
+
 void QCMake::configure()
 {
+  cmSystemTools::SaveRestoreEnvironment restoreEnv;
+  this->setUpEnvironment();
+
 #ifdef Q_OS_WIN
   UINT lastErrorMode = SetErrorMode(0);
 #endif
@@ -186,6 +195,9 @@ void QCMake::configure()
 
 void QCMake::generate()
 {
+  cmSystemTools::SaveRestoreEnvironment restoreEnv;
+  this->setUpEnvironment();
+
 #ifdef Q_OS_WIN
   UINT lastErrorMode = SetErrorMode(0);
 #endif
@@ -373,6 +385,18 @@ void QCMake::stderrCallback(std::string const& msg)
   QCoreApplication::processEvents();
 }
 
+void QCMake::setUpEnvironment() const
+{
+  auto env = QProcessEnvironment::systemEnvironment();
+  for (auto const& key : env.keys()) {
+    cmSystemTools::UnsetEnv(key.toLocal8Bit().data());
+  }
+
+  for (auto const& var : this->Environment.toStringList()) {
+    cmSystemTools::PutEnv(var.toLocal8Bit().data());
+  }
+}
+
 QString QCMake::binaryDirectory() const
 {
   return this->BinaryDirectory;
@@ -386,6 +410,11 @@ QString QCMake::sourceDirectory() const
 QString QCMake::generator() const
 {
   return this->Generator;
+}
+
+QProcessEnvironment QCMake::environment() const
+{
+  return this->Environment;
 }
 
 std::vector<cmake::GeneratorInfo> const& QCMake::availableGenerators() const
