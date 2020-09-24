@@ -21,6 +21,7 @@ These modules are loaded using the :command:`include` command.
    /module/CheckCCompilerFlag
    /module/CheckCSourceCompiles
    /module/CheckCSourceRuns
+   /module/CheckCUDACompilerFlag
    /module/CheckCXXCompilerFlag
    /module/CheckCXXSourceCompiles
    /module/CheckCXXSourceRuns

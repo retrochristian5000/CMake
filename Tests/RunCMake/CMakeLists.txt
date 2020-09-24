@@ -534,8 +534,12 @@ add_RunCMake_test(target_compile_features)
 add_RunCMake_test(target_compile_options -DCMAKE_C_COMPILER_ID=${CMAKE_C_COMPILER_ID})
 add_RunCMake_test(target_include_directories)
 add_RunCMake_test(target_sources)
-add_RunCMake_test(CheckSourceCompiles)
-add_RunCMake_test(CheckSourceRuns)
+add_RunCMake_test(CheckSourceCompiles -DCMake_TEST_CUDA=${CMake_TEST_CUDA})
+set_property(TEST RunCMake.CheckSourceCompiles APPEND
+    PROPERTY LABELS "CUDA")
+add_RunCMake_test(CheckSourceRuns     -DCMake_TEST_CUDA=${CMake_TEST_CUDA})
+set_property(TEST RunCMake.CheckSourceRuns APPEND
+    PROPERTY LABELS "CUDA")
 add_RunCMake_test(CheckModules)
 add_RunCMake_test(CheckIPOSupported)
 if (CMAKE_SYSTEM_NAME MATCHES "(Linux|Darwin)"
