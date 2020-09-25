@@ -4,6 +4,7 @@
 
 #include <QCompleter>
 #include <QMetaProperty>
+#include <QtGlobal>
 
 static const int NumTypes = 4;
 static const int DefaultTypeIndex = 0;
@@ -40,8 +41,8 @@ AddCacheEntry::AddCacheEntry(QWidget* p, const QStringList& varNames,
   AddCacheEntry::setTabOrder(string, this->Description);
   QCompleter* completer = new QCompleter(this->VarNames, this);
   this->Name->setCompleter(completer);
-  connect(completer, SIGNAL(activated(const QString&)), this,
-          SLOT(onCompletionActivated(const QString&)));
+  connect(completer, QOverload<const QString&>::of(&QCompleter::activated),
+          this, &AddCacheEntry::onCompletionActivated);
 }
 
 QString AddCacheEntry::name() const
