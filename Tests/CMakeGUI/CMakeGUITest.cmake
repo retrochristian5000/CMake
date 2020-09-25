@@ -6,7 +6,7 @@ function(run_cmake_gui_test name)
   set(_fail)
 
   cmake_parse_arguments(_rcgt
-    "DO_CONFIGURE"
+    "DO_CONFIGURE;ALLOW_CONFIGURE_FAILURE"
     "GENERATOR"
     "ARGS;CONFIGURE_ARGS"
     ${ARGN}
@@ -41,7 +41,7 @@ function(run_cmake_gui_test name)
       OUTPUT_VARIABLE _output
       ERROR_VARIABLE _error
       )
-    if(_result)
+    if(_result AND NOT _rcgt_ALLOW_CONFIGURE_FAILURE)
       set(_fail 1)
       string(REPLACE "\n" "\n  " _formatted_output "${_output}")
       string(REPLACE "\n" "\n  " _formatted_error "${_error}")
@@ -109,3 +109,6 @@ run_cmake_gui_test(sourceBinaryArgs:noExistConfigExists
   ARGS
     "${CMakeGUITest_BINARY_DIR}/sourceBinaryArgs-noExistConfigExists/noexist"
   )
+
+run_cmake_gui_test(simpleConfigure:success DO_CONFIGURE)
+run_cmake_gui_test(simpleConfigure:fail DO_CONFIGURE ALLOW_CONFIGURE_FAILURE)
