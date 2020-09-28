@@ -189,7 +189,6 @@
 
     script:
         # Bootstrap.
-        - mkdir -p build/
         - cp -v Utilities/Release/linux/$CMAKE_ARCH/cache.txt build/CMakeCache.txt
         # Make sccache available.
         - .gitlab/ci/sccache.sh
@@ -201,6 +200,11 @@
         - echo "CMake_TEST_INSTALL:BOOL=OFF" >> build/CMakeCache.txt
         - echo "CMAKE_INSTALL_PREFIX:PATH=$PWD/build/install" >> build/CMakeCache.txt
         - echo "CMAKE_SKIP_INSTALL_ALL_DEPENDENCY:BOOL=ON" >> build/CMakeCache.txt
+        # Appease Git. The Git in this container is old (1.7) and doesn't
+        # understand some things. But, it doesn't need to, so make it blind.
+        - mkdir -p .git/info
+        - echo "* -crlf" >> .git/info/attributes
+        - git reset --hard
         # Bootstrap
         - cd build/
         - '$LAUNCHER ../bootstrap --parallel=$(nproc) --docdir=doc/cmake -- "-DCMake_DOC_ARTIFACT_PREFIX=$CI_PROJECT_DIR/build/install-doc"'
@@ -248,6 +252,11 @@
         - echo "CMake_TEST_INSTALL:BOOL=OFF" >> build/CMakeCache.txt
         - echo "CMAKE_INSTALL_PREFIX:PATH=$PWD/build/install" >> build/CMakeCache.txt
         - echo "CMAKE_SKIP_INSTALL_ALL_DEPENDENCY:BOOL=ON" >> build/CMakeCache.txt
+        # Appease Git. The Git in this container is old (1.7) and doesn't
+        # understand some things. But, it doesn't need to, so make it blind.
+        - mkdir -p .git/info
+        - echo "* -crlf" >> .git/info/attributes
+        - git reset --hard
         # Bootstrap
         - cd build/
         - "$LAUNCHER ../bootstrap --parallel=$(nproc) --docdir=doc/cmake"
