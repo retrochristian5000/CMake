@@ -149,6 +149,29 @@ test:fedora31-ninja-multi:
     needs:
         - test:fedora31-ninja
 
+build:linux-package-x86_64:
+    extends:
+        - .linux_package_x86_64
+        - .cmake_build_linux_package
+        - .cmake_release_artifacts
+        - .linux_builder_tags
+        - .run_only_for_package
+    dependencies:
+        - prep:doc
+    needs:
+        - prep:doc
+
+upload:linux-x86_64:
+    extends:
+        - .rsync_upload
+        - .run_only_for_package
+    dependencies:
+        - build:linux-package-x86_64
+    needs:
+        - build:linux-package-x86_64
+    variables:
+        RSYNC_DESTINATION: dev
+
 # macOS builds
 
 build:macos-ninja:
