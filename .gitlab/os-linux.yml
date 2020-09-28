@@ -189,7 +189,7 @@
 
     script:
         # Bootstrap.
-        - mkdir -p build/
+        - git diff-index --name-only HEAD --
         - cp -v Utilities/Release/linux/$CMAKE_ARCH/cache.txt build/CMakeCache.txt
         # Make sccache available.
         - .gitlab/ci/sccache.sh
@@ -202,10 +202,12 @@
         - echo "CMAKE_INSTALL_PREFIX:PATH=$PWD/build/install" >> build/CMakeCache.txt
         - echo "CMAKE_SKIP_INSTALL_ALL_DEPENDENCY:BOOL=ON" >> build/CMakeCache.txt
         # Bootstrap
+        - git diff-index --name-only HEAD --
         - cd build/
         - '$LAUNCHER ../bootstrap --parallel=$(nproc) --docdir=doc/cmake -- "-DCMake_DOC_ARTIFACT_PREFIX=$CI_PROJECT_DIR/build/install-doc"'
         # FIXME: When CTest can drive an external CMake for the build as well,
         # use the scripts here.
+        - git diff-index --name-only HEAD --
         - "$LAUNCHER make -j$(nproc)"
         # NOTE: This regex matches that used in the release build.
         - "$LAUNCHER bin/ctest --output-on-failure -j$(nproc) -R '^(CMake\\.|CMakeLib\\.|CMakeServerLib\\.|RunCMake\\.ctest_memcheck)'"
