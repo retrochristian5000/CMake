@@ -110,6 +110,7 @@
         - build
         - docker
         - linux
+        - temp
 
 .linux_builder_tags_qt:
     tags:
