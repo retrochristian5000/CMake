@@ -55,21 +55,23 @@
 
 .windows_builder_tags:
     tags:
-        - cmake # Since this is a bare runner, pin to a project.
+        #- cmake # Since this is a bare runner, pin to a project.
         - windows
         - shell
         - vs2019
         - msvc-19.27
         - nonconcurrent
+        - temp
 
 .windows_builder_ext_tags:
     tags:
-        - cmake # Since this is a bare runner, pin to a project.
+        #- cmake # Since this is a bare runner, pin to a project.
         - windows
         - shell
         - vs2019
         - msvc-19.27
         - concurrent
+        - temp
 
 ## Windows-specific scripts
 
