@@ -118,6 +118,7 @@
         - docker
         - linux
         - linux-3.17 # Needed to be able to load Fedora's Qt libraries.
+        - temp
 
 .linux_builder_tags_x11:
     tags:
@@ -126,6 +127,7 @@
         - linux
         - linux-3.17 # Needed to be able to load Fedora's Qt libraries.
         - x11
+        - temp
 
 .linux_builder_tags_cuda:
     tags:
