@@ -4024,6 +4024,16 @@ void cmGlobalXCodeGenerator::ComputeArchitectures(cmMakefile* mf)
   }
 
   if (this->Architectures.empty()) {
+    cmProp p = mf->GetDefinition("CMAKE_SYSTEM_PROCESSOR");
+    // When targeting Apple Silicon (arm64), we need to explicitly
+    // specify this architecture to the toolchain since it will otherwise
+    // guess the architecture based on that of the build system tool.
+    if (p && *p == "arm64") {
+      this->Architectures.emplace_back("arm64");
+    }
+  }
+
+  if (this->Architectures.empty()) {
     // With no ARCHS we use ONLY_ACTIVE_ARCH and possibly a
     // platform-specific default ARCHS placeholder value.
     // Look up the arch that Xcode chooses in this case.
