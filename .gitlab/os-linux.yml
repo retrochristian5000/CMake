@@ -203,7 +203,11 @@
         # Appease Git. The Git in this container is old (1.7) and doesn't
         # understand some things. But, it doesn't need to, so make it blind.
         - mkdir -p .git/info
+        - git diff-index --name-only HEAD --
         - echo "* -crlf" >> .git/info/attributes
+        - git diff-index --name-only HEAD --
+        - git update-index -q --refresh
+        - git diff-index --name-only HEAD --
         # Bootstrap
         - cd build/
         - '$LAUNCHER ../bootstrap --parallel=$(nproc) --docdir=doc/cmake -- "-DCMake_DOC_ARTIFACT_PREFIX=$CI_PROJECT_DIR/build/install-doc"'
@@ -254,7 +258,11 @@
         # Appease Git. The Git in this container is old (1.7) and doesn't
         # understand some things. But, it doesn't need to, so make it blind.
         - mkdir -p .git/info
+        - git diff-index --name-only HEAD --
         - echo "* -crlf" >> .git/info/attributes
+        - git diff-index --name-only HEAD --
+        - git update-index -q --refresh
+        - git diff-index --name-only HEAD --
         # Bootstrap
         - cd build/
         - "$LAUNCHER ../bootstrap --parallel=$(nproc) --docdir=doc/cmake"
