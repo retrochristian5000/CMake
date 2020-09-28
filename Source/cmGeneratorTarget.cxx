@@ -3190,6 +3190,15 @@ void cmGeneratorTarget::GetAppleArchs(const std::string& config,
   if (!archs) {
     archs = this->GetProperty("OSX_ARCHITECTURES");
   }
+  if (!cmNonempty(archs)) {
+    cmProp p = this->Makefile->GetDefinition("CMAKE_SYSTEM_PROCESSOR");
+    // When targeting Apple Silicon (arm64), we need to explicitly
+    // specify this architecture to the toolchain since it will otherwise
+    // guess the architecture based on that of the build system tool.
+    if (p && *p == "arm64") {
+      archs = p;
+    }
+  }
   if (archs) {
     cmExpandList(*archs, archVec);
   }
