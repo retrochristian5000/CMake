@@ -128,6 +128,29 @@ test:fedora31-ninja-multi:
     needs:
         - test:fedora31-ninja
 
+package:linux-x86_64:
+    extends:
+        - .linux_package_x86_64
+        - .cmake_build_linux_package
+        - .cmake_release_artifacts
+        - .linux_builder_tags
+        - .run_only_for_package
+    dependencies:
+        - build:fedora31-sphinx-package
+    needs:
+        - build:fedora31-sphinx-package
+
+upload:linux-x86_64:
+    extends:
+        - .rsync_upload
+        - .run_only_for_package
+    dependencies:
+        - package:linux-x86_64
+    needs:
+        - package:linux-x86_64
+    variables:
+        RSYNC_DESTINATION: dev
+
 # macOS builds
 
 build:macos-ninja:
