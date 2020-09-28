@@ -24,6 +24,11 @@
     variables:
         CMAKE_ARCH: x86_64
 
+.linux_package_source:
+    extends: .linux_package
+
+    image: "fedora:32"
+
 ### Debian
 
 .debian10:
@@ -208,6 +213,21 @@
         - bin/cpack -G TGZ
         - bin/cpack -G STGZ
         - sccache --show-stats
+
+    interruptible: true
+
+.cmake_build_linux_package_source:
+    stage: package-src
+
+    script:
+        - dnf install --no-install-recommends -y git
+        - mkdir -p build/
+        - cd build
+        # Package up the source as well. We need the binary name to name the source the same.
+        - v="$( ls cmake-*-Linux-x86_64.tar.gz | sed 's/.*cmake-//;s/-Linux.*//' )"
+        - cd "$GIT_CLONE_PATH"
+        - git archive --format=tgz "--prefix=cmake-$v/" -o "build/cmake-$v.tar.gz" HEAD
+        - git -c core.autocrlf=true -c core.eol=crlf archive --format=zip --prefix="cmake-$v/" -o "build/cmake-$v.zip" HEAD
 
     interruptible: true
 

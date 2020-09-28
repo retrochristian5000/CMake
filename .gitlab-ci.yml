@@ -15,6 +15,7 @@ stages:
     - build
     - test
     - package
+    - package-src
     - test-ext
     - upload
 
@@ -148,6 +149,29 @@ upload:linux-x86_64:
         - package:linux-x86_64
     needs:
         - package:linux-x86_64
+    variables:
+        RSYNC_DESTINATION: dev
+
+package:source:
+    extends:
+        - .linux_package_source
+        - .cmake_build_linux_package_source
+        - .cmake_release_artifacts
+        - .linux_builder_tags
+        - .run_only_for_package
+    dependencies:
+        - package:linux-x86_64
+    needs:
+        - package:linux-x86_64
+
+upload:source:
+    extends:
+        - .rsync_upload
+        - .run_only_for_package
+    dependencies:
+        - package:source
+    needs:
+        - package:source
     variables:
         RSYNC_DESTINATION: dev
 
