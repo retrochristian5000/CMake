@@ -25,4 +25,6 @@
     rules:
         - if: '$CMAKE_CI_PACKAGE == "true"'
           when: on_success
+        - if: '$CI_MERGE_REQUEST_ID'
+          when: manual
         - when: never
