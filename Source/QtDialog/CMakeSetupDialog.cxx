@@ -32,6 +32,7 @@
 #include "QCMake.h"
 #include "QCMakeCacheView.h"
 
+#include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
 #include "cmVersion.h"
 
@@ -181,11 +182,34 @@ CMakeSetupDialog::CMakeSetupDialog()
                    &QCMakeCacheView::collapseAll);
 
   QMenu* HelpMenu = this->menuBar()->addMenu(tr("&Help"));
-  a = HelpMenu->addAction(tr("About"));
-  QObject::connect(a, &QAction::triggered, this, &CMakeSetupDialog::doAbout);
   a = HelpMenu->addAction(tr("Help"));
   QObject::connect(a, &QAction::triggered, this, &CMakeSetupDialog::doHelp);
   a->setShortcut(QKeySequence::HelpContents);
+  a = HelpMenu->addAction(tr("CMake Reference Manual"));
+  QObject::connect(a, &QAction::triggered, this, []() {
+    QString urlFormat("https://cmake.org/cmake/help/v%1.%2/");
+    QUrl url(urlFormat.arg(QString::number(cmVersion::GetMajorVersion()),
+                           QString::number(cmVersion::GetMinorVersion())));
+
+    QString dir = QCoreApplication::applicationDirPath();
+    QDir bin(dir);
+    if (bin.exists("../Utilities/Sphinx/html/index.html")) {
+      url = QUrl::fromLocalFile(
+        bin.filePath("../Utilities/Sphinx/html/index.html"));
+    }
+
+    if (dir.endsWith(CMAKE_BIN_DIR)) {
+      QDir root(dir.left(dir.length() - cmStrLen(CMAKE_BIN_DIR)));
+      if (root.exists("." CMAKE_DOC_DIR "/html/index.html")) {
+        url = QUrl::fromLocalFile(
+          root.filePath("." CMAKE_DOC_DIR "/html/index.html"));
+      }
+    }
+
+    QDesktopServices::openUrl(url);
+  });
+  a = HelpMenu->addAction(tr("About"));
+  QObject::connect(a, &QAction::triggered, this, &CMakeSetupDialog::doAbout);
 
   this->setAcceptDrops(true);
 
