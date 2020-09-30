@@ -79,3 +79,12 @@ cmGlobalJOMMakefileGenerator::GenerateBuildCommand(
     makeProgram, projectName, projectDir, targetNames, config, fast, jobs,
     verbose, jomMakeOptions);
 }
+
+void cmGlobalJOMMakefileGenerator::WriteOptionalIncludeDirective(
+  std::ostream& os, const std::string& includeFile) const
+{
+  os << "!if exist(" << cmSystemTools::ConvertToOutputPath(includeFile)
+     << ")\n"
+     << "!include " << cmSystemTools::ConvertToOutputPath(includeFile) << "\n"
+     << "!endif\n\n";
+}

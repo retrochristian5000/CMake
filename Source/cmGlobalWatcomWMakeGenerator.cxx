@@ -89,3 +89,10 @@ void cmGlobalWatcomWMakeGenerator::PrintBuildCommandAdvice(std::ostream& os,
   this->cmGlobalUnixMakefileGenerator3::PrintBuildCommandAdvice(
     os, cmake::NO_BUILD_PARALLEL_LEVEL);
 }
+
+void cmGlobalWatcomWMakeGenerator::WriteOptionalIncludeDirective(
+  std::ostream& os, const std::string& includeFile) const
+{
+  os << "!include " << cmSystemTools::ConvertToOutputPath(includeFile)
+     << "\n\n";
+}

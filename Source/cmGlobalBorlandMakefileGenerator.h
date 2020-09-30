@@ -47,6 +47,9 @@ public:
   bool AllowDeleteOnError() const override { return false; }
   bool CanEscapeOctothorpe() const override { return true; }
 
+  void WriteOptionalIncludeDirective(
+    std::ostream& os, const std::string& includeFile) const override;
+
 protected:
   std::vector<GeneratedMakeCommand> GenerateBuildCommand(
     const std::string& makeProgram, const std::string& projectName,
