@@ -90,3 +90,12 @@ void cmGlobalNMakeMakefileGenerator::PrintBuildCommandAdvice(std::ostream& os,
   this->cmGlobalUnixMakefileGenerator3::PrintBuildCommandAdvice(
     os, cmake::NO_BUILD_PARALLEL_LEVEL);
 }
+
+void cmGlobalNMakeMakefileGenerator::WriteOptionalIncludeDirective(
+  std::ostream& os, const std::string& includeFile) const
+{
+  os << "!if exist(" << cmSystemTools::ConvertToOutputPath(includeFile)
+     << ")\n"
+     << "!include " << cmSystemTools::ConvertToOutputPath(includeFile) << "\n"
+     << "!endif\n\n";
+}
