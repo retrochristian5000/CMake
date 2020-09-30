@@ -2077,6 +2077,7 @@ static std::string cmSystemToolsCMakeCursesCommand;
 static std::string cmSystemToolsCMakeGUICommand;
 static std::string cmSystemToolsCMClDepsCommand;
 static std::string cmSystemToolsCMakeRoot;
+static std::string cmSystemToolsHTMLDoc;
 void cmSystemTools::FindCMakeResources(const char* argv0)
 {
   std::string exe_dir;
@@ -2161,15 +2162,25 @@ void cmSystemTools::FindCMakeResources(const char* argv0)
   if (!cmSystemTools::FileExists(cmSystemToolsCMClDepsCommand)) {
     cmSystemToolsCMClDepsCommand.clear();
   }
+  cmSystemToolsHTMLDoc = cmStrCat(exe_dir, "/../Utilities/Sphinx/html");
+  if (!cmSystemTools::FileExists(
+        cmStrCat(cmSystemToolsHTMLDoc, "/index.html"))) {
+    cmSystemToolsHTMLDoc.clear();
+  }
 
 #ifndef CMAKE_BOOTSTRAP
   // Install tree has
   // - "<prefix><CMAKE_BIN_DIR>/cmake"
   // - "<prefix><CMAKE_DATA_DIR>"
-  if (cmHasSuffix(exe_dir, CMAKE_BIN_DIR)) {
+  // - "<prefix><CMAKE_DOC_DIR>"
+  if (cmHasLiteralSuffix(exe_dir, CMAKE_BIN_DIR)) {
     std::string const prefix =
-      exe_dir.substr(0, exe_dir.size() - strlen(CMAKE_BIN_DIR));
+      exe_dir.substr(0, exe_dir.size() - cmStrLen(CMAKE_BIN_DIR));
     cmSystemToolsCMakeRoot = prefix + CMAKE_DATA_DIR;
+    if (cmSystemTools::FileExists(
+          cmStrCat(prefix, CMAKE_DOC_DIR "/html/index.html"))) {
+      cmSystemToolsHTMLDoc = cmStrCat(prefix, CMAKE_DOC_DIR "/html");
+    }
   }
   if (cmSystemToolsCMakeRoot.empty() ||
       !cmSystemTools::FileExists(
@@ -2232,6 +2243,11 @@ std::string const& cmSystemTools::GetCMClDepsCommand()
 std::string const& cmSystemTools::GetCMakeRoot()
 {
   return cmSystemToolsCMakeRoot;
+}
+
+std::string const& cmSystemTools::GetHTMLDoc()
+{
+  return cmSystemToolsHTMLDoc;
 }
 
 std::string cmSystemTools::GetCurrentWorkingDirectory()
