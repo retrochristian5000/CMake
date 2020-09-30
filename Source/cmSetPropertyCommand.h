@@ -9,6 +9,7 @@
 
 class cmMakefile;
 class cmExecutionStatus;
+class cmSourceFile;
 
 bool cmSetPropertyCommand(std::vector<std::string> const& args,
                           cmExecutionStatus& status);
@@ -39,4 +40,8 @@ void MakeSourceFilePathsAbsoluteIfNeeded(
   std::vector<std::string>& source_files_absolute_paths,
   std::vector<std::string>::const_iterator files_it_begin,
   std::vector<std::string>::const_iterator files_it_end, bool needed);
+
+bool HandleAndValidateSourceFilePropertyGENERATED(
+  cmSourceFile* sf, std::string const& propertyValue, bool remove = false,
+  bool appendMode = false, bool appendAsString = false);
 }

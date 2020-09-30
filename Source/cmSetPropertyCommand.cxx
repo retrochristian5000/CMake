@@ -10,9 +10,12 @@
 #include "cmGlobalGenerator.h"
 #include "cmInstalledFile.h"
 #include "cmMakefile.h"
+#include "cmMessageType.h"
+#include "cmPolicies.h"
 #include "cmProperty.h"
 #include "cmRange.h"
 #include "cmSourceFile.h"
+#include "cmSourceFileLocation.h"
 #include "cmState.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
@@ -216,7 +219,88 @@ void MakeSourceFilePathsAbsoluteIfNeeded(
     source_files_absolute_paths.push_back(absolute_file_path);
   }
 }
+
+bool HandleAndValidateSourceFilePropertyGENERATED(
+  cmSourceFile* sf, std::string const& propertyValue, bool remove,
+  bool appendMode, bool appendAsString)
+{
+  auto& mf = *sf->GetLocation().GetMakefile();
+  auto policyStatus = mf.GetPolicyStatus(cmPolicies::CMP0118);
+
+  const bool policyWARN = policyStatus == cmPolicies::WARN;
+  const bool policyNEW = policyStatus != cmPolicies::OLD && !policyWARN;
+
+  if (policyWARN) {
+    if (!cmIsOn(propertyValue) && !cmIsOff(propertyValue)) {
+      mf.IssueMessage(
+        MessageType::AUTHOR_WARNING,
+        cmStrCat(cmPolicies::GetPolicyWarning(cmPolicies::CMP0118),
+                 "\nAttempt to set property 'GENERATED' with the following "
+                 "non-boolean value (which will be interpreted as \"0\"):\n",
+                 propertyValue,
+                 "\nThat exact value will not be retrievable. A value of "
+                 "\"0\" will be returned instead.\n"
+                 "If CMP0118 is set to NEW such an attempt to set a "
+                 "non-boolean value will result in a an error!\n"));
+    }
+    if (cmIsOff(propertyValue)) {
+      mf.IssueMessage(
+        MessageType::AUTHOR_WARNING,
+        cmStrCat(cmPolicies::GetPolicyWarning(cmPolicies::CMP0118),
+                 "\nUnsetting property 'GENERATED' will not be allowed once "
+                 "CMP0118 is set to NEW!\n"));
+    }
+    if (appendMode) {
+      mf.IssueMessage(
+        MessageType::AUTHOR_WARNING,
+        cmStrCat(cmPolicies::GetPolicyWarning(cmPolicies::CMP0118),
+                 "\nAppending to property 'GENERATED' will not be allowed "
+                 "once CMP0118 is set to NEW!\n"));
+    }
+  } else if (policyNEW) {
+    if (!cmIsOn(propertyValue) && !cmIsOff(propertyValue)) {
+      mf.IssueMessage(
+        MessageType::AUTHOR_ERROR,
+        cmStrCat(
+          "Policy CMP0118 is set to NEW and the following non-boolean value "
+          "given for property 'GENERATED' is therefore not allowed:\n",
+          propertyValue, "\nReplace it with a boolean value!\n"));
+      return true;
+    }
+    if (cmIsOff(propertyValue)) {
+      mf.IssueMessage(MessageType::AUTHOR_ERROR,
+                      "Policy CMP0118 is set to NEW and unsetting the "
+                      "`GENERATED` property is therefore not allowed!\n");
+      return true;
+    }
+    if (appendMode) {
+      mf.IssueMessage(MessageType::AUTHOR_ERROR,
+                      "Policy CMP0118 is set to NEW and appending to the "
+                      "`GENERATED` property is therefore not allowed. Only "
+                      "setting it to \"1\" is allowed!\n");
+      return true;
+    }
+  }
+
+  // Set property.
+  if (!policyNEW) {
+    // Do it the traditional way.
+    if (appendMode) {
+      sf->AppendProperty("GENERATED", propertyValue, appendAsString);
+    } else {
+      if (remove) {
+        sf->SetProperty("GENERATED", nullptr);
+      } else {
+        sf->SetProperty("GENERATED", propertyValue.c_str());
+      }
+    }
+  } else {
+    // TODO: Mark source-file as generated!
+  }
+  return true;
 }
+
+} // END: namespace SetPropertyCommand
 
 bool cmSetPropertyCommand(std::vector<std::string> const& args,
                           cmExecutionStatus& status)
@@ -367,7 +451,7 @@ bool cmSetPropertyCommand(std::vector<std::string> const& args,
   return true;
 }
 
-namespace {
+namespace /* anonymous */ {
 bool HandleGlobalMode(cmExecutionStatus& status,
                       const std::set<std::string>& names,
                       const std::string& propertyName,
@@ -525,6 +609,12 @@ bool HandleSource(cmSourceFile* sf, const std::string& propertyName,
                   const std::string& propertyValue, bool appendAsString,
                   bool appendMode, bool remove)
 {
+  // Special validation and handling of GENERATED flag?
+  if (propertyName == "GENERATED") {
+    return SetPropertyCommand::HandleAndValidateSourceFilePropertyGENERATED(
+      sf, propertyValue, remove, appendMode, appendAsString);
+  }
+
   // Set or append the property.
   if (appendMode) {
     sf->AppendProperty(propertyName, propertyValue, appendAsString);
@@ -696,4 +786,4 @@ bool HandleInstall(cmInstalledFile* file, cmMakefile& makefile,
   }
   return true;
 }
-}
+} // END: namespace /* anonymous */
