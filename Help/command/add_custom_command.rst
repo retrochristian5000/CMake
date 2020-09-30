@@ -234,10 +234,11 @@ The options are:
   :manual:`generator expressions <cmake-generator-expressions(7)>`.
 
 ``DEPFILE``
-  Specify a ``.d`` depfile for the :generator:`Ninja` generator.
+  Specify a ``.d`` depfile for Ninja and Makefile generators.
   A ``.d`` file holds dependencies usually emitted by the custom
   command itself.
-  Using ``DEPFILE`` with other generators than Ninja is an error.
+  Using ``DEPFILE`` with other generators than Ninja or Makefile
+  generators is an error.
 
 Build Events
 ^^^^^^^^^^^^

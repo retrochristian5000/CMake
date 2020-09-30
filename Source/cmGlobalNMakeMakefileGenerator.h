@@ -44,6 +44,9 @@ public:
   void EnableLanguage(std::vector<std::string> const& languages, cmMakefile*,
                       bool optional) override;
 
+  void WriteOptionalIncludeDirective(
+    std::ostream& os, const std::string& includeFile) const override;
+
 protected:
   std::vector<GeneratedMakeCommand> GenerateBuildCommand(
     const std::string& makeProgram, const std::string& projectName,
