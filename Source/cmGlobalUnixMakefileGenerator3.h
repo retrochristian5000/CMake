@@ -167,7 +167,12 @@ public:
 
   bool IsIPOSupported() const override { return true; }
 
+  bool SupportsCustomCommandDepfile() const override { return true; }
+
   void ComputeTargetObjectDirectory(cmGeneratorTarget* gt) const override;
+
+  virtual void WriteOptionalIncludeDirective(
+    std::ostream& ruleFileStream, const std::string& includeFile) const;
 
   std::string IncludeDirective;
   bool DefineWindowsNULL;
