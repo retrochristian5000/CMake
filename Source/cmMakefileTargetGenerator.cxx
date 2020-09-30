@@ -15,6 +15,7 @@
 #include <cmext/algorithm>
 
 #include "cmComputeLinkInformation.h"
+#include "cmCryptoHash.h"
 #include "cmCustomCommand.h"
 #include "cmCustomCommandGenerator.h"
 #include "cmGeneratedFileStream.h"
@@ -1478,6 +1479,25 @@ void cmMakefileTargetGenerator::GenerateCustomRuleFile(
   // Collect the dependencies.
   std::vector<std::string> depends;
   this->LocalGenerator->AppendCustomDepend(depends, ccg);
+
+  // Write the depfile.
+  auto const& depfile = ccg.GetCC().GetDepfile();
+  if (!depfile.empty()) {
+    cmCryptoHash hash(cmCryptoHash::AlgoSHA256);
+    auto internalDepfile =
+      cmStrCat(this->LocalGenerator->GetBinaryDirectory(), "/CMakeFiles/",
+               hash.HashString(depfile), ".d");
+    ;
+    *this->BuildFileStream
+      << "# Depfile\n"
+      << this->GlobalGenerator->IncludeDirective << ' '
+      << this->LocalGenerator->MaybeConvertToRelativePath(
+           this->LocalGenerator->GetCurrentBinaryDirectory(), internalDepfile)
+      << "\n\n";
+    if (!cmSystemTools::FileExists(internalDepfile)) {
+      cmSystemTools::Touch(internalDepfile, true);
+    }
+  }
 
   // Write the rule.
   const std::vector<std::string>& outputs = ccg.GetOutputs();

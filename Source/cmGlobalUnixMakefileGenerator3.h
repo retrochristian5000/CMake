@@ -167,6 +167,8 @@ public:
 
   bool IsIPOSupported() const override { return true; }
 
+  bool SupportsCustomCommandDepfile() const override { return true; }
+
   void ComputeTargetObjectDirectory(cmGeneratorTarget* gt) const override;
 
   std::string IncludeDirective;
