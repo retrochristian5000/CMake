@@ -483,6 +483,13 @@ void cmGlobalUnixMakefileGenerator3::WriteDirectoryRules2(
   }
 }
 
+void cmGlobalUnixMakefileGenerator3::WriteOptionalIncludeDirective(
+  std::ostream& os, const std::string& includeFile) const
+{
+  os << "-include " << cmSystemTools::ConvertToOutputPath(includeFile)
+     << "\n\n";
+}
+
 namespace {
 std::string ConvertToMakefilePathForUnix(std::string const& path)
 {

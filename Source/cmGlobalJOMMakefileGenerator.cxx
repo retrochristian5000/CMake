@@ -6,6 +6,7 @@
 #include "cmLocalUnixMakefileGenerator3.h"
 #include "cmMakefile.h"
 #include "cmState.h"
+#include "cmSystemTools.h"
 #include "cmake.h"
 
 cmGlobalJOMMakefileGenerator::cmGlobalJOMMakefileGenerator(cmake* cm)
@@ -78,4 +79,13 @@ cmGlobalJOMMakefileGenerator::GenerateBuildCommand(
   return cmGlobalUnixMakefileGenerator3::GenerateBuildCommand(
     makeProgram, projectName, projectDir, targetNames, config, fast, jobs,
     verbose, jomMakeOptions);
+}
+
+void cmGlobalJOMMakefileGenerator::WriteOptionalIncludeDirective(
+  std::ostream& os, const std::string& includeFile) const
+{
+  os << "!if exist(" << cmSystemTools::ConvertToOutputPath(includeFile)
+     << ")\n"
+     << "!include " << cmSystemTools::ConvertToOutputPath(includeFile) << "\n"
+     << "!endif\n\n";
 }
