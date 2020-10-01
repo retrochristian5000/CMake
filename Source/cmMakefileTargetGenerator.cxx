@@ -1479,6 +1479,16 @@ void cmMakefileTargetGenerator::GenerateCustomRuleFile(
   std::vector<std::string> depends;
   this->LocalGenerator->AppendCustomDepend(depends, ccg);
 
+  // Write the depfile.
+  auto const& depfile = ccg.GetCC().GetDepfile();
+  if (!depfile.empty()) {
+    *this->BuildFileStream << "# Depfile\n";
+    this->GlobalGenerator->WriteOptionalIncludeDirective(
+      *this->BuildFileStream,
+      this->LocalGenerator->MaybeConvertToRelativePath(
+        this->LocalGenerator->GetCurrentBinaryDirectory(), depfile));
+  }
+
   // Write the rule.
   const std::vector<std::string>& outputs = ccg.GetOutputs();
   bool symbolic = this->WriteMakeRule(*this->BuildFileStream, nullptr, outputs,
