@@ -27,20 +27,25 @@ bool cmGccDepfileLexerHelper::readFile(const char* filePath)
   if (!file) {
     return false;
   }
-  newEntry();
+  this->Content.emplace_back();
+  this->newRule();
   yyscan_t scanner;
   cmGccDepfile_yylex_init(&scanner);
   cmGccDepfile_yyset_extra(this, scanner);
   cmGccDepfile_yyrestart(file, scanner);
   cmGccDepfile_yylex(scanner);
   cmGccDepfile_yylex_destroy(scanner);
-  sanitizeContent();
+  this->sanitizeContent();
   fclose(file);
-  return true;
+  return this->HelperState != State::Failed;
 }
 
 void cmGccDepfileLexerHelper::newEntry()
 {
+  if (this->HelperState == State::Rule) {
+    this->HelperState = State::Failed;
+    return;
+  }
   this->HelperState = State::Rule;
   this->Content.emplace_back();
   newRule();
@@ -56,7 +61,9 @@ void cmGccDepfileLexerHelper::newRule()
 
 void cmGccDepfileLexerHelper::newDependency()
 {
-  // printf("NEW DEP\n");
+  if (this->HelperState == State::Failed) {
+    return;
+  }
   this->HelperState = State::Dependency;
   if (this->Content.back().paths.empty() ||
       !this->Content.back().paths.back().empty()) {
@@ -67,9 +74,9 @@ void cmGccDepfileLexerHelper::newDependency()
 void cmGccDepfileLexerHelper::newRuleOrDependency()
 {
   if (this->HelperState == State::Rule) {
-    newRule();
-  } else {
-    newDependency();
+    this->newRule();
+  } else if (this->HelperState == State::Dependency) {
+    this->newDependency();
   }
 }
 
@@ -93,6 +100,8 @@ void cmGccDepfileLexerHelper::addToCurrentPath(const char* s)
       }
       dst = &dep->paths.back();
     } break;
+    case State::Failed:
+      return;
   }
   dst->append(s);
 }
