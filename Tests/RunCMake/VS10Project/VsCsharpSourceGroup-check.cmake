@@ -12,6 +12,7 @@ set(SOURCE_GROUPS_TO_FIND
   "CSharpSourceGroup"
   "CSharpSourceGroup/nested"
   "Images"
+  "splash.png"
 )
 
 foreach(GROUP_NAME IN LISTS ${SOURCE_GROUPS_TO_FIND})
