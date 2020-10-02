@@ -1,0 +1,6 @@
+out1 out2: in1 in2
+
+../out3 \
+  ../out4: \
+  ../in3 \
+  ../in4

@@ -1,0 +1,15 @@
+^\^[^
+]*/Tests/RunCMake/TransformDepfile/deps-tlog-build/out1\|[^
+]*/Tests/RunCMake/TransformDepfile/deps-tlog-build/out2
+[^
+]*/Tests/RunCMake/TransformDepfile/deps-tlog-build/in1
+[^
+]*/Tests/RunCMake/TransformDepfile/deps-tlog-build/in2
+\^[^
+]*/Tests/RunCMake/TransformDepfile/out3\|[^
+]*/Tests/RunCMake/TransformDepfile/out4
+[^
+]*/Tests/RunCMake/TransformDepfile/in3
+[^
+]*/Tests/RunCMake/TransformDepfile/in4
+$
