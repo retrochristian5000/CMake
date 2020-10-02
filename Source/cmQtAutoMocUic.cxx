@@ -15,6 +15,7 @@
 #include <vector>
 
 #include <cm/memory>
+#include <cm/optional>
 #include <cm/string_view>
 #include <cmext/algorithm>
 
@@ -2841,14 +2842,14 @@ bool cmQtAutoMocUicT::CreateDirectories()
 std::vector<std::string> cmQtAutoMocUicT::dependenciesFromDepFile(
   const char* filePath)
 {
-  cmGccDepfileContent content = cmReadGccDepfile(filePath);
-  if (content.empty()) {
+  auto const content = cmReadGccDepfile(filePath);
+  if (!content || content->empty()) {
     return {};
   }
 
   // Moc outputs a depfile with exactly one rule.
   // Discard the rule and return the dependencies.
-  return content.front().paths;
+  return content->front().paths;
 }
 
 void cmQtAutoMocUicT::Abort(bool error)
