@@ -18,6 +18,8 @@
 #include <cm/optional>
 #include <cm/string_view>
 
+#include <sys/types.h>
+
 #include "cmsys/RegularExpression.hxx"
 
 #include "cmAlgorithms.h"
@@ -690,8 +692,7 @@ public:
    */
   int ConfigureFile(const std::string& infile, const std::string& outfile,
                     bool copyonly, bool atOnly, bool escapeQuotes,
-                    bool use_source_permissions,
-                    cmNewLineStyle = cmNewLineStyle());
+                    mode_t permissions = 0, cmNewLineStyle = cmNewLineStyle());
 
   /**
    * Print a command's invocation

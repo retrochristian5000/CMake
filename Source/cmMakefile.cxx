@@ -37,7 +37,6 @@
 #include "cmExecutionStatus.h"
 #include "cmExpandedCommandArgument.h" // IWYU pragma: keep
 #include "cmExportBuildFileGenerator.h"
-#include "cmFSPermissions.h"
 #include "cmFileLockPool.h"
 #include "cmFunctionBlocker.h"
 #include "cmGeneratedFileStream.h"
@@ -71,8 +70,6 @@
 #endif
 
 class cmMessenger;
-
-using namespace cmFSPermissions;
 
 cmDirectoryId::cmDirectoryId(std::string s)
   : String(std::move(s))
@@ -4095,8 +4092,7 @@ void cmMakefile::ConfigureString(const std::string& input, std::string& output,
 int cmMakefile::ConfigureFile(const std::string& infile,
                               const std::string& outfile, bool copyonly,
                               bool atOnly, bool escapeQuotes,
-                              bool use_source_permissions,
-                              cmNewLineStyle newLine)
+                              mode_t permissions, cmNewLineStyle newLine)
 {
   int res = 1;
   if (!this->CanIWriteThisFile(outfile)) {
@@ -4118,12 +4114,8 @@ int cmMakefile::ConfigureFile(const std::string& infile,
   // output files that now don't exist.
   this->AddCMakeOutputFile(soutfile);
 
-  mode_t perm = 0;
-  if (!use_source_permissions) {
-    perm = perm | mode_owner_read | mode_owner_write | mode_group_read |
-      mode_world_read;
-  } else {
-    cmSystemTools::GetPermissions(sinfile, perm);
+  if (permissions == 0) {
+    cmSystemTools::GetPermissions(sinfile, permissions);
   }
 
   std::string::size_type pos = soutfile.rfind('/');
@@ -4138,7 +4130,7 @@ int cmMakefile::ConfigureFile(const std::string& infile,
                          cmSystemTools::GetLastSystemError());
       return 0;
     }
-    if (!cmSystemTools::SetPermissions(soutfile, perm)) {
+    if (!cmSystemTools::SetPermissions(soutfile, permissions)) {
       this->IssueMessage(MessageType::FATAL_ERROR,
                          cmSystemTools::GetLastSystemError());
       return 0;
@@ -4195,7 +4187,7 @@ int cmMakefile::ConfigureFile(const std::string& infile,
                          cmSystemTools::GetLastSystemError());
       res = 0;
     } else {
-      if (!cmSystemTools::SetPermissions(soutfile, perm)) {
+      if (!cmSystemTools::SetPermissions(soutfile, permissions)) {
         this->IssueMessage(MessageType::FATAL_ERROR,
                            cmSystemTools::GetLastSystemError());
         res = 0;
