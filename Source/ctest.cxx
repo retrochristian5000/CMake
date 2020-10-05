@@ -54,7 +54,8 @@ static const char* cmDocumentationOptions[][2] = {
     "format or 'json-v1' for json format. Defaults to 'human'." },
   { "-L <regex>, --label-regex <regex>",
     "Run tests with labels matching "
-    "regular expression." },
+    "regular expression. With multiple -L, run tests matching each "
+    "(all) of the regular expressions." },
   { "-R <regex>, --tests-regex <regex>",
     "Run tests matching regular "
     "expression." },
