@@ -2922,13 +2922,12 @@ bool HandleConfigureCommand(std::vector<std::string> const& args,
     return false;
   }
 
-  bool escapeQuotes = false;
-  bool atOnly = false;
+  int flags = cmMakefile::ConfigureFileFlags::None;
   for (unsigned int i = 5; i < args.size(); ++i) {
     if (args[i] == "@ONLY") {
-      atOnly = true;
+      flags |= cmMakefile::ConfigureFileFlags::AtOnly;
     } else if (args[i] == "ESCAPE_QUOTES") {
-      escapeQuotes = true;
+      flags |= cmMakefile::ConfigureFileFlags::EscapeQuotes;
     } else if (args[i] == "NEWLINE_STYLE" || args[i] == "LF" ||
                args[i] == "UNIX" || args[i] == "CRLF" || args[i] == "WIN32" ||
                args[i] == "DOS") {
@@ -3005,7 +3004,7 @@ bool HandleConfigureCommand(std::vector<std::string> const& args,
   std::string outLine;
   while (cmSystemTools::GetLineFromStream(sin, inLine)) {
     outLine.clear();
-    makeFile.ConfigureString(inLine, outLine, atOnly, escapeQuotes);
+    makeFile.ConfigureString(inLine, outLine, flags);
     fout << outLine << newLineCharacters;
   }
 

@@ -95,6 +95,19 @@ public:
 class cmMakefile
 {
 public:
+  /* Flags for ConfigureFile(), ConfigureString() */
+  enum ConfigureFileFlags
+  {
+    None = 0,
+    // Behavioral flags
+    CopyOnly = 1 << 0,
+    AtOnly = 1 << 1,
+    EscapeQuotes = 1 << 2,
+    UseSourcePermissions = 1 << 3,
+    // Warnings
+    WarnUninitialized = 1 << 15
+  };
+
   /* Mark a variable as used */
   void MarkVariableAsUsed(const std::string& var);
   /* return true if a variable has been initialized */
@@ -681,27 +694,17 @@ public:
   /**
    * Replace variables and #cmakedefine lines in the given string.
    * See cmConfigureFileCommand for details.
+   *
+   * Only flags @c AtOnly and @c EscapeQuotes are relevant here.
    */
   void ConfigureString(const std::string& input, std::string& output,
-                       bool atOnly, bool escapeQuotes) const;
-
-  enum ConfigureFileFlags
-  {
-    None = 0,
-    // Behavioral flags
-    CopyOnly = 1 << 0,
-    AtOnly = 1 << 1,
-    EscapeQuotes = 1 << 2,
-    UseSourcePermissions = 1 << 3,
-    // Warnings
-    WarnUninitialized = 1 << 15
-  };
+                       const int flags) const;
 
   /**
    * Copy file but change lines according to ConfigureString
    */
   int ConfigureFile(const std::string& infile, const std::string& outfile,
-                    int flags, cmNewLineStyle = cmNewLineStyle());
+                    const int flags, cmNewLineStyle = cmNewLineStyle());
 
   /**
    * Print a command's invocation

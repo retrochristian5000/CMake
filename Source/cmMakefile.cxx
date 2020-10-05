@@ -4024,8 +4024,11 @@ std::string cmMakefile::GetModulesFile(const std::string& filename,
 }
 
 void cmMakefile::ConfigureString(const std::string& input, std::string& output,
-                                 bool atOnly, bool escapeQuotes) const
+                                 const int flags) const
 {
+  const bool atOnly = flags & ConfigureFileFlags::AtOnly;
+  const bool escapeQuotes = flags & ConfigureFileFlags::EscapeQuotes;
+
   // Split input to handle one line at a time.
   std::string::const_iterator lineStart = input.begin();
   while (lineStart != input.end()) {
@@ -4093,7 +4096,7 @@ void cmMakefile::ConfigureString(const std::string& input, std::string& output,
 }
 
 int cmMakefile::ConfigureFile(const std::string& infile,
-                              const std::string& outfile, int flags,
+                              const std::string& outfile, const int flags,
                               cmNewLineStyle newLine)
 {
   const bool copyonly = flags & ConfigureFileFlags::CopyOnly;
@@ -4188,7 +4191,8 @@ int cmMakefile::ConfigureFile(const std::string& infile,
     std::string outLine;
     while (cmSystemTools::GetLineFromStream(fin, inLine)) {
       outLine.clear();
-      this->ConfigureString(inLine, outLine, atOnly, escapeQuotes);
+      // Extra flags that ConfigureString() doesn't handle, don't matter
+      this->ConfigureString(inLine, outLine, flags);
       fout << outLine << newLineCharacters;
     }
     // close the files before attempting to copy

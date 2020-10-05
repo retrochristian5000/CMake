@@ -168,13 +168,12 @@ bool HandleConfigureCommand(std::vector<std::string> const& args,
   }
 
   // Parse options.
-  bool escapeQuotes = false;
-  bool atOnly = false;
+  int flags = cmMakefile::ConfigureFileFlags::None;
   for (unsigned int i = 3; i < args.size(); ++i) {
     if (args[i] == "@ONLY") {
-      atOnly = true;
+      flags |= cmMakefile::ConfigureFileFlags::AtOnly;
     } else if (args[i] == "ESCAPE_QUOTES") {
-      escapeQuotes = true;
+      flags |= cmMakefile::ConfigureFileFlags::EscapeQuotes;
     } else {
       status.SetError(cmStrCat("Unrecognized argument \"", args[i], "\""));
       return false;
@@ -183,7 +182,7 @@ bool HandleConfigureCommand(std::vector<std::string> const& args,
 
   // Configure the string.
   std::string output;
-  status.GetMakefile().ConfigureString(args[1], output, atOnly, escapeQuotes);
+  status.GetMakefile().ConfigureString(args[1], output, flags);
 
   // Store the output in the provided variable.
   status.GetMakefile().AddDefinition(args[2], output);

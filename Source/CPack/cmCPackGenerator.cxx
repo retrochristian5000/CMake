@@ -1320,7 +1320,8 @@ std::string cmCPackGenerator::FindTemplate(const char* name)
 bool cmCPackGenerator::ConfigureString(const std::string& inString,
                                        std::string& outString)
 {
-  this->MakefileMap->ConfigureString(inString, outString, true, false);
+  this->MakefileMap->ConfigureString(inString, outString,
+                                     cmMakefile::ConfigureFileFlags::AtOnly);
   return true;
 }
 
