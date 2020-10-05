@@ -115,6 +115,7 @@
   { include: [ "<istream>", public, "\"cmsys/FStream.hxx\"", public ] },
   { include: [ "<ostream>", public, "\"cmsys/FStream.hxx\"", public ] },
   { include: [ "<fstream>", public, "\"cmsys/FStream.hxx\"", public ] },
+  { include: [ "<optional>", private, "<cm/optional>", public ] },
 
   # major and minor are used as macro arguments. Those are false matches.
   { symbol: [ "major", private, "\"cmVersion.h\"", public ] },
