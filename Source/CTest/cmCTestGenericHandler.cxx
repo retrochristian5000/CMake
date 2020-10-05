@@ -21,32 +21,64 @@ cmCTestGenericHandler::cmCTestGenericHandler()
 
 cmCTestGenericHandler::~cmCTestGenericHandler() = default;
 
-void cmCTestGenericHandler::SetOption(const std::string& op, const char* value)
+/* Modify the given `map`, setting key `op` to `value` if `value`
+ * is non-null, otherwise removing key `op` (if it exists).
+ */
+static void SetMapValue(cmCTestGenericHandler::t_StringToString& map,
+                        const std::string& op, const char* value)
 {
   if (!value) {
-    auto remit = this->Options.find(op);
-    if (remit != this->Options.end()) {
-      this->Options.erase(remit);
+    auto remit = map.find(op);
+    if (remit != map.end()) {
+      map.erase(remit);
     }
     return;
   }
 
-  this->Options[op] = value;
+  map[op] = value;
+}
+
+void cmCTestGenericHandler::SetOption(const std::string& op, const char* value)
+{
+  SetMapValue(this->Options, op, value);
 }
 
 void cmCTestGenericHandler::SetPersistentOption(const std::string& op,
                                                 const char* value)
 {
   this->SetOption(op, value);
-  if (!value) {
-    auto remit = this->PersistentOptions.find(op);
-    if (remit != this->PersistentOptions.end()) {
-      this->PersistentOptions.erase(remit);
-    }
-    return;
-  }
+  SetMapValue(this->PersistentOptions, op, value);
+}
 
-  this->PersistentOptions[op] = value;
+/* Modify the given `map`, doing nothing if `value` is null. Otherwise,
+ * set key `op` to `value` if key `op` does not exist in the map,
+ * or append `value` to the existing value in the map if it does.
+ */
+static void SetMapMultiValue(cmCTestGenericHandler::t_StringToString& map,
+                             const std::string& op, const char* value)
+{
+  if (value) {
+    auto remit = map.find(op);
+    if (remit != map.end()) {
+      auto extended = remit->second + char(0) + std::string(value);
+      map[op] = extended;
+    } else {
+      map[op] = value;
+    }
+  }
+}
+
+void cmCTestGenericHandler::AddMultiOption(const std::string& op,
+                                           const char* value)
+{
+  SetMapMultiValue(this->Options, op, value);
+}
+
+void cmCTestGenericHandler::AddPersistentMultiOption(const std::string& op,
+                                                     const char* value)
+{
+  this->AddMultiOption(op, value);
+  SetMapMultiValue(this->PersistentOptions, op, value);
 }
 
 void cmCTestGenericHandler::Initialize()
@@ -66,6 +98,27 @@ const char* cmCTestGenericHandler::GetOption(const std::string& op)
     return nullptr;
   }
   return remit->second.c_str();
+}
+
+std::vector<const char*> cmCTestGenericHandler::GetMultiOption(
+  const std::string& op)
+{
+  auto remit = this->Options.find(op);
+  if (remit == this->Options.end()) {
+    return std::vector<const char*>();
+  }
+
+  std::vector<const char*> parts;
+  auto* str = remit->second.c_str();
+  size_t c = 0;
+  while ((c != std::string::npos) && (c < remit->second.length())) {
+    parts.push_back(str + c);
+    // Find next NUL-separator and step over it
+    c = remit->second.find(char(0), c);
+    if ((c != std::string::npos) && ((c + 1) < remit->second.length()))
+      c++;
+  }
+  return parts;
 }
 
 bool cmCTestGenericHandler::StartResultingXML(cmCTest::Part part,
