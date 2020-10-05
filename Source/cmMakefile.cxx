@@ -15,7 +15,6 @@
 
 #include <cm/iterator>
 #include <cm/memory>
-#include <cm/optional>
 #include <cm/type_traits> // IWYU pragma: keep
 #include <cm/vector>
 #include <cmext/algorithm>
