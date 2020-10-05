@@ -58,9 +58,9 @@ bool cmConfigureFileCommand(std::vector<std::string> const& args,
     status.SetError(errorMessage);
     return false;
   }
-  bool copyOnly = false;
-  bool escapeQuotes = false;
-  bool use_source_permissions = true;
+
+  int configure_file_flags =
+    cmMakefile::ConfigureFileFlags::UseSourcePermissions;
 
   static std::set<cm::string_view> noopOptions = {
     /* Legacy.  */
@@ -75,21 +75,21 @@ bool cmConfigureFileCommand(std::vector<std::string> const& args,
   };
 
   std::string unknown_args;
-  bool atOnly = false;
   for (unsigned int i = 2; i < args.size(); ++i) {
     if (args[i] == "COPYONLY") {
-      copyOnly = true;
+      configure_file_flags |= cmMakefile::ConfigureFileFlags::CopyOnly;
       if (newLineStyle.IsValid()) {
         status.SetError("COPYONLY could not be used in combination "
                         "with NEWLINE_STYLE");
         return false;
       }
     } else if (args[i] == "ESCAPE_QUOTES") {
-      escapeQuotes = true;
+      configure_file_flags |= cmMakefile::ConfigureFileFlags::EscapeQuotes;
     } else if (args[i] == "@ONLY") {
-      atOnly = true;
+      configure_file_flags |= cmMakefile::ConfigureFileFlags::AtOnly;
     } else if (args[i] == "NO_SOURCE_PERMISSIONS") {
-      use_source_permissions = false;
+      configure_file_flags &=
+        ~cmMakefile::ConfigureFileFlags::UseSourcePermissions;
     } else if (noopOptions.find(args[i]) != noopOptions.end()) {
       /* Ignore no-op options.  */
     } else {
@@ -105,8 +105,7 @@ bool cmConfigureFileCommand(std::vector<std::string> const& args,
   }
 
   if (!status.GetMakefile().ConfigureFile(
-        inputFile, outputFile, copyOnly, atOnly, escapeQuotes,
-        use_source_permissions, newLineStyle)) {
+        inputFile, outputFile, configure_file_flags, newLineStyle)) {
     status.SetError("Problem configuring file");
     return false;
   }

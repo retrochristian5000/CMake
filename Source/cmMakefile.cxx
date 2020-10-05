@@ -4093,11 +4093,15 @@ void cmMakefile::ConfigureString(const std::string& input, std::string& output,
 }
 
 int cmMakefile::ConfigureFile(const std::string& infile,
-                              const std::string& outfile, bool copyonly,
-                              bool atOnly, bool escapeQuotes,
-                              bool use_source_permissions,
+                              const std::string& outfile, int flags,
                               cmNewLineStyle newLine)
 {
+  const bool copyonly = flags & ConfigureFileFlags::CopyOnly;
+  const bool atOnly = flags & ConfigureFileFlags::AtOnly;
+  const bool escapeQuotes = flags & ConfigureFileFlags::EscapeQuotes;
+  const bool use_source_permissions =
+    flags & ConfigureFileFlags::UseSourcePermissions;
+
   int res = 1;
   if (!this->CanIWriteThisFile(outfile)) {
     cmSystemTools::Error("Attempt to write file: " + outfile +

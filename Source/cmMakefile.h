@@ -685,13 +685,23 @@ public:
   void ConfigureString(const std::string& input, std::string& output,
                        bool atOnly, bool escapeQuotes) const;
 
+  enum ConfigureFileFlags
+  {
+    None = 0,
+    // Behavioral flags
+    CopyOnly = 1 << 0,
+    AtOnly = 1 << 1,
+    EscapeQuotes = 1 << 2,
+    UseSourcePermissions = 1 << 3,
+    // Warnings
+    WarnUninitialized = 1 << 15
+  };
+
   /**
    * Copy file but change lines according to ConfigureString
    */
   int ConfigureFile(const std::string& infile, const std::string& outfile,
-                    bool copyonly, bool atOnly, bool escapeQuotes,
-                    bool use_source_permissions,
-                    cmNewLineStyle = cmNewLineStyle());
+                    int flags, cmNewLineStyle = cmNewLineStyle());
 
   /**
    * Print a command's invocation
