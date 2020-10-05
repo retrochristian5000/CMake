@@ -70,6 +70,7 @@ void cmCTestGenericHandler::AddMultiOption(const std::string& op,
 void cmCTestGenericHandler::AddPersistentMultiOption(const std::string& op,
                                                      const char* value)
 {
+  this->AddMultiOption(op, value);
   AddMap(this->PersistentOptions, op, value);
 }
 
