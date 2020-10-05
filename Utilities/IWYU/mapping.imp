@@ -115,6 +115,13 @@
   { include: [ "<istream>", public, "\"cmsys/FStream.hxx\"", public ] },
   { include: [ "<ostream>", public, "\"cmsys/FStream.hxx\"", public ] },
   { include: [ "<fstream>", public, "\"cmsys/FStream.hxx\"", public ] },
+  { include: [ "<optional>", public, "<cm/optional>", public ] },
+
+  { symbol: [ "cm::optional", public, "<cm/optional>", public ] },
+  { symbol: [ "cm::nullopt_t", public, "<cm/optional>", public ] },
+  { symbol: [ "cm::nullopt", public, "<cm/optional>", public ] },
+  { symbol: [ "cm::bad_optional_access", public, "<cm/optional>", public ] },
+  { symbol: [ "cm::make_optional", public, "<cm/optional>", public ] },
 
   # major and minor are used as macro arguments. Those are false matches.
   { symbol: [ "major", private, "\"cmVersion.h\"", public ] },
