@@ -73,9 +73,38 @@ public:
 
   using t_StringToString = std::map<std::string, std::string>;
 
+  /**
+   * Options collect a single value from flags; passing the
+   * flag multiple times on the command-line *overwrites* values,
+   * and only the last one specified counts.
+   *
+   * The value is stored as a string. Mixing the single-option
+   * API with the multi-option API will give weird results, except
+   * that GetOption() for a multi-option will return nullptr if
+   * the option is not set at all, and a pointer to the first
+   * value that was set otherwise.
+   *
+   */
   void SetPersistentOption(const std::string& op, const char* value);
   void SetOption(const std::string& op, const char* value);
   const char* GetOption(const std::string& op);
+
+  /**
+   * Multi-Options collect one or more values from flags; passing
+   * the flag multiple times on the command-line *adds* values,
+   * rather than overwriting the previous values.
+   *
+   * The value is stored as a NUL-separated string;
+   * this is done so the storage doesn't need to distinguish
+   * single-options from multi-options. Mixing the multi-option
+   * API with the single-option API will give weird results, except
+   * that GetMultiOption() for a single-option will return an
+   * empty vector if the option is not set at all, and a vector
+   * with one value (the single value that has been set) otherwise.
+   */
+  void AddPersistentMultiOption(const std::string& op, const char* value);
+  void AddMultiOption(const std::string& op, const char* value);
+  std::vector<const char*> GetMultiOption(const std::string& op);
 
   void SetCommand(cmCTestCommand* command) { this->Command = command; }
 

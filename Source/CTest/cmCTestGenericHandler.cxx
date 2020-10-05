@@ -35,6 +35,20 @@ static void SetMap(cmCTestGenericHandler::t_StringToString& map,
   map[op] = value;
 }
 
+static void AddMap(cmCTestGenericHandler::t_StringToString& map,
+                   const std::string& op, const char* value)
+{
+  if (value) {
+    auto remit = map.find(op);
+    if (remit != map.end()) {
+      auto extended = remit->second + char(0) + std::string(value);
+      map[op] = extended;
+    } else {
+      map[op] = value;
+    }
+  }
+}
+
 void cmCTestGenericHandler::SetOption(const std::string& op, const char* value)
 {
   SetMap(this->Options, op, value);
@@ -45,6 +59,19 @@ void cmCTestGenericHandler::SetPersistentOption(const std::string& op,
 {
   this->SetOption(op, value);
   SetMap(this->PersistentOptions, op, value);
+}
+
+void cmCTestGenericHandler::AddMultiOption(const std::string& op,
+                                           const char* value)
+{
+  AddMap(this->Options, op, value);
+}
+
+void cmCTestGenericHandler::AddPersistentMultiOption(const std::string& op,
+                                                     const char* value)
+{
+  this->AddMultiOption(op, value);
+  AddMap(this->PersistentOptions, op, value);
 }
 
 void cmCTestGenericHandler::Initialize()
@@ -64,6 +91,27 @@ const char* cmCTestGenericHandler::GetOption(const std::string& op)
     return nullptr;
   }
   return remit->second.c_str();
+}
+
+std::vector<const char*> cmCTestGenericHandler::GetMultiOption(
+  const std::string& op)
+{
+  auto remit = this->Options.find(op);
+  if (remit == this->Options.end()) {
+    return std::vector<const char*>();
+  }
+
+  std::vector<const char*> parts;
+  auto* str = remit->second.c_str();
+  size_t c = 0;
+  while ((c != std::string::npos) && (c < remit->second.length())) {
+    parts.push_back(str + c);
+    // Find next NUL-separator and step over it
+    c = remit->second.find(char(0), c);
+    if ((c != std::string::npos) && ((c + 1) < remit->second.length()))
+      c++;
+  }
+  return parts;
 }
 
 bool cmCTestGenericHandler::StartResultingXML(cmCTest::Part part,
