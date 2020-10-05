@@ -77,6 +77,19 @@ public:
   void SetOption(const std::string& op, const char* value);
   const char* GetOption(const std::string& op);
 
+  /**
+   * Multi-Options collect one or more options from flags; passing
+   * the flag multiple times on the command-line *adds* values,
+   * rather than overwriting the previous values.
+   *
+   * The @p value is stored in options as a NUL-separated string;
+   * this is done so the storage doesn't need to distinguish
+   * one-valued from multi-valued options. Note that GetOption()
+   * will *not* give a useful value for a MultiOption.
+   */
+  void AddPersistentMultiOption(const std::string& op, const char* value);
+  void AddMultiOption(const std::string& op, const char* value);
+
   void SetCommand(cmCTestCommand* command) { this->Command = command; }
 
   void SetSubmitIndex(int idx) { this->SubmitIndex = idx; }

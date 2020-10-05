@@ -35,6 +35,20 @@ static void SetMap(cmCTestGenericHandler::t_StringToString& map,
   map[op] = value;
 }
 
+static void AddMap(cmCTestGenericHandler::t_StringToString& map,
+                   const std::string& op, const char* value)
+{
+  if (value) {
+    auto remit = map.find(op);
+    if (remit != map.end()) {
+      auto extended = remit->second + char(0) + std::string(value);
+      map[op] = extended;
+    } else {
+      map[op] = value;
+    }
+  }
+}
+
 void cmCTestGenericHandler::SetOption(const std::string& op, const char* value)
 {
   SetMap(this->Options, op, value);
@@ -45,6 +59,18 @@ void cmCTestGenericHandler::SetPersistentOption(const std::string& op,
 {
   this->SetOption(op, value);
   SetMap(this->PersistentOptions, op, value);
+}
+
+void cmCTestGenericHandler::AddMultiOption(const std::string& op,
+                                           const char* value)
+{
+  AddMap(this->Options, op, value);
+}
+
+void cmCTestGenericHandler::AddPersistentMultiOption(const std::string& op,
+                                                     const char* value)
+{
+  AddMap(this->PersistentOptions, op, value);
 }
 
 void cmCTestGenericHandler::Initialize()
