@@ -93,6 +93,27 @@ const char* cmCTestGenericHandler::GetOption(const std::string& op)
   return remit->second.c_str();
 }
 
+std::vector<const char*> cmCTestGenericHandler::GetMultiOption(
+  const std::string& op)
+{
+  auto remit = this->Options.find(op);
+  if (remit == this->Options.end()) {
+    return std::vector<const char*>();
+  }
+
+  std::vector<const char*> parts;
+  auto* str = remit->second.c_str();
+  size_t c = 0;
+  while ((c != std::string::npos) && (c < remit->second.length())) {
+    parts.push_back(str + c);
+    // Find next NUL-separator and step over it
+    c = remit->second.find(char(0), c);
+    if ((c != std::string::npos) && ((c + 1) < remit->second.length()))
+      c++;
+  }
+  return parts;
+}
+
 bool cmCTestGenericHandler::StartResultingXML(cmCTest::Part part,
                                               const char* name,
                                               cmGeneratedFileStream& xofs)

@@ -89,6 +89,7 @@ public:
    */
   void AddPersistentMultiOption(const std::string& op, const char* value);
   void AddMultiOption(const std::string& op, const char* value);
+  std::vector<const char*> GetMultiOption(const std::string& op);
 
   void SetCommand(cmCTestCommand* command) { this->Command = command; }
 
