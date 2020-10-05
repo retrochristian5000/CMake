@@ -125,6 +125,7 @@ They are normally called through the :command:`find_package` command.
    /module/FindBZip2
    /module/FindCABLE
    /module/FindCoin3D
+   /module/FindCryptoPP
    /module/FindCups
    /module/FindCUDAToolkit
    /module/FindCURL
