@@ -15,7 +15,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <cm/optional>
 #include <cm/string_view>
 
 #include "cmsys/RegularExpression.hxx"
