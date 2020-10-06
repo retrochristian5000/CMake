@@ -202,6 +202,7 @@
         - sccache --show-stats
         - "$LAUNCHER ctest -VV -S .gitlab/ci/ctest_configure.cmake"
         - "$LAUNCHER ctest -VV -S .gitlab/ci/ctest_build.cmake"
+        - cat build/Tests/FortranC/Flags.cmake || true
         - sccache --show-stats
 
     interruptible: true
@@ -211,6 +212,7 @@
 
     script:
         - *before_script_linux
+        - cat build/Tests/FortranC/Flags.cmake || true
         - "$LAUNCHER ctest --output-on-failure -V -S .gitlab/ci/ctest_test.cmake"
 
     interruptible: true
