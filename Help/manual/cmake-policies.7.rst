@@ -51,6 +51,14 @@ The :variable:`CMAKE_MINIMUM_REQUIRED_VERSION` variable may also be used
 to determine whether to report an error on use of deprecated macros or
 functions.
 
+Policies Introduced by CMake 3.20
+=================================
+
+.. toctree::
+   :maxdepth: 1
+
+   CMP0117: Extensions must be explicit for source files. </policy/CMP0117>
+
 Policies Introduced by CMake 3.19
 =================================
 
