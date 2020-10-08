@@ -7024,7 +7024,9 @@ void cmGeneratorTarget::ComputeLinkInterfaceRuntimeLibraries(
   const std::string& config, cmOptionalLinkInterface& iface) const
 {
   for (std::string const& lang : iface.Languages) {
-    if (lang == "CUDA" || lang == "HIP") {
+    if ((lang == "CUDA" || lang == "HIP") &&
+        iface.LanguageRuntimeLibraries.find(lang) ==
+          iface.LanguageRuntimeLibraries.end()) {
       auto implicitTargets =
         computeImplicitLanguageTargets<cmLinkItem>(lang, config, this);
       iface.LanguageRuntimeLibraries[lang] = std::move(implicitTargets);
@@ -7036,7 +7038,9 @@ void cmGeneratorTarget::ComputeLinkImplementationRuntimeLibraries(
   const std::string& config, cmOptionalLinkImplementation& impl) const
 {
   for (std::string const& lang : impl.Languages) {
-    if (lang == "CUDA" || lang == "HIP") {
+    if ((lang == "CUDA" || lang == "HIP") &&
+        impl.LanguageRuntimeLibraries.find(lang) ==
+          impl.LanguageRuntimeLibraries.end()) {
       auto implicitTargets =
         computeImplicitLanguageTargets<cmLinkImplItem>(lang, config, this);
       impl.LanguageRuntimeLibraries[lang] = std::move(implicitTargets);
