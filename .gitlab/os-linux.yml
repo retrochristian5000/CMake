@@ -52,7 +52,7 @@
     image: "kitware/cmake:ci-fedora31-x86_64-2020-10-03"
 
     variables:
-        GIT_CLONE_PATH: "$CI_BUILDS_DIR/cmake ci"
+        GIT_CLONE_PATH: "$CI_BUILDS_DIR/this is an extraordinarily long filename with spaces for continuous integration"
 
 #### Lint builds
 
