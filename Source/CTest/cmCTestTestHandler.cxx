@@ -332,7 +332,6 @@ void cmCTestTestHandler::Initialize()
   this->UseIncludeRegExpFlag = false;
   this->UseExcludeRegExpFlag = false;
   this->UseExcludeRegExpFirst = false;
-  this->ExcludeLabelRegularExpression = "";
   this->IncludeRegExp.clear();
   this->ExcludeRegExp.clear();
   this->ExcludeFixtureRegExp.clear();
@@ -519,6 +518,8 @@ bool cmCTestTestHandler::ProcessOptions()
   }
 
   const char* val;
+  // LabelRegularExpression is a multi-option, but you can still use
+  // the single-valued version to check if the option is set at all.
   val = this->GetOption("LabelRegularExpression");
   if (val) {
     auto parts = this->GetMultiOption("LabelRegularExpression");
@@ -534,8 +535,16 @@ bool cmCTestTestHandler::ProcessOptions()
   }
   val = this->GetOption("ExcludeLabelRegularExpression");
   if (val) {
-    this->UseExcludeLabelRegExpFlag = true;
-    this->ExcludeLabelRegExp = val;
+    auto parts = this->GetMultiOption("ExcludeLabelRegularExpression");
+    this->UseExcludeLabelRegExpFlag = parts.size() > 0;
+    this->ExcludeLabelRegularExpressions.clear();
+    if (parts.size() > 0) {
+      this->ExcludeLabelRegularExpressions.reserve(parts.size());
+      for (const auto& p : parts) {
+        this->ExcludeLabelRegularExpressions.push_back(
+          cmsys::RegularExpression(p));
+      }
+    }
   }
   val = this->GetOption("IncludeRegularExpression");
   if (val) {
@@ -770,6 +779,36 @@ void cmCTestTestHandler::PrintLabelOrSubprojectSummary(bool doSubProject)
   cmCTestOptionalLog(this->CTest, HANDLER_OUTPUT, "\n", this->Quiet);
 }
 
+/**
+ * Check if the labels (from a test) match all the expressions.
+ *
+ * Each of the RE's must match at least one label
+ * (e.g. all of the REs must match **some** label,
+ * in order for the filter to apply to the test).
+ */
+static bool MatchLabelsAgainstFilterRE(
+  const std::vector<std::string>& labels,
+  const std::vector<cmsys::RegularExpression>& expressions)
+{
+  for (const auto& re : expressions) {
+    // check to see if the label regular expression matches
+    bool found = false; // assume it does not match
+    cmsys::RegularExpressionMatch match;
+    // loop over all labels and look for match
+    for (std::string const& l : labels) {
+      if (re.find(l.c_str(), match)) {
+        found = true;
+        break;
+      }
+    }
+    // if no match was found, exclude the test
+    if (!found) {
+      return false;
+    }
+  }
+  return true;
+}
+
 void cmCTestTestHandler::CheckLabelFilterInclude(cmCTestTestProperties& it)
 {
   // if not using Labels to filter then return
@@ -782,23 +821,10 @@ void cmCTestTestHandler::CheckLabelFilterInclude(cmCTestTestProperties& it)
     it.IsInBasedOnREOptions = false;
     return;
   }
-  // Each of the LabelRE's must match at least one
-  // (e.g. all of them must be satisfied by a given test).
-  for (const auto& re : this->IncludeLabelRegularExpressions) {
-    // check to see if the label regular expression matches
-    bool found = false; // assume it does not match
-    cmsys::RegularExpressionMatch match;
-    // loop over all labels and look for match
-    for (std::string const& l : it.Labels) {
-      if (re.find(l.c_str(), match)) {
-        found = true;
-        break;
-      }
-    }
-    // if no match was found, exclude the test
-    if (!found) {
-      it.IsInBasedOnREOptions = false;
-    }
+  // if no match was found, exclude the test
+  if (!MatchLabelsAgainstFilterRE(it.Labels,
+                                  this->IncludeLabelRegularExpressions)) {
+    it.IsInBasedOnREOptions = false;
   }
 }
 
@@ -813,16 +839,9 @@ void cmCTestTestHandler::CheckLabelFilterExclude(cmCTestTestProperties& it)
   if (it.Labels.empty()) {
     return;
   }
-  // check to see if the label regular expression matches
-  bool found = false; // assume it does not match
-  // loop over all labels and look for match
-  for (std::string const& l : it.Labels) {
-    if (this->ExcludeLabelRegularExpression.find(l)) {
-      found = true;
-    }
-  }
   // if match was found, exclude the test
-  if (found) {
+  if (MatchLabelsAgainstFilterRE(it.Labels,
+                                 this->ExcludeLabelRegularExpressions)) {
     it.IsInBasedOnREOptions = false;
   }
 }
@@ -1717,10 +1736,6 @@ bool cmCTestTestHandler::ParseResourceGroupsProperty(
 
 bool cmCTestTestHandler::GetListOfTests()
 {
-  if (!this->ExcludeLabelRegExp.empty()) {
-    this->ExcludeLabelRegularExpression.compile(
-      this->ExcludeLabelRegExp.c_str());
-  }
   if (!this->IncludeRegExp.empty()) {
     this->IncludeTestsRegularExpression.compile(this->IncludeRegExp.c_str());
   }
