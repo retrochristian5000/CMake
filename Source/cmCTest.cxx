@@ -2115,9 +2115,9 @@ bool cmCTest::HandleCommandLineArguments(size_t& i,
   } else if (this->CheckArgument(arg, "-LE"_s, "--label-exclude") &&
              i < args.size() - 1) {
     i++;
-    this->GetTestHandler()->SetPersistentOption(
+    this->GetTestHandler()->AddPersistentMultiOption(
       "ExcludeLabelRegularExpression", args[i].c_str());
-    this->GetMemCheckHandler()->SetPersistentOption(
+    this->GetMemCheckHandler()->AddPersistentMultiOption(
       "ExcludeLabelRegularExpression", args[i].c_str());
   }
 
