@@ -332,6 +332,8 @@ void cmCTestTestHandler::Initialize()
   this->UseIncludeRegExpFlag = false;
   this->UseExcludeRegExpFlag = false;
   this->UseExcludeRegExpFirst = false;
+  this->IncludeLabelRegularExpressions.clear();
+  this->ExcludeLabelRegularExpressions.clear();
   this->IncludeRegExp.clear();
   this->ExcludeRegExp.clear();
   this->ExcludeFixtureRegExp.clear();
