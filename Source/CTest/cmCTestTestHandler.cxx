@@ -479,6 +479,27 @@ int cmCTestTestHandler::ProcessHandler()
   return 0;
 }
 
+/* Given a multi-option value `parts`, compile those parts into
+ * regular expressions in `expressions`. Skip empty values.
+ * Returns true if there were any expressions.
+ */
+static bool BuildLabelRE(const std::vector<const char*>& parts,
+                         std::vector<cmsys::RegularExpression>& expressions)
+{
+  expressions.clear();
+  if (parts.size() > 0) {
+    expressions.resize(parts.size());
+    int c = 0;
+    for (const auto& p : parts) {
+      if (!std::string(p).empty()) {
+        expressions[c].compile(p);
+      }
+      ++c;
+    }
+  }
+  return expressions.size() > 0;
+}
+
 bool cmCTestTestHandler::ProcessOptions()
 {
   // Update internal data structure from generic one
@@ -524,29 +545,15 @@ bool cmCTestTestHandler::ProcessOptions()
   // the single-valued version to check if the option is set at all.
   val = this->GetOption("LabelRegularExpression");
   if (val) {
-    auto parts = this->GetMultiOption("LabelRegularExpression");
-    this->UseIncludeLabelRegExpFlag = parts.size() > 0;
-    this->IncludeLabelRegularExpressions.clear();
-    if (parts.size() > 0) {
-      this->IncludeLabelRegularExpressions.reserve(parts.size());
-      for (const auto& p : parts) {
-        this->IncludeLabelRegularExpressions.push_back(
-          cmsys::RegularExpression(p));
-      }
-    }
+    this->UseIncludeLabelRegExpFlag =
+      BuildLabelRE(this->GetMultiOption("LabelRegularExpression"),
+                   this->IncludeLabelRegularExpressions);
   }
   val = this->GetOption("ExcludeLabelRegularExpression");
   if (val) {
-    auto parts = this->GetMultiOption("ExcludeLabelRegularExpression");
-    this->UseExcludeLabelRegExpFlag = parts.size() > 0;
-    this->ExcludeLabelRegularExpressions.clear();
-    if (parts.size() > 0) {
-      this->ExcludeLabelRegularExpressions.reserve(parts.size());
-      for (const auto& p : parts) {
-        this->ExcludeLabelRegularExpressions.push_back(
-          cmsys::RegularExpression(p));
-      }
-    }
+    this->UseExcludeLabelRegExpFlag =
+      BuildLabelRE(this->GetMultiOption("ExcludeLabelRegularExpression"),
+                   this->ExcludeLabelRegularExpressions);
   }
   val = this->GetOption("IncludeRegularExpression");
   if (val) {
