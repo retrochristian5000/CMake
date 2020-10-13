@@ -51,6 +51,13 @@
 #include <sstream>
 #include <utility>
 
+#ifdef _WIN32
+#  include <fcntl.h> // for _O_BINARY
+#  include <io.h>    // for _setmode
+#  include <stdio.h> // for std{out,err} and fileno
+#endif
+
+#include <cm/memory>
 #include <cm/string_view>
 
 #include "cmsys/Directory.hxx"
@@ -181,9 +188,18 @@ static bool cmTarFilesFrom(std::string const& file,
 
 static void cmCatFile(const std::string& fileToAppend)
 {
+#ifdef _WIN32
+  _setmode(fileno(stdout), _O_BINARY);
+#endif
   cmsys::ifstream source(fileToAppend.c_str(),
                          (std::ios::binary | std::ios::in));
-  std::cout << source.rdbuf();
+  // get length of file:
+  source.seekg(0, source.end);
+  int length = source.tellg();
+  source.seekg(0, source.beg);
+  auto buff = cm::make_unique<char[]>(length);
+  source.read(buff.get(), length);
+  write(fileno(stdout), buff.get(), length);
 }
 
 static bool cmRemoveDirectory(const std::string& dir, bool recursive = true)
