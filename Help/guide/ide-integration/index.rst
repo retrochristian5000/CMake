@@ -69,6 +69,9 @@ While reading, parsing, and evaluating the contents of ``CMakePresets.json`` is
 straightforward, it is not trivial. In addition to the documentation, IDE
 vendors may also wish to refer to the CMake source code and test cases for a
 better understanding of how to implement the format.
+``CMakePresets_schema.json`` (see below) provides a machine-readable JSON schema
+for the ``CMakePresets.json`` format that IDE vendors may find useful for
+validation and providing editing assistance.
 
 Configuring
 ===========
@@ -121,3 +124,9 @@ obtain this information and use it to present the user with a list of tests.
 
 IDEs should not invoke the ``test`` target of the generated buildsystem.
 Instead, they should invoke :manual:`ctest(1)` directly.
+
+CMakePresets_schema.json
+========================
+
+.. literalinclude:: CMakePresets_schema.json
+  :language: json
