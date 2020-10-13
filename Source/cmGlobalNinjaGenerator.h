@@ -647,8 +647,6 @@ public:
 
   std::string GetDefaultBuildConfig() const override;
 
-  bool ReadCacheEntriesForBuild(const cmState& state) override;
-
   bool SupportsDefaultBuildType() const override { return true; }
   bool SupportsCrossConfigs() const override { return true; }
   bool SupportsDefaultConfigs() const override { return true; }
