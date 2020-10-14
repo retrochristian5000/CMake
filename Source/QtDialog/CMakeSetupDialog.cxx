@@ -92,6 +92,8 @@ CMakeSetupDialog::CMakeSetupDialog()
   this->ProgressBar->reset();
   this->RemoveEntry->setEnabled(false);
   this->AddEntry->setEnabled(false);
+  this->Preset->setHidden(true);
+  this->PresetLabel->setHidden(true);
 
   QByteArray p = settings.value("SplitterSizes").toByteArray();
   this->Splitter->restoreState(p);
