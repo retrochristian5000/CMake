@@ -65,6 +65,7 @@ Reference Manuals
    /manual/cmake-language.7
    /manual/cmake-modules.7
    /manual/cmake-packages.7
+   /manual/cmake-presets.7
    /manual/cmake-policies.7
    /manual/cmake-properties.7
    /manual/cmake-qt.7
