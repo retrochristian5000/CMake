@@ -42,7 +42,8 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "A required string representing the machine-friendly name of the preset. This identifier is used in the --preset argument. There must not be two presets in the union of CMakePresets.json and CMakeUserPresets.json in the same directory with the same name."
+            "description": "A required string representing the machine-friendly name of the preset. This identifier is used in the --preset argument. There must not be two presets in the union of CMakePresets.json and CMakeUserPresets.json in the same directory with the same name.",
+            "minLength": 1
           },
           "hidden": {
             "type": "boolean",
@@ -52,14 +53,16 @@
             "anyOf": [
               {
                 "type": "string",
-                "description": "An optional string representing the name of the preset to inherit from."
+                "description": "An optional string representing the name of the preset to inherit from.",
+                "minLength": 1
               },
               {
                 "type": "array",
                 "description": "An optional array of strings representing the names of presets to inherit from. The preset will inherit all of the fields from the inherits presets by default (except name, hidden, inherits, description, and longDescription), but can override them as desired. If multiple inherits presets provide conflicting values for the same field, the earlier preset in the inherits list will be preferred. Presets in CMakePresets.json may not inherit from presets in CMakeUserPresets.json.",
                 "items": {
                   "type": "string",
-                  "description": "An optional string representing the name of the preset to inherit from."
+                  "description": "An optional string representing the name of the preset to inherit from.",
+                  "minLength": 1
                 }
               }
             ]
@@ -179,7 +182,7 @@
                 "type": "boolean",
                 "description": "An optional boolean. Setting this to true is equivalent to passing --warn-uninitialized on the command line."
               },
-              "unusedVars": {
+              "unusedCli": {
                 "type": "boolean",
                 "description": "An optional boolean. Setting this to false is equivalent to passing --no-warn-unused-cli on the command line."
               },
@@ -204,6 +207,20 @@
               }
             },
             "additionalProperties": false
+          },
+          "debug": {
+            "type": "object",
+            "properties": {
+              "output": {
+                "type": "boolean"
+              },
+              "tryCompile": {
+                "type": "boolean"
+              },
+              "find": {
+                "type": "boolean"
+              }
+            }
           }
         },
         "required": [
