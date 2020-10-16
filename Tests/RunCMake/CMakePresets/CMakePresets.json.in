@@ -470,28 +470,38 @@
       "binaryDir": "${sourceDir}/build"
     },
     {
-      "name": "CMakeGeneratorConfigNone",
+      "name": "UseArchToolsetNone",
       "generator": "@RunCMake_GENERATOR@",
       "architecture": "a",
       "toolset": "a",
       "binaryDir": "${sourceDir}/build"
     },
     {
-      "name": "CMakeGeneratorConfigBase",
+      "name": "UseArchToolsetBase",
       "generator": "@RunCMake_GENERATOR@",
-      "architecture": "a",
-      "toolset": "a",
-      "cmakeGeneratorConfig": "ignore",
+      "architecture": {
+        "value": "a",
+        "use": "ignore"
+      },
+      "toolset": {
+        "value": "a",
+        "use": "ignore"
+      },
       "binaryDir": "${sourceDir}/build"
     },
     {
-      "name": "CMakeGeneratorConfigDefault",
-      "inherits": "CMakeGeneratorConfigBase",
-      "cmakeGeneratorConfig": "default"
+      "name": "UseArchToolsetDefault",
+      "inherits": "UseArchToolsetBase",
+      "architecture": {
+        "use": "default"
+      },
+      "toolset": {
+        "use": "default"
+      }
     },
     {
-      "name": "CMakeGeneratorConfigIgnore",
-      "inherits": "CMakeGeneratorConfigBase"
+      "name": "UseArchToolsetIgnore",
+      "inherits": "UseArchToolsetBase"
     }
   ]
 }

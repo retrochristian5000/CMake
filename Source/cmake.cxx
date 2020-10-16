@@ -1069,12 +1069,16 @@ void cmake::SetArgs(const std::vector<std::string>& args)
     this->UnprocessedPresetVariables = expandedPreset->CacheVariables;
     this->UnprocessedPresetEnvironment = expandedPreset->Environment;
 
-    if (!expandedPreset->GeneratorConfig ||
-        expandedPreset->GeneratorConfig ==
-          cmCMakePresetsFile::CMakeGeneratorConfig::Default) {
+    if (!expandedPreset->UseArchitecture ||
+        expandedPreset->UseArchitecture ==
+          cmCMakePresetsFile::ArchToolsetUse::Default) {
       if (!this->GeneratorPlatformSet) {
         this->SetGeneratorPlatform(expandedPreset->Architecture);
       }
+    }
+    if (!expandedPreset->UseToolset ||
+        expandedPreset->UseToolset ==
+          cmCMakePresetsFile::ArchToolsetUse::Default) {
       if (!this->GeneratorToolsetSet) {
         this->SetGeneratorToolset(expandedPreset->Toolset);
       }

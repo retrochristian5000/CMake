@@ -166,9 +166,9 @@ if(RunCMake_GENERATOR MATCHES "^Visual Studio ")
     run_cmake_presets(VisualStudioInheritanceMultiSecond)
   endif()
 else()
-  run_cmake_presets(CMakeGeneratorConfigNone)
-  run_cmake_presets(CMakeGeneratorConfigDefault)
-  run_cmake_presets(CMakeGeneratorConfigIgnore)
+  run_cmake_presets(UseArchToolsetNone)
+  run_cmake_presets(UseArchToolsetDefault)
+  run_cmake_presets(UseArchToolsetIgnore)
 endif()
 
 # Test bad command line arguments

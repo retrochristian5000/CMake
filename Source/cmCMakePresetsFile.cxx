@@ -29,7 +29,7 @@ enum class CycleStatus
 using ReadFileResult = cmCMakePresetsFile::ReadFileResult;
 using CacheVariable = cmCMakePresetsFile::CacheVariable;
 using UnexpandedPreset = cmCMakePresetsFile::UnexpandedPreset;
-using CMakeGeneratorConfig = cmCMakePresetsFile::CMakeGeneratorConfig;
+using ArchToolsetUse = cmCMakePresetsFile::ArchToolsetUse;
 
 constexpr int MIN_VERSION = 1;
 constexpr int MAX_VERSION = 1;
@@ -189,8 +189,8 @@ auto const PresetDebugHelper =
     .Bind("find"_s, &UnexpandedPreset::DebugFind, PresetOptionalBoolHelper,
           false);
 
-ReadFileResult CMakeGeneratorConfigHelper(
-  cm::optional<CMakeGeneratorConfig>& out, const Json::Value* value)
+ReadFileResult ArchToolsetUseHelper(cm::optional<ArchToolsetUse>& out,
+                                    const Json::Value* value)
 {
   if (!value) {
     out = cm::nullopt;
@@ -202,17 +202,53 @@ ReadFileResult CMakeGeneratorConfigHelper(
   }
 
   if (value->asString() == "default") {
-    out = CMakeGeneratorConfig::Default;
+    out = ArchToolsetUse::Default;
     return ReadFileResult::READ_OK;
   }
 
   if (value->asString() == "ignore") {
-    out = CMakeGeneratorConfig::Ignore;
+    out = ArchToolsetUse::Ignore;
     return ReadFileResult::READ_OK;
   }
 
   return ReadFileResult::INVALID_PRESET;
 }
+
+std::function<ReadFileResult(UnexpandedPreset&, const Json::Value*)>
+ArchToolsetHelper(std::string UnexpandedPreset::*valueField,
+                  cm::optional<ArchToolsetUse> UnexpandedPreset::*useField)
+{
+  auto const objectHelper =
+    cmJSONObjectHelper<UnexpandedPreset, ReadFileResult>(
+      ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET, false)
+      .Bind("value", valueField, PresetStringHelper, false)
+      .Bind("use", useField, ArchToolsetUseHelper, false);
+  return [valueField, useField, objectHelper](
+           UnexpandedPreset& out, const Json::Value* value) -> ReadFileResult {
+    if (!value) {
+      (out.*valueField).clear();
+      out.*useField = cm::nullopt;
+      return ReadFileResult::READ_OK;
+    }
+
+    if (value->isString()) {
+      out.*valueField = value->asString();
+      out.*useField = cm::nullopt;
+      return ReadFileResult::READ_OK;
+    }
+
+    if (value->isObject()) {
+      return objectHelper(out, value);
+    }
+
+    return ReadFileResult::INVALID_PRESET;
+  };
+}
+
+auto const ArchitectureHelper = ArchToolsetHelper(
+  &UnexpandedPreset::Architecture, &UnexpandedPreset::UseArchitecture);
+auto const ToolsetHelper =
+  ArchToolsetHelper(&UnexpandedPreset::Toolset, &UnexpandedPreset::UseToolset);
 
 auto const PresetHelper =
   cmJSONObjectHelper<UnexpandedPreset, ReadFileResult>(
@@ -229,11 +265,8 @@ auto const PresetHelper =
           false)
     .Bind("generator"_s, &UnexpandedPreset::Generator, PresetStringHelper,
           false)
-    .Bind("architecture"_s, &UnexpandedPreset::Architecture,
-          PresetStringHelper, false)
-    .Bind("toolset"_s, &UnexpandedPreset::Toolset, PresetStringHelper, false)
-    .Bind("cmakeGeneratorConfig"_s, &UnexpandedPreset::GeneratorConfig,
-          CMakeGeneratorConfigHelper, false)
+    .Bind("architecture"_s, ArchitectureHelper, false)
+    .Bind("toolset"_s, ToolsetHelper, false)
     .Bind("binaryDir"_s, &UnexpandedPreset::BinaryDir, PresetStringHelper,
           false)
     .Bind<std::string>("cmakeExecutable"_s, nullptr, PresetStringHelper, false)
@@ -330,8 +363,11 @@ ReadFileResult VisitPreset(std::map<std::string, UnexpandedPreset>& presets,
     InheritString(preset.Generator, parent->second.Generator);
     InheritString(preset.Architecture, parent->second.Architecture);
     InheritString(preset.Toolset, parent->second.Toolset);
-    if (!preset.GeneratorConfig) {
-      preset.GeneratorConfig = parent->second.GeneratorConfig;
+    if (!preset.UseArchitecture) {
+      preset.UseArchitecture = parent->second.UseArchitecture;
+    }
+    if (!preset.UseToolset) {
+      preset.UseToolset = parent->second.UseToolset;
     }
     InheritString(preset.BinaryDir, parent->second.BinaryDir);
     InheritOptionalBool(preset.WarnDev, parent->second.WarnDev);
