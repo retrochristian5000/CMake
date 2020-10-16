@@ -12,7 +12,7 @@
 class cmCMakePresetsFile
 {
 public:
-  enum class CMakeGeneratorConfig
+  enum class ArchToolsetUse
   {
     Default,
     Ignore,
@@ -50,8 +50,9 @@ public:
     std::string Description;
     std::string Generator;
     std::string Architecture;
+    cm::optional<ArchToolsetUse> UseArchitecture;
     std::string Toolset;
-    cm::optional<CMakeGeneratorConfig> GeneratorConfig;
+    cm::optional<ArchToolsetUse> UseToolset;
     std::string BinaryDir;
 
     std::map<std::string, cm::optional<CacheVariable>> CacheVariables;
