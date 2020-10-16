@@ -543,6 +543,10 @@ bool ExpandMacro(const cmCMakePresetsFile& file,
       out += cmSystemTools::GetParentDirectory(file.SourceDir);
       return true;
     }
+    if (macroName == "sourceDirName") {
+      out += cmSystemTools::GetFilenameName(file.SourceDir);
+      return true;
+    }
     if (macroName == "presetName") {
       out += preset.Name;
       return true;
