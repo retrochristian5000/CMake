@@ -181,3 +181,8 @@ endfunction()
 if(NOT RunCMake_GENERATOR MATCHES "Visual Studio 9 ")
   __ep_test_CONFIGURE_HANDLED_BY_BUILD()
 endif()
+
+find_package(Git QUIET)
+if(GIT_EXECUTABLE)
+  run_cmake(FetchGitTags)
+endif()
