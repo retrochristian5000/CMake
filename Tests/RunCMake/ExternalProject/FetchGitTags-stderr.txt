@@ -1,0 +1,8 @@
+(Cloning into 'fetcher'...
+done.
+Already on 'master'
+HEAD is now at 126ffe5 First file
+From .*/Tests/RunCMake/ExternalProject/FetchGitTags-build/srcRepo
+ \* [new tag] *tag_of_interest -> tag_of_interest
+Previous HEAD position was 126ffe5 First file
+HEAD is now at 177c04f Second file)?
