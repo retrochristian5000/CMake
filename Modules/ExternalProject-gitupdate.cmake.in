@@ -51,7 +51,7 @@ execute_process(
 # Is the hash checkout out that we want?
 if(error_code OR is_remote_ref OR NOT ("${tag_sha}" STREQUAL "${head_sha}"))
   execute_process(
-    COMMAND "@git_EXECUTABLE@" fetch
+    COMMAND "@git_EXECUTABLE@" fetch --tags --force
     WORKING_DIRECTORY "@work_dir@"
     RESULT_VARIABLE error_code
     )
