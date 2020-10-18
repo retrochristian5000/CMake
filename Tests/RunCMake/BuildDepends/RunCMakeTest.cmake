@@ -113,3 +113,10 @@ if(CMake_TEST_BuildDepends_GNU_AS)
   set(ENV{ASM} "${CMake_TEST_BuildDepends_GNU_AS}")
   run_BuildDepends(GNU-AS)
 endif()
+
+if (RunCMake_GENERATOR STREQUAL "Unix Makefiles"
+    AND (CMAKE_C_COMPILER_ID STREQUAL "GNU"
+      OR CMAKE_C_COMPILER_ID STREQUAL "Clang"
+      OR CMAKE_C_COMPILER_ID STREQUAL "AppleClang"))
+  run_BuildDepends(CompilerDependencies)
+endif()

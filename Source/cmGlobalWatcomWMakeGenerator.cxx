@@ -28,6 +28,7 @@ cmGlobalWatcomWMakeGenerator::cmGlobalWatcomWMakeGenerator(cmake* cm)
   this->DefineWindowsNULL = true;
   this->UnixCD = false;
   this->MakeSilentFlag = "-h";
+  this->ToolSupportsCompilerDependencies = false;
 }
 
 void cmGlobalWatcomWMakeGenerator::EnableLanguage(
