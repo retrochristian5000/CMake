@@ -15,6 +15,7 @@
 #include "cmsys/FStream.hxx"
 #include "cmsys/Terminal.h"
 
+#include "cmCMakePath.h"
 #include "cmCustomCommand.h" // IWYU pragma: keep
 #include "cmCustomCommandGenerator.h"
 #include "cmFileTimeCache.h"
@@ -552,8 +553,10 @@ void cmLocalUnixMakefileGenerator3::WriteMakeRule(
     }
   }
 
-  // Write the list of commands.
-  os << cmWrap("\t", commands, "", "\n") << "\n";
+  if (!commands.empty()) {
+    // Write the list of commands.
+    os << cmWrap("\t", commands, "", "\n") << "\n";
+  }
   if (symbolic && !this->IsWatcomWMake()) {
     os << ".PHONY : " << tgt << "\n";
   }
@@ -1301,84 +1304,88 @@ bool cmLocalUnixMakefileGenerator3::UpdateDependencies(
   // Check if any multiple output pairs have a missing file.
   this->CheckMultipleOutputs(verbose);
 
-  std::string const targetDir = cmSystemTools::GetFilenamePath(tgtInfo);
-  std::string const internalDependFile = targetDir + "/depend.internal";
-  std::string const dependFile = targetDir + "/depend.make";
+  if (!this->Makefile->GetSafeDefinition("CMAKE_DEPENDS_LANGUAGES").empty()) {
+    // dependencies are managed by CMake itself
 
-  // If the target DependInfo.cmake file has changed since the last
-  // time dependencies were scanned then force rescanning.  This may
-  // happen when a new source file is added and CMake regenerates the
-  // project but no other sources were touched.
-  bool needRescanDependInfo = false;
-  cmFileTimeCache* ftc =
-    this->GlobalGenerator->GetCMakeInstance()->GetFileTimeCache();
-  {
-    int result;
-    if (!ftc->Compare(internalDependFile, tgtInfo, &result) || result < 0) {
-      if (verbose) {
-        cmSystemTools::Stdout(cmStrCat("Dependee \"", tgtInfo,
-                                       "\" is newer than depender \"",
-                                       internalDependFile, "\".\n"));
+    std::string const targetDir = cmSystemTools::GetFilenamePath(tgtInfo);
+    std::string const internalDependFile = targetDir + "/depend.internal";
+    std::string const dependFile = targetDir + "/depend.make";
+
+    // If the target DependInfo.cmake file has changed since the last
+    // time dependencies were scanned then force rescanning.  This may
+    // happen when a new source file is added and CMake regenerates the
+    // project but no other sources were touched.
+    bool needRescanDependInfo = false;
+    cmFileTimeCache* ftc =
+      this->GlobalGenerator->GetCMakeInstance()->GetFileTimeCache();
+    {
+      int result;
+      if (!ftc->Compare(internalDependFile, tgtInfo, &result) || result < 0) {
+        if (verbose) {
+          cmSystemTools::Stdout(cmStrCat("Dependee \"", tgtInfo,
+                                         "\" is newer than depender \"",
+                                         internalDependFile, "\".\n"));
+        }
+        needRescanDependInfo = true;
       }
-      needRescanDependInfo = true;
     }
-  }
 
-  // If the directory information is newer than depend.internal, include dirs
-  // may have changed. In this case discard all old dependencies.
-  bool needRescanDirInfo = false;
-  {
-    std::string dirInfoFile =
-      cmStrCat(this->GetCurrentBinaryDirectory(),
-               "/CMakeFiles/CMakeDirectoryInformation.cmake");
-    int result;
-    if (!ftc->Compare(internalDependFile, dirInfoFile, &result) ||
-        result < 0) {
-      if (verbose) {
-        cmSystemTools::Stdout(cmStrCat("Dependee \"", dirInfoFile,
-                                       "\" is newer than depender \"",
-                                       internalDependFile, "\".\n"));
+    // If the directory information is newer than depend.internal, include dirs
+    // may have changed. In this case discard all old dependencies.
+    bool needRescanDirInfo = false;
+    {
+      std::string dirInfoFile =
+        cmStrCat(this->GetCurrentBinaryDirectory(),
+                 "/CMakeFiles/CMakeDirectoryInformation.cmake");
+      int result;
+      if (!ftc->Compare(internalDependFile, dirInfoFile, &result) ||
+          result < 0) {
+        if (verbose) {
+          cmSystemTools::Stdout(cmStrCat("Dependee \"", dirInfoFile,
+                                         "\" is newer than depender \"",
+                                         internalDependFile, "\".\n"));
+        }
+        needRescanDirInfo = true;
       }
-      needRescanDirInfo = true;
     }
-  }
 
-  // Check the implicit dependencies to see if they are up to date.
-  // The build.make file may have explicit dependencies for the object
-  // files but these will not affect the scanning process so they need
-  // not be considered.
-  cmDepends::DependencyMap validDependencies;
-  bool needRescanDependencies = false;
-  if (!needRescanDirInfo) {
-    cmDependsC checker;
-    checker.SetVerbose(verbose);
-    checker.SetFileTimeCache(ftc);
-    // cmDependsC::Check() fills the vector validDependencies() with the
-    // dependencies for those files where they are still valid, i.e. neither
-    // the files themselves nor any files they depend on have changed.
-    // We don't do that if the CMakeDirectoryInformation.cmake file has
-    // changed, because then potentially all dependencies have changed.
-    // This information is given later on to cmDependsC, which then only
-    // rescans the files where it did not get valid dependencies via this
-    // dependency vector. This means that in the normal case, when only
-    // few or one file have been edited, then also only this one file is
-    // actually scanned again, instead of all files for this target.
-    needRescanDependencies =
-      !checker.Check(dependFile, internalDependFile, validDependencies);
-  }
+    // Check the implicit dependencies to see if they are up to date.
+    // The build.make file may have explicit dependencies for the object
+    // files but these will not affect the scanning process so they need
+    // not be considered.
+    cmDepends::DependencyMap validDependencies;
+    bool needRescanDependencies = false;
+    if (!needRescanDirInfo) {
+      cmDependsC checker;
+      checker.SetVerbose(verbose);
+      checker.SetFileTimeCache(ftc);
+      // cmDependsC::Check() fills the vector validDependencies() with the
+      // dependencies for those files where they are still valid, i.e. neither
+      // the files themselves nor any files they depend on have changed.
+      // We don't do that if the CMakeDirectoryInformation.cmake file has
+      // changed, because then potentially all dependencies have changed.
+      // This information is given later on to cmDependsC, which then only
+      // rescans the files where it did not get valid dependencies via this
+      // dependency vector. This means that in the normal case, when only
+      // few or one file have been edited, then also only this one file is
+      // actually scanned again, instead of all files for this target.
+      needRescanDependencies =
+        !checker.Check(dependFile, internalDependFile, validDependencies);
+    }
 
-  if (needRescanDependInfo || needRescanDirInfo || needRescanDependencies) {
-    // The dependencies must be regenerated.
-    std::string targetName = cmSystemTools::GetFilenameName(targetDir);
-    targetName = targetName.substr(0, targetName.length() - 4);
-    std::string message =
-      cmStrCat("Scanning dependencies of target ", targetName);
-    cmSystemTools::MakefileColorEcho(cmsysTerminal_Color_ForegroundMagenta |
-                                       cmsysTerminal_Color_ForegroundBold,
-                                     message.c_str(), true, color);
+    if (needRescanDependInfo || needRescanDirInfo || needRescanDependencies) {
+      // The dependencies must be regenerated.
+      std::string targetName = cmSystemTools::GetFilenameName(targetDir);
+      targetName = targetName.substr(0, targetName.length() - 4);
+      std::string message =
+        cmStrCat("Scanning dependencies of target ", targetName);
+      cmSystemTools::MakefileColorEcho(cmsysTerminal_Color_ForegroundMagenta |
+                                         cmsysTerminal_Color_ForegroundBold,
+                                       message.c_str(), true, color);
 
-    return this->ScanDependencies(targetDir, dependFile, internalDependFile,
-                                  validDependencies);
+      return this->ScanDependencies(targetDir, dependFile, internalDependFile,
+                                    validDependencies);
+    }
   }
 
   // The dependencies are already up-to-date.
@@ -1706,6 +1713,35 @@ void cmLocalUnixMakefileGenerator3::WriteLocalAllRules(
   }
 }
 
+void cmLocalUnixMakefileGenerator3::CheckDependencies(cmMakefile* mf,
+                                                      bool verbose)
+{
+  // Get the list of target files to check
+  cmProp infoDef = mf->GetDefinition("CMAKE_DEPEND_INFO_FILES");
+  if (!infoDef) {
+    return;
+  }
+  std::vector<std::string> files = cmExpandedList(*infoDef);
+  cmDepends clearer;
+  clearer.SetVerbose(verbose);
+
+  for (std::string const& file : files) {
+    auto snapshot = mf->GetState()->CreateBaseSnapshot();
+    cmMakefile lmf(mf->GetGlobalGenerator(), snapshot);
+    lmf.ReadListFile(file);
+    auto depsFiles = lmf.GetSafeDefinition("CMAKE_DEPENDS_DEPENDENCY_FILES");
+    if (!depsFiles.empty()) {
+      // Ensure all dependency files exist...
+      std::vector<std::string> depsList = cmExpandedList(depsFiles);
+      for (const auto& dep : depsList) {
+        if (!cmSystemTools::FileExists(dep)) {
+          clearer.Clear(dep);
+        }
+      }
+    }
+  }
+}
+
 void cmLocalUnixMakefileGenerator3::ClearDependencies(cmMakefile* mf,
                                                       bool verbose)
 {
@@ -1721,16 +1757,31 @@ void cmLocalUnixMakefileGenerator3::ClearDependencies(cmMakefile* mf,
   cmDepends clearer;
   clearer.SetVerbose(verbose);
   for (std::string const& file : files) {
-    std::string dir = cmSystemTools::GetFilenamePath(file);
+    auto snapshot = mf->GetState()->CreateBaseSnapshot();
+    cmMakefile lmf(mf->GetGlobalGenerator(), snapshot);
+    lmf.ReadListFile(file);
 
-    // Clear the implicit dependency makefile.
-    std::string dependFile = dir + "/depend.make";
-    clearer.Clear(dependFile);
+    if (!lmf.GetSafeDefinition("CMAKE_DEPENDS_LANGUAGES").empty()) {
+      std::string dir = cmSystemTools::GetFilenamePath(file);
 
-    // Remove the internal dependency check file to force
-    // regeneration.
-    std::string internalDependFile = dir + "/depend.internal";
-    cmSystemTools::RemoveFile(internalDependFile);
+      // Clear the implicit dependency makefile.
+      std::string dependFile = dir + "/depend.make";
+      clearer.Clear(dependFile);
+
+      // Remove the internal dependency check file to force
+      // regeneration.
+      std::string internalDependFile = dir + "/depend.internal";
+      cmSystemTools::RemoveFile(internalDependFile);
+    }
+
+    auto depsFiles = lmf.GetSafeDefinition("CMAKE_DEPENDS_DEPENDENCY_FILES");
+    if (!depsFiles.empty()) {
+      // clear the dependency files generated by the compiler
+      std::vector<std::string> depsList = cmExpandedList(depsFiles);
+      for (const auto& dep : depsList) {
+        clearer.Clear(dep);
+      }
+    }
   }
 }
 
@@ -1786,8 +1837,8 @@ private:
 void cmLocalUnixMakefileGenerator3::WriteDependLanguageInfo(
   std::ostream& cmakefileStream, cmGeneratorTarget* target)
 {
-  ImplicitDependLanguageMap const& implicitLangs =
-    this->GetImplicitDepends(target);
+  auto const& implicitLangs =
+    this->GetImplicitDepends(target, cmDependencyScannerKind::CMake);
 
   // list the languages
   cmakefileStream
@@ -1798,101 +1849,118 @@ void cmLocalUnixMakefileGenerator3::WriteDependLanguageInfo(
   }
   cmakefileStream << "  )\n";
 
-  // now list the files for each language
-  cmakefileStream
-    << "# The set of files for implicit dependencies of each language:\n";
-  for (auto const& implicitLang : implicitLangs) {
-    cmakefileStream << "set(CMAKE_DEPENDS_CHECK_" << implicitLang.first
-                    << "\n";
-    ImplicitDependFileMap const& implicitPairs = implicitLang.second;
+  if (!implicitLangs.empty()) {
+    // now list the files for each language
+    cmakefileStream
+      << "# The set of files for implicit dependencies of each language:\n";
+    for (auto const& implicitLang : implicitLangs) {
+      const auto& lang = implicitLang.first;
 
-    // for each file pair
-    for (auto const& implicitPair : implicitPairs) {
-      for (auto const& di : implicitPair.second) {
-        cmakefileStream << "  \"" << di << "\" ";
-        cmakefileStream << "\"" << implicitPair.first << "\"\n";
+      cmakefileStream << "set(CMAKE_DEPENDS_CHECK_" << lang << "\n";
+      auto const& implicitPairs = implicitLang.second;
+
+      // for each file pair
+      for (auto const& implicitPair : implicitPairs) {
+        for (auto const& di : implicitPair.second) {
+          cmakefileStream << "  \"" << di << "\" ";
+          cmakefileStream << "\"" << implicitPair.first << "\"\n";
+        }
       }
-    }
-    cmakefileStream << "  )\n";
+      cmakefileStream << "  )\n";
 
-    // Tell the dependency scanner what compiler is used.
-    std::string cidVar =
-      cmStrCat("CMAKE_", implicitLang.first, "_COMPILER_ID");
-    cmProp cid = this->Makefile->GetDefinition(cidVar);
-    if (cmNonempty(cid)) {
-      cmakefileStream << "set(CMAKE_" << implicitLang.first
-                      << "_COMPILER_ID \"" << *cid << "\")\n";
-    }
+      // Tell the dependency scanner what compiler is used.
+      std::string cidVar = cmStrCat("CMAKE_", lang, "_COMPILER_ID");
+      cmProp cid = this->Makefile->GetDefinition(cidVar);
+      if (cmNonempty(cid)) {
+        cmakefileStream << "set(CMAKE_" << lang << "_COMPILER_ID \"" << *cid
+                        << "\")\n";
+      }
 
-    if (implicitLang.first == "Fortran") {
-      std::string smodSep =
-        this->Makefile->GetSafeDefinition("CMAKE_Fortran_SUBMODULE_SEP");
-      std::string smodExt =
-        this->Makefile->GetSafeDefinition("CMAKE_Fortran_SUBMODULE_EXT");
-      cmakefileStream << "set(CMAKE_Fortran_SUBMODULE_SEP \"" << smodSep
-                      << "\")\n";
-      cmakefileStream << "set(CMAKE_Fortran_SUBMODULE_EXT \"" << smodExt
-                      << "\")\n";
-    }
+      if (lang == "Fortran") {
+        std::string smodSep =
+          this->Makefile->GetSafeDefinition("CMAKE_Fortran_SUBMODULE_SEP");
+        std::string smodExt =
+          this->Makefile->GetSafeDefinition("CMAKE_Fortran_SUBMODULE_EXT");
+        cmakefileStream << "set(CMAKE_Fortran_SUBMODULE_SEP \"" << smodSep
+                        << "\")\n";
+        cmakefileStream << "set(CMAKE_Fortran_SUBMODULE_EXT \"" << smodExt
+                        << "\")\n";
+      }
 
-    // Build a list of preprocessor definitions for the target.
-    std::set<std::string> defines;
-    this->GetTargetDefines(target, this->GetConfigName(), implicitLang.first,
-                           defines);
-    if (!defines.empty()) {
-      /* clang-format off */
+      // Build a list of preprocessor definitions for the target.
+      std::set<std::string> defines;
+      this->GetTargetDefines(target, this->GetConfigName(), lang, defines);
+      if (!defines.empty()) {
+        /* clang-format off */
       cmakefileStream
         << "\n"
         << "# Preprocessor definitions for this target.\n"
-        << "set(CMAKE_TARGET_DEFINITIONS_" << implicitLang.first << "\n";
-      /* clang-format on */
-      for (std::string const& define : defines) {
-        cmakefileStream << "  " << cmOutputConverter::EscapeForCMake(define)
-                        << "\n";
+        << "set(CMAKE_TARGET_DEFINITIONS_" << lang << "\n";
+        /* clang-format on */
+        for (std::string const& define : defines) {
+          cmakefileStream << "  " << cmOutputConverter::EscapeForCMake(define)
+                          << "\n";
+        }
+        cmakefileStream << "  )\n";
+      }
+
+      // Target-specific include directories:
+      cmakefileStream << "\n"
+                      << "# The include file search paths:\n";
+      cmakefileStream << "set(CMAKE_" << lang << "_TARGET_INCLUDE_PATH\n";
+      std::vector<std::string> includes;
+
+      this->GetIncludeDirectories(includes, target, lang,
+                                  this->GetConfigName());
+      std::string binaryDir = this->GetState()->GetBinaryDirectory();
+      if (this->Makefile->IsOn("CMAKE_DEPENDS_IN_PROJECT_ONLY")) {
+        std::string const& sourceDir = this->GetState()->GetSourceDirectory();
+        cm::erase_if(includes, ::NotInProjectDir(sourceDir, binaryDir));
+      }
+      for (std::string const& include : includes) {
+        cmakefileStream << "  \""
+                        << this->MaybeConvertToRelativePath(binaryDir, include)
+                        << "\"\n";
       }
       cmakefileStream << "  )\n";
     }
 
-    // Target-specific include directories:
-    cmakefileStream << "\n"
-                    << "# The include file search paths:\n";
-    cmakefileStream << "set(CMAKE_" << implicitLang.first
-                    << "_TARGET_INCLUDE_PATH\n";
-    std::vector<std::string> includes;
+    // Store include transform rule properties.  Write the directory
+    // rules first because they may be overridden by later target rules.
+    std::vector<std::string> transformRules;
+    if (cmProp xform =
+          this->Makefile->GetProperty("IMPLICIT_DEPENDS_INCLUDE_TRANSFORM")) {
+      cmExpandList(*xform, transformRules);
+    }
+    if (cmProp xform =
+          target->GetProperty("IMPLICIT_DEPENDS_INCLUDE_TRANSFORM")) {
+      cmExpandList(*xform, transformRules);
+    }
+    if (!transformRules.empty()) {
+      cmakefileStream << "\nset(CMAKE_INCLUDE_TRANSFORMS\n";
+      for (std::string const& tr : transformRules) {
+        cmakefileStream << "  " << cmOutputConverter::EscapeForCMake(tr)
+                        << "\n";
+      }
+      cmakefileStream << "  )\n";
+    }
+  }
 
-    this->GetIncludeDirectories(includes, target, implicitLang.first,
-                                this->GetConfigName());
-    std::string binaryDir = this->GetState()->GetBinaryDirectory();
-    if (this->Makefile->IsOn("CMAKE_DEPENDS_IN_PROJECT_ONLY")) {
-      std::string const& sourceDir = this->GetState()->GetSourceDirectory();
-      cm::erase_if(includes, ::NotInProjectDir(sourceDir, binaryDir));
-    }
-    for (std::string const& include : includes) {
-      cmakefileStream << "  \""
-                      << this->MaybeConvertToRelativePath(binaryDir, include)
-                      << "\"\n";
-    }
-    cmakefileStream << "  )\n";
-  }
+  auto const& compilerLangs =
+    this->GetImplicitDepends(target, cmDependencyScannerKind::Compiler);
 
-  // Store include transform rule properties.  Write the directory
-  // rules first because they may be overridden by later target rules.
-  std::vector<std::string> transformRules;
-  if (cmProp xform =
-        this->Makefile->GetProperty("IMPLICIT_DEPENDS_INCLUDE_TRANSFORM")) {
-    cmExpandList(*xform, transformRules);
-  }
-  if (cmProp xform =
-        target->GetProperty("IMPLICIT_DEPENDS_INCLUDE_TRANSFORM")) {
-    cmExpandList(*xform, transformRules);
-  }
-  if (!transformRules.empty()) {
-    cmakefileStream << "set(CMAKE_INCLUDE_TRANSFORMS\n";
-    for (std::string const& tr : transformRules) {
-      cmakefileStream << "  " << cmOutputConverter::EscapeForCMake(tr) << "\n";
+  // list the dependency files managed by the compiler
+  cmakefileStream << "\n# The set of dependency files which are needed:\n";
+  cmakefileStream << "set(CMAKE_DEPENDS_DEPENDENCY_FILES\n";
+  for (auto const& compilerLang : compilerLangs) {
+    auto const& compilerPairs = compilerLang.second;
+    for (auto const& compilerPair : compilerPairs) {
+      cmCMakePath file(this->GetRelativeTargetDirectory(target));
+      file.Append(cmCMakePath(compilerPair.first).GetFileName()).Concat(".d");
+      cmakefileStream << "  \"" << file.GenericString() << "\"\n";
     }
-    cmakefileStream << "  )\n";
   }
+  cmakefileStream << "  )\n";
 }
 
 void cmLocalUnixMakefileGenerator3::WriteDisclaimer(std::ostream& os)
