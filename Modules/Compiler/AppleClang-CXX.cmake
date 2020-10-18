@@ -2,6 +2,14 @@ include(Compiler/Clang)
 __compiler_clang(CXX)
 
 if(NOT "x${CMAKE_CXX_SIMULATE_ID}" STREQUAL "xMSVC")
+  if((NOT DEFINED CMAKE_DEPENDS_USE_COMPILER OR CMAKE_DEPENDS_USE_COMPILER)
+      AND CMAKE_GENERATOR MATCHES "Makefiles"
+      AND CMAKE_DEPFILE_FLAGS_CXX AND NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 3.0)
+    # dependencies are computed by the compiler itself
+    string(PREPEND CMAKE_DEPFILE_FLAGS_CXX "-MP ")
+    set(CMAKE_CXX_DEPENDS_USE_COMPILER TRUE)
+  endif()
+
   set(CMAKE_CXX_COMPILE_OPTIONS_VISIBILITY_INLINES_HIDDEN "-fvisibility-inlines-hidden")
 endif()
 

@@ -473,6 +473,17 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
     return;
   }
 
+  // Use compiler to generate dependencies, if supported.
+  // Except if 'CMAKE_DEPENDS_IN_PROJECT_ONLY' is ON because
+  // it is not compatible for now (require a post-processing step)
+  bool compilerGenerateDeps =
+    this->GlobalGenerator->SupportsCompilerDependencies() &&
+    cmIsOn(this->Makefile->GetDefinition(
+      cmStrCat("CMAKE_", lang, "_DEPENDS_USE_COMPILER"))) &&
+    cmIsOff(this->Makefile->GetDefinition("CMAKE_DEPENDS_IN_PROJECT_ONLY"));
+  auto scanner = compilerGenerateDeps ? cmDependencyScannerKind::Compiler
+                                      : cmDependencyScannerKind::CMake;
+
   // Get the full path name of the object file.
   std::string const& objectName =
     this->GeneratorTarget->GetObjectName(&source);
@@ -512,7 +523,7 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
   std::string srcFullPath =
     cmSystemTools::CollapseFullPath(source.GetFullPath());
   this->LocalGenerator->AddImplicitDepends(this->GeneratorTarget, lang,
-                                           objFullPath, srcFullPath);
+                                           objFullPath, srcFullPath, scanner);
 
   this->LocalGenerator->AppendRuleDepend(depends,
                                          this->FlagFileNameFull.c_str());
@@ -554,8 +565,8 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
         depends.push_back(
           this->GeneratorTarget->GetPchFile(config, lang, arch));
       }
-      this->LocalGenerator->AddImplicitDepends(this->GeneratorTarget, lang,
-                                               objFullPath, pchHeader);
+      this->LocalGenerator->AddImplicitDepends(
+        this->GeneratorTarget, lang, objFullPath, pchHeader, scanner);
     }
   }
 
@@ -689,6 +700,7 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
     source.GetFullPath(), cmOutputConverter::SHELL);
 
   // Construct the build message.
+  std::vector<std::string> no_depends;
   std::vector<std::string> no_commands;
   std::vector<std::string> commands;
 
@@ -782,6 +794,34 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
   this->LocalGenerator->AppendFlags(includesString,
                                     "$(" + lang + "_INCLUDES)");
   vars.Includes = includesString.c_str();
+
+  std::string dependencyTarget;
+  std::string shellDependencyFile;
+  std::string dependencyFile;
+  if (compilerGenerateDeps) {
+    //    vars.DependencyTarget = relativeObj.c_str();
+    dependencyTarget = this->LocalGenerator->EscapeForShell(
+      this->LocalGenerator->ConvertToMakefilePath(
+        this->LocalGenerator->MaybeConvertToRelativePath(
+          this->LocalGenerator->GetBinaryDirectory(), relativeObj)));
+    vars.DependencyTarget = dependencyTarget.c_str();
+
+    auto depFile = cmStrCat(obj, ".d");
+    shellDependencyFile = this->LocalGenerator->ConvertToOutputFormat(
+      depFile, cmOutputConverter::SHELL);
+    vars.DependencyFile = shellDependencyFile.c_str();
+    dependencyFile = cmStrCat(relativeObj, ".d");
+
+    // Create the dependency file
+    // If it exists, do not overwrite it to avoid a full re-build
+    auto depFullPath = this->LocalGenerator->ConvertToFullPath(depFile);
+    if (!cmSystemTools::FileExists(depFullPath)) {
+      cmGeneratedFileStream depFileStream(
+        depFullPath, false, this->GlobalGenerator->GetMakefileEncoding());
+      depFileStream << "# Empty dependencies file for " << sourceFile << ".\n"
+                    << "# This may be replaced when source is compiled.\n";
+    }
+  }
 
   // At the moment, it is assumed that C, C++, Fortran, and CUDA have both
   // assembly and preprocessor capabilities. The same is true for the
@@ -950,6 +990,31 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
       }
     }
 
+    std::string flagsWithDeps(flags);
+
+    if (compilerGenerateDeps) {
+      // Injects dependency computation
+      auto depFlags = this->Makefile->GetSafeDefinition(
+        cmStrCat("CMAKE_DEPFILE_FLAGS_", lang));
+
+      if (!depFlags.empty()) {
+        // Add dependency flags
+        rulePlaceholderExpander->ExpandRuleVariables(this->LocalGenerator,
+                                                     depFlags, vars);
+        flagsWithDeps.append(1, ' ');
+        flagsWithDeps.append(depFlags);
+      }
+      vars.Flags = flagsWithDeps.c_str();
+
+      const auto& extraCommands = this->Makefile->GetSafeDefinition(
+        cmStrCat("CMAKE_", lang, "_DEPENDS_EXTRA_COMMANDS"));
+      if (!extraCommands.empty()) {
+        auto commandList = cmExpandedList(extraCommands);
+        compileCommands.insert(compileCommands.end(), commandList.cbegin(),
+                               commandList.cend());
+      }
+    }
+
     // Expand placeholders in the commands.
     for (std::string& compileCommand : compileCommands) {
       compileCommand = cmStrCat(launcher, compileCommand);
@@ -975,8 +1040,8 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
       cmExpandList(evaluated_outputs, outputs);
     }
   }
-  if (!ispcHeaderRelative
-         .empty()) { // can't move ispcHeader as vars is using it
+  if (!ispcHeaderRelative.empty()) {
+    // can't move ispcHeader as vars is using it
     outputs.emplace_back(ispcHeaderRelative);
   }
 
@@ -984,9 +1049,29 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
     this->CleanFiles.insert(outputs.begin() + 1, outputs.end());
   }
 
+  if (compilerGenerateDeps) {
+    depends.push_back(dependencyFile);
+  }
+
   // Write the rule.
   this->WriteMakeRule(*this->BuildFileStream, nullptr, outputs, depends,
                       commands);
+
+  if (compilerGenerateDeps) {
+    // set back flags without dependency generation
+    vars.Flags = flags.c_str();
+
+    // add an empty rule for dependency file
+    // *this->BuildFileStream << dependencyFile << ":\n";
+    std::vector<std::string> outs{ dependencyFile };
+    this->WriteMakeRule(*this->BuildFileStream, nullptr, outs, no_depends,
+                        no_commands);
+    // and, finally, include the dependencies
+    *this->BuildFileStream << this->GlobalGenerator->IncludeDirective << " "
+                           << cmSystemTools::ConvertToOutputPath(
+                                dependencyFile)
+                           << "\n\n";
+  }
 
   bool do_preprocess_rules = lang_has_preprocessor &&
     this->LocalGenerator->GetCreatePreprocessedSourceRules();
@@ -1384,10 +1469,10 @@ void cmMakefileTargetGenerator::WriteDeviceLinkRule(
 
     std::string registerFileCmd;
 
-    // The generated register file contains macros that when expanded register
-    // the device routines. Because the routines are the same for all
-    // architectures the register file will be the same too. Thus generate it
-    // only on the first invocation to reduce overhead.
+    // The generated register file contains macros that when expanded
+    // register the device routines. Because the routines are the same for
+    // all architectures the register file will be the same too. Thus
+    // generate it only on the first invocation to reduce overhead.
     if (fatbinaryDepends.size() == 1) {
       std::string registerFileRel =
         this->LocalGenerator->MaybeConvertToRelativePath(
@@ -1422,7 +1507,8 @@ void cmMakefileTargetGenerator::WriteDeviceLinkRule(
                                       fatbinaryOutputRel, fatbinaryDepends,
                                       { fatbinaryCommand }, false);
 
-  // Compile the stub that registers the kernels and contains the fatbinaries.
+  // Compile the stub that registers the kernels and contains the
+  // fatbinaries.
   cmRulePlaceholderExpander::RuleVariables vars;
   vars.CMTargetName = this->GetGeneratorTarget()->GetName().c_str();
   vars.CMTargetType =
@@ -1840,9 +1926,9 @@ bool cmMakefileTargetGenerator::CheckUseResponseFileForObjects(
   if (size_t const limit = cmSystemTools::CalculateCommandLineLengthLimit()) {
     // Compute the total length of our list of object files with room
     // for argument separation and quoting.  This does not convert paths
-    // relative to CMAKE_CURRENT_BINARY_DIR like the final list will be, so the
-    // actual list will likely be much shorter than this.  However, in the
-    // worst case all objects will remain as absolute paths.
+    // relative to CMAKE_CURRENT_BINARY_DIR like the final list will be, so
+    // the actual list will likely be much shorter than this.  However, in
+    // the worst case all objects will remain as absolute paths.
     size_t length = 0;
     for (std::string const& obj : this->Objects) {
       length += obj.size() + 3;
