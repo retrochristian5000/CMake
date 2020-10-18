@@ -257,6 +257,8 @@ public:
     cmOutputConverter::OutputFormat format = cmOutputConverter::SHELL,
     bool forceFullPaths = false);
 
+  /** Called from command-line hook to check dependencies integrity.  */
+  virtual void CheckDependencies(cmMakefile* /* mf */, bool /* verbose */) {}
   /** Called from command-line hook to clear dependencies.  */
   virtual void ClearDependencies(cmMakefile* /* mf */, bool /* verbose */) {}
 

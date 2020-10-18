@@ -2563,22 +2563,22 @@ int cmake::CheckBuildSystem()
     return 1;
   }
 
-  if (this->ClearBuildSystem) {
-    // Get the generator used for this build system.
-    const char* genName =
-      cmToCStr(mf.GetDefinition("CMAKE_DEPENDS_GENERATOR"));
-    if (!cmNonempty(genName)) {
-      genName = "Unix Makefiles";
-    }
-
-    // Create the generator and use it to clear the dependencies.
-    std::unique_ptr<cmGlobalGenerator> ggd =
-      this->CreateGlobalGenerator(genName);
-    if (ggd) {
-      cm.GetCurrentSnapshot().SetDefaultDefinitions();
-      cmMakefile mfd(ggd.get(), cm.GetCurrentSnapshot());
-      auto lgd = ggd->CreateLocalGenerator(&mfd);
+  // Get the generator used for this build system.
+  const char* genName = cmToCStr(mf.GetDefinition("CMAKE_DEPENDS_GENERATOR"));
+  if (!cmNonempty(genName)) {
+    genName = "Unix Makefiles";
+  }
+  // Create the generator and use it to clear the dependencies.
+  std::unique_ptr<cmGlobalGenerator> ggd =
+    this->CreateGlobalGenerator(genName);
+  if (ggd) {
+    cm.GetCurrentSnapshot().SetDefaultDefinitions();
+    cmMakefile mfd(ggd.get(), cm.GetCurrentSnapshot());
+    auto lgd = ggd->CreateLocalGenerator(&mfd);
+    if (this->ClearBuildSystem) {
       lgd->ClearDependencies(&mfd, verbose);
+    } else {
+      lgd->CheckDependencies(&mfd, verbose);
     }
   }
 
