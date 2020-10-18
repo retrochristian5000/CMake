@@ -141,6 +141,8 @@ public:
   bool UpdateDependencies(const std::string& tgtInfo, bool verbose,
                           bool color) override;
 
+  /** Called from command-line hook to check dependencies integrity.  */
+  void CheckDependencies(cmMakefile* mf, bool verbose) override;
   /** Called from command-line hook to clear dependencies.  */
   void ClearDependencies(cmMakefile* mf, bool verbose) override;
 

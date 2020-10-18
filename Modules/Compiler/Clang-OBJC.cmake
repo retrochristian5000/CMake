@@ -1,6 +1,22 @@
 include(Compiler/Clang)
 __compiler_clang(OBJC)
 
+if((NOT DEFINED CMAKE_DEPENDS_USE_COMPILER OR CMAKE_DEPENDS_USE_COMPILER)
+    AND CMAKE_DEPFILE_FLAGS_OBJC AND NOT CMAKE_OBJC_COMPILER_VERSION VERSION_LESS 3.0)
+  # dependencies are computed by the compiler itself
+  string(PREPEND CMAKE_DEPFILE_FLAGS_OBJC "-MP ")
+  if (CMAKE_GENERATOR MATCHES "NMake Makefiles")
+    string(PREPEND CMAKE_DEPFILE_FLAGS_OBJC "-MV ")
+    # NMake does not managed correctly the dependency between the object and
+    # the dependency file: compiler is systematically re-launched even if
+    # the object is up-to-date against the dependency file.
+    # So, force a newer time-stamp of the object to avoid erroneous re-compilation.
+    set(CMAKE_OBJC_DEPENDS_EXTRA_COMMANDS "@<CMAKE_COMMAND> -E touch_nocreate <OBJECT>")
+  endif()
+  set(CMAKE_OBJC_DEPENDS_USE_COMPILER TRUE)
+endif()
+
+
 if(NOT CMAKE_OBJC_COMPILER_VERSION VERSION_LESS 3.4)
   set(CMAKE_OBJC90_STANDARD_COMPILE_OPTION "-std=c90")
   set(CMAKE_OBJC90_EXTENSION_COMPILE_OPTION "-std=gnu90")
