@@ -103,7 +103,9 @@ public:
   };
 
   std::string SourceDir;
-  std::map<std::string, UnexpandedPreset> Presets;
+  std::map<std::string,
+           std::pair<UnexpandedPreset, cm::optional<ExpandedPreset>>>
+    Presets;
   std::vector<std::string> PresetOrder;
 
   enum class ReadFileResult
@@ -123,6 +125,7 @@ public:
     DUPLICATE_PRESETS,
     CYCLIC_PRESET_INHERITANCE,
     USER_PRESET_INHERITANCE,
+    INVALID_MACRO_EXPANSION,
   };
 
   static std::string GetFilename(const std::string& sourceDir);
@@ -131,11 +134,11 @@ public:
                                     bool allowNoFiles = false);
   static const char* ResultToString(ReadFileResult result);
 
-  cm::optional<ExpandedPreset> ExpandMacros(
-    const UnexpandedPreset& preset) const;
-
 private:
   ReadFileResult ReadJSONFile(
     const std::string& filename, std::vector<std::string>& presetOrder,
-    std::map<std::string, UnexpandedPreset>& presetMap, bool user);
+    std::map<std::string,
+             std::pair<UnexpandedPreset, cm::optional<ExpandedPreset>>>&
+      presetMap,
+    bool user);
 };
