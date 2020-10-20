@@ -345,7 +345,9 @@ class cmMakefile;
          0, cmPolicies::WARN)                                                 \
   SELECT(POLICY, CMP0116,                                                     \
          "Ninja generators transform DEPFILEs from add_custom_command().", 3, \
-         20, 0, cmPolicies::WARN)
+         20, 0, cmPolicies::WARN)                                             \
+  SELECT(POLICY, CMP0117, "Control flow statements must be properly nested.", \
+         3, 20, 0, cmPolicies::WARN)
 
 #define CM_SELECT_ID(F, A1, A2, A3, A4, A5, A6) F(A1)
 #define CM_FOR_EACH_POLICY_ID(POLICY)                                         \

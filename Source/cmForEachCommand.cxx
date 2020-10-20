@@ -239,7 +239,7 @@ auto cmForEachFunctionBlocker::invoke(
   InvokeResult result = { true, false };
   // Invoke all the functions that were collected in the block.
   for (cmListFileFunction const& func : functions) {
-    cmExecutionStatus status(mf);
+    cmExecutionStatus status(mf, inStatus.GetNestingBreakContext());
     mf.ExecuteCommand(func, status);
     if (status.GetReturnInvoked()) {
       inStatus.SetReturnInvoked();

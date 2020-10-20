@@ -1,0 +1,10 @@
+^CMake Warning at CMP0117-NEW\.cmake:[0-9]+ \(message\):
+  First message
+Call Stack \(most recent call first\):
+  CMakeLists\.txt:[0-9]+ \(include\)
+
+
+CMake Error at CMP0117-NEW\.cmake:[0-9]+ \(endforeach\):
+  Control flow statements are not properly nested\.
+Call Stack \(most recent call first\):
+  CMakeLists\.txt:[0-9]+ \(include\)$

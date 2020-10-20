@@ -9,6 +9,8 @@
 
 #include <cstdlib>
 
+#include <cm/optional>
+
 #include "cmExecutionStatus.h"
 #include "cmGlobalGenerator.h"
 #include "cmMakefile.h"
@@ -428,7 +430,7 @@ int CCONV cmExecuteCommand(void* arg, const char* name, int numArgs,
   }
 
   cmListFileFunction lff{ name, 0, std::move(lffArgs) };
-  cmExecutionStatus status(*mf);
+  cmExecutionStatus status(*mf, cm::nullopt);
   return mf->ExecuteCommand(lff, status);
 }
 
