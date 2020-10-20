@@ -423,6 +423,24 @@ bool cmMakefile::ExecuteCommand(const cmListFileFunction& lff,
     return result;
   }
 
+  if (status.GetNestingBreakContext()) {
+    switch (this->GetPolicyStatus(cmPolicies::CMP0117)) {
+      case cmPolicies::OLD:
+      case cmPolicies::WARN:
+        break;
+      case cmPolicies::REQUIRED_IF_USED:
+      case cmPolicies::REQUIRED_ALWAYS:
+      case cmPolicies::NEW: {
+        auto bt = this->Backtrace.Push(*status.GetNestingBreakContext());
+        this->GetCMakeInstance()->IssueMessage(
+          MessageType::FATAL_ERROR,
+          "Control flow statements are not properly nested.", bt);
+        cmSystemTools::SetFatalErrorOccured();
+        return false;
+      }
+    }
+  }
+
   if (this->ExecuteCommandCallback) {
     this->ExecuteCommandCallback();
   }
@@ -784,7 +802,7 @@ void cmMakefile::RunListFile(cmListFile const& listFile,
   // Run the parsed commands.
   const size_t numberFunctions = listFile.Functions.size();
   for (size_t i = 0; i < numberFunctions; ++i) {
-    cmExecutionStatus status(*this);
+    cmExecutionStatus status(*this, listFile.NestingBreakContext);
     this->ExecuteCommand(listFile.Functions[i], status);
     if (cmSystemTools::GetFatalErrorOccured()) {
       break;
@@ -793,6 +811,14 @@ void cmMakefile::RunListFile(cmListFile const& listFile,
       // Exit early due to return command.
       break;
     }
+  }
+
+  if (listFile.NestingBreakContext &&
+      this->GetPolicyStatus(cmPolicies::CMP0117) == cmPolicies::WARN) {
+    auto bt = this->Backtrace.Push(*listFile.NestingBreakContext);
+    this->GetCMakeInstance()->IssueMessage(
+      MessageType::AUTHOR_WARNING,
+      cmPolicies::GetPolicyWarning(cmPolicies::CMP0117), bt);
   }
 
   // Run any deferred commands.
@@ -814,7 +840,7 @@ void cmMakefile::RunListFile(cmListFile const& listFile,
       // The deferred call may have come from another file.
       DeferCallScope callScope(this, d.FilePath);
 
-      cmExecutionStatus status(*this);
+      cmExecutionStatus status(*this, cm::nullopt);
       this->ExecuteCommand(d.Command, status, std::move(id));
       if (cmSystemTools::GetFatalErrorOccured()) {
         break;

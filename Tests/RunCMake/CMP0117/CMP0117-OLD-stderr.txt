@@ -1,0 +1,27 @@
+^CMake Warning at CMP0117-OLD\.cmake:[0-9]+ \(message\):
+  First message
+Call Stack \(most recent call first\):
+  CMakeLists\.txt:[0-9]+ \(include\)
+
+
+CMake Warning at CMP0117-OLD\.cmake:[0-9]+ \(message\):
+  Second message
+Call Stack \(most recent call first\):
+  CMakeLists\.txt:[0-9]+ \(include\)
+
+
+CMake Warning at CMP0117-OLD\.cmake:[0-9]+ \(message\):
+  1
+Call Stack \(most recent call first\):
+  CMakeLists\.txt:[0-9]+ \(include\)
+
+
+CMake Warning at CMP0117-OLD\.cmake:[0-9]+ \(message\):
+Call Stack \(most recent call first\):
+  CMakeLists\.txt:[0-9]+ \(include\)
+
+
+CMake Warning at CMP0117-OLD\.cmake:[0-9]+ \(message\):
+  Third message
+Call Stack \(most recent call first\):
+  CMakeLists\.txt:[0-9]+ \(include\)$

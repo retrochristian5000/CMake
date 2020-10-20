@@ -1,0 +1,35 @@
+CMP0117
+-------
+
+.. versionadded:: 3.20
+
+Control flow statements must be properly nested.
+
+In most cases, CMake correctly determines when control flow statements are not
+properly nested. For example, a lone :command:`if` command without a
+corresponding :command:`endif` is not valid. However, in CMake 3.19 and below,
+there were some corner cases that were not detected. For example, CMake would
+accept the following code:
+
+.. code-block:: cmake
+
+  foreach(a 1 2)
+    if(a)
+  endforeach()
+  endif()
+  endif()
+
+Starting with CMake 3.20, CMake examines each CMake file for proper nesting
+before executing it, and records whether or not the file is nested properly. If
+at any point, ``CMP0117`` is set to ``NEW``, CMake immediately raises an error,
+even if the problematic code has not been reached yet.
+
+The ``OLD`` behavior for this policy is to accept the problematic corner cases.
+The ``NEW`` behavior for this policy is to detect the problematic corner cases
+and raise an error if they are found.
+
+This policy was introduced in CMake version 3.20.  CMake version |release|
+warns when the policy is not set and uses ``OLD`` behavior.  Use the
+:command:`cmake_policy` command to set it to ``OLD`` or ``NEW`` explicitly.
+
+.. include:: DEPRECATED.txt

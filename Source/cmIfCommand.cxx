@@ -145,7 +145,7 @@ bool cmIfFunctionBlocker::Replay(std::vector<cmListFileFunction> functions,
 
     // should we execute?
     else if (!this->IsBlocking) {
-      cmExecutionStatus status(mf);
+      cmExecutionStatus status(mf, inStatus.GetNestingBreakContext());
       mf.ExecuteCommand(func, status);
       if (status.GetReturnInvoked()) {
         inStatus.SetReturnInvoked();

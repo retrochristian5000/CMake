@@ -6,6 +6,8 @@
 #include <memory>
 #include <utility>
 
+#include <cm/optional>
+
 #include "cmExecutionStatus.h"
 #include "cmListFileCache.h"
 #include "cmMakefile.h"
@@ -60,7 +62,7 @@ void cmVariableWatchCommandVariableAccessed(const std::string& variable,
 
     cmListFileFunction newLFF{ data->Command, fakeLineNo,
                                std::move(newLFFArgs) };
-    cmExecutionStatus status(*makefile);
+    cmExecutionStatus status(*makefile, cm::nullopt);
     if (!makefile->ExecuteCommand(newLFF, status)) {
       cmSystemTools::Error(
         cmStrCat("Error in cmake code at\nUnknown:0:\nA command failed "

@@ -5,6 +5,7 @@
 #include <utility>
 
 #include <cm/memory>
+#include <cm/optional>
 #include <cm/string_view>
 #include <cmext/algorithm>
 #include <cmext/string_view>
@@ -47,6 +48,7 @@ public:
   cmPolicies::PolicyMap Policies;
   std::string FilePath;
   long Line;
+  cm::optional<cmListFileContext> NestingBreakContext;
 };
 
 bool cmFunctionHelperCommand::operator()(
@@ -111,7 +113,7 @@ bool cmFunctionHelperCommand::operator()(
   // Invoke all the functions that were collected in the block.
   // for each function
   for (cmListFileFunction const& func : this->Functions) {
-    cmExecutionStatus status(makefile);
+    cmExecutionStatus status(makefile, this->NestingBreakContext);
     if (!makefile.ExecuteCommand(func, status) || status.GetNestedError()) {
       // The error message should have already included the call stack
       // so we do not need to report an error here.
@@ -162,6 +164,7 @@ bool cmFunctionFunctionBlocker::Replay(
   f.Functions = std::move(functions);
   f.FilePath = this->GetStartingContext().FilePath;
   f.Line = this->GetStartingContext().Line;
+  f.NestingBreakContext = status.GetNestingBreakContext();
   mf.RecordPolicies(f.Policies);
   mf.GetState()->AddScriptedCommand(this->Args.front(), std::move(f));
   return true;

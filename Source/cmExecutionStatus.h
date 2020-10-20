@@ -5,6 +5,11 @@
 #include <cmConfigure.h> // IWYU pragma: keep
 
 #include <string>
+#include <utility>
+
+#include <cm/optional>
+
+#include "cmListFileCache.h"
 
 class cmMakefile;
 
@@ -16,13 +21,19 @@ class cmMakefile;
 class cmExecutionStatus
 {
 public:
-  cmExecutionStatus(cmMakefile& makefile)
+  cmExecutionStatus(cmMakefile& makefile,
+                    cm::optional<cmListFileContext> nestingBreakContext)
     : Makefile(makefile)
     , Error("unknown error.")
+    , NestingBreakContext(std::move(nestingBreakContext))
   {
   }
 
   cmMakefile& GetMakefile() { return this->Makefile; }
+  const cm::optional<cmListFileContext>& GetNestingBreakContext()
+  {
+    return this->NestingBreakContext;
+  }
 
   void SetError(std::string const& e) { this->Error = e; }
   std::string const& GetError() const { return this->Error; }
@@ -46,4 +57,5 @@ private:
   bool BreakInvoked = false;
   bool ContinueInvoked = false;
   bool NestedError = false;
+  cm::optional<cmListFileContext> NestingBreakContext;
 };

@@ -95,7 +95,7 @@ bool cmWhileFunctionBlocker::Replay(std::vector<cmListFileFunction> functions,
 
     // Invoke all the functions that were collected in the block.
     for (cmListFileFunction const& fn : functions) {
-      cmExecutionStatus status(mf);
+      cmExecutionStatus status(mf, inStatus.GetNestingBreakContext());
       mf.ExecuteCommand(fn, status);
       if (status.GetReturnInvoked()) {
         inStatus.SetReturnInvoked();

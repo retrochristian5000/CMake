@@ -57,6 +57,7 @@ Policies Introduced by CMake 3.20
 .. toctree::
    :maxdepth: 1
 
+   CMP0117: Control flow statements must be properly nested. </policy/CMP0117>
    CMP0116: Ninja generators transform DEPFILEs from add_custom_command(). </policy/CMP0116>
    CMP0115: Source file extensions must be explicit. </policy/CMP0115>
 
