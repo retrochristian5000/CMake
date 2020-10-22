@@ -194,7 +194,9 @@ if(BUILD_TESTING)
     "Extra command line flags to pass to the coverage tool")
 
   # set the site name
-  site_name(SITE)
+  cmake_host_system_information(RESULT _ctest_hostname QUERY HOSTNAME)
+  set(SITE "${_ctest_hostname}" CACHE STRING "Name of the computer/site where compile is being run")
+  unset(_ctest_hostname)
   # set the build name
   if(NOT BUILDNAME)
     set(DART_COMPILER "${CMAKE_CXX_COMPILER}")
