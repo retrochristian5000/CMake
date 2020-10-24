@@ -593,6 +593,8 @@ Variable Queries
     properties to avoid side-effects due to the double evaluation of
     these properties.
 
+.. _`Target-Dependent Generator Expressions`:
+
 Target-Dependent Queries
 ------------------------
 
