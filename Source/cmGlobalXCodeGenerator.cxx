@@ -1206,7 +1206,7 @@ cmXCodeObject* cmGlobalXCodeGenerator::CreateXCodeFileReferenceFromPath(
     }
   }
   // Make a copy so that we can override it later
-  std::string path = fullpath;
+  std::string path = cmSystemTools::CollapseFullPath(fullpath);
   // Compute the extension without leading '.'.
   std::string ext = cmSystemTools::GetFilenameLastExtension(path);
   if (!ext.empty()) {
@@ -1427,6 +1427,9 @@ bool cmGlobalXCodeGenerator::CreateXCodeTarget(
       if (sourceFile->GetObjectLibrary().empty()) {
         externalObjFiles.push_back(xsf);
       }
+    } else if (tsFlags.Type ==
+               cmGeneratorTarget::SourceFileTypeEmbeddedFramework) {
+      externalObjFiles.push_back(xsf);
     } else if (this->IsHeaderFile(sourceFile) ||
                (tsFlags.Type ==
                 cmGeneratorTarget::SourceFileTypePrivateHeader) ||
@@ -1586,6 +1589,70 @@ bool cmGlobalXCodeGenerator::CreateXCodeTarget(
         cmXCodeObject* xsf = this->CreateXCodeSourceFile(
           this->CurrentLocalGenerator, sourceFile, gtgt);
         buildFiles->AddObject(xsf);
+      }
+      contentBuildPhases.push_back(copyFilesBuildPhase);
+    }
+  }
+
+  // Add embedded framework source files to "Embedded Frameworks" build phases
+  if (isFrameworkTarget || isBundleTarget || isCFBundleTarget) {
+    typedef std::map<std::string, std::vector<cmSourceFile*>>
+      mapOfVectorOfSourceFiles;
+    mapOfVectorOfSourceFiles bundleFiles;
+    for (auto sourceFile : commonSourceFiles) {
+      cmGeneratorTarget::SourceFileFlags tsFlags =
+        gtgt->GetTargetSourceFileFlags(sourceFile);
+      if (tsFlags.Type == cmGeneratorTarget::SourceFileTypeEmbeddedFramework) {
+        bundleFiles[tsFlags.MacFolder].push_back(sourceFile);
+      }
+    }
+    for (auto keySources : bundleFiles) {
+      cmXCodeObject* copyFilesBuildPhase =
+        this->CreateObject(cmXCodeObject::PBXCopyFilesBuildPhase);
+      std::string copyFilesBuildPhaseName = "Embed Frameworks";
+      std::string destinationFrameworks = "10";
+      copyFilesBuildPhase->SetComment(copyFilesBuildPhaseName);
+      copyFilesBuildPhase->AddAttribute("buildActionMask",
+                                        this->CreateString("2147483647"));
+      copyFilesBuildPhase->AddAttribute(
+        "dstSubfolderSpec", this->CreateString(destinationFrameworks));
+      copyFilesBuildPhase->AddAttribute(
+        "name", this->CreateString(copyFilesBuildPhaseName));
+      copyFilesBuildPhase->AddAttribute("dstPath",
+                                        this->CreateString(keySources.first));
+      copyFilesBuildPhase->AddAttribute("runOnlyForDeploymentPostprocessing",
+                                        this->CreateString("0"));
+      buildFiles = this->CreateObject(cmXCodeObject::OBJECT_LIST);
+      copyFilesBuildPhase->AddAttribute("files", buildFiles);
+
+      for (auto sourceFile : keySources.second) {
+        cmXCodeObject* xsf = this->CreateXCodeSourceFile(
+          this->CurrentLocalGenerator, sourceFile, gtgt);
+        cmXCodeObject* buildFile;
+        cmXCodeObject* fr = xsf->GetAttribute("fileRef");
+        if (!fr) {
+          fr = this->CreateObjectReference(xsf);
+        }
+        auto it = FileRefToBuildFileMap.find(fr);
+        if (it == FileRefToBuildFileMap.end()) {
+          buildFile = this->CreateObject(cmXCodeObject::PBXBuildFile);
+          buildFile->AddAttribute("fileRef", fr);
+          FileRefToBuildFileMap[fr] = buildFile;
+        } else {
+          buildFile = it->second;
+        }
+        cmXCodeObject* settings =
+          this->CreateObject(cmXCodeObject::ATTRIBUTE_GROUP);
+        cmXCodeObject* attrs = this->CreateObject(cmXCodeObject::OBJECT_LIST);
+        if (sourceFile->GetPropertyAsBool("XCODE_REMOVE_HEADERS_ON_COPY")) {
+          attrs->AddObject(this->CreateString("RemoveHeadersOnCopy"));
+        }
+        if (sourceFile->GetPropertyAsBool("XCODE_CODE_SIGN_ON_COPY")) {
+          attrs->AddObject(this->CreateString("CodeSignOnCopy"));
+        }
+        settings->AddAttributeIfNotEmpty("ATTRIBUTES", attrs);
+        buildFile->AddAttributeIfNotEmpty("settings", settings);
+        buildFiles->AddObject(buildFile);
       }
       contentBuildPhases.push_back(copyFilesBuildPhase);
     }
