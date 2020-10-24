@@ -404,6 +404,10 @@ cmTarget::cmTarget(std::string const& name, cmStateEnums::TargetType type,
       initProp("XCODE_SCHEME_DYNAMIC_LIBRARY_LOADS");
       initProp("XCODE_SCHEME_ENVIRONMENT");
       initPropValue("XCODE_LINK_BUILD_PHASE_MODE", "NONE");
+      initProp("XCODE_EMBED_FRAMEWORKS");
+      initProp("XCODE_EMBED_FRAMEWORKS_PATH");
+      initProp("XCODE_EMBED_FRAMEWORKS_REMOVE_HEADERS_ON_COPY");
+      initProp("XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY");
     }
 #endif
   }
