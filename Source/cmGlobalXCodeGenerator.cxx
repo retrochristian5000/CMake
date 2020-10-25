@@ -774,6 +774,7 @@ void cmGlobalXCodeGenerator::ClearXCodeObjects()
   this->TargetGroup.clear();
   this->FileRefs.clear();
   this->ExternalLibRefs.clear();
+  this->EmbeddedLibRefs.clear();
   this->FileRefToBuildFileMap.clear();
   this->CommandsVisited.clear();
 }
@@ -1427,9 +1428,6 @@ bool cmGlobalXCodeGenerator::CreateXCodeTarget(
       if (sourceFile->GetObjectLibrary().empty()) {
         externalObjFiles.push_back(xsf);
       }
-    } else if (tsFlags.Type ==
-               cmGeneratorTarget::SourceFileTypeEmbeddedFramework) {
-      externalObjFiles.push_back(xsf);
     } else if (this->IsHeaderFile(sourceFile) ||
                (tsFlags.Type ==
                 cmGeneratorTarget::SourceFileTypePrivateHeader) ||
@@ -1594,68 +1592,26 @@ bool cmGlobalXCodeGenerator::CreateXCodeTarget(
     }
   }
 
-  // Add embedded framework source files to "Embedded Frameworks" build phases
+  // Add an empty "Embedded Frameworks" build phase it will be populated
+  // later in cmGlobalXcodeGenerator::AddEmbeddedFrameworks
   if (isFrameworkTarget || isBundleTarget || isCFBundleTarget) {
-    typedef std::map<std::string, std::vector<cmSourceFile*>>
-      mapOfVectorOfSourceFiles;
-    mapOfVectorOfSourceFiles bundleFiles;
-    for (auto sourceFile : commonSourceFiles) {
-      cmGeneratorTarget::SourceFileFlags tsFlags =
-        gtgt->GetTargetSourceFileFlags(sourceFile);
-      if (tsFlags.Type == cmGeneratorTarget::SourceFileTypeEmbeddedFramework) {
-        bundleFiles[tsFlags.MacFolder].push_back(sourceFile);
-      }
-    }
-    for (auto keySources : bundleFiles) {
-      cmXCodeObject* copyFilesBuildPhase =
-        this->CreateObject(cmXCodeObject::PBXCopyFilesBuildPhase);
-      std::string copyFilesBuildPhaseName = "Embed Frameworks";
-      std::string destinationFrameworks = "10";
-      copyFilesBuildPhase->SetComment(copyFilesBuildPhaseName);
-      copyFilesBuildPhase->AddAttribute("buildActionMask",
-                                        this->CreateString("2147483647"));
-      copyFilesBuildPhase->AddAttribute(
-        "dstSubfolderSpec", this->CreateString(destinationFrameworks));
-      copyFilesBuildPhase->AddAttribute(
-        "name", this->CreateString(copyFilesBuildPhaseName));
-      copyFilesBuildPhase->AddAttribute("dstPath",
-                                        this->CreateString(keySources.first));
-      copyFilesBuildPhase->AddAttribute("runOnlyForDeploymentPostprocessing",
-                                        this->CreateString("0"));
-      buildFiles = this->CreateObject(cmXCodeObject::OBJECT_LIST);
-      copyFilesBuildPhase->AddAttribute("files", buildFiles);
-
-      for (auto sourceFile : keySources.second) {
-        cmXCodeObject* xsf = this->CreateXCodeSourceFile(
-          this->CurrentLocalGenerator, sourceFile, gtgt);
-        cmXCodeObject* buildFile;
-        cmXCodeObject* fr = xsf->GetAttribute("fileRef");
-        if (!fr) {
-          fr = this->CreateObjectReference(xsf);
-        }
-        auto it = FileRefToBuildFileMap.find(fr);
-        if (it == FileRefToBuildFileMap.end()) {
-          buildFile = this->CreateObject(cmXCodeObject::PBXBuildFile);
-          buildFile->AddAttribute("fileRef", fr);
-          FileRefToBuildFileMap[fr] = buildFile;
-        } else {
-          buildFile = it->second;
-        }
-        cmXCodeObject* settings =
-          this->CreateObject(cmXCodeObject::ATTRIBUTE_GROUP);
-        cmXCodeObject* attrs = this->CreateObject(cmXCodeObject::OBJECT_LIST);
-        if (sourceFile->GetPropertyAsBool("XCODE_REMOVE_HEADERS_ON_COPY")) {
-          attrs->AddObject(this->CreateString("RemoveHeadersOnCopy"));
-        }
-        if (sourceFile->GetPropertyAsBool("XCODE_CODE_SIGN_ON_COPY")) {
-          attrs->AddObject(this->CreateString("CodeSignOnCopy"));
-        }
-        settings->AddAttributeIfNotEmpty("ATTRIBUTES", attrs);
-        buildFile->AddAttributeIfNotEmpty("settings", settings);
-        buildFiles->AddObject(buildFile);
-      }
-      contentBuildPhases.push_back(copyFilesBuildPhase);
-    }
+    auto* copyFilesBuildPhase =
+      this->CreateObject(cmXCodeObject::PBXCopyFilesBuildPhase);
+    std::string copyFilesBuildPhaseName = "Embed Frameworks";
+    std::string destinationFrameworks = "10";
+    copyFilesBuildPhase->SetComment(copyFilesBuildPhaseName);
+    copyFilesBuildPhase->AddAttribute("buildActionMask",
+                                      this->CreateString("2147483647"));
+    copyFilesBuildPhase->AddAttribute(
+      "dstSubfolderSpec", this->CreateString(destinationFrameworks));
+    copyFilesBuildPhase->AddAttribute(
+      "name", this->CreateString(copyFilesBuildPhaseName));
+    copyFilesBuildPhase->AddAttribute("dstPath", this->CreateString(""));
+    copyFilesBuildPhase->AddAttribute("runOnlyForDeploymentPostprocessing",
+                                      this->CreateString("0"));
+    buildFiles = this->CreateObject(cmXCodeObject::OBJECT_LIST);
+    copyFilesBuildPhase->AddAttribute("files", buildFiles);
+    contentBuildPhases.push_back(copyFilesBuildPhase);
   }
 
   // always create framework build phase
@@ -3685,6 +3641,96 @@ void cmGlobalXCodeGenerator::AddDependAndLinkInformation(cmXCodeObject* target)
   }
 }
 
+void cmGlobalXCodeGenerator::AddEmbeddedFrameworks(cmXCodeObject* target)
+{
+  cmGeneratorTarget* gt = target->GetTarget();
+  if (!gt) {
+    cmSystemTools::Error("Error no target on xobject\n");
+    return;
+  }
+  if (!gt->IsInBuildSystem()) {
+    return;
+  }
+
+  std::vector<cmXCodeObject*> buildFileList;
+  // Collect all embedded frameworks
+  if (cmProp files = gt->GetProperty("XCODE_EMBED_FRAMEWORKS")) {
+    std::vector<std::string> relFiles = cmExpandedList(*files);
+    for (std::string const& relFile : relFiles) {
+      cmXCodeObject* buildFile;
+      std::string filePath = relFile;
+      auto* genTarget = FindGeneratorTarget(relFile);
+      if (genTarget) {
+        // This is a target - get it's product path
+        auto* xcTarget = FindXCodeTarget(genTarget);
+        if (!xcTarget) {
+          continue;
+        }
+        // Add the target output file as a build reference for other targets
+        // to link against
+        auto* fileRefObject = xcTarget->GetAttribute("productReference");
+        if (!fileRefObject) {
+          continue;
+        }
+        auto* pathObject = fileRefObject->GetAttribute("path");
+        if (!pathObject) {
+          continue;
+        }
+        filePath = pathObject->GetString();
+      }
+      if (!cmSystemTools::IsPathToFramework(filePath)) {
+        continue;
+      }
+      // Prevent duplicates
+      auto it = EmbeddedLibRefs.find(filePath);
+      if (it == EmbeddedLibRefs.end()) {
+        buildFile = CreateXCodeBuildFileFromPath(filePath, gt, "", nullptr);
+        cmXCodeObject* settings =
+          this->CreateObject(cmXCodeObject::ATTRIBUTE_GROUP);
+        cmXCodeObject* attrs = this->CreateObject(cmXCodeObject::OBJECT_LIST);
+        attrs->AddObject(this->CreateString("RemoveHeadersOnCopy"));
+        attrs->AddObject(this->CreateString("CodeSignOnCopy"));
+        settings->AddAttributeIfNotEmpty("ATTRIBUTES", attrs);
+        buildFile->AddAttributeIfNotEmpty("settings", settings);
+        if (!buildFile) {
+          continue;
+        }
+        this->EmbeddedLibRefs.emplace(filePath, buildFile);
+      } else {
+        buildFile = it->second;
+      }
+      if (buildFile) {
+        buildFileList.push_back(buildFile);
+      }
+    }
+  }
+  if (!buildFileList.size()) {
+    return;
+  }
+  // Add all the collected build files to "Embed Frameworks" build phase
+  auto* buildPhases = target->GetAttribute("buildPhases");
+  if (!buildPhases) {
+    cmSystemTools::Error("Missing buildPhase of target");
+    return;
+  }
+  auto* frameworkBuildPhase =
+    buildPhases->GetObject(cmXCodeObject::PBXFrameworksBuildPhase);
+  if (!frameworkBuildPhase) {
+    cmSystemTools::Error("Missing PBXFrameworksBuildPhase of buildPhase");
+    return;
+  }
+  auto* buildFiles = frameworkBuildPhase->GetAttribute("files");
+  if (!buildFiles) {
+    cmSystemTools::Error("Missing files of PBXFrameworksBuildPhase");
+    return;
+  }
+  for (auto* buildFile : buildFileList) {
+    if (!buildFiles->HasObject(buildFile)) {
+      buildFiles->AddObject(buildFile);
+    }
+  }
+}
+
 bool cmGlobalXCodeGenerator::CreateGroups(
   std::vector<cmLocalGenerator*>& generators)
 {
@@ -4063,7 +4109,9 @@ bool cmGlobalXCodeGenerator::CreateXCodeObjects(
   // loop over all targets and add link and depend info
   for (auto t : targets) {
     this->AddDependAndLinkInformation(t);
+    this->AddEmbeddedFrameworks(t);
   }
+
   if (this->XcodeBuildSystem == BuildSystem::One) {
     this->CreateXCodeDependHackMakefile(targets);
   }

@@ -658,9 +658,7 @@ public:
                                  // has MACOSX_PACKAGE_LOCATION=="Resources"
     SourceFileTypeDeepResource,  // MACOSX_PACKAGE_LOCATION starts with
                                  // "Resources/"
-    SourceFileTypeMacContent,    // has MACOSX_PACKAGE_LOCATION!="Resources[/]"
-    SourceFileTypeEmbeddedFramework // is in "XCODE_EMBED_FRAMEWORKS" target
-                                    // property
+    SourceFileTypeMacContent     // has MACOSX_PACKAGE_LOCATION!="Resources[/]"
   };
   struct SourceFileFlags
   {

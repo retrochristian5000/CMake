@@ -5204,23 +5204,6 @@ void cmGeneratorTarget::ConstructSourceFileFlags() const
       }
     }
   }
-
-  // Mark sources listed as resources.
-  if (cmProp files = this->GetProperty("XCODE_EMBED_FRAMEWORKS")) {
-    std::vector<std::string> relFiles = cmExpandedList(*files);
-    for (std::string const& relFile : relFiles) {
-      if (cmSourceFile* sf = this->Makefile->GetSource(relFile)) {
-        SourceFileFlags& flags = this->SourceFlagsMap[sf];
-        flags.MacFolder = "";
-        if (!this->GlobalGenerator->ShouldStripResourcePath(this->Makefile)) {
-          // TODO: we need aditional properties to set target directory (Xcode
-          // allows to set them under "Embed Frameworks" build phase)
-          flags.MacFolder = "Frameworks";
-        }
-        flags.Type = cmGeneratorTarget::SourceFileTypeEmbeddedFramework;
-      }
-    }
-  }
 }
 
 const cmGeneratorTarget::CompatibleInterfacesBase&
