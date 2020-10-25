@@ -83,8 +83,8 @@ subsequently be run.
 #]=======================================================================]
 
 include_guard(GLOBAL)
-include(CheckSourceRuns)
+include(Internal/CheckSourceRuns)
 
 macro(CHECK_Fortran_SOURCE_RUNS SOURCE VAR)
-  check_source_runs(Fortran "${SOURCE}" ${VAR} ${ARGN})
+  cmake_check_source_runs(Fortran "${SOURCE}" ${VAR} ${ARGN})
 endmacro()
