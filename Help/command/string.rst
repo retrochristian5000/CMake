@@ -563,13 +563,16 @@ The contents of ``<value>`` should be valid JSON.
          EQUAL <json-string1> <json-string2>)
 
 Compare the two JSON objects given by ``<json-string1>`` and ``<json-string2>``
-for equality
+for equality.  The contents of ``<json-string1>`` and ``<json-string2>``
+should be valid JSON.  The ``<out-var>`` will be set to ``ON`` if the JSON
+objects are considered equal, otherwise ``OFF``.
 
-
-If the optional ``ERROR_VARIABLE`` argument is given, errors will be
-reported in ``<error-variable>``. If no error occurs, the ``<error-variable>``
-will be set to ``NOTFOUND``. If ``ERROR_VARIABLE`` is not set a CMake error
-will be issued.
-When an error occurs the ``<out-var>`` will be set to
-``<member|index>-[<member|index>...]-NOTFOUND`` with the path elements up to
-the point where the error occurred.
+.. note::
+  If the optional ``ERROR_VARIABLE`` argument is given errors will be
+  reported in ``<error-variable>``. If no error occurs, the
+  ``<error-variable>`` will be set to ``NOTFOUND``. If ``ERROR_VARIABLE``
+  is not set a fatal error message is generated for all errors.
+  When an error occurs the ``<out-var>`` will be set to
+  ``<member|index>-[<member|index>...]-NOTFOUND`` with the path elements
+  up to the point where the error occurred, or just ``NOTFOUND`` if there
+  is no relevant path.
