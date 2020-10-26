@@ -569,6 +569,7 @@ cmNinjaRule GetPreprocessScanRule(
   ppVars.Object = "$out"; // for RULE_LAUNCH_COMPILE
   ppVars.PreprocessedSource = "$out";
   ppVars.DependencyFile = rule.DepFile.c_str();
+  ppVars.DependencyTarget = "$out";
 
   // Preprocessing uses the original source, compilation uses
   // preprocessed output or original source
@@ -778,8 +779,8 @@ void cmNinjaTargetGenerator::WriteCompileRule(const std::string& lang,
     const std::string flagsName = cmStrCat("CMAKE_DEPFILE_FLAGS_", lang);
     std::string depfileFlags = mf->GetSafeDefinition(flagsName);
     if (!depfileFlags.empty()) {
-      cmSystemTools::ReplaceString(depfileFlags, "<DEPFILE>", "$DEP_FILE");
-      cmSystemTools::ReplaceString(depfileFlags, "<OBJECT>", "$out");
+      cmSystemTools::ReplaceString(depfileFlags, "<DEP_FILE>", "$DEP_FILE");
+      cmSystemTools::ReplaceString(depfileFlags, "<DEP_TARGET>", "$out");
       cmSystemTools::ReplaceString(
         depfileFlags, "<CMAKE_C_COMPILER>",
         cmToCStr(mf->GetDefinition("CMAKE_C_COMPILER")));
