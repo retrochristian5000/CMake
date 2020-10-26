@@ -122,7 +122,7 @@ function(CHECK_SOURCE_RUNS _lang _source _var)
         set(_SRC_EXT "${arg}")
         set(_key "")
       else()
-        message(FATAL_ERROR "Unknown argument:\n  ${arg}\n")
+        message(AUTHOR_WARNING "Unknown argument:\n  ${arg}\n")
       endif()
     endforeach()
 
