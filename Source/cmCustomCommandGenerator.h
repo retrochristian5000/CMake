@@ -4,12 +4,14 @@
 
 #include "cmConfigure.h" // IWYU pragma: keep
 
+#include <set>
 #include <string>
 #include <vector>
 
 #include "cmCustomCommandLines.h"
 
 class cmCustomCommand;
+class cmGeneratorTarget;
 class cmLocalGenerator;
 
 class cmCustomCommandGenerator
@@ -24,6 +26,7 @@ class cmCustomCommandGenerator
   std::vector<std::string> Byproducts;
   std::vector<std::string> Depends;
   std::string WorkingDirectory;
+  std::set<cmGeneratorTarget*> Targets;
 
   void FillEmulatorsWithArguments();
   std::vector<std::string> GetCrossCompilingEmulator(unsigned int c) const;
@@ -46,6 +49,7 @@ public:
   std::vector<std::string> const& GetOutputs() const;
   std::vector<std::string> const& GetByproducts() const;
   std::vector<std::string> const& GetDepends() const;
+  std::set<cmGeneratorTarget*> const& GetTargets() const;
   bool HasOnlyEmptyCommandLines() const;
   std::string GetFullDepfile() const;
   std::string GetInternalDepfile() const;
