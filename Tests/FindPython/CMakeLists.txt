@@ -451,6 +451,18 @@ if(CMake_TEST_FindPython)
       --test-command ${CMAKE_CTEST_COMMAND} -V -C $<CONFIGURATION>
       )
   endif()
+
+  if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    add_test(NAME FindPython.GenericNames COMMAND
+      ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION>
+      --build-and-test
+      "${CMake_SOURCE_DIR}/Tests/FindPython/GenericNames"
+      "${CMake_BINARY_DIR}/Tests/FindPython/GenericNames"
+      ${build_generator_args}
+      --build-project GenericNames
+      --build-options ${build_options}
+    )
+  endif()
 endif()
 
 if(CMake_TEST_FindPython_NumPy)
