@@ -12,9 +12,6 @@ check_files("${RunCMake_TEST_BINARY_DIR}"
 
     ${TARGET_OBJECT_FILES_generatorobj_Debug}
 
-    ${TARGET_FILE_generator_Release}
-    ${TARGET_OBJECT_FILES_generator_Release}
-
     ${TARGET_FILE_generated_Release}
     ${TARGET_OBJECT_FILES_generated_Release}
 
@@ -29,6 +26,9 @@ check_files("${RunCMake_TEST_BINARY_DIR}"
   EXCLUDE
     ${TARGET_OBJECT_FILES_generated_Debug}
     ${TARGET_OBJECT_FILES_emptyobj_Debug}
+
+    ${TARGET_FILE_generator_Release}
+    ${TARGET_OBJECT_FILES_generator_Release}
 
     ${TARGET_OBJECT_FILES_generator_MinSizeRel}
     ${TARGET_OBJECT_FILES_generated_MinSizeRel}
