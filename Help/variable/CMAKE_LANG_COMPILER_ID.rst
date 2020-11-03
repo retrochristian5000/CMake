@@ -25,6 +25,7 @@ include:
   HP = Hewlett-Packard Compiler (hp.com)
   IAR = IAR Systems (iar.com)
   Intel = Intel Compiler (intel.com)
+  IntelLLVM = Intel LLVM-Based Compiler (intel.com)
   MSVC = Microsoft Visual Studio (microsoft.com)
   NVIDIA = NVIDIA CUDA Compiler (nvidia.com)
   OpenWatcom = Open Watcom (openwatcom.org)
