@@ -100,7 +100,7 @@ if(WIN32)
   set(_odbc_lib_names odbc32;)
 
   # List additional libraries required to use ODBC library
-  if(MSVC OR CMAKE_CXX_COMPILER_ID MATCHES "Intel")
+  if(MSVC OR CMAKE_CXX_COMPILER_ID MATCHES "Intel(LLVM)?")
     set(_odbc_required_libs_names odbccp32;ws2_32)
   elseif(MINGW)
     set(_odbc_required_libs_names odbccp32)
