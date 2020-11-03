@@ -3,7 +3,11 @@ export void ispcCompilerId() {
 
 // Identify the compiler
 #if defined(ISPC)
+#if defined(__INTEL_CMPLRLLVM_COMPILER)
+  print("INFO:compiler[IntelLLVM]");
+#else
   print("INFO:compiler[Intel]");
+#endif
 #endif
 
 // Identify the platform

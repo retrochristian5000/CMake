@@ -47,7 +47,7 @@ path from the main ``<file>`` to the compiler-specific files. For example:
      PREFIX ClimbingStats
      OUTPUT_FILES_VAR support_files
      OUTPUT_DIR compilers
-     COMPILERS GNU Clang MSVC Intel
+     COMPILERS GNU Clang MSVC Intel IntelLLVM
      FEATURES cxx_variadic_templates
    )
    install(FILES
@@ -130,7 +130,7 @@ feature:
    write_compiler_detection_header(
      FILE climbingstats_compiler_detection.h
      PREFIX ClimbingStats
-     COMPILERS GNU Clang AppleClang MSVC Intel
+     COMPILERS GNU Clang AppleClang MSVC Intel IntelLLVM
      FEATURES cxx_variadic_templates
    )
 
@@ -401,6 +401,7 @@ function(write_compiler_detection_header
     MSVC
     SunPro
     Intel
+    IntelLLVM
   )
 
   set(_hex_compilers ADSP Borland Embarcadero SunPro)

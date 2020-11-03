@@ -71,7 +71,7 @@ cmake_policy(SET CMP0054 NEW) # if() quoted variables not dereferenced
 set(_IRSL_HAVE_Intel FALSE)
 set(_IRSL_HAVE_MSVC FALSE)
 foreach(LANG IN ITEMS C CXX Fortran)
-  if("${CMAKE_${LANG}_COMPILER_ID}" STREQUAL "Intel")
+  if("${CMAKE_${LANG}_COMPILER_ID}" MATCHES "Intel(LLVM)?")
     if(NOT _IRSL_HAVE_Intel)
       get_filename_component(_Intel_basedir "${CMAKE_${LANG}_COMPILER}" PATH)
       if(CMAKE_SIZEOF_VOID_P EQUAL 8)
