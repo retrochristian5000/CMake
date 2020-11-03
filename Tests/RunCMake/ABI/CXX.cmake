@@ -1,0 +1,4 @@
+enable_language(CXX)
+if(NOT CMAKE_CXX_BYTE_ORDER MATCHES "^(BIG_ENDIAN|LITTLE_ENDIAN)$")
+  message(FATAL_ERROR "CMAKE_CXX_BYTE_ORDER has unexpected value '${CMAKE_CXX_BYTE_ORDER}'")
+endif()

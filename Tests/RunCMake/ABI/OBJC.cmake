@@ -1,0 +1,4 @@
+enable_language(OBJC)
+if(NOT CMAKE_OBJC_BYTE_ORDER MATCHES "^(BIG_ENDIAN|LITTLE_ENDIAN)$")
+  message(FATAL_ERROR "CMAKE_OBJC_BYTE_ORDER has unexpected value '${CMAKE_OBJC_BYTE_ORDER}'")
+endif()

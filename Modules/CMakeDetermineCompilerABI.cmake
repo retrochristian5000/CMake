@@ -75,13 +75,16 @@ function(CMAKE_DETERMINE_COMPILER_ABI lang src)
       message(CHECK_PASS "done")
       file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
         "Detecting ${lang} compiler ABI info compiled with the following output:\n${OUTPUT}\n\n")
-      file(STRINGS "${BIN}" ABI_STRINGS LIMIT_COUNT 2 REGEX "INFO:[A-Za-z0-9_]+\\[[^]]*\\]")
+      file(STRINGS "${BIN}" ABI_STRINGS LIMIT_COUNT 3 REGEX "INFO:[A-Za-z0-9_]+\\[[^]]*\\]")
       foreach(info ${ABI_STRINGS})
         if("${info}" MATCHES "INFO:sizeof_dptr\\[0*([^]]*)\\]")
           set(ABI_SIZEOF_DPTR "${CMAKE_MATCH_1}")
         endif()
         if("${info}" MATCHES "INFO:abi\\[([^]]*)\\]")
           set(ABI_NAME "${CMAKE_MATCH_1}")
+        endif()
+        if("${info}" MATCHES "INFO:byte_order\\[([^]]*)\\]")
+          set(ABI_BYTE_ORDER "${CMAKE_MATCH_1}")
         endif()
       endforeach()
 
@@ -93,6 +96,10 @@ function(CMAKE_DETERMINE_COMPILER_ABI lang src)
 
       if(ABI_NAME)
         set(CMAKE_${lang}_COMPILER_ABI "${ABI_NAME}" PARENT_SCOPE)
+      endif()
+
+      if(ABI_BYTE_ORDER)
+        set(CMAKE_${lang}_BYTE_ORDER "${ABI_BYTE_ORDER}" PARENT_SCOPE)
       endif()
 
       # Parse implicit include directory for this language, if available.

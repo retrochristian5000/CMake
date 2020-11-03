@@ -1,0 +1,4 @@
+enable_language(CUDA)
+if(NOT CMAKE_CUDA_BYTE_ORDER MATCHES "^(BIG_ENDIAN|LITTLE_ENDIAN)$")
+  message(FATAL_ERROR "CMAKE_CUDA_BYTE_ORDER has unexpected value '${CMAKE_CUDA_BYTE_ORDER}'")
+endif()
