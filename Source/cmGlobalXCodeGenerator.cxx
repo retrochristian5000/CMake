@@ -3544,6 +3544,7 @@ void cmGlobalXCodeGenerator::AddDependAndLinkInformation(cmXCodeObject* target)
     // add the library search paths
     {
       BuildObjectListOrString libSearchPaths(this, true);
+      libSearchPaths.Add("$(inherited)");
       std::string linkDirs;
       for (auto const& libDir : cli->GetDirectories()) {
         if (!libDir.empty() && libDir != "/usr/lib") {
@@ -3565,6 +3566,7 @@ void cmGlobalXCodeGenerator::AddDependAndLinkInformation(cmXCodeObject* target)
     // add framework search paths
     {
       BuildObjectListOrString fwSearchPaths(this, true);
+      fwSearchPaths.Add("$(inherited)");
       // Add previously collected paths where to look for frameworks
       // that were added to "Link Binary With Libraries"
       for (auto& fwDir : frameworkSearchPaths) {
