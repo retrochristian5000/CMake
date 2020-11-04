@@ -342,7 +342,7 @@ macro(GNUInstallDirs_get_absolute_install_dir absvar var)
   else()
     # Historical behaviour: use ${dir} from caller's scope
     set(GGAID_dir "${dir}")
-    message(WARNING "GNUInstallDirs_get_absolute_install_dir called without dir argument; using \${dir} from caller's scope")
+    message(AUTHOR_WARNING "GNUInstallDirs_get_absolute_install_dir called without dir argument; using \${dir} from caller's scope")
   endif ()
 
   if(NOT IS_ABSOLUTE "${${var}}")
