@@ -122,7 +122,7 @@ Macros
   ``CMAKE_INSTALL_FULL_<dir>`` variables, it is exposed publicly to
   allow users who create additional path variables to also compute
   absolute paths where necessary, using the same logic.  ``dirname`` is
-  the directory name to get, e.g. `BINDIR`.
+  the directory name to get, e.g. ``BINDIR``.
 #]=======================================================================]
 
 cmake_policy(PUSH)
