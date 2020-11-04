@@ -113,7 +113,7 @@ Macros
 
   ::
 
-    GNUInstallDirs_get_absolute_install_dir(absvar var [dir])
+    GNUInstallDirs_get_absolute_install_dir(absvar var dirname)
 
   Set the given variable ``absvar`` to the absolute path contained
   within the variable ``var``.  This is to allow the computation of an
@@ -121,9 +121,8 @@ Macros
   above.  While this macro is used to compute the various
   ``CMAKE_INSTALL_FULL_<dir>`` variables, it is exposed publicly to
   allow users who create additional path variables to also compute
-  absolute paths where necessary, using the same logic.  ``dir`` is the
-  directory to find.  It is optional for backward compatibility reasons
-  but should be set to the directory to get, e.g. `BINDIR`.
+  absolute paths where necessary, using the same logic.  ``dirname`` is
+  the directory name to get, e.g. `BINDIR`.
 #]=======================================================================]
 
 cmake_policy(PUSH)
