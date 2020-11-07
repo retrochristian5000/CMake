@@ -1020,6 +1020,42 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
         compileCommands.insert(compileCommands.end(), commandList.cbegin(),
                                commandList.cend());
       }
+
+      const auto& depFormat = this->Makefile->GetRequiredDefinition(
+        cmStrCat("CMAKE_", lang, "_DEPFILE_FORMAT"));
+      if ((cmHasPrefix(this->GlobalGenerator->GetName(), "NMake"_s) &&
+           depFormat != "nmake"_s) ||
+          (!cmHasPrefix(this->GlobalGenerator->GetName(), "NMake"_s) &&
+           depFormat != "make"_s)) {
+        // post-process dependencies file
+        std::string depProcess = "$(CMAKE_COMMAND) -E cmake_format_depends ";
+        depProcess +=
+          cmStrCat("--generator=\"", this->GlobalGenerator->GetName(), "\"");
+        depProcess += cmStrCat(" --dep-file=", shellDependencyFile);
+        depProcess += cmStrCat(" --dep-format=", depFormat);
+        depProcess += cmStrCat(" --source-dir=",
+                               this->LocalGenerator->ConvertToOutputFormat(
+                                 this->LocalGenerator->GetSourceDirectory(),
+                                 cmOutputConverter::SHELL));
+        depProcess += cmStrCat(" --binary-dir=",
+                               this->LocalGenerator->ConvertToOutputFormat(
+                                 this->LocalGenerator->GetBinaryDirectory(),
+                                 cmOutputConverter::SHELL));
+        depProcess +=
+          cmStrCat(" --current-source-dir=",
+                   this->LocalGenerator->ConvertToOutputFormat(
+                     this->LocalGenerator->GetCurrentSourceDirectory(),
+                     cmOutputConverter::SHELL));
+        depProcess +=
+          cmStrCat(" --current-binary-dir=",
+                   this->LocalGenerator->ConvertToOutputFormat(
+                     this->LocalGenerator->GetCurrentBinaryDirectory(),
+                     cmOutputConverter::SHELL));
+        if (this->LocalGenerator->GetColorMakefile()) {
+          depProcess += " --color=$(COLOR)";
+        }
+        compileCommands.emplace_back(std::move(depProcess));
+      }
     }
 
     // Expand placeholders in the commands.
