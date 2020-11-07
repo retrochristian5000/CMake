@@ -136,6 +136,12 @@ public:
   std::string CreateMakeVariable(const std::string& sin,
                                  const std::string& s2in);
 
+  /** Called from command-line hook to format dependencies generated
+      by the compiler.  */
+  bool FormatDependencies(const std::string& depFile,
+                          const std::string& depFormat, bool verbose,
+                          bool color) override;
+
   /** Called from command-line hook to bring dependencies up to date
       for a target.  */
   bool UpdateDependencies(const std::string& tgtInfo, bool verbose,

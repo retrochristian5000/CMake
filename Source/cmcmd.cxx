@@ -1162,6 +1162,73 @@ int cmcmd::ExecuteCMakeCommand(std::vector<std::string> const& args,
       return 1;
     }
 
+#if !defined(CMAKE_BOOTSTRAP) || defined(CMAKE_BOOTSTRAP_MAKEFILES)
+    // Internal CMake compiler dependency formatting support.
+    if (args[1] == "cmake_format_depends") {
+      const bool verbose = isCMakeVerbose();
+
+      cmake cm(cmake::RoleScript, cmState::Unknown);
+      std::string sourceDir;
+      std::string binaryDir;
+      std::string currentSourceDir;
+      std::string currentBinaryDir;
+      std::string generator;
+      std::string depFile;
+      std::string depFormat;
+      bool color = false;
+      for (auto const& arg : cmMakeRange(args).advance(2)) {
+        if (cmHasLiteralPrefix(arg, "--source-dir=")) {
+          sourceDir = arg.substr(13);
+        } else if (cmHasLiteralPrefix(arg, "--binary-dir=")) {
+          binaryDir = arg.substr(13);
+        } else if (cmHasLiteralPrefix(arg, "--current-source-dir=")) {
+          currentSourceDir = arg.substr(21);
+        } else if (cmHasLiteralPrefix(arg, "--current-binary-dir=")) {
+          currentBinaryDir = arg.substr(21);
+        } else if (cmHasLiteralPrefix(arg, "--generator=")) {
+          generator = arg.substr(12);
+        } else if (cmHasLiteralPrefix(arg, "--dep-file=")) {
+          depFile = arg.substr(11);
+        } else if (cmHasLiteralPrefix(arg, "--dep-format=")) {
+          depFormat = arg.substr(13);
+        } else if (cmHasLiteralPrefix(arg, "--color=")) {
+          color = (arg.size() == 8 || cmIsOn(arg.c_str() + 8));
+        } else {
+          return 1;
+        }
+      }
+      if (sourceDir.empty() || binaryDir.empty() || currentSourceDir.empty() ||
+          currentBinaryDir.empty() || generator.empty() || depFile.empty() ||
+          depFormat.empty()) {
+        return 1;
+      }
+
+      // Create a local generator configured for the directory in
+      // which dependencies will be scanned.
+      sourceDir = cmSystemTools::CollapseFullPath(sourceDir);
+      binaryDir = cmSystemTools::CollapseFullPath(binaryDir);
+      currentSourceDir = cmSystemTools::CollapseFullPath(currentSourceDir);
+      currentBinaryDir = cmSystemTools::CollapseFullPath(currentBinaryDir);
+      depFile = cmSystemTools::CollapseFullPath(depFile);
+      cm.SetHomeDirectory(sourceDir);
+      cm.SetHomeOutputDirectory(binaryDir);
+      cm.GetCurrentSnapshot().SetDefaultDefinitions();
+      if (auto ggd = cm.CreateGlobalGenerator(generator)) {
+        cm.SetGlobalGenerator(std::move(ggd));
+        cmStateSnapshot snapshot = cm.GetCurrentSnapshot();
+        snapshot.GetDirectory().SetCurrentSource(currentSourceDir);
+        snapshot.GetDirectory().SetCurrentBinary(currentBinaryDir);
+        cmMakefile mf(cm.GetGlobalGenerator(), snapshot);
+        auto lgd = cm.GetGlobalGenerator()->CreateLocalGenerator(&mf);
+
+        return lgd->FormatDependencies(depFile, depFormat, verbose, color) ? 0
+                                                                           : 2;
+      }
+
+      return 1;
+    }
+#endif
+
     // Internal CMake link script support.
     if (args[1] == "cmake_link_script" && args.size() >= 3) {
       return cmcmd::ExecuteLinkScript(args);
@@ -1779,8 +1846,8 @@ int cmcmd::RunLLVMRC(std::vector<std::string> const& args)
       skipNextArg = false;
       continue;
     }
-    // We use ++ as seperator between the preprocessing step definition and the
-    // rc compilation step becase we need to prepend a -- to seperate the
+    // We use ++ as seperator between the preprocessing step definition and
+    // the rc compilation step becase we need to prepend a -- to seperate the
     // source file properly from other options when using clang-cl for
     // preprocessing.
     if (arg == "++") {
@@ -1830,7 +1897,8 @@ int cmcmd::RunLLVMRC(std::vector<std::string> const& args)
     return 1;
   }
   // Since we might have skipped the last argument to llvm-rc
-  // we need to make sure the llvm-rc source file is present in the commandline
+  // we need to make sure the llvm-rc source file is present in the
+  // commandline
   if (resource_compile.back() != intermediate_file) {
     resource_compile.push_back(intermediate_file);
   }
@@ -2123,8 +2191,8 @@ int cmVSLink::LinkIncremental()
   // http://blogs.msdn.com/zakramer/archive/2006/05/22/603558.aspx
 
   //    1.  Compiler compiles the application and generates the *.obj files.
-  //    2.  An empty manifest file is generated if this is a clean build and if
-  //    not the previous one is reused.
+  //    2.  An empty manifest file is generated if this is a clean build and
+  //    if not the previous one is reused.
   //    3.  The resource compiler (rc.exe) compiles the *.manifest file to a
   //    *.res file.
   //    4.  Linker generates the binary (EXE or DLL) with the /incremental
