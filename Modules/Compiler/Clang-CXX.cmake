@@ -15,6 +15,9 @@ if("x${CMAKE_CXX_COMPILER_FRONTEND_VARIANT}" STREQUAL "xGNU")
       # the object is up-to-date against the dependency file.
       # So, force a newer time-stamp of the object to avoid erroneous re-compilation.
       set(CMAKE_CXX_DEPENDS_EXTRA_COMMANDS "@<CMAKE_COMMAND> -E touch_nocreate <OBJECT>")
+      set(CMAKE_CXX_DEPFILE_FORMAT nmake)
+    else()
+      set(CMAKE_CXX_DEPFILE_FORMAT make)
     endif()
     set(CMAKE_CXX_DEPENDS_USE_COMPILER TRUE)
   endif()

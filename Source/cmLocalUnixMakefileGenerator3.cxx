@@ -9,13 +9,14 @@
 #include <utility>
 
 #include <cm/memory>
+#include <cm/string_view>
 #include <cm/vector>
 #include <cmext/algorithm>
+#include <cmext/string_view>
 
 #include "cmsys/FStream.hxx"
 #include "cmsys/Terminal.h"
 
-#include "cmCMakePath.h"
 #include "cmCustomCommand.h" // IWYU pragma: keep
 #include "cmCustomCommandGenerator.h"
 #include "cmFileTimeCache.h"
@@ -1292,6 +1293,154 @@ std::string cmLocalUnixMakefileGenerator3::CreateMakeVariable(
   return ret;
 }
 
+namespace {
+std::string& ReplaceAll(std::string& data, const std::string& toSearch,
+                        const std::string& replaceStr)
+{
+  // Get the first occurrence
+  auto pos = data.find(toSearch);
+  // Repeat until the end is reached
+  while (pos != std::string::npos) {
+    // Replace this occurrence of Sub String
+    data.replace(pos, toSearch.size(), replaceStr);
+    // Get the next occurrence from the current position
+    pos = data.find(toSearch, pos + replaceStr.size());
+  }
+
+  return data;
+}
+
+std::string& NormalizePath(std::string& item)
+{
+  ReplaceAll(item, "$$", "$");
+  ReplaceAll(item, "\\ ", " ");
+  ReplaceAll(item, "\\#", "#");
+  ReplaceAll(item, "\\", "/");
+
+  return item;
+}
+
+void ParseLine(const std::string& line, std::string& target,
+               std::vector<std::string>& depends,
+               bool needPathConversion = false)
+{
+  auto start = line.find_first_not_of(' ');
+  if (start == std::string::npos || line[start] == '#') {
+    return;
+  }
+
+  auto index = start;
+  while ((index = line.find(' ', index)) != std::string::npos) {
+    if (line[index - 1] == '\\') {
+      index += 1;
+      continue;
+    }
+
+    auto item = line.substr(start, index - start);
+    if (item.back() != ':') {
+      // this is a dependency, add it
+      depends.emplace_back(
+        std::move(needPathConversion ? NormalizePath(item) : item));
+    } else if (target.empty()) {
+      item.pop_back();
+      // first target is the main target
+      target = std::move(needPathConversion ? NormalizePath(item) : item);
+    }
+
+    start = line.find_first_not_of(' ', index + 1);
+    index = start;
+  }
+  if (start != std::string::npos) {
+    auto item = line.substr(start);
+    if (line.back() != ':') {
+      // this is not a phony target, add it
+      depends.emplace_back(
+        std::move(needPathConversion ? NormalizePath(item) : item));
+    } else if (target.empty()) {
+      item.pop_back();
+      // first target is the main target
+      target = std::move(needPathConversion ? NormalizePath(item) : item);
+    }
+  }
+}
+}
+
+bool cmLocalUnixMakefileGenerator3::FormatDependencies(
+  const std::string& depFile, const std::string& depFormat, bool /*verbose*/,
+  bool color)
+{
+  if (depFormat != "make"_s && depFormat != "gcc"_s) {
+    // Input format not supported
+    return false;
+  }
+
+  std::string message = cmStrCat("Formatting dependencies of file ", depFile);
+  cmSystemTools::MakefileColorEcho(cmsysTerminal_Color_ForegroundMagenta |
+                                     cmsysTerminal_Color_ForegroundBold,
+                                   message.c_str(), true, color);
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+  bool needPathConversion = true;
+#else
+  bool needPathConversion = false;
+#endif
+
+  cmsys::ifstream fin(depFile.c_str());
+  if (!fin) {
+    return false;
+  }
+
+  std::string target;
+  std::vector<std::string> depends;
+  std::string line;
+  while (cmSystemTools::GetLineFromStream(fin, line)) {
+    if (line.empty()) {
+      continue;
+    }
+    if (line.back() == '\\') {
+      line.pop_back();
+    }
+    ParseLine(line, target, depends, needPathConversion);
+  }
+  fin.close();
+
+  cmsys::ofstream fout(depFile.c_str(),
+                       needPathConversion ? std::ios_base::out
+                                          : std::ios_base::app);
+  if (!fout) {
+    return false;
+  }
+
+  if (needPathConversion) {
+    // Complete dependency file must be generated
+
+    // escape for make tool
+    for (auto& depend : depends) {
+      depend = this->ConvertToMakefilePath(depend);
+    }
+
+    // Generate target and dependencies
+    fout << this->ConvertToMakefilePath(target) << ": " << depends.front();
+
+    for (const auto& depend : cmMakeRange(depends).advance(1)) {
+      fout << " \\" << std::endl << "  " << depend;
+    }
+    fout << std::endl;
+  }
+
+  // Add phony targets
+  // first dependency is skipped because it is the source file
+  for (const auto& depend : cmMakeRange(depends).advance(1)) {
+    fout << std::endl << depend << ':' << std::endl;
+  }
+
+  // And to finish, touch the object output file to ensure it is newer than the
+  // dependencies file
+  cmSystemTools::Touch(NormalizePath(target), false);
+
+  return true;
+}
+
 bool cmLocalUnixMakefileGenerator3::UpdateDependencies(
   const std::string& tgtInfo, bool verbose, bool color)
 {
@@ -1330,8 +1479,8 @@ bool cmLocalUnixMakefileGenerator3::UpdateDependencies(
       }
     }
 
-    // If the directory information is newer than depend.internal, include dirs
-    // may have changed. In this case discard all old dependencies.
+    // If the directory information is newer than depend.internal, include
+    // dirs may have changed. In this case discard all old dependencies.
     bool needRescanDirInfo = false;
     {
       std::string dirInfoFile =
@@ -1360,15 +1509,15 @@ bool cmLocalUnixMakefileGenerator3::UpdateDependencies(
       checker.SetVerbose(verbose);
       checker.SetFileTimeCache(ftc);
       // cmDependsC::Check() fills the vector validDependencies() with the
-      // dependencies for those files where they are still valid, i.e. neither
-      // the files themselves nor any files they depend on have changed.
-      // We don't do that if the CMakeDirectoryInformation.cmake file has
-      // changed, because then potentially all dependencies have changed.
-      // This information is given later on to cmDependsC, which then only
-      // rescans the files where it did not get valid dependencies via this
-      // dependency vector. This means that in the normal case, when only
-      // few or one file have been edited, then also only this one file is
-      // actually scanned again, instead of all files for this target.
+      // dependencies for those files where they are still valid, i.e.
+      // neither the files themselves nor any files they depend on have
+      // changed. We don't do that if the CMakeDirectoryInformation.cmake
+      // file has changed, because then potentially all dependencies have
+      // changed. This information is given later on to cmDependsC, which
+      // then only rescans the files where it did not get valid dependencies
+      // via this dependency vector. This means that in the normal case, when
+      // only few or one file have been edited, then also only this one file
+      // is actually scanned again, instead of all files for this target.
       needRescanDependencies =
         !checker.Check(dependFile, internalDependFile, validDependencies);
     }
@@ -1841,8 +1990,8 @@ void cmLocalUnixMakefileGenerator3::WriteDependLanguageInfo(
     this->GetImplicitDepends(target, cmDependencyScannerKind::CMake);
 
   // list the languages
-  cmakefileStream
-    << "# The set of languages for which implicit dependencies are needed:\n";
+  cmakefileStream << "# The set of languages for which implicit "
+                     "dependencies are needed:\n";
   cmakefileStream << "set(CMAKE_DEPENDS_LANGUAGES\n";
   for (auto const& implicitLang : implicitLangs) {
     cmakefileStream << "  \"" << implicitLang.first << "\"\n";
@@ -1955,9 +2104,10 @@ void cmLocalUnixMakefileGenerator3::WriteDependLanguageInfo(
   for (auto const& compilerLang : compilerLangs) {
     auto const& compilerPairs = compilerLang.second;
     for (auto const& compilerPair : compilerPairs) {
-      cmCMakePath file(this->GetRelativeTargetDirectory(target));
-      file.Append(cmCMakePath(compilerPair.first).GetFileName()).Concat(".d");
-      cmakefileStream << "  \"" << file.GenericString() << "\"\n";
+      cmakefileStream << "  \""
+                      << this->MaybeConvertToRelativePath(
+                           this->GetBinaryDirectory(), compilerPair.first)
+                      << ".d\"\n";
     }
   }
   cmakefileStream << "  )\n";
