@@ -12,6 +12,9 @@ if((NOT DEFINED CMAKE_DEPENDS_USE_COMPILER OR CMAKE_DEPENDS_USE_COMPILER)
     # the object is up-to-date against the dependency file.
     # So, force a newer time-stamp of the object to avoid erroneous re-compilation.
     set(CMAKE_OBJC_DEPENDS_EXTRA_COMMANDS "@<CMAKE_COMMAND> -E touch_nocreate <OBJECT>")
+    set(CMAKE_OBJC_DEPFILE_FORMAT nmake)
+  else()
+    set(CMAKE_OBJC_DEPFILE_FORMAT make)
   endif()
   set(CMAKE_OBJC_DEPENDS_USE_COMPILER TRUE)
 endif()
