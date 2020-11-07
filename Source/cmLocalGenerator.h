@@ -269,6 +269,15 @@ public:
     return true;
   }
 
+  /** Called from command-line hook to format dependencies generated
+      by the compiler.  */
+  virtual bool FormatDependencies(const std::string& /* depFile */,
+                                  const std::string& /* depFormat */,
+                                  bool /*verbose*/, bool /*color*/)
+  {
+    return true;
+  }
+
   /** @brief Get the include directories for the current makefile and language
    * and optional the compiler implicit include directories.
    *

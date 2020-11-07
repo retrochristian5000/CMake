@@ -6,6 +6,7 @@ if((NOT DEFINED CMAKE_DEPENDS_USE_COMPILER OR CMAKE_DEPENDS_USE_COMPILER)
   # dependencies are computed by the compiler itself
   string(PREPEND CMAKE_DEPFILE_FLAGS_OBJC "-MP ")
   set(CMAKE_OBJC_DEPENDS_USE_COMPILER TRUE)
+  set(CMAKE_OBJC_DEPFILE_FORMAT make)
 endif()
 
 
