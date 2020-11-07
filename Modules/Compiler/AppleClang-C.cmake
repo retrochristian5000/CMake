@@ -9,6 +9,7 @@ if(NOT "x${CMAKE_C_SIMULATE_ID}" STREQUAL "xMSVC")
     # dependencies are computed by the compiler itself
     string(PREPEND CMAKE_DEPFILE_FLAGS_C "-MP ")
     set(CMAKE_C_DEPENDS_USE_COMPILER TRUE)
+    set(CMAKE_C_DEPFILE_FORMAT make)
   endif()
 endif()
 

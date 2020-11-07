@@ -8,6 +8,7 @@ if(NOT "x${CMAKE_CXX_SIMULATE_ID}" STREQUAL "xMSVC")
     # dependencies are computed by the compiler itself
     string(PREPEND CMAKE_DEPFILE_FLAGS_CXX "-MP ")
     set(CMAKE_CXX_DEPENDS_USE_COMPILER TRUE)
+    set(CMAKE_CXX_DEPFILE_FORMAT "make")
   endif()
 
   set(CMAKE_CXX_COMPILE_OPTIONS_VISIBILITY_INLINES_HIDDEN "-fvisibility-inlines-hidden")

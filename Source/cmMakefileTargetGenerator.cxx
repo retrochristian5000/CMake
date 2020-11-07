@@ -12,7 +12,9 @@
 #include <utility>
 
 #include <cm/memory>
+#include <cm/string_view>
 #include <cmext/algorithm>
+#include <cmext/string_view>
 
 #include "cmComputeLinkInformation.h"
 #include "cmCustomCommand.h"
@@ -799,7 +801,6 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
   std::string shellDependencyFile;
   std::string dependencyFile;
   if (compilerGenerateDeps) {
-    //    vars.DependencyTarget = relativeObj.c_str();
     dependencyTarget = this->LocalGenerator->EscapeForShell(
       this->LocalGenerator->ConvertToMakefilePath(
         this->LocalGenerator->MaybeConvertToRelativePath(
@@ -1013,6 +1014,46 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
         compileCommands.insert(compileCommands.end(), commandList.cbegin(),
                                commandList.cend());
       }
+
+      const auto& depFormat = this->Makefile->GetRequiredDefinition(
+        cmStrCat("CMAKE_", lang, "_DEPFILE_FORMAT"));
+#if defined(_WIN32) && !defined(__CYGWIN__)
+      bool isWIN32 = true;
+#else
+      bool isWIN32 = false;
+#endif
+      if ((!isWIN32 && depFormat != "make"_s) ||
+          (isWIN32 &&
+           !(this->LocalGenerator->IsNMake() && depFormat == "nmake"_s))) {
+        // post-process dependencies file
+        std::string depProcess = "$(CMAKE_COMMAND) -E cmake_format_depends ";
+        depProcess +=
+          cmStrCat("--generator=\"", this->GlobalGenerator->GetName(), "\"");
+        depProcess += cmStrCat(" --dep-file=", shellDependencyFile);
+        depProcess += cmStrCat(" --dep-format=", depFormat);
+        depProcess += cmStrCat(" --source-dir=",
+                               this->LocalGenerator->ConvertToOutputFormat(
+                                 this->LocalGenerator->GetSourceDirectory(),
+                                 cmOutputConverter::SHELL));
+        depProcess += cmStrCat(" --binary-dir=",
+                               this->LocalGenerator->ConvertToOutputFormat(
+                                 this->LocalGenerator->GetBinaryDirectory(),
+                                 cmOutputConverter::SHELL));
+        depProcess +=
+          cmStrCat(" --current-source-dir=",
+                   this->LocalGenerator->ConvertToOutputFormat(
+                     this->LocalGenerator->GetCurrentSourceDirectory(),
+                     cmOutputConverter::SHELL));
+        depProcess +=
+          cmStrCat(" --current-binary-dir=",
+                   this->LocalGenerator->ConvertToOutputFormat(
+                     this->LocalGenerator->GetCurrentBinaryDirectory(),
+                     cmOutputConverter::SHELL));
+        if (this->LocalGenerator->GetColorMakefile()) {
+          depProcess += " --color=$(COLOR)";
+        }
+        compileCommands.emplace_back(std::move(depProcess));
+      }
     }
 
     // Expand placeholders in the commands.
@@ -1068,7 +1109,7 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
                         no_commands);
     // and, finally, include the dependencies
     *this->BuildFileStream << this->GlobalGenerator->IncludeDirective << " "
-                           << cmSystemTools::ConvertToOutputPath(
+                           << this->LocalGenerator->ConvertToMakefilePath(
                                 dependencyFile)
                            << "\n\n";
   }
