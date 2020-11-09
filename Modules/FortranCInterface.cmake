@@ -220,7 +220,10 @@ endif()
 
 # Create the interface detection project if it does not exist.
 if(NOT FortranCInterface_BINARY_DIR)
-  set(FortranCInterface_BINARY_DIR ${CMAKE_BINARY_DIR}/CMakeFiles/FortranCInterface)
+  string(SHA256 _FortranCInterface_SOURCE_DIR_HASH "${FortranCInterface_SOURCE_DIR}")
+  string(SUBSTRING "${_FortranCInterface_SOURCE_DIR_HASH}" 0 16 _FortranCInterface_SOURCE_DIR_HASH)
+  set(FortranCInterface_BINARY_DIR ${CMAKE_BINARY_DIR}/CMakeFiles/FortranCInterface/${_FortranCInterface_SOURCE_DIR_HASH})
+  unset(_FortranCInterface_SOURCE_DIR_HASH)
   include(${FortranCInterface_SOURCE_DIR}/Detect.cmake)
 endif()
 
