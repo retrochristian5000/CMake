@@ -295,7 +295,7 @@ bool HandleAndValidateSourceFilePropertyGENERATED(
       }
     }
   } else {
-    // TODO: Mark source-file as generated!
+    sf->MarkAsGenerated();
   }
   return true;
 }

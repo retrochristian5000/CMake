@@ -20,18 +20,18 @@ class cmMakefile;
 /** \class cmSourceFile
  * \brief Represent a class loaded from a makefile.
  *
- * cmSourceFile is represents a class loaded from
- * a makefile.
+ * cmSourceFile represents a class loaded from a makefile.
  */
 class cmSourceFile
 {
 public:
   /**
-   * Construct with the makefile storing the source and the initial
-   * name referencing it.
+   * Construct with the makefile storing the source and the initial name
+   * referencing it. If it shall be marked as generated, this source file's
+   * kind is assumed to be known, regardless of the given value.
    */
   cmSourceFile(
-    cmMakefile* mf, const std::string& name,
+    cmMakefile* mf, const std::string& name, bool generated,
     cmSourceFileLocationKind kind = cmSourceFileLocationKind::Ambiguous);
 
   /**
@@ -54,9 +54,30 @@ public:
       command like get_property or get_source_file_property.  */
   cmProp GetPropertyForUser(const std::string& prop);
 
-  //! Checks is the GENERATED property is set and true
-  /// @return Equivalent to GetPropertyAsBool("GENERATED")
-  bool GetIsGenerated() const { return this->IsGenerated; }
+  /// Marks this file as generated
+  /**
+   * This stores this file's path in the global table for all generated source
+   * files.
+   */
+  void MarkAsGenerated();
+  enum class CheckingMode
+  {
+    Normal,
+    BackwardsCompatible
+  };
+  /// Determines if this source file is marked as generated.
+  /**
+   * This will check if this file's path is stored in the global table of all
+   * generated source files. If that is not the case and checkingMode is set to
+   * backwards-compatible the value of the possibly existing local property
+   * GENERATED is returned instead.
+   * @param checkingMode Determines if alternatively for
+   * backwards-compatibility a local GENERATED property should be considered,
+   * too.
+   * @return true if this source file is marked as generated, otherwise false.
+   */
+  bool GetIsGenerated(
+    CheckingMode checkingMode = CheckingMode::BackwardsCompatible) const;
 
   const std::vector<BT<std::string>>& GetCompileOptions() const
   {
