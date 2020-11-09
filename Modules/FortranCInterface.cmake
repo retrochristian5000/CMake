@@ -220,7 +220,10 @@ endif()
 
 # Create the interface detection project if it does not exist.
 if(NOT FortranCInterface_BINARY_DIR)
-  set(FortranCInterface_BINARY_DIR ${CMAKE_BINARY_DIR}/CMakeFiles/FortranCInterface)
+  string(SHA256 _FortranCInterface_SOURCE_DIR_HASH "${FortranCInterface_SOURCE_DIR}")
+  string(SUBSTRING "${_FortranCInterface_SOURCE_DIR_HASH}" 0 16 _FortranCInterface_SOURCE_DIR_HASH)
+  set(FortranCInterface_BINARY_DIR ${CMAKE_BINARY_DIR}/CMakeFiles/FortranCInterface/${_FortranCInterface_SOURCE_DIR_HASH})
+  unset(_FortranCInterface_SOURCE_DIR_HASH)
   include(${FortranCInterface_SOURCE_DIR}/Detect.cmake)
 endif()
 
@@ -343,6 +346,13 @@ function(FortranCInterface_VERIFY)
     set(_desc "Verifying Fortran/${lang} Compiler Compatibility")
     message(CHECK_START "${_desc}")
 
+    cmake_policy(GET CMP0056 _FortranCInterface_CMP0056)
+    if(_FortranCInterface_CMP0056 STREQUAL "NEW")
+      set(_FortranCInterface_EXE_LINKER_FLAGS "-DCMAKE_EXE_LINKER_FLAGS:STRING=${CMAKE_EXE_LINKER_FLAGS}")
+    else()
+      set(_FortranCInterface_EXE_LINKER_FLAGS "")
+    endif()
+
     # Build a sample project which reports symbols.
     set(CMAKE_TRY_COMPILE_CONFIGURATION Release)
     try_compile(FortranCInterface_VERIFY_${lang}_COMPILED
@@ -358,6 +368,7 @@ function(FortranCInterface_VERIFY)
                  "-DCMAKE_C_FLAGS_RELEASE:STRING=${CMAKE_C_FLAGS_RELEASE}"
                  "-DCMAKE_CXX_FLAGS_RELEASE:STRING=${CMAKE_CXX_FLAGS_RELEASE}"
                  "-DCMAKE_Fortran_FLAGS_RELEASE:STRING=${CMAKE_Fortran_FLAGS_RELEASE}"
+                 ${_FortranCInterface_EXE_LINKER_FLAGS}
       OUTPUT_VARIABLE _output)
     file(WRITE "${FortranCInterface_BINARY_DIR}/Verify${lang}/output.txt" "${_output}")
 
