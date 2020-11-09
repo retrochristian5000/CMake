@@ -2017,6 +2017,8 @@ void cmGlobalNinjaGenerator::StripNinjaOutputPathPrefixAsSuffix(
   cmStripSuffixIfExists(path, this->OutputPathPrefix);
 }
 
+#if !defined(CMAKE_BOOTSTRAP)
+
 /*
 
 We use the following approach to support Fortran.  Each target already
@@ -2399,11 +2401,6 @@ bool cmGlobalNinjaGenerator::WriteDyndepFile(
   return true;
 }
 
-bool cmGlobalNinjaGenerator::EnableCrossConfigBuild() const
-{
-  return !this->CrossConfigs.empty();
-}
-
 int cmcmd_cmake_ninja_dyndep(std::vector<std::string>::const_iterator argBeg,
                              std::vector<std::string>::const_iterator argEnd)
 {
@@ -2483,6 +2480,13 @@ int cmcmd_cmake_ninja_dyndep(std::vector<std::string>::const_iterator argBeg,
     return 1;
   }
   return 0;
+}
+
+#endif
+
+bool cmGlobalNinjaGenerator::EnableCrossConfigBuild() const
+{
+  return !this->CrossConfigs.empty();
 }
 
 void cmGlobalNinjaGenerator::AppendDirectoryForConfig(
