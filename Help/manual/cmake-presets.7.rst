@@ -121,9 +121,9 @@ Format
 
     ``generator``
 
-      An optional string representing the generator to use for the preset. If
-      ``generator`` is not specified, it must be inherited from the
-      ``inherits`` preset (unless this preset is ``hidden``).
+      A required string representing the generator to use for the preset. This
+      field is optional if the preset is ``hidden``, or if it inherits
+      ``generator`` from another preset.
 
       Note that for Visual Studio generators, unlike in the command line ``-G``
       argument, you cannot include the platform name in the generator name. Use
@@ -161,11 +161,11 @@ Format
 
     ``binaryDir``
 
-      An optional string representing the path to the output binary directory.
+      A required string representing the path to the output binary directory.
       This field supports macro expansion. If a relative path is specified, it
-      is calculated relative to the source directory. If ``binaryDir`` is not
-      specified, it must be inherited from the ``inherits`` preset (unless this
-      preset is ``hidden``).
+      is calculated relative to the source directory. This field is optional if
+      the preset is ``hidden``, or if it inherits ``binaryDir`` from another
+      preset.
 
     ``cmakeExecutable``
 
