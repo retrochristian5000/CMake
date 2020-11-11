@@ -2,6 +2,8 @@ Preset CMake variables:
 
   TEST_BOOL_FALSE:BOOL="FALSE"
   TEST_BOOL_TRUE:BOOL="TRUE"
+  TEST_CWD="[^
+]*/Tests/RunCMake/CMakePresets/Good-build"
   TEST_DOLLAR="\$"
   TEST_D_ENV_REF="xEnvironment variablex"
   TEST_D_ENV_REF_P=""
