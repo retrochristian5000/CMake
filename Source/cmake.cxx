@@ -546,7 +546,7 @@ bool cmake::SetCacheArgs(const std::vector<std::string>& args)
       return false;
     }
 
-    std::string const name = std::string(entry);
+    std::string const name{ entry };
     if (!foundNo && !foundError) {
       // -W<name>
       state->DiagLevels[name] = std::max(state->DiagLevels[name], DIAG_WARN);
@@ -1150,6 +1150,17 @@ void cmake::SetArgs(const std::vector<std::string>& args)
       exit(1);
     } else if (!matched) {
       this->SetDirectoriesFromFile(arg);
+    }
+  }
+
+  // Empty instance, platform and toolset if only a generator is specified
+  if (this->GlobalGenerator) {
+    this->GeneratorInstance = "";
+    if (!this->GeneratorPlatformSet) {
+      this->GeneratorPlatform = "";
+    }
+    if (!this->GeneratorToolsetSet) {
+      this->GeneratorToolset = "";
     }
   }
 
