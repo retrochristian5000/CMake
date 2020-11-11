@@ -680,6 +680,10 @@ ExpandMacroResult ExpandMacro(const cmCMakePresetsFile& file,
       out += cmSystemTools::GetFilenameName(file.SourceDir);
       return ExpandMacroResult::Ok;
     }
+    if (macroName == "cwd") {
+      out += cmSystemTools::GetCurrentWorkingDirectory();
+      return ExpandMacroResult::Ok;
+    }
     if (macroName == "presetName") {
       out += preset.Name;
       return ExpandMacroResult::Ok;

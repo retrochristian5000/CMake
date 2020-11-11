@@ -313,6 +313,12 @@ Format
     The last filename component of ``${sourceDir}``. For example, if
     ``${sourceDir}`` is ``/path/to/source``, this would be ``source``.
 
+  ``${cwd}``
+
+    CMake's current working directory when :manual:`cmake(1)` or
+    :manual:`cmake-gui(1)` is first launched. This is NOT necessarily the same
+    as the value of the ``binaryDir`` field, or :variable:`CMAKE_BINARY_DIR`.
+
   ``${presetName}``
 
     Name specified in the preset's ``name`` field.
