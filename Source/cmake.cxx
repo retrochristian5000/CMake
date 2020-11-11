@@ -546,7 +546,7 @@ bool cmake::SetCacheArgs(const std::vector<std::string>& args)
       return false;
     }
 
-    std::string const name = std::string(entry);
+    std::string const name{ entry };
     if (!foundNo && !foundError) {
       // -W<name>
       state->DiagLevels[name] = std::max(state->DiagLevels[name], DIAG_WARN);
