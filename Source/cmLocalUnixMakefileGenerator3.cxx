@@ -1320,8 +1320,7 @@ std::string& NormalizePath(std::string& item)
   return item;
 }
 
-void ParseLine(const std::string& line, std::string& target,
-               std::vector<std::string>& depends,
+void ParseLine(const std::string& line, std::vector<std::string>& depends,
                bool needPathConversion = false)
 {
   auto start = line.find_first_not_of(' ');
@@ -1341,10 +1340,6 @@ void ParseLine(const std::string& line, std::string& target,
       // this is a dependency, add it
       depends.emplace_back(
         std::move(needPathConversion ? NormalizePath(item) : item));
-    } else if (target.empty()) {
-      item.pop_back();
-      // first target is the main target
-      target = std::move(needPathConversion ? NormalizePath(item) : item);
     }
 
     start = line.find_first_not_of(' ', index + 1);
@@ -1353,30 +1348,22 @@ void ParseLine(const std::string& line, std::string& target,
   if (start != std::string::npos) {
     auto item = line.substr(start);
     if (line.back() != ':') {
-      // this is not a phony target, add it
+      // this is a dependency, add it
       depends.emplace_back(
         std::move(needPathConversion ? NormalizePath(item) : item));
-    } else if (target.empty()) {
-      item.pop_back();
-      // first target is the main target
-      target = std::move(needPathConversion ? NormalizePath(item) : item);
     }
   }
 }
 }
 
 bool cmLocalUnixMakefileGenerator3::FormatDependencies(
-  const std::string& depFile, const std::string& depFormat, bool verbose,
+  const std::string& depFile, const std::string& depFormat,
+  const std::string& sourceFile, const std::string& objectFile, bool verbose,
   bool color)
 {
-  if (depFormat != "make"_s && depFormat != "gcc"_s) {
-    // Input format not supported
-    return false;
-  }
-
   if (verbose) {
     std::string message =
-      cmStrCat("Formatting dependencies of file ", depFile);
+      cmStrCat("Formatting dependencies of file ", objectFile);
     cmSystemTools::MakefileColorEcho(cmsysTerminal_Color_ForegroundMagenta |
                                        cmsysTerminal_Color_ForegroundBold,
                                      message.c_str(), true, color);
@@ -1393,17 +1380,26 @@ bool cmLocalUnixMakefileGenerator3::FormatDependencies(
     return false;
   }
 
-  std::string target;
   std::vector<std::string> depends;
   std::string line;
-  while (cmSystemTools::GetLineFromStream(fin, line)) {
-    if (line.empty()) {
-      continue;
+
+  if (depFormat == "msvc"_s) {
+    // Add source file as first dependency
+    depends.push_back(sourceFile);
+
+    while (cmSystemTools::GetLineFromStream(fin, line)) {
+      depends.emplace_back(std::move(line));
     }
-    if (line.back() == '\\') {
-      line.pop_back();
+  } else {
+    while (cmSystemTools::GetLineFromStream(fin, line)) {
+      if (line.empty()) {
+        continue;
+      }
+      if (line.back() == '\\') {
+        line.pop_back();
+      }
+      ParseLine(line, depends, needPathConversion);
     }
-    ParseLine(line, target, depends, needPathConversion);
   }
   fin.close();
 
@@ -1415,15 +1411,13 @@ bool cmLocalUnixMakefileGenerator3::FormatDependencies(
 
   if (needPathConversion) {
     // escape for make tool
-    target = this->ConvertToMakefilePath(target);
-
     for (auto& depend : depends) {
       depend = this->ConvertToMakefilePath(depend);
     }
   }
 
   // Generate target and dependencies
-  fout << target << ": " << depends.front();
+  fout << this->ConvertToMakefilePath(objectFile) << ": " << depends.front();
 
   for (const auto& depend : cmMakeRange(depends).advance(1)) {
     fout << " \\" << std::endl << "  " << depend;
@@ -1438,7 +1432,7 @@ bool cmLocalUnixMakefileGenerator3::FormatDependencies(
 
   // And to finish, touch the object output file to ensure it is newer than the
   // dependencies file
-  cmSystemTools::Touch(NormalizePath(target), false);
+  cmSystemTools::Touch(objectFile, false);
 
   return true;
 }

@@ -1024,6 +1024,26 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
 
       const auto& depFormat = this->Makefile->GetRequiredDefinition(
         cmStrCat("CMAKE_", lang, "_DEPFILE_FORMAT"));
+
+      if (depFormat == "msvc"_s) {
+        // compiler must be launched through a wrapper to pick-up dependencies
+        std::string depFilter =
+          "$(CMAKE_COMMAND) -E cmake_cl_compile_depends ";
+        depFilter += cmStrCat("--dep-file=", shellDependencyFile);
+        depFilter +=
+          cmStrCat(" --working-dir=",
+                   this->LocalGenerator->ConvertToOutputFormat(
+                     this->LocalGenerator->GetCurrentBinaryDirectory(),
+                     cmOutputConverter::SHELL));
+        const auto& prefix = this->Makefile->GetSafeDefinition(
+          cmStrCat("CMAKE_", lang, "_CL_SHOWINCLUDES_PREFIX"));
+        depFilter += cmStrCat(" --filter-prefix=",
+                              this->LocalGenerator->ConvertToOutputFormat(
+                                prefix, cmOutputConverter::SHELL));
+        depFilter += " -- ";
+        compileCommands.front().insert(0, depFilter);
+      }
+
 #if defined(_WIN32) && !defined(__CYGWIN__)
       bool isWIN32 = true;
 #else
@@ -1056,6 +1076,8 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
                    this->LocalGenerator->ConvertToOutputFormat(
                      this->LocalGenerator->GetCurrentBinaryDirectory(),
                      cmOutputConverter::SHELL));
+        depProcess += cmStrCat(" --source-file=", sourceFile);
+        depProcess += cmStrCat(" --object-file=", shellObj);
         if (this->LocalGenerator->GetColorMakefile()) {
           depProcess += " --color=$(COLOR)";
         }
