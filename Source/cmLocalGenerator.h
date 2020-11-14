@@ -273,6 +273,8 @@ public:
       by the compiler.  */
   virtual bool FormatDependencies(const std::string& /* depFile */,
                                   const std::string& /* depFormat */,
+                                  const std::string& /* sourceFile */,
+                                  const std::string& /* objectFile */,
                                   bool /*verbose*/, bool /*color*/)
   {
     return true;
