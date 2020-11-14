@@ -1320,8 +1320,7 @@ std::string& NormalizePath(std::string& item)
   return item;
 }
 
-void ParseLine(const std::string& line, std::string& target,
-               std::vector<std::string>& depends,
+void ParseLine(const std::string& line, std::vector<std::string>& depends,
                bool needPathConversion = false)
 {
   auto start = line.find_first_not_of(' ');
@@ -1341,10 +1340,6 @@ void ParseLine(const std::string& line, std::string& target,
       // this is a dependency, add it
       depends.emplace_back(
         std::move(needPathConversion ? NormalizePath(item) : item));
-    } else if (target.empty()) {
-      item.pop_back();
-      // first target is the main target
-      target = std::move(needPathConversion ? NormalizePath(item) : item);
     }
 
     start = line.find_first_not_of(' ', index + 1);
@@ -1353,28 +1348,21 @@ void ParseLine(const std::string& line, std::string& target,
   if (start != std::string::npos) {
     auto item = line.substr(start);
     if (line.back() != ':') {
-      // this is not a phony target, add it
+      // this is a dependency, add it
       depends.emplace_back(
         std::move(needPathConversion ? NormalizePath(item) : item));
-    } else if (target.empty()) {
-      item.pop_back();
-      // first target is the main target
-      target = std::move(needPathConversion ? NormalizePath(item) : item);
     }
   }
 }
 }
 
 bool cmLocalUnixMakefileGenerator3::FormatDependencies(
-  const std::string& depFile, const std::string& depFormat, bool /*verbose*/,
-  bool color)
+  const std::string& depFile, const std::string& depFormat,
+  const std::string& sourceFile, const std::string& objectFile,
+  bool /*verbose*/, bool color)
 {
-  if (depFormat != "make"_s && depFormat != "gcc"_s) {
-    // Input format not supported
-    return false;
-  }
-
-  std::string message = cmStrCat("Formatting dependencies of file ", depFile);
+  std::string message =
+    cmStrCat("Formatting dependencies of file ", objectFile);
   cmSystemTools::MakefileColorEcho(cmsysTerminal_Color_ForegroundMagenta |
                                      cmsysTerminal_Color_ForegroundBold,
                                    message.c_str(), true, color);
@@ -1390,17 +1378,27 @@ bool cmLocalUnixMakefileGenerator3::FormatDependencies(
     return false;
   }
 
-  std::string target;
+  std::string target = objectFile;
   std::vector<std::string> depends;
   std::string line;
-  while (cmSystemTools::GetLineFromStream(fin, line)) {
-    if (line.empty()) {
-      continue;
+
+  if (depFormat == "msvc"_s) {
+    // Add source file as first dependency
+    depends.push_back(sourceFile);
+
+    while (cmSystemTools::GetLineFromStream(fin, line)) {
+      depends.emplace_back(std::move(line));
     }
-    if (line.back() == '\\') {
-      line.pop_back();
+  } else {
+    while (cmSystemTools::GetLineFromStream(fin, line)) {
+      if (line.empty()) {
+        continue;
+      }
+      if (line.back() == '\\') {
+        line.pop_back();
+      }
+      ParseLine(line, depends, needPathConversion);
     }
-    ParseLine(line, target, depends, needPathConversion);
   }
   fin.close();
 
