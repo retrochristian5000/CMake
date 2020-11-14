@@ -141,8 +141,8 @@ public:
   bool FormatDependencies(const std::string& depFile,
                           const std::string& depFormat,
                           const std::string& sourceFile,
-                          const std::string& objectFile, bool verbose,
-                          bool color) override;
+                          const std::string& objectFile, bool projectOnly,
+                          bool verbose, bool color) override;
 
   /** Called from command-line hook to bring dependencies up to date
       for a target.  */
