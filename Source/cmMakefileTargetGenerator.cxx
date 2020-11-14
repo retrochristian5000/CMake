@@ -476,13 +476,10 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
   }
 
   // Use compiler to generate dependencies, if supported.
-  // Except if 'CMAKE_DEPENDS_IN_PROJECT_ONLY' is ON because
-  // it is not compatible for now (require a post-processing step)
   bool compilerGenerateDeps =
     this->GlobalGenerator->SupportsCompilerDependencies() &&
     cmIsOn(this->Makefile->GetDefinition(
-      cmStrCat("CMAKE_", lang, "_DEPENDS_USE_COMPILER"))) &&
-    cmIsOff(this->Makefile->GetDefinition("CMAKE_DEPENDS_IN_PROJECT_ONLY"));
+      cmStrCat("CMAKE_", lang, "_DEPENDS_USE_COMPILER")));
   auto scanner = compilerGenerateDeps ? cmDependencyScannerKind::Compiler
                                       : cmDependencyScannerKind::CMake;
 
@@ -1044,7 +1041,9 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
 #endif
       if ((!isWIN32 && depFormat != "make"_s) ||
           (isWIN32 &&
-           !(this->LocalGenerator->IsNMake() && depFormat == "nmake"_s))) {
+           !(this->LocalGenerator->IsNMake() && depFormat == "nmake"_s)) ||
+          cmIsOn(
+            this->Makefile->GetDefinition("CMAKE_DEPENDS_IN_PROJECT_ONLY"))) {
         // post-process dependencies file
         std::string depProcess = "$(CMAKE_COMMAND) -E cmake_format_depends ";
         depProcess +=
@@ -1071,6 +1070,10 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
                      cmOutputConverter::SHELL));
         depProcess += cmStrCat(" --source-file=", sourceFile);
         depProcess += cmStrCat(" --object-file=", shellObj);
+        if (cmIsOn(this->Makefile->GetDefinition(
+              "CMAKE_DEPENDS_IN_PROJECT_ONLY"))) {
+          depProcess += " --project-only";
+        }
         if (this->LocalGenerator->GetColorMakefile()) {
           depProcess += " --color=$(COLOR)";
         }

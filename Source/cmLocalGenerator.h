@@ -275,7 +275,8 @@ public:
                                   const std::string& /* depFormat */,
                                   const std::string& /* sourceFile */,
                                   const std::string& /* objectFile */,
-                                  bool /*verbose*/, bool /*color*/)
+                                  bool /* projectOnly */, bool /*verbose*/,
+                                  bool /*color*/)
   {
     return true;
   }
