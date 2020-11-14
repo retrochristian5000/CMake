@@ -1281,6 +1281,7 @@ int cmcmd::ExecuteCMakeCommand(std::vector<std::string> const& args,
       std::string depFormat;
       std::string sourceFile;
       std::string objectFile;
+      bool projectOnly = false;
       bool color = false;
       for (auto const& arg : cmMakeRange(args).advance(2)) {
         if (cmHasLiteralPrefix(arg, "--source-dir=")) {
@@ -1301,6 +1302,8 @@ int cmcmd::ExecuteCMakeCommand(std::vector<std::string> const& args,
           sourceFile = arg.substr(14);
         } else if (cmHasLiteralPrefix(arg, "--object-file=")) {
           objectFile = arg.substr(14);
+        } else if (cmHasLiteralPrefix(arg, "--project-only")) {
+          projectOnly = true;
         } else if (cmHasLiteralPrefix(arg, "--color=")) {
           color = (arg.size() == 8 || cmIsOn(arg.c_str() + 8));
         } else {
@@ -1332,7 +1335,7 @@ int cmcmd::ExecuteCMakeCommand(std::vector<std::string> const& args,
         auto lgd = cm.GetGlobalGenerator()->CreateLocalGenerator(&mf);
 
         return lgd->FormatDependencies(depFile, depFormat, sourceFile,
-                                       objectFile, verbose, color)
+                                       objectFile, projectOnly, verbose, color)
           ? 0
           : 2;
       }

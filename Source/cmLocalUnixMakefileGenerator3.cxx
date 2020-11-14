@@ -53,8 +53,9 @@
 #  include "cmDependsJava.h"
 #endif
 
+namespace {
 // Helper function used below.
-static std::string cmSplitExtension(std::string const& in, std::string& base)
+std::string cmSplitExtension(std::string const& in, std::string& base)
 {
   std::string ext;
   std::string::size_type dot_pos = in.rfind('.');
@@ -66,6 +67,43 @@ static std::string cmSplitExtension(std::string const& in, std::string& base)
     base = in;
   }
   return ext;
+}
+
+// Helper predicate for removing absolute paths that don't point to the
+// source or binary directory. It is used when CMAKE_DEPENDS_IN_PROJECT_ONLY
+// is set ON, to only consider in-project dependencies during the build.
+class NotInProjectDir
+{
+public:
+  // Constructor with the source and binary directory's path
+  NotInProjectDir(cm::string_view sourceDir, cm::string_view binaryDir)
+    : SourceDir(sourceDir)
+    , BinaryDir(binaryDir)
+  {
+  }
+
+  // Operator evaluating the predicate
+  bool operator()(const std::string& p) const
+  {
+    auto path = cmCMakePath(p).Normal();
+
+    // Keep all relative paths:
+    if (path.IsRelative()) {
+      return false;
+    }
+
+    // If it's an absolute path, check if it starts with the source
+    // directory:
+    return !(cmCMakePath(SourceDir).IsPrefix(path) ||
+             cmCMakePath(BinaryDir).IsPrefix(path));
+  }
+
+private:
+  // The path to the source directory
+  cm::string_view SourceDir;
+  // The path to the binary directory
+  cm::string_view BinaryDir;
+};
 }
 
 cmLocalUnixMakefileGenerator3::cmLocalUnixMakefileGenerator3(
@@ -1359,8 +1397,8 @@ void ParseLine(const std::string& line, std::vector<std::string>& depends,
 
 bool cmLocalUnixMakefileGenerator3::FormatDependencies(
   const std::string& depFile, const std::string& depFormat,
-  const std::string& sourceFile, const std::string& objectFile, bool verbose,
-  bool color)
+  const std::string& sourceFile, const std::string& objectFile,
+  bool projectOnly, bool verbose, bool color)
 {
   if (verbose) {
     std::string message =
@@ -1385,9 +1423,6 @@ bool cmLocalUnixMakefileGenerator3::FormatDependencies(
   std::string line;
 
   if (depFormat == "msvc"_s) {
-    // Add source file as first dependency
-    depends.push_back(sourceFile);
-
     while (cmSystemTools::GetLineFromStream(fin, line)) {
       depends.emplace_back(std::move(line));
     }
@@ -1401,6 +1436,8 @@ bool cmLocalUnixMakefileGenerator3::FormatDependencies(
       }
       ParseLine(line, depends, needPathConversion);
     }
+    // Remove the first dependency, it is the source
+    depends.erase(depends.cbegin());
   }
   fin.close();
 
@@ -1408,6 +1445,13 @@ bool cmLocalUnixMakefileGenerator3::FormatDependencies(
                              this->GlobalGenerator->GetMakefileEncoding());
   if (!fout) {
     return false;
+  }
+
+  if (projectOnly) {
+    // filter out dependencies outside the project
+    cm::erase_if(
+      depends,
+      NotInProjectDir(this->GetSourceDirectory(), this->GetBinaryDirectory()));
   }
 
   if (needPathConversion) {
@@ -1418,16 +1462,16 @@ bool cmLocalUnixMakefileGenerator3::FormatDependencies(
   }
 
   // Generate target and dependencies
-  fout << this->ConvertToMakefilePath(objectFile) << ": " << depends.front();
+  fout << this->ConvertToMakefilePath(objectFile) << ": "
+       << this->ConvertToMakefilePath(sourceFile);
 
-  for (const auto& depend : cmMakeRange(depends).advance(1)) {
+  for (const auto& depend : depends) {
     fout << " \\" << std::endl << "  " << depend;
   }
   fout << std::endl;
 
   // Add phony targets
-  // first dependency is skipped because it is the source file
-  for (const auto& depend : cmMakeRange(depends).advance(1)) {
+  for (const auto& depend : depends) {
     fout << std::endl << depend << ':' << std::endl;
   }
 
@@ -1929,43 +1973,6 @@ void cmLocalUnixMakefileGenerator3::ClearDependencies(cmMakefile* mf,
       }
     }
   }
-}
-
-namespace {
-// Helper predicate for removing absolute paths that don't point to the
-// source or binary directory. It is used when CMAKE_DEPENDS_IN_PROJECT_ONLY
-// is set ON, to only consider in-project dependencies during the build.
-class NotInProjectDir
-{
-public:
-  // Constructor with the source and binary directory's path
-  NotInProjectDir(cm::string_view sourceDir, cm::string_view binaryDir)
-    : SourceDir(sourceDir)
-    , BinaryDir(binaryDir)
-  {
-  }
-
-  // Operator evaluating the predicate
-  bool operator()(const std::string& p) const
-  {
-    auto path = cmCMakePath(p).Normal();
-
-    // Keep all relative paths:
-    if (path.IsRelative()) {
-      return false;
-    }
-    // If it's an absolute path, check if it starts with the source
-    // directory:
-    return !(cmCMakePath(SourceDir).IsPrefix(path) ||
-             cmCMakePath(BinaryDir).IsPrefix(path));
-  }
-
-private:
-  // The path to the source directory
-  cm::string_view SourceDir;
-  // The path to the binary directory
-  cm::string_view BinaryDir;
-};
 }
 
 void cmLocalUnixMakefileGenerator3::WriteDependLanguageInfo(
