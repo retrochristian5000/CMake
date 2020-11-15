@@ -3443,10 +3443,11 @@ void cmGlobalXCodeGenerator::AddDependAndLinkInformation(cmXCodeObject* target)
     if (!libTarget) {
       if (libItem->IsPath) {
         // Get or create a direct file ref in the root project
-        auto it = this->ExternalLibRefs.find(libItem->Value.Value);
+        const auto cleanPath =
+          cmSystemTools::CollapseFullPath(libItem->Value.Value);
+        auto it = this->ExternalLibRefs.find(cleanPath);
         if (it == this->ExternalLibRefs.end()) {
-          buildFile = CreateXCodeBuildFileFromPath(libItem->Value.Value, gt,
-                                                   "", nullptr);
+          buildFile = CreateXCodeBuildFileFromPath(cleanPath, gt, "", nullptr);
           if (!buildFile) {
             // Add this library item back to a regular linker flag list
             for (const auto& conf : configItemMap) {
@@ -3454,7 +3455,7 @@ void cmGlobalXCodeGenerator::AddDependAndLinkInformation(cmXCodeObject* target)
             }
             continue;
           }
-          this->ExternalLibRefs.emplace(libItem->Value.Value, buildFile);
+          this->ExternalLibRefs.emplace(cleanPath, buildFile);
         } else {
           buildFile = it->second;
         }
@@ -3586,7 +3587,9 @@ void cmGlobalXCodeGenerator::AddDependAndLinkInformation(cmXCodeObject* target)
       for (auto const& libItem : configItemMap[configName]) {
         auto const& libName = *libItem;
         if (libName.IsPath) {
-          const auto libPath = GetLibraryOrFrameworkPath(libName.Value.Value);
+          const auto cleanPath =
+            cmSystemTools::CollapseFullPath(libName.Value.Value);
+          const auto libPath = GetLibraryOrFrameworkPath(cleanPath);
           if (cmSystemTools::StringEndsWith(libPath.c_str(), ".framework")) {
             const auto fwName =
               cmSystemTools::GetFilenameWithoutExtension(libPath);
@@ -3594,17 +3597,17 @@ void cmGlobalXCodeGenerator::AddDependAndLinkInformation(cmXCodeObject* target)
             libPaths.Add("-F " + this->XCodeEscapePath(fwDir));
             libPaths.Add("-framework " + fwName);
           } else {
-            libPaths.Add(this->XCodeEscapePath(libName.Value.Value));
+            libPaths.Add(this->XCodeEscapePath(cleanPath));
           }
           if ((!libName.Target || libName.Target->IsImported()) &&
               IsLinkPhaseLibraryExtension(libPath)) {
             // Create file reference for embedding
-            auto it = this->ExternalLibRefs.find(libName.Value.Value);
+            auto it = this->ExternalLibRefs.find(cleanPath);
             if (it == this->ExternalLibRefs.end()) {
-              auto* buildFile = this->CreateXCodeBuildFileFromPath(
-                libName.Value.Value, gt, "", nullptr);
+              auto* buildFile =
+                this->CreateXCodeBuildFileFromPath(cleanPath, gt, "", nullptr);
               if (buildFile) {
-                this->ExternalLibRefs.emplace(libName.Value.Value, buildFile);
+                this->ExternalLibRefs.emplace(cleanPath, buildFile);
               }
             }
           }
