@@ -4,7 +4,7 @@ __compiler_clang(CUDA)
 # Set explicitly, because __compiler_clang() doesn't set this if we're simulating MSVC.
 set(CMAKE_DEPFILE_FLAGS_CUDA "-MD -MT <DEP_TARGET> -MF <DEP_FILE>")
 if((NOT DEFINED CMAKE_DEPENDS_USE_COMPILER OR CMAKE_DEPENDS_USE_COMPILER)
-    AND CMAKE_GENERATOR MATCHES "Makefiles")
+    AND CMAKE_GENERATOR MATCHES "Makefiles|WMake")
   # dependencies are computed by the compiler itself
   string(PREPEND CMAKE_DEPFILE_FLAGS_CUDA "-MP ")
   if (CMAKE_GENERATOR MATCHES "NMake Makefiles")
