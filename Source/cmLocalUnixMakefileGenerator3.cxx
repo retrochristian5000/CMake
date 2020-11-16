@@ -1413,6 +1413,7 @@ bool cmLocalUnixMakefileGenerator3::FormatDependencies(
 #else
   bool needPathConversion = false;
 #endif
+  needPathConversion = needPathConversion || projectOnly;
 
   cmsys::ifstream fin(depFile.c_str());
   if (!fin) {
@@ -1465,8 +1466,12 @@ bool cmLocalUnixMakefileGenerator3::FormatDependencies(
   fout << this->ConvertToMakefilePath(objectFile) << ": "
        << this->ConvertToMakefilePath(sourceFile);
 
+  const auto& lineContinue =
+    static_cast<cmGlobalUnixMakefileGenerator3*>(this->GlobalGenerator)
+      ->LineContinueDirective;
+
   for (const auto& depend : depends) {
-    fout << " \\" << std::endl << "  " << depend;
+    fout << " " << lineContinue << "  " << depend;
   }
   fout << std::endl;
 
