@@ -1692,12 +1692,7 @@ void cmMakefileTargetGenerator::WriteObjectsVariable(
                          << this->GeneratorTarget->GetName() << "\n"
                          << variableName << " =";
   std::string object;
-  std::string lineContinue;
-  if (cmProp p = this->Makefile->GetDefinition("CMAKE_MAKE_LINE_CONTINUE")) {
-    lineContinue = *p;
-  } else {
-    lineContinue = "\\";
-  }
+  const auto& lineContinue = this->GlobalGenerator->LineContinueDirective;
 
   cmProp pchExtension = this->Makefile->GetDefinition("CMAKE_PCH_EXTENSION");
 
@@ -1705,7 +1700,7 @@ void cmMakefileTargetGenerator::WriteObjectsVariable(
     if (cmSystemTools::StringEndsWith(obj, cmToCStr(pchExtension))) {
       continue;
     }
-    *this->BuildFileStream << " " << lineContinue << "\n";
+    *this->BuildFileStream << " " << lineContinue;
     *this->BuildFileStream
       << cmLocalUnixMakefileGenerator3::ConvertToQuotedOutputPath(
            obj, useWatcomQuote);
@@ -1728,7 +1723,7 @@ void cmMakefileTargetGenerator::WriteObjectsVariable(
   for (std::string const& obj : this->ExternalObjects) {
     object =
       this->LocalGenerator->MaybeConvertToRelativePath(currentBinDir, obj);
-    *this->BuildFileStream << " " << lineContinue << "\n";
+    *this->BuildFileStream << " " << lineContinue;
     *this->BuildFileStream
       << cmLocalUnixMakefileGenerator3::ConvertToQuotedOutputPath(
            obj, useWatcomQuote);
