@@ -348,7 +348,10 @@ class cmMakefile;
          20, 0, cmPolicies::WARN)                                             \
   SELECT(POLICY, CMP0117,                                                     \
          "MSVC RTTI flag /GR is not added to CMAKE_CXX_FLAGS by default.", 3, \
-         20, 0, cmPolicies::WARN)
+         20, 0, cmPolicies::WARN)                                             \
+  SELECT(POLICY, CMP0118,                                                     \
+         "GENERATED property is now visible from any scope.", 3, 20, 0,       \
+         cmPolicies::WARN)
 
 #define CM_SELECT_ID(F, A1, A2, A3, A4, A5, A6) F(A1)
 #define CM_FOR_EACH_POLICY_ID(POLICY)                                         \

@@ -36,3 +36,10 @@ See also the :command:`set_property(SOURCE)` command.
 
 See :ref:`Source File Properties` for the list of properties known
 to CMake.
+
+.. note::
+
+  A special kind of source file property exists, the :prop_sf:`GENERATED`
+  property, which can be set and retrieved from every directory scope if
+  policy :policy:`CMP0118` is set to ``NEW``.  For more information see
+  its documentation.

@@ -40,3 +40,10 @@ file properties usually control how the file is built. One property that is
 always there is :prop_sf:`LOCATION`.
 
 See also the more general :command:`get_property` command.
+
+.. note::
+
+  A special kind of source file property exists, the :prop_sf:`GENERATED`
+  property, which can be set and retrieved from every directory scope if
+  policy :policy:`CMP0118` is set to ``NEW``.  For more information see
+  its documentation.
