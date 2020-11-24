@@ -47,6 +47,10 @@ if(NOT $ENV{CUDAHOSTCXX} STREQUAL "")
   endif()
 endif()
 
+if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+  set(CMAKE_CUDA_ARCHITECTURES "$ENV{CUDAARCHS}")
+endif()
+
 # Build a small source file to identify the compiler.
 if(NOT CMAKE_CUDA_COMPILER_ID_RUN)
   set(CMAKE_CUDA_COMPILER_ID_RUN 1)
