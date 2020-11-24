@@ -430,6 +430,8 @@ public:
     return this->DefaultConfigs;
   }
 
+  bool CheckCxxModuleSupport();
+
 protected:
   void Generate() override;
 
@@ -547,6 +549,8 @@ private:
   bool NinjaSupportsCleanDeadTool = false;
   bool NinjaSupportsMultipleOutputs = false;
   bool NinjaSupportsMetadataOnRegeneration = false;
+
+  bool DiagnosedCxxModuleSupport = false;
 
 private:
   void InitOutputPathPrefix();
