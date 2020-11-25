@@ -1,10 +1,12 @@
 # Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
 # file Copyright.txt or https://cmake.org/licensing for details.
 
-# To ensure maximum portability across various compilers and platforms
-# deactivate any compiler extensions
-set(CMAKE_C_EXTENSIONS FALSE)
-set(CMAKE_CXX_EXTENSIONS FALSE)
+if (CMAKE_SYSTEM_NAME STREQUAL QNX)
+    # Deactivate any compiler extensions. This is not portable,
+    # so exclude it on QNX
+    set(CMAKE_C_EXTENSIONS FALSE)
+    set(CMAKE_CXX_EXTENSIONS FALSE)
+endif()
 
 include(CheckIncludeFile)
 # Check if we can build support for ELF parsing.
