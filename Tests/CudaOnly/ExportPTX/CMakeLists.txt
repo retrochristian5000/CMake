@@ -7,7 +7,9 @@ project (ExportPTX CUDA)
 # How to install PTX files
 
 # PTX can be compiled only for a single architecture at a time
+message("before CMAKE_CUDA_ARCHITECTURES=${CMAKE_CUDA_ARCHITECTURES}")
 list(SUBLIST CMAKE_CUDA_ARCHITECTURES 0 1 CMAKE_CUDA_ARCHITECTURES)
+message("after CMAKE_CUDA_ARCHITECTURES=${CMAKE_CUDA_ARCHITECTURES}")
 
 add_library(CudaPTX OBJECT kernelA.cu kernelB.cu)
 set_property(TARGET CudaPTX PROPERTY CUDA_PTX_COMPILATION ON)
