@@ -159,6 +159,15 @@ function(run_cmake test)
     "|[^\n]*offset in archive not a multiple of 8"
     "|[^\n]*from Time Machine by path"
     "|[^\n]*Bullseye Testing Technology"
+
+    # Error messages displayed when iOS device is connected to a mac and don't directly affect the
+    # result of the build
+    "|[^\n]*\\[MT\\] iPhoneConnect:[^\n]*"
+    "|Domain: com.apple.platform.iphoneos"
+    "|Code: 5"
+    "|Failure Reason: allowsSecureServices: 1. isConnected: 0. Platform:[^\n]*"
+    "|(^|\n)--($|\n)"
+
     ")[^\n]*\n)+"
     )
   foreach(o out err)
