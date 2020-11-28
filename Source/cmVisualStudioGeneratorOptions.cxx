@@ -212,6 +212,11 @@ void cmVisualStudioGeneratorOptions::FixCudaCodeGeneration()
       }
     }
   }
+
+  for (const std::string& flag : result)
+  {
+    std::printf("CodeGeneration flag: %s", flag.c_str());
+  }
 }
 
 void cmVisualStudioGeneratorOptions::FixManifestUACFlags()
