@@ -846,6 +846,7 @@ void cmake::SetArgs(const std::vector<std::string>& args)
   bool haveToolset = false;
   bool havePlatform = false;
   bool haveBArg = false;
+  bool scriptMode = false;
 #if !defined(CMAKE_BOOTSTRAP)
   std::string profilingFormat;
   std::string profilingOutput;
@@ -898,7 +899,11 @@ void cmake::SetArgs(const std::vector<std::string>& args)
     CommandArgument{ "-B", "No build directory specified for -B",
                      CommandArgument::Values::One, BuildArgLambda },
     CommandArgument{ "-P", "-P must be followed by a file name.",
-                     CommandArgument::Values::One, IgnoreAndTrueLambda },
+                     CommandArgument::Values::One,
+                     [&](std::string const&, cmake*) {
+                       scriptMode = true;
+                       return true;
+                     } },
     CommandArgument{ "-D", "-D must be followed with VAR=VALUE.",
                      CommandArgument::Values::One, IgnoreAndTrueLambda },
     CommandArgument{ "-C", "-C must be followed by a file name.",
@@ -1111,6 +1116,11 @@ void cmake::SetArgs(const std::vector<std::string>& args)
 
 #endif
 
+  // We need to ignore "--" as it is used by `-P` as a placeholder to signify
+  // subsequent args are for the script
+  arguments.emplace_back("--", CommandArgument::Values::Zero,
+                         IgnoreAndTrueLambda);
+
   bool badGeneratorName = false;
   CommandArgument generatorCommand(
     "-G", "No generator specified for -G", CommandArgument::Values::One,
@@ -1145,6 +1155,14 @@ void cmake::SetArgs(const std::vector<std::string>& args)
         break;
       }
     }
+
+    if (!matched && !scriptMode &&
+        cmHasPrefix(
+          arg, "-")) { // unparsed argument provided outside of script mode
+      cmSystemTools::Error(cmStrCat("Unknown argument ", arg));
+      parsedCorrectly = false;
+    }
+
     if (!parsedCorrectly) {
       cmSystemTools::Error("Run 'cmake --help' for all supported options.");
       exit(1);
