@@ -3155,6 +3155,36 @@ void cmGeneratorTarget::GetAppleArchs(const std::string& config,
   }
 }
 
+void cmGeneratorTarget::AddExplicitLanguageFlags(std::string& flags,
+                                                 cmSourceFile const& sf) const
+{
+  cmProp lang = sf.GetProperty("LANGUAGE");
+  if (!lang) {
+    return;
+  }
+
+  switch (this->GetPolicyStatusCMP0119()) {
+    case cmPolicies::WARN:
+    case cmPolicies::OLD: {
+      // The OLD behavior is to not add explicit language flags,
+      // except for C++ on the XL compiler where we always have.
+      if (!(*lang == "CXX" &&
+            this->Makefile->GetSafeDefinition("CMAKE_CXX_COMPILER_ID") ==
+              "XL")) {
+        return;
+      }
+    } break;
+    case cmPolicies::REQUIRED_ALWAYS:
+    case cmPolicies::REQUIRED_IF_USED:
+    case cmPolicies::NEW:
+      // The NEW behavior is to add explicit language flags.
+      break;
+  }
+
+  this->LocalGenerator->AppendFeatureOptions(flags, *lang,
+                                             "EXPLICIT_LANGUAGE");
+}
+
 void cmGeneratorTarget::AddCUDAArchitectureFlags(std::string& flags) const
 {
   const std::string& property = this->GetSafeProperty("CUDA_ARCHITECTURES");
