@@ -623,8 +623,13 @@ bool cmGlobalNinjaGenerator::FindMakeProgram(cmMakefile* mf)
   if (!this->cmGlobalGenerator::FindMakeProgram(mf)) {
     return false;
   }
+  if (cmProp ninjaVersion = mf->GetDefinition("CMAKE_MAKE_VERSION")) {
+    this->NinjaVersion = *ninjaVersion;
+  }
   if (cmProp ninjaCommand = mf->GetDefinition("CMAKE_MAKE_PROGRAM")) {
     this->NinjaCommand = *ninjaCommand;
+  }
+  if (this->NinjaVersion.empty() && !this->NinjaCommand.empty()) {
     std::vector<std::string> command;
     command.push_back(this->NinjaCommand);
     command.emplace_back("--version");
@@ -642,8 +647,9 @@ bool cmGlobalNinjaGenerator::FindMakeProgram(cmMakefile* mf)
       return false;
     }
     this->NinjaVersion = cmTrimWhitespace(version);
-    this->CheckNinjaFeatures();
   }
+  this->CheckNinjaFeatures();
+
   return true;
 }
 
