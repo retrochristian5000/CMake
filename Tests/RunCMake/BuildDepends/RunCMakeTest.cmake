@@ -123,3 +123,8 @@ if ((RunCMake_GENERATOR STREQUAL "Unix Makefiles"
       AND CMAKE_C_COMPILER_ID STREQUAL "MSVC"))
   run_BuildDepends(CompilerDependencies)
 endif()
+
+if (RunCMake_GENERATOR MATCHES "Makefiles")
+  run_cmake(CustomCommandDependencies-BadArgs)
+  run_BuildDepends(CustomCommandDependencies)
+endif()
