@@ -27,6 +27,8 @@
 ;; cmake-command-help Written by James Bigler
 ;;
 
+(require 'rst)
+
 (defcustom cmake-mode-cmake-executable "cmake"
   "*The name of the cmake executable.
 
@@ -257,7 +259,7 @@ optional argument topic will be appended to the argument list."
     (shell-command command buffer)
     (save-selected-window
       (select-window (display-buffer buffer 'not-this-window))
-      (cmake-mode)
+      (rst-mode)
       (read-only-mode 1)
       (view-mode 1))
     )
