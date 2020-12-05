@@ -349,6 +349,7 @@ else()
       HAVE_CXX_STD_14=$<COMPILE_FEATURES:cxx_std_14>
       HAVE_CXX_STD_17=$<COMPILE_FEATURES:cxx_std_17>
       HAVE_CXX_STD_20=$<COMPILE_FEATURES:cxx_std_20>
+      HAVE_CXX_STD_23=$<COMPILE_FEATURES:cxx_std_23>
     )
   endif()
 
