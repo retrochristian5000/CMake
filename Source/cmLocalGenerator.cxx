@@ -2474,8 +2474,10 @@ void cmLocalGenerator::AddPchDependencies(cmGeneratorTarget* target)
     target->GetSourceFiles(sources, config);
 
     const std::string configUpper = cmSystemTools::UpperCase(config);
+    const std::initializer_list<std::string> langs{ "C", "CXX", "OBJC",
+                                                    "OBJCXX" };
 
-    for (const std::string& lang : { "C", "CXX", "OBJC", "OBJCXX" }) {
+    for (const std::string& lang : langs) {
       auto langSources = std::count_if(
         sources.begin(), sources.end(), [lang](cmSourceFile* sf) {
           return lang == sf->GetLanguage() &&
