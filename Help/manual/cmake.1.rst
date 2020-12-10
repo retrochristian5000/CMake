@@ -632,8 +632,13 @@ Available commands are:
 ``echo_append [<string>...]``
   Displays arguments as text but no new line.
 
-``env [--unset=NAME]... [NAME=VALUE]... COMMAND [ARG]...``
+``env [--unset=NAME]... [--from-file-v1=FILENAME]... [NAME=VALUE]... COMMAND [ARG]...``
   Run command in a modified environment.
+
+  Specifying a filename to ``--from-files-v1`` will add each
+  ``NAME=VALUE`` pair in the file to the modified environment.
+  Empty lines. and lines starting with ``#`` will be discarded.
+  Lines in the format ``--unset=NAME`` will remove environment variables.
 
 ``environment``
   Display the current environment variables.
