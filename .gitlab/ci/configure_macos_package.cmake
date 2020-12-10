@@ -20,5 +20,8 @@ set(CMake_INSTALL_DEPENDENCIES "ON" CACHE BOOL "")
 set(CMAKE_SKIP_RPATH "TRUE" CACHE BOOL "")
 set(CMake_TEST_NO_FindPackageModeMakefileTest "TRUE" CACHE BOOL "")
 
+# Skip sccache because it does not work with multiple architectures.
+set(configure_no_sccache 1)
+
 include("${CMAKE_CURRENT_LIST_DIR}/configure_macos_common.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/configure_common.cmake")
