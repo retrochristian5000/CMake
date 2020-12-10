@@ -640,6 +640,10 @@ Available commands are:
   Empty lines. and lines starting with ``#`` will be discarded.
   Lines in the format ``--unset=NAME`` will remove environment variables.
 
+  .. note::
+    Environment variables cannot start with ``-``, any that are found will
+    be interpreted as invalid options.
+
 ``environment``
   Display the current environment variables.
 
