@@ -803,6 +803,21 @@ int cmcmd::ExecuteCMakeCommand(std::vector<std::string> const& args,
         if (cmHasLiteralPrefix(a, "--unset=")) {
           // Unset environment variable.
           cmSystemTools::UnPutEnv(a.substr(8));
+        } else if (cmHasLiteralPrefix(a, "--from-file-v1=")) {
+          std::string filename = a.substr(15);
+          std::ifstream envFile(filename);
+          if (!envFile) {
+            std::cerr << "cmake -E env_file: failed to open file " << filename
+                      << std::endl;
+            return 1;
+          }
+
+          std::string line;
+          while (std::getline(envFile, line)) {
+            if (!line.empty()) {
+              cmSystemTools::PutEnv(line);
+            }
+          }
         } else if (!a.empty() && a[0] == '-') {
           // Environment variable and command names cannot start in '-',
           // so this must be an unknown option.
@@ -821,49 +836,6 @@ int cmcmd::ExecuteCMakeCommand(std::vector<std::string> const& args,
       if (ai == ae) {
         std::cerr << "cmake -E env: no command given" << std::endl;
         return 1;
-      }
-
-      // Execute command from remaining arguments.
-      std::vector<std::string> cmd(ai, ae);
-      int retval;
-      if (cmSystemTools::RunSingleCommand(cmd, nullptr, nullptr, &retval,
-                                          nullptr,
-                                          cmSystemTools::OUTPUT_PASSTHROUGH)) {
-        return retval;
-      }
-      return 1;
-    }
-
-    if (args[1] == "env_file") {
-      auto ai = args.cbegin() + 2;
-      auto ae = args.cend();
-
-      if (ai == ae) {
-        std::cerr << "cmake -E env_file: no filename given" << std::endl;
-        return 1;
-      }
-
-      std::string const& filename = *ai;
-      ++ai;
-
-      if (ai == ae) {
-        std::cerr << "cmake -E env_file: no command given" << std::endl;
-        return 1;
-      }
-
-      std::cout << filename << std::endl;
-      std::ifstream envFile(filename);
-      if (!envFile) {
-        std::cerr << "cmake -E env_file: failed to open file " << filename
-                  << std::endl;
-        return 1;
-      }
-
-      std::string line;
-      while (std::getline(envFile, line)) {
-        if (!line.empty()) {
-          cmSystemTools::PutEnv(line);
-        }
       }
 
       // Execute command from remaining arguments.
