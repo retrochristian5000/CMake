@@ -803,6 +803,10 @@ int cmcmd::ExecuteCMakeCommand(std::vector<std::string> const& args,
           cmSystemTools::UnPutEnv(a.substr(8));
         } else if (cmHasLiteralPrefix(a, "--from-file-v1=")) {
           std::string filename = a.substr(15);
+          if (filename.empty()) {
+            std::cerr << "cmake -E env: no filename given" << std::endl;
+            return 1;
+          }
           cmsys::ifstream envFile(filename);
           if (!envFile) {
             std::cerr << "cmake -E env: failed to open file " << filename
@@ -818,11 +822,16 @@ int cmcmd::ExecuteCMakeCommand(std::vector<std::string> const& args,
             } else if (cmHasLiteralPrefix(line, "--unset=")) {
               cmSystemTools::UnPutEnv(line.substr(8));
             } else if (line[0] == '-') {
-              // Environment variable names cannot start with '-'
-              // Error?
+              // Environment variable names cannot start with '-',
+              // so this must be an unknown option.
+              std::cerr << "cmake -E env: unknown option '" << line
+                        << "' in file " << filename << std::endl;
+              return 1;
             } else {
               cmSystemTools::PutEnv(line);
             }
+
+            envFile.close();
           }
         } else if (!a.empty() && a[0] == '-') {
           // Environment variable and command names cannot start in '-',

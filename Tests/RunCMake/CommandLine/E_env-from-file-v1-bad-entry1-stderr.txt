@@ -1,0 +1,1 @@
+^cmake -E env: unknown option '-bad-entry1' in file .*/E_env-from-file-v1-bad-entry1.env$
