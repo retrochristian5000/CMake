@@ -801,6 +801,21 @@ int cmcmd::ExecuteCMakeCommand(std::vector<std::string> const& args,
         if (cmHasLiteralPrefix(a, "--unset=")) {
           // Unset environment variable.
           cmSystemTools::UnPutEnv(a.substr(8));
+        } else if (cmHasLiteralPrefix(a, "--from-file-v1=")) {
+          std::string filename = a.substr(15);
+          std::ifstream envFile(filename);
+          if (!envFile) {
+            std::cerr << "cmake -E env_file: failed to open file " << filename
+                      << std::endl;
+            return 1;
+          }
+
+          std::string line;
+          while (std::getline(envFile, line)) {
+            if (!line.empty()) {
+              cmSystemTools::PutEnv(line);
+            }
+          }
         } else if (!a.empty() && a[0] == '-') {
           // Environment variable and command names cannot start in '-',
           // so this must be an unknown option.
