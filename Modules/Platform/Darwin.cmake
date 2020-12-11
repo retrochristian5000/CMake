@@ -234,3 +234,9 @@ list(APPEND CMAKE_SYSTEM_PREFIX_PATH
   /sw        # Fink
   /opt/local # MacPorts
   )
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
+  list(APPEND CMAKE_SYSTEM_PREFIX_PATH
+    /opt/homebrew # Brew on Apple Silicon
+    )
+endif()
