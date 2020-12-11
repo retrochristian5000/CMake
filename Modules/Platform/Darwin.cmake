@@ -233,4 +233,5 @@ endif()
 list(APPEND CMAKE_SYSTEM_PREFIX_PATH
   /sw        # Fink
   /opt/local # MacPorts
+  /opt/homebrew # Brew on Apple Silicon
   )
