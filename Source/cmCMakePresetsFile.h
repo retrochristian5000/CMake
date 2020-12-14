@@ -48,6 +48,13 @@ public:
     bool User;
     std::string DisplayName;
     std::string Description;
+
+    std::map<std::string, cm::optional<std::string>> Environment;
+  };
+
+  class ConfigurePreset : Preset
+  {
+  public:
     std::string Generator;
     std::string Architecture;
     cm::optional<ArchToolsetStrategy> ArchitectureStrategy;
@@ -56,7 +63,6 @@ public:
     std::string BinaryDir;
 
     std::map<std::string, cm::optional<CacheVariable>> CacheVariables;
-    std::map<std::string, cm::optional<std::string>> Environment;
 
     cm::optional<bool> WarnDev;
     cm::optional<bool> ErrorDev;
@@ -69,6 +75,127 @@ public:
     cm::optional<bool> DebugOutput;
     cm::optional<bool> DebugTryCompile;
     cm::optional<bool> DebugFind;
+  };
+
+  class BuildPreset : Preset
+  {
+  public:
+    std::string ConfigurePreset;
+    bool InheritConfigureEnvironment;
+    cm::optional<int> Jobs;
+    std::vector<std::string> Targets;
+    std::string Configuration;
+    bool CleanFirst;
+    bool Verbose;
+    std::vector<std::string> NativeToolOptions;
+  };
+
+  class TestPreset : Preset
+  {
+  public:
+    struct Output
+    {
+      enum class Verbosity
+      {
+        Default,
+        Verbose,
+        Extra
+      };
+
+      bool ShortProgress;
+      Verbosity Verbosity;
+      bool Debug;
+      bool OutputOnFailure;
+      bool Quiet;
+      std::string OutputLogFile;
+      bool LabelSummary;
+      bool SubprojectSummary;
+      cm::optional<int> MaxPassedTestOutputSize;
+      cm::optional<int> MaxFailedTestOutputSize;
+      cm::optional<int> MaxTestNameWidth;
+    };
+
+    struct FilterInclude
+    {
+      struct Index
+      {
+        cm::optional<int> Start;
+        cm::optional<int> End;
+        cm::optional<int> Stride;
+        std::vector<int> SpecificTests;
+        bool UseUnion;
+      };
+
+      std::string Name;
+      std::string Label;
+      Index Index;
+    };
+
+    struct FilterExclude
+    {
+      struct Fixtures
+      {
+        std::string Any;
+        std::string Setup;
+        std::string Cleanup;
+      };
+
+      std::string Name;
+      std::string Label;
+      Fixtures Fixtures;
+    };
+
+    struct Execution
+    {
+      enum class ShowOnly
+      {
+        Human,
+        JsonV1
+      };
+
+      struct Repeat
+      {
+        enum class Mode
+        {
+          UntilFail,
+          UntilPass,
+          AfterTimeout
+        };
+
+        Mode Mode;
+        int Count;
+      };
+
+      enum class NoTestsAction
+      {
+        Default,
+        Error,
+        Ignore
+      };
+
+      bool StopOnFailure;
+      bool EnableFailover;
+      cm::optional<int> Jobs;
+      std::string ResourceSpecFile;
+      cm::optional<int> TestLoad;
+      ShowOnly ShowOnly;
+      bool RerunFailed;
+
+      Repeat Repeat;
+      cm::optional<bool> InteractiveDebugging;
+      bool ScheduleRandom;
+      cm::optional<int> Timeout;
+      NoTestsAction NoTestsAction;
+    };
+
+    std::string ConfigurePreset;
+    bool InheritConfigureEnvironment;
+    std::string Configuration;
+    bool OverwriteConfigurationFile;
+    Output Output;
+    FilterInclude FilterInclude;
+    FilterExclude FilterExclude;
+    Execution Execution;
   };
 
   class UnexpandedPreset : public Preset
