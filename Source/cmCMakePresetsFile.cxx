@@ -28,8 +28,9 @@ enum class CycleStatus
 
 using ReadFileResult = cmCMakePresetsFile::ReadFileResult;
 using CacheVariable = cmCMakePresetsFile::CacheVariable;
-using UnexpandedPreset = cmCMakePresetsFile::UnexpandedPreset;
-using ExpandedPreset = cmCMakePresetsFile::ExpandedPreset;
+using ConfigurePreset = cmCMakePresetsFile::ConfigurePreset;
+using BuildPreset = cmCMakePresetsFile::BuildPreset;
+using TestPreset = cmCMakePresetsFile::TestPreset;
 using ArchToolsetStrategy = cmCMakePresetsFile::ArchToolsetStrategy;
 
 constexpr int MIN_VERSION = 1;
@@ -45,7 +46,9 @@ struct CMakeVersion
 struct RootPresets
 {
   CMakeVersion CMakeMinimumRequired;
-  std::vector<cmCMakePresetsFile::UnexpandedPreset> Presets;
+  std::vector<cmCMakePresetsFile::ConfigurePreset> ConfigurePresets;
+  std::vector<cmCMakePresetsFile::BuildPreset> BuildPresets;
+  std::vector<cmCMakePresetsFile::TestPreset> TestPresets;
 };
 
 cmJSONHelper<std::nullptr_t, ReadFileResult> VendorHelper(ReadFileResult error)
@@ -182,34 +185,33 @@ auto const PresetOptionalBoolHelper =
                                              PresetBoolHelper);
 
 auto const PresetWarningsHelper =
-  cmJSONObjectHelper<UnexpandedPreset, ReadFileResult>(
+  cmJSONObjectHelper<ConfigurePreset, ReadFileResult>(
     ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET, false)
-    .Bind("dev"_s, &UnexpandedPreset::WarnDev, PresetOptionalBoolHelper, false)
-    .Bind("deprecated"_s, &UnexpandedPreset::WarnDeprecated,
+    .Bind("dev"_s, &ConfigurePreset::WarnDev, PresetOptionalBoolHelper, false)
+    .Bind("deprecated"_s, &ConfigurePreset::WarnDeprecated,
           PresetOptionalBoolHelper, false)
-    .Bind("uninitialized"_s, &UnexpandedPreset::WarnUninitialized,
+    .Bind("uninitialized"_s, &ConfigurePreset::WarnUninitialized,
           PresetOptionalBoolHelper, false)
-    .Bind("unusedCli"_s, &UnexpandedPreset::WarnUnusedCli,
+    .Bind("unusedCli"_s, &ConfigurePreset::WarnUnusedCli,
           PresetOptionalBoolHelper, false)
-    .Bind("systemVars"_s, &UnexpandedPreset::WarnSystemVars,
+    .Bind("systemVars"_s, &ConfigurePreset::WarnSystemVars,
           PresetOptionalBoolHelper, false);
 
 auto const PresetErrorsHelper =
-  cmJSONObjectHelper<UnexpandedPreset, ReadFileResult>(
+  cmJSONObjectHelper<ConfigurePreset, ReadFileResult>(
     ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET, false)
-    .Bind("dev"_s, &UnexpandedPreset::ErrorDev, PresetOptionalBoolHelper,
-          false)
-    .Bind("deprecated"_s, &UnexpandedPreset::ErrorDeprecated,
+    .Bind("dev"_s, &ConfigurePreset::ErrorDev, PresetOptionalBoolHelper, false)
+    .Bind("deprecated"_s, &ConfigurePreset::ErrorDeprecated,
           PresetOptionalBoolHelper, false);
 
 auto const PresetDebugHelper =
-  cmJSONObjectHelper<UnexpandedPreset, ReadFileResult>(
+  cmJSONObjectHelper<ConfigurePreset, ReadFileResult>(
     ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET, false)
-    .Bind("output"_s, &UnexpandedPreset::DebugOutput, PresetOptionalBoolHelper,
+    .Bind("output"_s, &ConfigurePreset::DebugOutput, PresetOptionalBoolHelper,
           false)
-    .Bind("tryCompile"_s, &UnexpandedPreset::DebugTryCompile,
+    .Bind("tryCompile"_s, &ConfigurePreset::DebugTryCompile,
           PresetOptionalBoolHelper, false)
-    .Bind("find"_s, &UnexpandedPreset::DebugFind, PresetOptionalBoolHelper,
+    .Bind("find"_s, &ConfigurePreset::DebugFind, PresetOptionalBoolHelper,
           false);
 
 ReadFileResult ArchToolsetStrategyHelper(
@@ -237,18 +239,18 @@ ReadFileResult ArchToolsetStrategyHelper(
   return ReadFileResult::INVALID_PRESET;
 }
 
-std::function<ReadFileResult(UnexpandedPreset&, const Json::Value*)>
+std::function<ReadFileResult(ConfigurePreset&, const Json::Value*)>
 ArchToolsetHelper(
-  std::string UnexpandedPreset::*valueField,
-  cm::optional<ArchToolsetStrategy> UnexpandedPreset::*strategyField)
+  std::string ConfigurePreset::*valueField,
+  cm::optional<ArchToolsetStrategy> ConfigurePreset::*strategyField)
 {
   auto const objectHelper =
-    cmJSONObjectHelper<UnexpandedPreset, ReadFileResult>(
+    cmJSONObjectHelper<ConfigurePreset, ReadFileResult>(
       ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET, false)
       .Bind("value", valueField, PresetStringHelper, false)
       .Bind("strategy", strategyField, ArchToolsetStrategyHelper, false);
   return [valueField, strategyField, objectHelper](
-           UnexpandedPreset& out, const Json::Value* value) -> ReadFileResult {
+           ConfigurePreset& out, const Json::Value* value) -> ReadFileResult {
     if (!value) {
       (out.*valueField).clear();
       out.*strategyField = cm::nullopt;
@@ -270,41 +272,40 @@ ArchToolsetHelper(
 }
 
 auto const ArchitectureHelper = ArchToolsetHelper(
-  &UnexpandedPreset::Architecture, &UnexpandedPreset::ArchitectureStrategy);
+  &ConfigurePreset::Architecture, &ConfigurePreset::ArchitectureStrategy);
 auto const ToolsetHelper = ArchToolsetHelper(
-  &UnexpandedPreset::Toolset, &UnexpandedPreset::ToolsetStrategy);
+  &ConfigurePreset::Toolset, &ConfigurePreset::ToolsetStrategy);
 
 auto const PresetHelper =
-  cmJSONObjectHelper<UnexpandedPreset, ReadFileResult>(
+  cmJSONObjectHelper<ConfigurePreset, ReadFileResult>(
     ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET, false)
-    .Bind("name"_s, &UnexpandedPreset::Name, PresetStringHelper)
-    .Bind("inherits"_s, &UnexpandedPreset::Inherits, PresetInheritsHelper,
+    .Bind("name"_s, &ConfigurePreset::Name, PresetStringHelper)
+    .Bind("inherits"_s, &ConfigurePreset::Inherits, PresetInheritsHelper,
           false)
-    .Bind("hidden"_s, &UnexpandedPreset::Hidden, PresetBoolHelper, false)
+    .Bind("hidden"_s, &ConfigurePreset::Hidden, PresetBoolHelper, false)
     .Bind<std::nullptr_t>("vendor"_s, nullptr,
                           VendorHelper(ReadFileResult::INVALID_PRESET), false)
-    .Bind("displayName"_s, &UnexpandedPreset::DisplayName, PresetStringHelper,
+    .Bind("displayName"_s, &ConfigurePreset::DisplayName, PresetStringHelper,
           false)
-    .Bind("description"_s, &UnexpandedPreset::Description, PresetStringHelper,
+    .Bind("description"_s, &ConfigurePreset::Description, PresetStringHelper,
           false)
-    .Bind("generator"_s, &UnexpandedPreset::Generator, PresetStringHelper,
+    .Bind("generator"_s, &ConfigurePreset::Generator, PresetStringHelper,
           false)
     .Bind("architecture"_s, ArchitectureHelper, false)
     .Bind("toolset"_s, ToolsetHelper, false)
-    .Bind("binaryDir"_s, &UnexpandedPreset::BinaryDir, PresetStringHelper,
+    .Bind("binaryDir"_s, &ConfigurePreset::BinaryDir, PresetStringHelper,
           false)
     .Bind<std::string>("cmakeExecutable"_s, nullptr, PresetStringHelper, false)
-    .Bind("cacheVariables"_s, &UnexpandedPreset::CacheVariables,
+    .Bind("cacheVariables"_s, &ConfigurePreset::CacheVariables,
           VariablesHelper, false)
-    .Bind("environment"_s, &UnexpandedPreset::Environment,
-          EnvironmentMapHelper, false)
+    .Bind("environment"_s, &ConfigurePreset::Environment, EnvironmentMapHelper,
+          false)
     .Bind("warnings"_s, PresetWarningsHelper, false)
     .Bind("errors"_s, PresetErrorsHelper, false)
     .Bind("debug"_s, PresetDebugHelper, false);
 
-auto const PresetsHelper =
-  cmJSONVectorHelper<UnexpandedPreset, ReadFileResult>(
-    ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESETS, PresetHelper);
+auto const PresetsHelper = cmJSONVectorHelper<ConfigurePreset, ReadFileResult>(
+  ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESETS, PresetHelper);
 
 auto const CMakeVersionUIntHelper = cmJSONUIntHelper<ReadFileResult>(
   ReadFileResult::READ_OK, ReadFileResult::INVALID_VERSION);
@@ -320,7 +321,8 @@ auto const RootPresetsHelper =
   cmJSONObjectHelper<RootPresets, ReadFileResult>(
     ReadFileResult::READ_OK, ReadFileResult::INVALID_ROOT, false)
     .Bind<int>("version"_s, nullptr, VersionHelper)
-    .Bind("configurePresets"_s, &RootPresets::Presets, PresetsHelper, false)
+    .Bind("configurePresets"_s, &RootPresets::ConfigurePresets, PresetsHelper,
+          false)
     .Bind("cmakeMinimumRequired"_s, &RootPresets::CMakeMinimumRequired,
           CMakeVersionHelper, false)
     .Bind<std::nullptr_t>("vendor"_s, nullptr,
@@ -348,8 +350,9 @@ void InheritOptionalBool(cm::optional<bool>& child,
  * inheritance.
  */
 ReadFileResult VisitPreset(
-  std::map<std::string, cmCMakePresetsFile::PresetPair>& presets,
-  UnexpandedPreset& preset, std::map<std::string, CycleStatus> cycleStatus)
+  std::map<std::string, cmCMakePresetsFile::PresetPair<ConfigurePreset>>&
+    presets,
+  ConfigurePreset& preset, std::map<std::string, CycleStatus> cycleStatus)
 {
   switch (cycleStatus[preset.Name]) {
     case CycleStatus::InProgress:
@@ -435,7 +438,8 @@ ReadFileResult VisitPreset(
 }
 
 ReadFileResult ComputePresetInheritance(
-  std::map<std::string, cmCMakePresetsFile::PresetPair>& presets)
+  std::map<std::string, cmCMakePresetsFile::PresetPair<ConfigurePreset>>&
+    presets)
 {
   std::map<std::string, CycleStatus> cycleStatus;
   for (auto const& it : presets) {
@@ -487,23 +491,23 @@ enum class ExpandMacroResult
 };
 
 ExpandMacroResult VisitEnv(const cmCMakePresetsFile& file,
-                           cmCMakePresetsFile::ExpandedPreset& preset,
+                           cmCMakePresetsFile::ConfigurePreset& preset,
                            std::map<std::string, CycleStatus>& envCycles,
                            std::string& value, CycleStatus& status);
 ExpandMacroResult ExpandMacros(const cmCMakePresetsFile& file,
-                               cmCMakePresetsFile::ExpandedPreset& preset,
+                               cmCMakePresetsFile::ConfigurePreset& preset,
                                std::map<std::string, CycleStatus>& envCycles,
                                std::string& out);
 ExpandMacroResult ExpandMacro(const cmCMakePresetsFile& file,
-                              cmCMakePresetsFile::ExpandedPreset& preset,
+                              cmCMakePresetsFile::ConfigurePreset& preset,
                               std::map<std::string, CycleStatus>& envCycles,
                               std::string& out,
                               const std::string& macroNamespace,
                               const std::string& macroName);
 
 bool ExpandMacros(const cmCMakePresetsFile& file,
-                  const UnexpandedPreset& preset,
-                  cm::optional<ExpandedPreset>& out)
+                  const ConfigurePreset& preset,
+                  cm::optional<ConfigurePreset>& out)
 {
   out = preset;
 
@@ -560,7 +564,7 @@ bool ExpandMacros(const cmCMakePresetsFile& file,
 }
 
 ExpandMacroResult VisitEnv(const cmCMakePresetsFile& file,
-                           cmCMakePresetsFile::ExpandedPreset& preset,
+                           cmCMakePresetsFile::ConfigurePreset& preset,
                            std::map<std::string, CycleStatus>& envCycles,
                            std::string& value, CycleStatus& status)
 {
@@ -581,7 +585,7 @@ ExpandMacroResult VisitEnv(const cmCMakePresetsFile& file,
 }
 
 ExpandMacroResult ExpandMacros(const cmCMakePresetsFile& file,
-                               cmCMakePresetsFile::ExpandedPreset& preset,
+                               cmCMakePresetsFile::ConfigurePreset& preset,
                                std::map<std::string, CycleStatus>& envCycles,
                                std::string& out)
 {
@@ -661,7 +665,7 @@ ExpandMacroResult ExpandMacros(const cmCMakePresetsFile& file,
 }
 
 ExpandMacroResult ExpandMacro(const cmCMakePresetsFile& file,
-                              cmCMakePresetsFile::ExpandedPreset& preset,
+                              cmCMakePresetsFile::ConfigurePreset& preset,
                               std::map<std::string, CycleStatus>& envCycles,
                               std::string& out,
                               const std::string& macroNamespace,
@@ -741,11 +745,10 @@ cmCMakePresetsFile::ReadFileResult cmCMakePresetsFile::ReadProjectPresets(
 {
   bool haveOneFile = false;
   this->SourceDir = sourceDir;
-  this->Presets.clear();
-  this->PresetOrder.clear();
+  this->ClearPresets();
 
   std::vector<std::string> presetOrder;
-  std::map<std::string, PresetPair> presetMap;
+  std::map<std::string, PresetPair<ConfigurePreset>> presetMap;
 
   std::string filename = GetUserFilename(this->SourceDir);
   if (cmSystemTools::FileExists(filename)) {
@@ -781,8 +784,8 @@ cmCMakePresetsFile::ReadFileResult cmCMakePresetsFile::ReadProjectPresets(
     }
   }
 
-  this->PresetOrder = std::move(presetOrder);
-  this->Presets = std::move(presetMap);
+  this->ConfigurePresetOrder = std::move(presetOrder);
+  this->ConfigurePresets = std::move(presetMap);
   return ReadFileResult::READ_OK;
 }
 
@@ -828,7 +831,7 @@ const char* cmCMakePresetsFile::ResultToString(ReadFileResult result)
 
 cmCMakePresetsFile::ReadFileResult cmCMakePresetsFile::ReadJSONFile(
   const std::string& filename, std::vector<std::string>& presetOrder,
-  std::map<std::string, PresetPair>& presetMap, bool user)
+  std::map<std::string, PresetPair<ConfigurePreset>>& presetMap, bool user)
 {
   cmsys::ifstream fin(filename.c_str());
   if (!fin) {
@@ -870,7 +873,7 @@ cmCMakePresetsFile::ReadFileResult cmCMakePresetsFile::ReadJSONFile(
     return ReadFileResult::UNRECOGNIZED_CMAKE_VERSION;
   }
 
-  for (auto& preset : presets.Presets) {
+  for (auto& preset : presets.ConfigurePresets) {
     preset.User = user;
     if (preset.Name.empty()) {
       return ReadFileResult::INVALID_PRESET;
@@ -882,4 +885,15 @@ cmCMakePresetsFile::ReadFileResult cmCMakePresetsFile::ReadJSONFile(
   }
 
   return ReadFileResult::READ_OK;
+}
+
+void cmCMakePresetsFile::ClearPresets()
+{
+  this->ConfigurePresets.clear();
+  this->BuildPresets.clear();
+  this->TestPresets.clear();
+
+  this->ConfigurePresetOrder.clear();
+  this->BuildPresetOrder.clear();
+  this->TestPresetOrder.clear();
 }

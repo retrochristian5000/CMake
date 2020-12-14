@@ -1226,8 +1226,8 @@ void cmake::SetArgs(const std::vector<std::string>& args)
       this->PrintPresetList(settingsFile);
       return;
     }
-    auto preset = settingsFile.Presets.find(presetName);
-    if (preset == settingsFile.Presets.end()) {
+    auto preset = settingsFile.ConfigurePresets.find(presetName);
+    if (preset == settingsFile.ConfigurePresets.end()) {
       cmSystemTools::Error(cmStrCat("No such preset in ",
                                     this->GetHomeDirectory(), ": \"",
                                     presetName, '"'));
@@ -1657,9 +1657,9 @@ void cmake::PrintPresetList(const cmCMakePresetsFile& file) const
   std::vector<GeneratorInfo> generators;
   this->GetRegisteredGenerators(generators, false);
 
-  std::vector<cmCMakePresetsFile::UnexpandedPreset> presets;
-  for (auto const& p : file.PresetOrder) {
-    auto const& preset = file.Presets.at(p);
+  std::vector<cmCMakePresetsFile::ConfigurePreset> presets;
+  for (auto const& p : file.ConfigurePresetOrder) {
+    auto const& preset = file.ConfigurePresets.at(p);
     if (!preset.Unexpanded.Hidden && preset.Expanded &&
         std::find_if(generators.begin(), generators.end(),
                      [&preset](const GeneratorInfo& info) {
@@ -1677,8 +1677,8 @@ void cmake::PrintPresetList(const cmCMakePresetsFile& file) const
 
   auto longestPresetName =
     std::max_element(presets.begin(), presets.end(),
-                     [](const cmCMakePresetsFile::UnexpandedPreset& a,
-                        const cmCMakePresetsFile::UnexpandedPreset& b) {
+                     [](const cmCMakePresetsFile::ConfigurePreset& a,
+                        const cmCMakePresetsFile::ConfigurePreset& b) {
                        return a.Name.length() < b.Name.length();
                      });
   auto longestLength = longestPresetName->Name.length();

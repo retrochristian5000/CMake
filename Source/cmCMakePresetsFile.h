@@ -52,7 +52,7 @@ public:
     std::map<std::string, cm::optional<std::string>> Environment;
   };
 
-  class ConfigurePreset : Preset
+  class ConfigurePreset : public Preset
   {
   public:
     std::string Generator;
@@ -77,7 +77,7 @@ public:
     cm::optional<bool> DebugFind;
   };
 
-  class BuildPreset : Preset
+  class BuildPreset : public Preset
   {
   public:
     std::string ConfigurePreset;
@@ -90,7 +90,7 @@ public:
     std::vector<std::string> NativeToolOptions;
   };
 
-  class TestPreset : Preset
+  class TestPreset : public Preset
   {
   public:
     struct Output
@@ -198,48 +198,23 @@ public:
     Execution Execution;
   };
 
-  class UnexpandedPreset : public Preset
-  {
-  public:
-    using Preset::Preset;
-
-    UnexpandedPreset() = default;
-    UnexpandedPreset(const Preset& preset)
-      : Preset(preset)
-    {
-    }
-    UnexpandedPreset(Preset&& preset)
-      : Preset(std::move(preset))
-    {
-    }
-  };
-
-  class ExpandedPreset : public Preset
-  {
-  public:
-    using Preset::Preset;
-
-    ExpandedPreset() = default;
-    ExpandedPreset(const Preset& preset)
-      : Preset(preset)
-    {
-    }
-    ExpandedPreset(Preset&& preset)
-      : Preset(std::move(preset))
-    {
-    }
-  };
-
+  template <class T>
   class PresetPair
   {
   public:
-    UnexpandedPreset Unexpanded;
-    cm::optional<ExpandedPreset> Expanded;
+    T Unexpanded;
+    cm::optional<T> Expanded;
   };
 
+  std::map<std::string, PresetPair<ConfigurePreset>> ConfigurePresets;
+  std::map<std::string, PresetPair<BuildPreset>> BuildPresets;
+  std::map<std::string, PresetPair<TestPreset>> TestPresets;
+
+  std::vector<std::string> ConfigurePresetOrder;
+  std::vector<std::string> BuildPresetOrder;
+  std::vector<std::string> TestPresetOrder;
+
   std::string SourceDir;
-  std::map<std::string, PresetPair> Presets;
-  std::vector<std::string> PresetOrder;
 
   enum class ReadFileResult
   {
@@ -268,8 +243,8 @@ public:
   static const char* ResultToString(ReadFileResult result);
 
 private:
-  ReadFileResult ReadJSONFile(const std::string& filename,
-                              std::vector<std::string>& presetOrder,
-                              std::map<std::string, PresetPair>& presetMap,
-                              bool user);
+  ReadFileResult ReadJSONFile(
+    const std::string& filename, std::vector<std::string>& presetOrder,
+    std::map<std::string, PresetPair<ConfigurePreset>>& presetMap, bool user);
+  void ClearPresets();
 };
