@@ -180,9 +180,21 @@ ReadFileResult PresetInheritsHelper(std::vector<std::string>& out,
 auto const PresetBoolHelper = cmJSONBoolHelper<ReadFileResult>(
   ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET);
 
+auto const PresetBoolHelperDefaultTrue = cmJSONBoolHelper<ReadFileResult>(
+  ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET);
+
 auto const PresetOptionalBoolHelper =
   cmJSONOptionalHelper<bool, ReadFileResult>(ReadFileResult::READ_OK,
                                              PresetBoolHelper);
+
+auto const PresetIntHelper = cmJSONIntHelper<ReadFileResult>(
+  ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET);
+
+auto const PresetOptionalIntHelper = cmJSONOptionalHelper<int, ReadFileResult>(
+  ReadFileResult::READ_OK, PresetIntHelper);
+
+auto const PresetVectorIntHelper = cmJSONVectorHelper<int, ReadFileResult>(
+  ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET, PresetIntHelper);
 
 auto const PresetWarningsHelper =
   cmJSONObjectHelper<ConfigurePreset, ReadFileResult>(
@@ -276,7 +288,7 @@ auto const ArchitectureHelper = ArchToolsetHelper(
 auto const ToolsetHelper = ArchToolsetHelper(
   &ConfigurePreset::Toolset, &ConfigurePreset::ToolsetStrategy);
 
-auto const PresetHelper =
+auto const ConfigurePresetHelper =
   cmJSONObjectHelper<ConfigurePreset, ReadFileResult>(
     ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET, false)
     .Bind("name"_s, &ConfigurePreset::Name, PresetStringHelper)
@@ -304,8 +316,285 @@ auto const PresetHelper =
     .Bind("errors"_s, PresetErrorsHelper, false)
     .Bind("debug"_s, PresetDebugHelper, false);
 
-auto const PresetsHelper = cmJSONVectorHelper<ConfigurePreset, ReadFileResult>(
-  ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESETS, PresetHelper);
+auto const BuildPresetHelper =
+  cmJSONObjectHelper<BuildPreset, ReadFileResult>(
+    ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET, false)
+    .Bind("name"_s, &BuildPreset::Name, PresetStringHelper)
+    .Bind("inherits"_s, &BuildPreset::Inherits, PresetInheritsHelper, false)
+    .Bind("hidden"_s, &BuildPreset::Hidden, PresetBoolHelper, false)
+    .Bind<std::nullptr_t>("vendor"_s, nullptr,
+                          VendorHelper(ReadFileResult::INVALID_PRESET), false)
+    .Bind("displayName"_s, &BuildPreset::DisplayName, PresetStringHelper,
+          false)
+    .Bind("description"_s, &BuildPreset::Description, PresetStringHelper,
+          false)
+    .Bind("environment"_s, &BuildPreset::Environment, EnvironmentMapHelper,
+          false)
+    .Bind("configurePreset"_s, &BuildPreset::ConfigurePreset,
+          PresetStringHelper, false)
+    .Bind("inheritConfigureEnvironment"_s,
+          &BuildPreset::InheritConfigureEnvironment,
+          PresetBoolHelperDefaultTrue, false)
+    .Bind("jobs"_s, &BuildPreset::Jobs, PresetOptionalIntHelper, false)
+    .Bind("targets"_s, &BuildPreset::Targets, PresetVectorStringHelper, false)
+    .Bind("configuration"_s, &BuildPreset::Configuration, PresetStringHelper,
+          false)
+    .Bind("cleanFirst"_s, &BuildPreset::CleanFirst, PresetBoolHelper, false)
+    .Bind("verbose"_s, &BuildPreset::Verbose, PresetBoolHelper, false)
+    .Bind("nativeToolOptions"_s, &BuildPreset::NativeToolOptions,
+          PresetVectorStringHelper, false);
+
+ReadFileResult TestPresetOutputVerbosityHelper(
+  TestPreset::OutputOptions::VerbosityEnum& out, const Json::Value* value)
+{
+  if (!value) {
+    out = TestPreset::OutputOptions::VerbosityEnum::Default;
+    return ReadFileResult::READ_OK;
+  }
+
+  if (!value->isString()) {
+    return ReadFileResult::INVALID_PRESET;
+  }
+
+  if (value->asString() == "default") {
+    out = TestPreset::OutputOptions::VerbosityEnum::Default;
+    return ReadFileResult::READ_OK;
+  } else if (value->asString() == "verbose") {
+    out = TestPreset::OutputOptions::VerbosityEnum::Verbose;
+    return ReadFileResult::READ_OK;
+  } else if (value->asString() == "extra") {
+    out = TestPreset::OutputOptions::VerbosityEnum::Extra;
+    return ReadFileResult::READ_OK;
+  }
+
+  return ReadFileResult::INVALID_PRESET;
+}
+
+auto const TestPresetOutputHelper =
+  cmJSONObjectHelper<TestPreset::OutputOptions, ReadFileResult>(
+    ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET, false)
+    .Bind("shortProgress"_s, &TestPreset::OutputOptions::ShortProgress,
+          PresetBoolHelper, false)
+    .Bind("verbosity"_s, &TestPreset::OutputOptions::Verbosity,
+          TestPresetOutputVerbosityHelper, false)
+    .Bind("debug"_s, &TestPreset::OutputOptions::Debug, PresetBoolHelper,
+          false)
+    .Bind("outputOnFailure"_s, &TestPreset::OutputOptions::OutputOnFailure,
+          PresetBoolHelper, false)
+    .Bind("quiet"_s, &TestPreset::OutputOptions::Quiet, PresetBoolHelper,
+          false)
+    .Bind("outputLogFile"_s, &TestPreset::OutputOptions::OutputLogFile,
+          PresetStringHelper, false)
+    .Bind("labelSummary"_s, &TestPreset::OutputOptions::LabelSummary,
+          PresetBoolHelper, false)
+    .Bind("subprojectSummary"_s, &TestPreset::OutputOptions::SubprojectSummary,
+          PresetBoolHelper, false)
+    .Bind("maxPassedTestOutputSize"_s,
+          &TestPreset::OutputOptions::MaxPassedTestOutputSize,
+          PresetOptionalIntHelper, false)
+    .Bind("maxFailedTestOutputSize"_s,
+          &TestPreset::OutputOptions::MaxFailedTestOutputSize,
+          PresetOptionalIntHelper, false)
+    .Bind("maxTestNameWidth"_s, &TestPreset::OutputOptions::MaxTestNameWidth,
+          PresetOptionalIntHelper, false);
+
+auto const TestPresetFilterIncludeIndexHelper =
+  cmJSONObjectHelper<TestPreset::Include::IndexOptions, ReadFileResult>(
+    ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET)
+    .Bind("start"_s, &TestPreset::Include::IndexOptions::Start,
+          PresetOptionalIntHelper, false)
+    .Bind("end"_s, &TestPreset::Include::IndexOptions::End,
+          PresetOptionalIntHelper, false)
+    .Bind("stride"_s, &TestPreset::Include::IndexOptions::Stride,
+          PresetOptionalIntHelper, false)
+    .Bind("specificTests"_s, &TestPreset::Include::IndexOptions::SpecificTests,
+          PresetVectorIntHelper, false)
+    .Bind("useUnion"_s, &TestPreset::Include::IndexOptions::UseUnion,
+          PresetBoolHelper, false);
+
+auto const TestPresetFilterIncludeHelper =
+  cmJSONObjectHelper<TestPreset::Include, ReadFileResult>(
+    ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET)
+    .Bind("name"_s, &TestPreset::Include::Name, PresetStringHelper, false)
+    .Bind("label"_s, &TestPreset::Include::Label, PresetStringHelper, false)
+    .Bind("index"_s, &TestPreset::Include::Index,
+          TestPresetFilterIncludeIndexHelper, false);
+
+auto const TestPresetFilterExcludeFixturesHelper =
+  cmJSONObjectHelper<TestPreset::Exclude::FixturesOptions, ReadFileResult>(
+    ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET)
+    .Bind("any"_s, &TestPreset::Exclude::FixturesOptions::Any,
+          PresetStringHelper, false)
+    .Bind("setup"_s, &TestPreset::Exclude::FixturesOptions::Setup,
+          PresetStringHelper, false)
+    .Bind("cleanup"_s, &TestPreset::Exclude::FixturesOptions::Cleanup,
+          PresetStringHelper, false);
+
+auto const TestPresetFilterExcludeHelper =
+  cmJSONObjectHelper<TestPreset::Exclude, ReadFileResult>(
+    ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET)
+    .Bind("name"_s, &TestPreset::Exclude::Name, PresetStringHelper, false)
+    .Bind("label"_s, &TestPreset::Exclude::Label, PresetStringHelper, false)
+    .Bind("fixtures"_s, &TestPreset::Exclude::Fixtures,
+          TestPresetFilterExcludeFixturesHelper, false);
+
+ReadFileResult TestPresetExecutionShowOnlyHelper(
+  cm::optional<TestPreset::ExecutionOptions::ShowOnlyEnum>& out,
+  const Json::Value* value)
+{
+  if (!value) {
+    out = cm::nullopt;
+    return ReadFileResult::READ_OK;
+  }
+
+  if (!value->isString()) {
+    return ReadFileResult::INVALID_PRESET;
+  }
+
+  if (value->asString() == "human") {
+    out = TestPreset::ExecutionOptions::ShowOnlyEnum::Human;
+    return ReadFileResult::READ_OK;
+  } else if (value->asString() == "json-v1") {
+    out = TestPreset::ExecutionOptions::ShowOnlyEnum::JsonV1;
+    return ReadFileResult::READ_OK;
+  }
+
+  return ReadFileResult::INVALID_PRESET;
+}
+
+ReadFileResult TestPresetExecutionModeHelper(
+  TestPreset::ExecutionOptions::RepeatOptions::ModeEnum& out,
+  const Json::Value* value)
+{
+  if (!value) {
+    return ReadFileResult::READ_OK;
+  }
+
+  if (!value->isString()) {
+    return ReadFileResult::INVALID_PRESET;
+  }
+
+  if (value->asString() == "until-fail") {
+    out = TestPreset::ExecutionOptions::RepeatOptions::ModeEnum::UntilFail;
+    return ReadFileResult::READ_OK;
+  } else if (value->asString() == "until-pass") {
+    out = TestPreset::ExecutionOptions::RepeatOptions::ModeEnum::UntilPass;
+    return ReadFileResult::READ_OK;
+  } else if (value->asString() == "after-timeout") {
+    out = TestPreset::ExecutionOptions::RepeatOptions::ModeEnum::AfterTimeout;
+    return ReadFileResult::READ_OK;
+  }
+
+  return ReadFileResult::INVALID_PRESET;
+}
+
+auto const TestPresetExecutionRepeatHelper =
+  cmJSONObjectHelper<TestPreset::ExecutionOptions::RepeatOptions,
+                     ReadFileResult>(ReadFileResult::READ_OK,
+                                     ReadFileResult::INVALID_PRESET)
+    .Bind("mode"_s, &TestPreset::ExecutionOptions::RepeatOptions::Mode,
+          TestPresetExecutionModeHelper, true)
+    .Bind("count"_s, &TestPreset::ExecutionOptions::RepeatOptions::Count,
+          PresetIntHelper, true);
+
+ReadFileResult TestPresetExecutionNoTestsActionHelper(
+  TestPreset::ExecutionOptions::NoTestsActionEnum& out,
+  const Json::Value* value)
+{
+  if (!value) {
+    out = TestPreset::ExecutionOptions::NoTestsActionEnum::Default;
+    return ReadFileResult::READ_OK;
+  }
+
+  if (!value->isString()) {
+    return ReadFileResult::INVALID_PRESET;
+  }
+
+  if (value->asString() == "default") {
+    out = TestPreset::ExecutionOptions::NoTestsActionEnum::Default;
+    return ReadFileResult::READ_OK;
+  } else if (value->asString() == "error") {
+    out = TestPreset::ExecutionOptions::NoTestsActionEnum::Error;
+    return ReadFileResult::READ_OK;
+  } else if (value->asString() == "ignore") {
+    out = TestPreset::ExecutionOptions::NoTestsActionEnum::Ignore;
+    return ReadFileResult::READ_OK;
+  }
+
+  return ReadFileResult::INVALID_PRESET;
+}
+
+auto const TestPresetExecutionHelper =
+  cmJSONObjectHelper<TestPreset::ExecutionOptions, ReadFileResult>(
+    ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET)
+    .Bind("StopOnFailure"_s, &TestPreset::ExecutionOptions::StopOnFailure,
+          PresetBoolHelper, false)
+    .Bind("EnableFailover"_s, &TestPreset::ExecutionOptions::EnableFailover,
+          PresetBoolHelper, false)
+    .Bind("jobs"_s, &TestPreset::ExecutionOptions::Jobs,
+          PresetOptionalIntHelper, false)
+    .Bind("resourceSpecFile"_s,
+          &TestPreset::ExecutionOptions::ResourceSpecFile, PresetStringHelper,
+          false)
+    .Bind("testLoad"_s, &TestPreset::ExecutionOptions::TestLoad,
+          PresetOptionalIntHelper, false)
+    .Bind("showOnly"_s, &TestPreset::ExecutionOptions::ShowOnly,
+          TestPresetExecutionShowOnlyHelper, false)
+    .Bind("rerunFailed"_s, &TestPreset::ExecutionOptions::RerunFailed,
+          PresetBoolHelper, false)
+    .Bind("repeat"_s, &TestPreset::ExecutionOptions::Repeat,
+          TestPresetExecutionRepeatHelper, false)
+    .Bind("interactiveDebugging"_s,
+          &TestPreset::ExecutionOptions::InteractiveDebugging,
+          PresetOptionalBoolHelper, false)
+    .Bind("scheduleRandom"_s, &TestPreset::ExecutionOptions::ScheduleRandom,
+          PresetBoolHelper, false)
+    .Bind("timeout"_s, &TestPreset::ExecutionOptions::Timeout,
+          PresetOptionalIntHelper, false)
+    .Bind("noTestsAction"_s, &TestPreset::ExecutionOptions::NoTestsAction,
+          TestPresetExecutionNoTestsActionHelper, false);
+
+auto const TestPresetHelper =
+  cmJSONObjectHelper<TestPreset, ReadFileResult>(
+    ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET, false)
+    .Bind("name"_s, &TestPreset::Name, PresetStringHelper)
+    .Bind("inherits"_s, &TestPreset::Inherits, PresetInheritsHelper, false)
+    .Bind("hidden"_s, &TestPreset::Hidden, PresetBoolHelper, false)
+    .Bind<std::nullptr_t>("vendor"_s, nullptr,
+                          VendorHelper(ReadFileResult::INVALID_PRESET), false)
+    .Bind("displayName"_s, &TestPreset::DisplayName, PresetStringHelper, false)
+    .Bind("description"_s, &TestPreset::Description, PresetStringHelper, false)
+    .Bind("environment"_s, &TestPreset::Environment, EnvironmentMapHelper,
+          false)
+    .Bind("configurePreset"_s, &TestPreset::ConfigurePreset,
+          PresetStringHelper, false)
+    .Bind("inheritConfigureEnvironment"_s,
+          &TestPreset::InheritConfigureEnvironment,
+          PresetBoolHelperDefaultTrue, false)
+    .Bind("configuration"_s, &TestPreset::Configuration, PresetStringHelper,
+          false)
+    .Bind("overwriteConfigurationFile"_s,
+          &TestPreset::OverwriteConfigurationFile, PresetBoolHelper, false)
+    .Bind("output"_s, &TestPreset::Output, TestPresetOutputHelper, false)
+    .Bind("include"_s, &TestPreset::FilterInclude,
+          TestPresetFilterIncludeHelper, false)
+    .Bind("exclude"_s, &TestPreset::FilterExclude,
+          TestPresetFilterExcludeHelper, false)
+    .Bind("execution"_s, &TestPreset::Execution, TestPresetExecutionHelper,
+          false);
+
+auto const ConfigurePresetsHelper =
+  cmJSONVectorHelper<ConfigurePreset, ReadFileResult>(
+    ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESETS,
+    ConfigurePresetHelper);
+
+auto const BuildPresetsHelper =
+  cmJSONVectorHelper<BuildPreset, ReadFileResult>(
+    ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESETS,
+    BuildPresetHelper);
+
+auto const TestPresetsHelper = cmJSONVectorHelper<TestPreset, ReadFileResult>(
+  ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESETS, TestPresetHelper);
 
 auto const CMakeVersionUIntHelper = cmJSONUIntHelper<ReadFileResult>(
   ReadFileResult::READ_OK, ReadFileResult::INVALID_VERSION);
@@ -321,8 +610,11 @@ auto const RootPresetsHelper =
   cmJSONObjectHelper<RootPresets, ReadFileResult>(
     ReadFileResult::READ_OK, ReadFileResult::INVALID_ROOT, false)
     .Bind<int>("version"_s, nullptr, VersionHelper)
-    .Bind("configurePresets"_s, &RootPresets::ConfigurePresets, PresetsHelper,
+    .Bind("configurePresets"_s, &RootPresets::ConfigurePresets,
+          ConfigurePresetsHelper, false)
+    .Bind("buildPresets"_s, &RootPresets::BuildPresets, BuildPresetsHelper,
           false)
+    .Bind("testPresets"_s, &RootPresets::TestPresets, TestPresetsHelper, false)
     .Bind("cmakeMinimumRequired"_s, &RootPresets::CMakeMinimumRequired,
           CMakeVersionHelper, false)
     .Bind<std::nullptr_t>("vendor"_s, nullptr,
@@ -743,16 +1035,26 @@ std::string cmCMakePresetsFile::GetUserFilename(const std::string& sourceDir)
 cmCMakePresetsFile::ReadFileResult cmCMakePresetsFile::ReadProjectPresets(
   const std::string& sourceDir, bool allowNoFiles)
 {
-  bool haveOneFile = false;
   this->SourceDir = sourceDir;
   this->ClearPresets();
 
-  std::vector<std::string> presetOrder;
-  std::map<std::string, PresetPair<ConfigurePreset>> presetMap;
+  auto result = this->ReadProjectPresetsInternal(sourceDir, allowNoFiles);
+  if (result != ReadFileResult::READ_OK) {
+    this->ClearPresets();
+  }
+
+  return result;
+}
+
+cmCMakePresetsFile::ReadFileResult
+cmCMakePresetsFile::ReadProjectPresetsInternal(const std::string& sourceDir,
+                                               bool allowNoFiles)
+{
+  bool haveOneFile = false;
 
   std::string filename = GetUserFilename(this->SourceDir);
   if (cmSystemTools::FileExists(filename)) {
-    auto result = this->ReadJSONFile(filename, presetOrder, presetMap, true);
+    auto result = this->ReadJSONFile(filename, true);
     if (result != ReadFileResult::READ_OK) {
       return result;
     }
@@ -761,7 +1063,7 @@ cmCMakePresetsFile::ReadFileResult cmCMakePresetsFile::ReadProjectPresets(
 
   filename = GetFilename(this->SourceDir);
   if (cmSystemTools::FileExists(filename)) {
-    auto result = this->ReadJSONFile(filename, presetOrder, presetMap, false);
+    auto result = this->ReadJSONFile(filename, false);
     if (result != ReadFileResult::READ_OK) {
       return result;
     }
@@ -773,19 +1075,17 @@ cmCMakePresetsFile::ReadFileResult cmCMakePresetsFile::ReadProjectPresets(
                         : ReadFileResult::FILE_NOT_FOUND;
   }
 
-  auto result = ComputePresetInheritance(presetMap);
+  auto result = ComputePresetInheritance(this->ConfigurePresets);
   if (result != ReadFileResult::READ_OK) {
     return result;
   }
 
-  for (auto& it : presetMap) {
+  for (auto& it : this->ConfigurePresets) {
     if (!ExpandMacros(*this, it.second.Unexpanded, it.second.Expanded)) {
       return ReadFileResult::INVALID_MACRO_EXPANSION;
     }
   }
 
-  this->ConfigurePresetOrder = std::move(presetOrder);
-  this->ConfigurePresets = std::move(presetMap);
   return ReadFileResult::READ_OK;
 }
 
@@ -830,8 +1130,7 @@ const char* cmCMakePresetsFile::ResultToString(ReadFileResult result)
 }
 
 cmCMakePresetsFile::ReadFileResult cmCMakePresetsFile::ReadJSONFile(
-  const std::string& filename, std::vector<std::string>& presetOrder,
-  std::map<std::string, PresetPair<ConfigurePreset>>& presetMap, bool user)
+  const std::string& filename, bool user)
 {
   cmsys::ifstream fin(filename.c_str());
   if (!fin) {
@@ -878,10 +1177,36 @@ cmCMakePresetsFile::ReadFileResult cmCMakePresetsFile::ReadJSONFile(
     if (preset.Name.empty()) {
       return ReadFileResult::INVALID_PRESET;
     }
-    if (!presetMap.insert({ preset.Name, { preset, cm::nullopt } }).second) {
+    if (!this->ConfigurePresets
+           .insert({ preset.Name, { preset, cm::nullopt } })
+           .second) {
       return ReadFileResult::DUPLICATE_PRESETS;
     }
-    presetOrder.push_back(preset.Name);
+    this->ConfigurePresetOrder.push_back(preset.Name);
+  }
+
+  for (auto& preset : presets.BuildPresets) {
+    preset.User = user;
+    if (preset.Name.empty()) {
+      return ReadFileResult::INVALID_PRESET;
+    }
+    if (!this->BuildPresets.insert({ preset.Name, { preset, cm::nullopt } })
+           .second) {
+      return ReadFileResult::DUPLICATE_PRESETS;
+    }
+    this->BuildPresetOrder.push_back(preset.Name);
+  }
+
+  for (auto& preset : presets.TestPresets) {
+    preset.User = user;
+    if (preset.Name.empty()) {
+      return ReadFileResult::INVALID_PRESET;
+    }
+    if (!this->TestPresets.insert({ preset.Name, { preset, cm::nullopt } })
+           .second) {
+      return ReadFileResult::DUPLICATE_PRESETS;
+    }
+    this->TestPresetOrder.push_back(preset.Name);
   }
 
   return ReadFileResult::READ_OK;

@@ -93,9 +93,9 @@ public:
   class TestPreset : public Preset
   {
   public:
-    struct Output
+    struct OutputOptions
     {
-      enum class Verbosity
+      enum class VerbosityEnum
       {
         Default,
         Verbose,
@@ -103,7 +103,7 @@ public:
       };
 
       bool ShortProgress;
-      Verbosity Verbosity;
+      VerbosityEnum Verbosity;
       bool Debug;
       bool OutputOnFailure;
       bool Quiet;
@@ -115,9 +115,9 @@ public:
       cm::optional<int> MaxTestNameWidth;
     };
 
-    struct FilterInclude
+    struct Include
     {
-      struct Index
+      struct IndexOptions
       {
         cm::optional<int> Start;
         cm::optional<int> End;
@@ -128,12 +128,12 @@ public:
 
       std::string Name;
       std::string Label;
-      Index Index;
+      IndexOptions Index;
     };
 
-    struct FilterExclude
+    struct Exclude
     {
-      struct Fixtures
+      struct FixturesOptions
       {
         std::string Any;
         std::string Setup;
@@ -142,31 +142,31 @@ public:
 
       std::string Name;
       std::string Label;
-      Fixtures Fixtures;
+      FixturesOptions Fixtures;
     };
 
-    struct Execution
+    struct ExecutionOptions
     {
-      enum class ShowOnly
+      enum class ShowOnlyEnum
       {
         Human,
         JsonV1
       };
 
-      struct Repeat
+      struct RepeatOptions
       {
-        enum class Mode
+        enum class ModeEnum
         {
           UntilFail,
           UntilPass,
           AfterTimeout
         };
 
-        Mode Mode;
+        ModeEnum Mode;
         int Count;
       };
 
-      enum class NoTestsAction
+      enum class NoTestsActionEnum
       {
         Default,
         Error,
@@ -178,24 +178,24 @@ public:
       cm::optional<int> Jobs;
       std::string ResourceSpecFile;
       cm::optional<int> TestLoad;
-      ShowOnly ShowOnly;
+      cm::optional<ShowOnlyEnum> ShowOnly;
       bool RerunFailed;
 
-      Repeat Repeat;
+      RepeatOptions Repeat;
       cm::optional<bool> InteractiveDebugging;
       bool ScheduleRandom;
       cm::optional<int> Timeout;
-      NoTestsAction NoTestsAction;
+      NoTestsActionEnum NoTestsAction;
     };
 
     std::string ConfigurePreset;
     bool InheritConfigureEnvironment;
     std::string Configuration;
     bool OverwriteConfigurationFile;
-    Output Output;
-    FilterInclude FilterInclude;
-    FilterExclude FilterExclude;
-    Execution Execution;
+    OutputOptions Output;
+    Include FilterInclude;
+    Exclude FilterExclude;
+    ExecutionOptions Execution;
   };
 
   template <class T>
@@ -243,8 +243,8 @@ public:
   static const char* ResultToString(ReadFileResult result);
 
 private:
-  ReadFileResult ReadJSONFile(
-    const std::string& filename, std::vector<std::string>& presetOrder,
-    std::map<std::string, PresetPair<ConfigurePreset>>& presetMap, bool user);
+  ReadFileResult ReadProjectPresetsInternal(const std::string& sourceDir,
+                                            bool allowNoFiles);
+  ReadFileResult ReadJSONFile(const std::string& filename, bool user);
   void ClearPresets();
 };
