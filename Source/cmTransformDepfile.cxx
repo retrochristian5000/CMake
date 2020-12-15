@@ -79,24 +79,11 @@ bool cmTransformDepfile(cmDepfileFormat format, const std::string& prefix,
 {
   cmGccDepfileContent content;
   if (cmSystemTools::FileExists(infile)) {
-    auto result = cmReadGccDepfile(infile.c_str());
+    auto result = cmReadGccDepfile(infile.c_str(), prefix);
     if (!result) {
       return false;
     }
     content = *std::move(result);
-  }
-
-  for (auto& dep : content) {
-    for (auto& rule : dep.rules) {
-      if (!cmSystemTools::FileIsFullPath(rule)) {
-        rule = cmStrCat(prefix, rule);
-      }
-    }
-    for (auto& path : dep.paths) {
-      if (!cmSystemTools::FileIsFullPath(path)) {
-        path = cmStrCat(prefix, path);
-      }
-    }
   }
 
   cmsys::ofstream fout(outfile.c_str());
