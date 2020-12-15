@@ -1509,16 +1509,16 @@ void CMakeSetupDialog::doCustomThemeDialog()
 void CMakeSetupDialog::restoreCustomTheme()
 {
   QString themeContent;
-  {
-    QSettings settings;
-    settings.beginGroup("Settings/StartPath");
-    const QString customThemeFileName =
-      settings.value("CustomThemeFileName").toString();
-    QFile themeFile(customThemeFileName);
-    if (themeFile.exists()) {
-      themeFile.open(QFile::ReadOnly | QFile::Text);
-      themeContent = QLatin1String(themeFile.readAll());
-    }
+
+  QSettings settings;
+  settings.beginGroup("Settings/StartPath");
+  const QString customThemeFileName =
+    settings.value("CustomThemeFileName").toString();
+  QFile themeFile(customThemeFileName);
+  if (themeFile.exists()) {
+    themeFile.open(QFile::ReadOnly | QFile::Text);
+    themeContent = QLatin1String(themeFile.readAll());
   }
+
   this->setStyleSheet(themeContent);
 }
