@@ -1509,7 +1509,6 @@ void CMakeSetupDialog::doCustomThemeDialog()
 void CMakeSetupDialog::restoreCustomTheme()
 {
   QString themeContent;
-
   QSettings settings;
   settings.beginGroup("Settings/StartPath");
   const QString customThemeFileName =
@@ -1519,6 +1518,5 @@ void CMakeSetupDialog::restoreCustomTheme()
     themeFile.open(QFile::ReadOnly | QFile::Text);
     themeContent = QLatin1String(themeFile.readAll());
   }
-
   this->setStyleSheet(themeContent);
 }
