@@ -191,6 +191,10 @@ CMakeSetupDialog::CMakeSetupDialog()
     OptionsMenu->addAction(tr("&Warn Uninitialized (--warn-uninitialized)"));
   this->WarnUninitializedAction->setCheckable(true);
 
+  a = OptionsMenu->addAction(tr("Custom &Theme"));
+  QObject::connect(a, &QAction::triggered, this,
+                   &CMakeSetupDialog::doCustomThemeDialog);
+
   QAction* debugAction = OptionsMenu->addAction(tr("&Debug Output"));
   debugAction->setCheckable(true);
   QObject::connect(debugAction, &QAction::toggled, this,
@@ -354,6 +358,8 @@ void CMakeSetupDialog::initialize()
   this->TaskbarButton = new QWinTaskbarButton(this);
   this->TaskbarButton->setWindow(this->windowHandle());
 #endif
+
+  this->restoreCustomTheme();
 }
 
 CMakeSetupDialog::~CMakeSetupDialog()
@@ -1477,4 +1483,42 @@ void CMakeSetupDialog::doWarningMessagesDialog()
 {
   WarningMessagesDialog dialog(this, this->CMakeThread->cmakeInstance());
   dialog.exec();
+}
+
+void CMakeSetupDialog::doCustomThemeDialog()
+{
+  QSettings settings;
+  settings.beginGroup("Settings/StartPath");
+
+  const QString oldThemeFileName =
+    settings.value("CustomThemeFileName").toString();
+
+  QString newThemeFileName =
+    QFileDialog::getOpenFileName(this, tr("Load Custom Theme"),
+                                 oldThemeFileName, tr("Style Sheet (*.qss)"));
+  // compare with old theme
+  if (oldThemeFileName == newThemeFileName) {
+    return;
+  }
+  settings.setValue("CustomThemeFileName", newThemeFileName);
+
+  restoreCustomTheme();
+}
+
+// restore the theme
+void CMakeSetupDialog::restoreCustomTheme()
+{
+  QString themeContent;
+  {
+    QSettings settings;
+    settings.beginGroup("Settings/StartPath");
+    const QString customThemeFileName =
+      settings.value("CustomThemeFileName").toString();
+    QFile themeFile(customThemeFileName);
+    if (themeFile.exists()) {
+      themeFile.open(QFile::ReadOnly | QFile::Text);
+      themeContent = QLatin1String(themeFile.readAll());
+    }
+  }
+  this->setStyleSheet(themeContent);
 }

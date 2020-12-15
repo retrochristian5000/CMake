@@ -95,6 +95,8 @@ protected slots:
   void doRegexExplorerDialog();
   /// display the modal warning messages dialog window
   void doWarningMessagesDialog();
+  void doCustomThemeDialog();
+  void restoreCustomTheme();
 
 protected:
   enum State
