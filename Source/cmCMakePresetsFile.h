@@ -81,12 +81,12 @@ public:
   {
   public:
     std::string ConfigurePreset;
-    bool InheritConfigureEnvironment;
+    cm::optional<bool> InheritConfigureEnvironment;
     cm::optional<int> Jobs;
     std::vector<std::string> Targets;
     std::string Configuration;
-    bool CleanFirst;
-    bool Verbose;
+    cm::optional<bool> CleanFirst;
+    cm::optional<bool> Verbose;
     std::vector<std::string> NativeToolOptions;
   };
 
@@ -102,14 +102,14 @@ public:
         Extra
       };
 
-      bool ShortProgress;
+      cm::optional<bool> ShortProgress;
       VerbosityEnum Verbosity;
-      bool Debug;
-      bool OutputOnFailure;
-      bool Quiet;
+      cm::optional<bool> Debug;
+      cm::optional<bool> OutputOnFailure;
+      cm::optional<bool> Quiet;
       std::string OutputLogFile;
-      bool LabelSummary;
-      bool SubprojectSummary;
+      cm::optional<bool> LabelSummary;
+      cm::optional<bool> SubprojectSummary;
       cm::optional<int> MaxPassedTestOutputSize;
       cm::optional<int> MaxFailedTestOutputSize;
       cm::optional<int> MaxTestNameWidth;
@@ -123,7 +123,7 @@ public:
         cm::optional<int> End;
         cm::optional<int> Stride;
         std::vector<int> SpecificTests;
-        bool UseUnion;
+        cm::optional<bool> UseUnion;
       };
 
       std::string Name;
@@ -173,25 +173,25 @@ public:
         Ignore
       };
 
-      bool StopOnFailure;
-      bool EnableFailover;
+      cm::optional<bool> StopOnFailure;
+      cm::optional<bool> EnableFailover;
       cm::optional<int> Jobs;
       std::string ResourceSpecFile;
       cm::optional<int> TestLoad;
       cm::optional<ShowOnlyEnum> ShowOnly;
-      bool RerunFailed;
+      cm::optional<bool> RerunFailed;
 
       RepeatOptions Repeat;
       cm::optional<bool> InteractiveDebugging;
-      bool ScheduleRandom;
+      cm::optional<bool> ScheduleRandom;
       cm::optional<int> Timeout;
       NoTestsActionEnum NoTestsAction;
     };
 
     std::string ConfigurePreset;
-    bool InheritConfigureEnvironment;
+    cm::optional<bool> InheritConfigureEnvironment;
     std::string Configuration;
-    bool OverwriteConfigurationFile;
+    cm::optional<bool> OverwriteConfigurationFile;
     OutputOptions Output;
     Include FilterInclude;
     Exclude FilterExclude;

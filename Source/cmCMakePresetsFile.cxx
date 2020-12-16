@@ -180,9 +180,6 @@ ReadFileResult PresetInheritsHelper(std::vector<std::string>& out,
 auto const PresetBoolHelper = cmJSONBoolHelper<ReadFileResult>(
   ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET);
 
-auto const PresetBoolHelperDefaultTrue = cmJSONBoolHelper<ReadFileResult>(
-  ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET);
-
 auto const PresetOptionalBoolHelper =
   cmJSONOptionalHelper<bool, ReadFileResult>(ReadFileResult::READ_OK,
                                              PresetBoolHelper);
@@ -333,14 +330,15 @@ auto const BuildPresetHelper =
     .Bind("configurePreset"_s, &BuildPreset::ConfigurePreset,
           PresetStringHelper, false)
     .Bind("inheritConfigureEnvironment"_s,
-          &BuildPreset::InheritConfigureEnvironment,
-          PresetBoolHelperDefaultTrue, false)
+          &BuildPreset::InheritConfigureEnvironment, PresetOptionalBoolHelper,
+          false)
     .Bind("jobs"_s, &BuildPreset::Jobs, PresetOptionalIntHelper, false)
     .Bind("targets"_s, &BuildPreset::Targets, PresetVectorStringHelper, false)
     .Bind("configuration"_s, &BuildPreset::Configuration, PresetStringHelper,
           false)
-    .Bind("cleanFirst"_s, &BuildPreset::CleanFirst, PresetBoolHelper, false)
-    .Bind("verbose"_s, &BuildPreset::Verbose, PresetBoolHelper, false)
+    .Bind("cleanFirst"_s, &BuildPreset::CleanFirst, PresetOptionalBoolHelper,
+          false)
+    .Bind("verbose"_s, &BuildPreset::Verbose, PresetOptionalBoolHelper, false)
     .Bind("nativeToolOptions"_s, &BuildPreset::NativeToolOptions,
           PresetVectorStringHelper, false);
 
@@ -374,21 +372,21 @@ auto const TestPresetOutputHelper =
   cmJSONObjectHelper<TestPreset::OutputOptions, ReadFileResult>(
     ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET, false)
     .Bind("shortProgress"_s, &TestPreset::OutputOptions::ShortProgress,
-          PresetBoolHelper, false)
+          PresetOptionalBoolHelper, false)
     .Bind("verbosity"_s, &TestPreset::OutputOptions::Verbosity,
           TestPresetOutputVerbosityHelper, false)
-    .Bind("debug"_s, &TestPreset::OutputOptions::Debug, PresetBoolHelper,
-          false)
+    .Bind("debug"_s, &TestPreset::OutputOptions::Debug,
+          PresetOptionalBoolHelper, false)
     .Bind("outputOnFailure"_s, &TestPreset::OutputOptions::OutputOnFailure,
-          PresetBoolHelper, false)
-    .Bind("quiet"_s, &TestPreset::OutputOptions::Quiet, PresetBoolHelper,
-          false)
+          PresetOptionalBoolHelper, false)
+    .Bind("quiet"_s, &TestPreset::OutputOptions::Quiet,
+          PresetOptionalBoolHelper, false)
     .Bind("outputLogFile"_s, &TestPreset::OutputOptions::OutputLogFile,
           PresetStringHelper, false)
     .Bind("labelSummary"_s, &TestPreset::OutputOptions::LabelSummary,
-          PresetBoolHelper, false)
+          PresetOptionalBoolHelper, false)
     .Bind("subprojectSummary"_s, &TestPreset::OutputOptions::SubprojectSummary,
-          PresetBoolHelper, false)
+          PresetOptionalBoolHelper, false)
     .Bind("maxPassedTestOutputSize"_s,
           &TestPreset::OutputOptions::MaxPassedTestOutputSize,
           PresetOptionalIntHelper, false)
@@ -410,7 +408,7 @@ auto const TestPresetFilterIncludeIndexHelper =
     .Bind("specificTests"_s, &TestPreset::Include::IndexOptions::SpecificTests,
           PresetVectorIntHelper, false)
     .Bind("useUnion"_s, &TestPreset::Include::IndexOptions::UseUnion,
-          PresetBoolHelper, false);
+          PresetOptionalBoolHelper, false);
 
 auto const TestPresetFilterIncludeHelper =
   cmJSONObjectHelper<TestPreset::Include, ReadFileResult>(
@@ -528,9 +526,9 @@ auto const TestPresetExecutionHelper =
   cmJSONObjectHelper<TestPreset::ExecutionOptions, ReadFileResult>(
     ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET)
     .Bind("StopOnFailure"_s, &TestPreset::ExecutionOptions::StopOnFailure,
-          PresetBoolHelper, false)
+          PresetOptionalBoolHelper, false)
     .Bind("EnableFailover"_s, &TestPreset::ExecutionOptions::EnableFailover,
-          PresetBoolHelper, false)
+          PresetOptionalBoolHelper, false)
     .Bind("jobs"_s, &TestPreset::ExecutionOptions::Jobs,
           PresetOptionalIntHelper, false)
     .Bind("resourceSpecFile"_s,
@@ -541,14 +539,14 @@ auto const TestPresetExecutionHelper =
     .Bind("showOnly"_s, &TestPreset::ExecutionOptions::ShowOnly,
           TestPresetExecutionShowOnlyHelper, false)
     .Bind("rerunFailed"_s, &TestPreset::ExecutionOptions::RerunFailed,
-          PresetBoolHelper, false)
+          PresetOptionalBoolHelper, false)
     .Bind("repeat"_s, &TestPreset::ExecutionOptions::Repeat,
           TestPresetExecutionRepeatHelper, false)
     .Bind("interactiveDebugging"_s,
           &TestPreset::ExecutionOptions::InteractiveDebugging,
           PresetOptionalBoolHelper, false)
     .Bind("scheduleRandom"_s, &TestPreset::ExecutionOptions::ScheduleRandom,
-          PresetBoolHelper, false)
+          PresetOptionalBoolHelper, false)
     .Bind("timeout"_s, &TestPreset::ExecutionOptions::Timeout,
           PresetOptionalIntHelper, false)
     .Bind("noTestsAction"_s, &TestPreset::ExecutionOptions::NoTestsAction,
@@ -569,12 +567,13 @@ auto const TestPresetHelper =
     .Bind("configurePreset"_s, &TestPreset::ConfigurePreset,
           PresetStringHelper, false)
     .Bind("inheritConfigureEnvironment"_s,
-          &TestPreset::InheritConfigureEnvironment,
-          PresetBoolHelperDefaultTrue, false)
+          &TestPreset::InheritConfigureEnvironment, PresetOptionalBoolHelper,
+          false)
     .Bind("configuration"_s, &TestPreset::Configuration, PresetStringHelper,
           false)
     .Bind("overwriteConfigurationFile"_s,
-          &TestPreset::OverwriteConfigurationFile, PresetBoolHelper, false)
+          &TestPreset::OverwriteConfigurationFile, PresetOptionalBoolHelper,
+          false)
     .Bind("output"_s, &TestPreset::Output, TestPresetOutputHelper, false)
     .Bind("include"_s, &TestPreset::FilterInclude,
           TestPresetFilterIncludeHelper, false)
