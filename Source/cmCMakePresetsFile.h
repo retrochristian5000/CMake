@@ -103,7 +103,7 @@ public:
       };
 
       cm::optional<bool> ShortProgress;
-      VerbosityEnum Verbosity;
+      cm::optional<VerbosityEnum> Verbosity;
       cm::optional<bool> Debug;
       cm::optional<bool> OutputOnFailure;
       cm::optional<bool> Quiet;
@@ -128,7 +128,7 @@ public:
 
       std::string Name;
       std::string Label;
-      IndexOptions Index;
+      cm::optional<IndexOptions> Index;
     };
 
     struct Exclude
@@ -142,7 +142,7 @@ public:
 
       std::string Name;
       std::string Label;
-      FixturesOptions Fixtures;
+      cm::optional<FixturesOptions> Fixtures;
     };
 
     struct ExecutionOptions
@@ -181,21 +181,21 @@ public:
       cm::optional<ShowOnlyEnum> ShowOnly;
       cm::optional<bool> RerunFailed;
 
-      RepeatOptions Repeat;
+      cm::optional<RepeatOptions> Repeat;
       cm::optional<bool> InteractiveDebugging;
       cm::optional<bool> ScheduleRandom;
       cm::optional<int> Timeout;
-      NoTestsActionEnum NoTestsAction;
+      cm::optional<NoTestsActionEnum> NoTestsAction;
     };
 
     std::string ConfigurePreset;
     cm::optional<bool> InheritConfigureEnvironment;
     std::string Configuration;
     cm::optional<bool> OverwriteConfigurationFile;
-    OutputOptions Output;
-    Include FilterInclude;
-    Exclude FilterExclude;
-    ExecutionOptions Execution;
+    cm::optional<OutputOptions> Output;
+    cm::optional<Include> FilterInclude;
+    cm::optional<Exclude> FilterExclude;
+    cm::optional<ExecutionOptions> Execution;
   };
 
   template <class T>

@@ -368,84 +368,95 @@ ReadFileResult TestPresetOutputVerbosityHelper(
   return ReadFileResult::INVALID_PRESET;
 }
 
-auto const TestPresetOutputHelper =
-  cmJSONObjectHelper<TestPreset::OutputOptions, ReadFileResult>(
-    ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET, false)
-    .Bind("shortProgress"_s, &TestPreset::OutputOptions::ShortProgress,
-          PresetOptionalBoolHelper, false)
-    .Bind("verbosity"_s, &TestPreset::OutputOptions::Verbosity,
-          TestPresetOutputVerbosityHelper, false)
-    .Bind("debug"_s, &TestPreset::OutputOptions::Debug,
-          PresetOptionalBoolHelper, false)
-    .Bind("outputOnFailure"_s, &TestPreset::OutputOptions::OutputOnFailure,
-          PresetOptionalBoolHelper, false)
-    .Bind("quiet"_s, &TestPreset::OutputOptions::Quiet,
-          PresetOptionalBoolHelper, false)
-    .Bind("outputLogFile"_s, &TestPreset::OutputOptions::OutputLogFile,
-          PresetStringHelper, false)
-    .Bind("labelSummary"_s, &TestPreset::OutputOptions::LabelSummary,
-          PresetOptionalBoolHelper, false)
-    .Bind("subprojectSummary"_s, &TestPreset::OutputOptions::SubprojectSummary,
-          PresetOptionalBoolHelper, false)
-    .Bind("maxPassedTestOutputSize"_s,
-          &TestPreset::OutputOptions::MaxPassedTestOutputSize,
-          PresetOptionalIntHelper, false)
-    .Bind("maxFailedTestOutputSize"_s,
-          &TestPreset::OutputOptions::MaxFailedTestOutputSize,
-          PresetOptionalIntHelper, false)
-    .Bind("maxTestNameWidth"_s, &TestPreset::OutputOptions::MaxTestNameWidth,
-          PresetOptionalIntHelper, false);
+auto const TestPresetOptionalOutputVerbosityHelper =
+  cmJSONOptionalHelper<TestPreset::OutputOptions::VerbosityEnum,
+                       ReadFileResult>(ReadFileResult::READ_OK,
+                                       TestPresetOutputVerbosityHelper);
 
-auto const TestPresetFilterIncludeIndexHelper =
-  cmJSONObjectHelper<TestPreset::Include::IndexOptions, ReadFileResult>(
-    ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET)
-    .Bind("start"_s, &TestPreset::Include::IndexOptions::Start,
-          PresetOptionalIntHelper, false)
-    .Bind("end"_s, &TestPreset::Include::IndexOptions::End,
-          PresetOptionalIntHelper, false)
-    .Bind("stride"_s, &TestPreset::Include::IndexOptions::Stride,
-          PresetOptionalIntHelper, false)
-    .Bind("specificTests"_s, &TestPreset::Include::IndexOptions::SpecificTests,
-          PresetVectorIntHelper, false)
-    .Bind("useUnion"_s, &TestPreset::Include::IndexOptions::UseUnion,
-          PresetOptionalBoolHelper, false);
+auto const TestPresetOptionalOutputHelper =
+  cmJSONOptionalHelper<TestPreset::OutputOptions, ReadFileResult>(
+    ReadFileResult::READ_OK,
+    cmJSONObjectHelper<TestPreset::OutputOptions, ReadFileResult>(
+      ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET, false)
+      .Bind("shortProgress"_s, &TestPreset::OutputOptions::ShortProgress,
+            PresetOptionalBoolHelper, false)
+      .Bind("verbosity"_s, &TestPreset::OutputOptions::Verbosity,
+            TestPresetOptionalOutputVerbosityHelper, false)
+      .Bind("debug"_s, &TestPreset::OutputOptions::Debug,
+            PresetOptionalBoolHelper, false)
+      .Bind("outputOnFailure"_s, &TestPreset::OutputOptions::OutputOnFailure,
+            PresetOptionalBoolHelper, false)
+      .Bind("quiet"_s, &TestPreset::OutputOptions::Quiet,
+            PresetOptionalBoolHelper, false)
+      .Bind("outputLogFile"_s, &TestPreset::OutputOptions::OutputLogFile,
+            PresetStringHelper, false)
+      .Bind("labelSummary"_s, &TestPreset::OutputOptions::LabelSummary,
+            PresetOptionalBoolHelper, false)
+      .Bind("subprojectSummary"_s,
+            &TestPreset::OutputOptions::SubprojectSummary,
+            PresetOptionalBoolHelper, false)
+      .Bind("maxPassedTestOutputSize"_s,
+            &TestPreset::OutputOptions::MaxPassedTestOutputSize,
+            PresetOptionalIntHelper, false)
+      .Bind("maxFailedTestOutputSize"_s,
+            &TestPreset::OutputOptions::MaxFailedTestOutputSize,
+            PresetOptionalIntHelper, false)
+      .Bind("maxTestNameWidth"_s, &TestPreset::OutputOptions::MaxTestNameWidth,
+            PresetOptionalIntHelper, false));
 
-auto const TestPresetFilterIncludeHelper =
-  cmJSONObjectHelper<TestPreset::Include, ReadFileResult>(
-    ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET)
-    .Bind("name"_s, &TestPreset::Include::Name, PresetStringHelper, false)
-    .Bind("label"_s, &TestPreset::Include::Label, PresetStringHelper, false)
-    .Bind("index"_s, &TestPreset::Include::Index,
-          TestPresetFilterIncludeIndexHelper, false);
+auto const TestPresetOptionalFilterIncludeIndexHelper =
+  cmJSONOptionalHelper<TestPreset::Include::IndexOptions, ReadFileResult>(
+    ReadFileResult::READ_OK,
+    cmJSONObjectHelper<TestPreset::Include::IndexOptions, ReadFileResult>(
+      ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET)
+      .Bind("start"_s, &TestPreset::Include::IndexOptions::Start,
+            PresetOptionalIntHelper, false)
+      .Bind("end"_s, &TestPreset::Include::IndexOptions::End,
+            PresetOptionalIntHelper, false)
+      .Bind("stride"_s, &TestPreset::Include::IndexOptions::Stride,
+            PresetOptionalIntHelper, false)
+      .Bind("specificTests"_s,
+            &TestPreset::Include::IndexOptions::SpecificTests,
+            PresetVectorIntHelper, false)
+      .Bind("useUnion"_s, &TestPreset::Include::IndexOptions::UseUnion,
+            PresetOptionalBoolHelper, false));
 
-auto const TestPresetFilterExcludeFixturesHelper =
-  cmJSONObjectHelper<TestPreset::Exclude::FixturesOptions, ReadFileResult>(
-    ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET)
-    .Bind("any"_s, &TestPreset::Exclude::FixturesOptions::Any,
-          PresetStringHelper, false)
-    .Bind("setup"_s, &TestPreset::Exclude::FixturesOptions::Setup,
-          PresetStringHelper, false)
-    .Bind("cleanup"_s, &TestPreset::Exclude::FixturesOptions::Cleanup,
-          PresetStringHelper, false);
+auto const TestPresetOptionalFilterIncludeHelper =
+  cmJSONOptionalHelper<TestPreset::Include, ReadFileResult>(
+    ReadFileResult::READ_OK,
+    cmJSONObjectHelper<TestPreset::Include, ReadFileResult>(
+      ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET)
+      .Bind("name"_s, &TestPreset::Include::Name, PresetStringHelper, false)
+      .Bind("label"_s, &TestPreset::Include::Label, PresetStringHelper, false)
+      .Bind("index"_s, &TestPreset::Include::Index,
+            TestPresetOptionalFilterIncludeIndexHelper, false));
+
+auto const TestPresetOptionalFilterExcludeFixturesHelper =
+  cmJSONOptionalHelper<TestPreset::Exclude::FixturesOptions, ReadFileResult>(
+    ReadFileResult::READ_OK,
+    cmJSONObjectHelper<TestPreset::Exclude::FixturesOptions, ReadFileResult>(
+      ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET)
+      .Bind("any"_s, &TestPreset::Exclude::FixturesOptions::Any,
+            PresetStringHelper, false)
+      .Bind("setup"_s, &TestPreset::Exclude::FixturesOptions::Setup,
+            PresetStringHelper, false)
+      .Bind("cleanup"_s, &TestPreset::Exclude::FixturesOptions::Cleanup,
+            PresetStringHelper, false));
 
 auto const TestPresetFilterExcludeHelper =
-  cmJSONObjectHelper<TestPreset::Exclude, ReadFileResult>(
-    ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET)
-    .Bind("name"_s, &TestPreset::Exclude::Name, PresetStringHelper, false)
-    .Bind("label"_s, &TestPreset::Exclude::Label, PresetStringHelper, false)
-    .Bind("fixtures"_s, &TestPreset::Exclude::Fixtures,
-          TestPresetFilterExcludeFixturesHelper, false);
+  cmJSONOptionalHelper<TestPreset::Exclude, ReadFileResult>(
+    ReadFileResult::READ_OK,
+    cmJSONObjectHelper<TestPreset::Exclude, ReadFileResult>(
+      ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET)
+      .Bind("name"_s, &TestPreset::Exclude::Name, PresetStringHelper, false)
+      .Bind("label"_s, &TestPreset::Exclude::Label, PresetStringHelper, false)
+      .Bind("fixtures"_s, &TestPreset::Exclude::Fixtures,
+            TestPresetOptionalFilterExcludeFixturesHelper, false));
 
 ReadFileResult TestPresetExecutionShowOnlyHelper(
-  cm::optional<TestPreset::ExecutionOptions::ShowOnlyEnum>& out,
-  const Json::Value* value)
+  TestPreset::ExecutionOptions::ShowOnlyEnum& out, const Json::Value* value)
 {
-  if (!value) {
-    out = cm::nullopt;
-    return ReadFileResult::READ_OK;
-  }
-
-  if (!value->isString()) {
+  if (!value || !value->isString()) {
     return ReadFileResult::INVALID_PRESET;
   }
 
@@ -459,6 +470,11 @@ ReadFileResult TestPresetExecutionShowOnlyHelper(
 
   return ReadFileResult::INVALID_PRESET;
 }
+
+auto const TestPresetOptionalExecutionShowOnlyHelper =
+  cmJSONOptionalHelper<TestPreset::ExecutionOptions::ShowOnlyEnum,
+                       ReadFileResult>(ReadFileResult::READ_OK,
+                                       TestPresetExecutionShowOnlyHelper);
 
 ReadFileResult TestPresetExecutionModeHelper(
   TestPreset::ExecutionOptions::RepeatOptions::ModeEnum& out,
@@ -486,14 +502,17 @@ ReadFileResult TestPresetExecutionModeHelper(
   return ReadFileResult::INVALID_PRESET;
 }
 
-auto const TestPresetExecutionRepeatHelper =
-  cmJSONObjectHelper<TestPreset::ExecutionOptions::RepeatOptions,
-                     ReadFileResult>(ReadFileResult::READ_OK,
-                                     ReadFileResult::INVALID_PRESET)
-    .Bind("mode"_s, &TestPreset::ExecutionOptions::RepeatOptions::Mode,
-          TestPresetExecutionModeHelper, true)
-    .Bind("count"_s, &TestPreset::ExecutionOptions::RepeatOptions::Count,
-          PresetIntHelper, true);
+auto const TestPresetOptionalExecutionRepeatHelper =
+  cmJSONOptionalHelper<TestPreset::ExecutionOptions::RepeatOptions,
+                       ReadFileResult>(
+    ReadFileResult::READ_OK,
+    cmJSONObjectHelper<TestPreset::ExecutionOptions::RepeatOptions,
+                       ReadFileResult>(ReadFileResult::READ_OK,
+                                       ReadFileResult::INVALID_PRESET)
+      .Bind("mode"_s, &TestPreset::ExecutionOptions::RepeatOptions::Mode,
+            TestPresetExecutionModeHelper, true)
+      .Bind("count"_s, &TestPreset::ExecutionOptions::RepeatOptions::Count,
+            PresetIntHelper, true));
 
 ReadFileResult TestPresetExecutionNoTestsActionHelper(
   TestPreset::ExecutionOptions::NoTestsActionEnum& out,
@@ -522,35 +541,42 @@ ReadFileResult TestPresetExecutionNoTestsActionHelper(
   return ReadFileResult::INVALID_PRESET;
 }
 
+auto const TestPresetOptionalExecutionNoTestsActionHelper =
+  cmJSONOptionalHelper<TestPreset::ExecutionOptions::NoTestsActionEnum,
+                       ReadFileResult>(ReadFileResult::READ_OK,
+                                       TestPresetExecutionNoTestsActionHelper);
+
 auto const TestPresetExecutionHelper =
-  cmJSONObjectHelper<TestPreset::ExecutionOptions, ReadFileResult>(
-    ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET)
-    .Bind("StopOnFailure"_s, &TestPreset::ExecutionOptions::StopOnFailure,
-          PresetOptionalBoolHelper, false)
-    .Bind("EnableFailover"_s, &TestPreset::ExecutionOptions::EnableFailover,
-          PresetOptionalBoolHelper, false)
-    .Bind("jobs"_s, &TestPreset::ExecutionOptions::Jobs,
-          PresetOptionalIntHelper, false)
-    .Bind("resourceSpecFile"_s,
-          &TestPreset::ExecutionOptions::ResourceSpecFile, PresetStringHelper,
-          false)
-    .Bind("testLoad"_s, &TestPreset::ExecutionOptions::TestLoad,
-          PresetOptionalIntHelper, false)
-    .Bind("showOnly"_s, &TestPreset::ExecutionOptions::ShowOnly,
-          TestPresetExecutionShowOnlyHelper, false)
-    .Bind("rerunFailed"_s, &TestPreset::ExecutionOptions::RerunFailed,
-          PresetOptionalBoolHelper, false)
-    .Bind("repeat"_s, &TestPreset::ExecutionOptions::Repeat,
-          TestPresetExecutionRepeatHelper, false)
-    .Bind("interactiveDebugging"_s,
-          &TestPreset::ExecutionOptions::InteractiveDebugging,
-          PresetOptionalBoolHelper, false)
-    .Bind("scheduleRandom"_s, &TestPreset::ExecutionOptions::ScheduleRandom,
-          PresetOptionalBoolHelper, false)
-    .Bind("timeout"_s, &TestPreset::ExecutionOptions::Timeout,
-          PresetOptionalIntHelper, false)
-    .Bind("noTestsAction"_s, &TestPreset::ExecutionOptions::NoTestsAction,
-          TestPresetExecutionNoTestsActionHelper, false);
+  cmJSONOptionalHelper<TestPreset::ExecutionOptions, ReadFileResult>(
+    ReadFileResult::READ_OK,
+    cmJSONObjectHelper<TestPreset::ExecutionOptions, ReadFileResult>(
+      ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET)
+      .Bind("StopOnFailure"_s, &TestPreset::ExecutionOptions::StopOnFailure,
+            PresetOptionalBoolHelper, false)
+      .Bind("EnableFailover"_s, &TestPreset::ExecutionOptions::EnableFailover,
+            PresetOptionalBoolHelper, false)
+      .Bind("jobs"_s, &TestPreset::ExecutionOptions::Jobs,
+            PresetOptionalIntHelper, false)
+      .Bind("resourceSpecFile"_s,
+            &TestPreset::ExecutionOptions::ResourceSpecFile,
+            PresetStringHelper, false)
+      .Bind("testLoad"_s, &TestPreset::ExecutionOptions::TestLoad,
+            PresetOptionalIntHelper, false)
+      .Bind("showOnly"_s, &TestPreset::ExecutionOptions::ShowOnly,
+            TestPresetOptionalExecutionShowOnlyHelper, false)
+      .Bind("rerunFailed"_s, &TestPreset::ExecutionOptions::RerunFailed,
+            PresetOptionalBoolHelper, false)
+      .Bind("repeat"_s, &TestPreset::ExecutionOptions::Repeat,
+            TestPresetOptionalExecutionRepeatHelper, false)
+      .Bind("interactiveDebugging"_s,
+            &TestPreset::ExecutionOptions::InteractiveDebugging,
+            PresetOptionalBoolHelper, false)
+      .Bind("scheduleRandom"_s, &TestPreset::ExecutionOptions::ScheduleRandom,
+            PresetOptionalBoolHelper, false)
+      .Bind("timeout"_s, &TestPreset::ExecutionOptions::Timeout,
+            PresetOptionalIntHelper, false)
+      .Bind("noTestsAction"_s, &TestPreset::ExecutionOptions::NoTestsAction,
+            TestPresetOptionalExecutionNoTestsActionHelper, false));
 
 auto const TestPresetHelper =
   cmJSONObjectHelper<TestPreset, ReadFileResult>(
@@ -574,9 +600,10 @@ auto const TestPresetHelper =
     .Bind("overwriteConfigurationFile"_s,
           &TestPreset::OverwriteConfigurationFile, PresetOptionalBoolHelper,
           false)
-    .Bind("output"_s, &TestPreset::Output, TestPresetOutputHelper, false)
+    .Bind("output"_s, &TestPreset::Output, TestPresetOptionalOutputHelper,
+          false)
     .Bind("include"_s, &TestPreset::FilterInclude,
-          TestPresetFilterIncludeHelper, false)
+          TestPresetOptionalFilterIncludeHelper, false)
     .Bind("exclude"_s, &TestPreset::FilterExclude,
           TestPresetFilterExcludeHelper, false)
     .Bind("execution"_s, &TestPreset::Execution, TestPresetExecutionHelper,
