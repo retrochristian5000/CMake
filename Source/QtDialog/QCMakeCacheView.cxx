@@ -47,7 +47,7 @@ protected:
 
     // check all strings for a match
     foreach (QString const& str, strs) {
-      if (str.contains(this->filterRegExp())) {
+      if (str.contains(this->filterRegularExpression())) {
         return true;
       }
     }

@@ -81,7 +81,7 @@ bool EnvironmentSearchFilter::filterAcceptsRow(int row,
   auto* model = this->sourceModel();
   auto key =
     model->data(model->index(row, 0, parent), Qt::DisplayRole).toString();
-  return key.contains(this->filterRegExp());
+  return key.contains(this->filterRegularExpression());
 }
 
 EnvironmentDialog::EnvironmentDialog(const QProcessEnvironment& environment,
