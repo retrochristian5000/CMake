@@ -12,6 +12,26 @@
 class cmCMakePresetsFile
 {
 public:
+  enum class ReadFileResult
+  {
+    READ_OK,
+    FILE_NOT_FOUND,
+    JSON_PARSE_ERROR,
+    INVALID_ROOT,
+    NO_VERSION,
+    INVALID_VERSION,
+    UNRECOGNIZED_VERSION,
+    INVALID_CMAKE_VERSION,
+    UNRECOGNIZED_CMAKE_VERSION,
+    INVALID_PRESETS,
+    INVALID_PRESET,
+    INVALID_VARIABLE,
+    DUPLICATE_PRESETS,
+    CYCLIC_PRESET_INHERITANCE,
+    USER_PRESET_INHERITANCE,
+    INVALID_MACRO_EXPANSION,
+  };
+
   enum class ArchToolsetStrategy
   {
     Set,
@@ -29,10 +49,6 @@ public:
   {
   public:
 #if __cplusplus < 201703L && (!defined(_MSVC_LANG) || _MSVC_LANG < 201703L)
-    Preset() = default;
-    Preset(const Preset& /*other*/) = default;
-    Preset(Preset&& /*other*/) = default;
-
     Preset& operator=(const Preset& /*other*/) = default;
 
     // The move assignment operators for several STL classes did not become
@@ -50,6 +66,17 @@ public:
     std::string Description;
 
     std::map<std::string, cm::optional<std::string>> Environment;
+
+    virtual ReadFileResult VisitPresetInherit(const Preset& parent) = 0;
+    virtual ReadFileResult VisitPresetBeforeInherit()
+    {
+      return ReadFileResult::READ_OK;
+    }
+
+    virtual ReadFileResult VisitPresetAfterInherit()
+    {
+      return ReadFileResult::READ_OK;
+    }
   };
 
   class ConfigurePreset : public Preset
@@ -75,6 +102,10 @@ public:
     cm::optional<bool> DebugOutput;
     cm::optional<bool> DebugTryCompile;
     cm::optional<bool> DebugFind;
+
+    ReadFileResult VisitPresetInherit(const Preset& parent) override;
+    ReadFileResult VisitPresetBeforeInherit() override;
+    ReadFileResult VisitPresetAfterInherit() override;
   };
 
   class BuildPreset : public Preset
@@ -88,6 +119,10 @@ public:
     cm::optional<bool> CleanFirst;
     cm::optional<bool> Verbose;
     std::vector<std::string> NativeToolOptions;
+
+    ReadFileResult VisitPresetInherit(const Preset& parent) override;
+    ReadFileResult VisitPresetBeforeInherit() override;
+    ReadFileResult VisitPresetAfterInherit() override;
   };
 
   class TestPreset : public Preset
@@ -196,6 +231,10 @@ public:
     cm::optional<Include> FilterInclude;
     cm::optional<Exclude> FilterExclude;
     cm::optional<ExecutionOptions> Execution;
+
+    ReadFileResult VisitPresetInherit(const Preset& parent) override;
+    ReadFileResult VisitPresetBeforeInherit() override;
+    ReadFileResult VisitPresetAfterInherit() override;
   };
 
   template <class T>
@@ -215,26 +254,6 @@ public:
   std::vector<std::string> TestPresetOrder;
 
   std::string SourceDir;
-
-  enum class ReadFileResult
-  {
-    READ_OK,
-    FILE_NOT_FOUND,
-    JSON_PARSE_ERROR,
-    INVALID_ROOT,
-    NO_VERSION,
-    INVALID_VERSION,
-    UNRECOGNIZED_VERSION,
-    INVALID_CMAKE_VERSION,
-    UNRECOGNIZED_CMAKE_VERSION,
-    INVALID_PRESETS,
-    INVALID_PRESET,
-    INVALID_VARIABLE,
-    DUPLICATE_PRESETS,
-    CYCLIC_PRESET_INHERITANCE,
-    USER_PRESET_INHERITANCE,
-    INVALID_MACRO_EXPANSION,
-  };
 
   static std::string GetFilename(const std::string& sourceDir);
   static std::string GetUserFilename(const std::string& sourceDir);

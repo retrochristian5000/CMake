@@ -18,6 +18,13 @@
 #include "cmSystemTools.h"
 #include "cmVersion.h"
 
+#define CHECK_OK(expr)                                                        \
+  {                                                                           \
+    auto result = expr;                                                       \
+    if (result != ReadFileResult::READ_OK)                                    \
+      return result;                                                          \
+  }
+
 namespace {
 enum class CycleStatus
 {
@@ -653,10 +660,19 @@ void InheritString(std::string& child, const std::string& parent)
   }
 }
 
-void InheritOptionalBool(cm::optional<bool>& child,
-                         const cm::optional<bool>& parent)
+template <typename T>
+void InheritOptionalValue(cm::optional<T>& child,
+                          const cm::optional<T>& parent)
 {
   if (!child) {
+    child = parent;
+  }
+}
+
+template <typename T>
+void InheritVector(std::vector<T>& child, const std::vector<T>& parent)
+{
+  if (child.empty()) {
     child = parent;
   }
 }
@@ -667,10 +683,10 @@ void InheritOptionalBool(cm::optional<bool>& child,
  * that each preset has the required fields, either directly or through
  * inheritance.
  */
+template <class T>
 ReadFileResult VisitPreset(
-  std::map<std::string, cmCMakePresetsFile::PresetPair<ConfigurePreset>>&
-    presets,
-  ConfigurePreset& preset, std::map<std::string, CycleStatus> cycleStatus)
+  T& preset, std::map<std::string, cmCMakePresetsFile::PresetPair<T>>& presets,
+  std::map<std::string, CycleStatus> cycleStatus)
 {
   switch (cycleStatus[preset.Name]) {
     case CycleStatus::InProgress:
@@ -683,12 +699,11 @@ ReadFileResult VisitPreset(
 
   cycleStatus[preset.Name] = CycleStatus::InProgress;
 
-  if (preset.CacheVariables.count("") != 0) {
-    return ReadFileResult::INVALID_PRESET;
-  }
   if (preset.Environment.count("") != 0) {
     return ReadFileResult::INVALID_PRESET;
   }
+
+  CHECK_OK(preset.VisitPresetBeforeInherit())
 
   for (auto const& i : preset.Inherits) {
     auto parent = presets.find(i);
@@ -696,68 +711,32 @@ ReadFileResult VisitPreset(
       return ReadFileResult::INVALID_PRESET;
     }
 
-    if (!preset.User && parent->second.Unexpanded.User) {
+    auto& parentPreset = parent->second.Unexpanded;
+    if (!preset.User && parentPreset.User) {
       return ReadFileResult::USER_PRESET_INHERITANCE;
     }
 
-    auto result = VisitPreset(presets, parent->second.Unexpanded, cycleStatus);
+    auto result = VisitPreset(parentPreset, presets, cycleStatus);
     if (result != ReadFileResult::READ_OK) {
       return result;
     }
 
-    InheritString(preset.Generator, parent->second.Unexpanded.Generator);
-    InheritString(preset.Architecture, parent->second.Unexpanded.Architecture);
-    InheritString(preset.Toolset, parent->second.Unexpanded.Toolset);
-    if (!preset.ArchitectureStrategy) {
-      preset.ArchitectureStrategy =
-        parent->second.Unexpanded.ArchitectureStrategy;
-    }
-    if (!preset.ToolsetStrategy) {
-      preset.ToolsetStrategy = parent->second.Unexpanded.ToolsetStrategy;
-    }
-    InheritString(preset.BinaryDir, parent->second.Unexpanded.BinaryDir);
-    InheritOptionalBool(preset.WarnDev, parent->second.Unexpanded.WarnDev);
-    InheritOptionalBool(preset.ErrorDev, parent->second.Unexpanded.ErrorDev);
-    InheritOptionalBool(preset.WarnDeprecated,
-                        parent->second.Unexpanded.WarnDeprecated);
-    InheritOptionalBool(preset.ErrorDeprecated,
-                        parent->second.Unexpanded.ErrorDeprecated);
-    InheritOptionalBool(preset.WarnUninitialized,
-                        parent->second.Unexpanded.WarnUninitialized);
-    InheritOptionalBool(preset.WarnUnusedCli,
-                        parent->second.Unexpanded.WarnUnusedCli);
-    InheritOptionalBool(preset.WarnSystemVars,
-                        parent->second.Unexpanded.WarnSystemVars);
-    for (auto const& v : parent->second.Unexpanded.CacheVariables) {
-      preset.CacheVariables.insert(v);
-    }
-    for (auto const& v : parent->second.Unexpanded.Environment) {
+    CHECK_OK(preset.VisitPresetInherit(parentPreset))
+
+    for (auto const& v : parentPreset.Environment) {
       preset.Environment.insert(v);
     }
   }
 
-  if (!preset.Hidden) {
-    if (preset.Generator.empty()) {
-      return ReadFileResult::INVALID_PRESET;
-    }
-    if (preset.BinaryDir.empty()) {
-      return ReadFileResult::INVALID_PRESET;
-    }
-    if (preset.WarnDev == false && preset.ErrorDev == true) {
-      return ReadFileResult::INVALID_PRESET;
-    }
-    if (preset.WarnDeprecated == false && preset.ErrorDeprecated == true) {
-      return ReadFileResult::INVALID_PRESET;
-    }
-  }
+  CHECK_OK(preset.VisitPresetAfterInherit())
 
   cycleStatus[preset.Name] = CycleStatus::Verified;
   return ReadFileResult::READ_OK;
 }
 
+template <class T>
 ReadFileResult ComputePresetInheritance(
-  std::map<std::string, cmCMakePresetsFile::PresetPair<ConfigurePreset>>&
-    presets)
+  std::map<std::string, cmCMakePresetsFile::PresetPair<T>>& presets)
 {
   std::map<std::string, CycleStatus> cycleStatus;
   for (auto const& it : presets) {
@@ -765,7 +744,7 @@ ReadFileResult ComputePresetInheritance(
   }
 
   for (auto& it : presets) {
-    auto result = VisitPreset(presets, it.second.Unexpanded, cycleStatus);
+    auto result = VisitPreset<T>(it.second.Unexpanded, presets, cycleStatus);
     if (result != ReadFileResult::READ_OK) {
       return result;
     }
@@ -1048,6 +1027,205 @@ ExpandMacroResult ExpandMacro(const cmCMakePresetsFile& file,
 }
 }
 
+cmCMakePresetsFile::ReadFileResult
+cmCMakePresetsFile::ConfigurePreset::VisitPresetInherit(
+  const cmCMakePresetsFile::Preset& parentPreset)
+{
+  auto& preset = *this;
+  const ConfigurePreset& parent = *((ConfigurePreset*)&parentPreset);
+  InheritString(preset.Generator, parent.Generator);
+  InheritString(preset.Architecture, parent.Architecture);
+  InheritString(preset.Toolset, parent.Toolset);
+  if (!preset.ArchitectureStrategy) {
+    preset.ArchitectureStrategy = parent.ArchitectureStrategy;
+  }
+  if (!preset.ToolsetStrategy) {
+    preset.ToolsetStrategy = parent.ToolsetStrategy;
+  }
+  InheritString(preset.BinaryDir, parent.BinaryDir);
+  InheritOptionalValue(preset.WarnDev, parent.WarnDev);
+  InheritOptionalValue(preset.ErrorDev, parent.ErrorDev);
+  InheritOptionalValue(preset.WarnDeprecated, parent.WarnDeprecated);
+  InheritOptionalValue(preset.ErrorDeprecated, parent.ErrorDeprecated);
+  InheritOptionalValue(preset.WarnUninitialized, parent.WarnUninitialized);
+  InheritOptionalValue(preset.WarnUnusedCli, parent.WarnUnusedCli);
+  InheritOptionalValue(preset.WarnSystemVars, parent.WarnSystemVars);
+
+  for (auto const& v : parent.CacheVariables) {
+    preset.CacheVariables.insert(v);
+  }
+
+  return ReadFileResult::READ_OK;
+}
+
+cmCMakePresetsFile::ReadFileResult
+cmCMakePresetsFile::ConfigurePreset::VisitPresetBeforeInherit()
+{
+  auto& preset = *this;
+  if (preset.Environment.count("") != 0) {
+    return ReadFileResult::INVALID_PRESET;
+  }
+
+  return ReadFileResult::READ_OK;
+}
+
+cmCMakePresetsFile::ReadFileResult
+cmCMakePresetsFile::ConfigurePreset::VisitPresetAfterInherit()
+{
+  auto& preset = *this;
+  if (!preset.Hidden) {
+    if (preset.Generator.empty()) {
+      return ReadFileResult::INVALID_PRESET;
+    }
+    if (preset.BinaryDir.empty()) {
+      return ReadFileResult::INVALID_PRESET;
+    }
+    if (preset.WarnDev == false && preset.ErrorDev == true) {
+      return ReadFileResult::INVALID_PRESET;
+    }
+    if (preset.WarnDeprecated == false && preset.ErrorDeprecated == true) {
+      return ReadFileResult::INVALID_PRESET;
+    }
+    if (preset.CacheVariables.count("") != 0) {
+      return ReadFileResult::INVALID_PRESET;
+    }
+  }
+
+  return ReadFileResult::READ_OK;
+}
+
+cmCMakePresetsFile::ReadFileResult
+cmCMakePresetsFile::BuildPreset::VisitPresetInherit(
+  const cmCMakePresetsFile::Preset& parentPreset)
+{
+  auto& preset = *this;
+  const BuildPreset& parent = *((BuildPreset*)&parentPreset);
+
+  InheritString(preset.ConfigurePreset, parent.ConfigurePreset);
+  InheritOptionalValue(preset.InheritConfigureEnvironment,
+                       parent.InheritConfigureEnvironment);
+  InheritOptionalValue(preset.Jobs, parent.Jobs);
+  InheritVector(preset.Targets, parent.Targets);
+  InheritString(preset.Configuration, parent.Configuration);
+  InheritOptionalValue(preset.CleanFirst, parent.CleanFirst);
+  InheritOptionalValue(preset.Verbose, parent.Verbose);
+  InheritVector(preset.NativeToolOptions, parent.NativeToolOptions);
+
+  return ReadFileResult::READ_OK;
+}
+
+cmCMakePresetsFile::ReadFileResult
+cmCMakePresetsFile::BuildPreset::VisitPresetAfterInherit()
+{
+  auto& preset = *this;
+  if (!preset.Hidden && preset.ConfigurePreset.empty()) {
+    return ReadFileResult::INVALID_PRESET;
+  }
+  return ReadFileResult::READ_OK;
+}
+
+cmCMakePresetsFile::ReadFileResult
+cmCMakePresetsFile::TestPreset::VisitPresetInherit(
+  const cmCMakePresetsFile::Preset& parentPreset)
+{
+  auto& preset = *this;
+  const TestPreset& parent = *((TestPreset*)&parentPreset);
+
+  InheritString(preset.ConfigurePreset, parent.ConfigurePreset);
+  InheritOptionalValue(preset.InheritConfigureEnvironment,
+                       parent.InheritConfigureEnvironment);
+  InheritString(preset.Configuration, parent.Configuration);
+  InheritOptionalValue(preset.OverwriteConfigurationFile,
+                       parent.OverwriteConfigurationFile);
+
+  if (parent.Output.has_value()) {
+    if (preset.Output.has_value()) {
+      auto& output = preset.Output.value();
+      auto& parentOutput = parent.Output.value();
+      InheritOptionalValue(output.ShortProgress, parentOutput.ShortProgress);
+      InheritOptionalValue(output.Verbosity, parentOutput.Verbosity);
+      InheritOptionalValue(output.Debug, parentOutput.Debug);
+      InheritOptionalValue(output.OutputOnFailure,
+                           parentOutput.OutputOnFailure);
+      InheritString(output.OutputLogFile, parentOutput.OutputLogFile);
+      InheritOptionalValue(output.LabelSummary, parentOutput.LabelSummary);
+      InheritOptionalValue(output.SubprojectSummary,
+                           parentOutput.SubprojectSummary);
+      InheritOptionalValue(output.MaxPassedTestOutputSize,
+                           parentOutput.MaxPassedTestOutputSize);
+      InheritOptionalValue(output.MaxFailedTestOutputSize,
+                           parentOutput.MaxFailedTestOutputSize);
+      InheritOptionalValue(output.MaxTestNameWidth,
+                           parentOutput.MaxTestNameWidth);
+    } else {
+      preset.Output = parent.Output;
+    }
+  }
+
+  if (parent.FilterInclude.has_value()) {
+    if (preset.FilterInclude.has_value()) {
+      auto& include = preset.FilterInclude.value();
+      auto& parentInclude = parent.FilterInclude.value();
+      InheritString(include.Name, parentInclude.Name);
+      InheritString(include.Label, parentInclude.Label);
+      InheritOptionalValue(include.Index, parentInclude.Index);
+    } else {
+      preset.FilterInclude = parent.FilterInclude;
+    }
+  }
+
+  if (parent.FilterExclude.has_value()) {
+    if (preset.FilterExclude.has_value()) {
+      auto& exclude = preset.FilterExclude.value();
+      auto& parentExclude = parent.FilterExclude.value();
+      InheritString(exclude.Name, parentExclude.Name);
+      InheritString(exclude.Label, parentExclude.Label);
+      InheritOptionalValue(exclude.Fixtures, parentExclude.Fixtures);
+    } else {
+      preset.FilterExclude = parent.FilterExclude;
+    }
+  }
+
+  if (parent.Execution.has_value()) {
+    if (preset.Execution.has_value()) {
+      auto& execution = preset.Execution.value();
+      auto& parentExecution = parent.Execution.value();
+      InheritOptionalValue(execution.StopOnFailure,
+                           parentExecution.StopOnFailure);
+      InheritOptionalValue(execution.EnableFailover,
+                           parentExecution.EnableFailover);
+      InheritOptionalValue(execution.Jobs, parentExecution.Jobs);
+      InheritString(execution.ResourceSpecFile,
+                    parentExecution.ResourceSpecFile);
+      InheritOptionalValue(execution.TestLoad, parentExecution.TestLoad);
+      InheritOptionalValue(execution.ShowOnly, parentExecution.ShowOnly);
+      InheritOptionalValue(execution.RerunFailed, parentExecution.RerunFailed);
+      InheritOptionalValue(execution.Repeat, parentExecution.Repeat);
+      InheritOptionalValue(execution.InteractiveDebugging,
+                           parentExecution.InteractiveDebugging);
+      InheritOptionalValue(execution.ScheduleRandom,
+                           parentExecution.ScheduleRandom);
+      InheritOptionalValue(execution.Timeout, parentExecution.Timeout);
+      InheritOptionalValue(execution.NoTestsAction,
+                           parentExecution.NoTestsAction);
+    } else {
+      preset.Execution = parent.Execution;
+    }
+  }
+
+  return ReadFileResult::READ_OK;
+}
+
+cmCMakePresetsFile::ReadFileResult
+cmCMakePresetsFile::TestPreset::VisitPresetAfterInherit()
+{
+  auto& preset = *this;
+  if (!preset.Hidden && preset.ConfigurePreset.empty()) {
+    return ReadFileResult::INVALID_PRESET;
+  }
+  return ReadFileResult::READ_OK;
+}
+
 std::string cmCMakePresetsFile::GetFilename(const std::string& sourceDir)
 {
   return cmStrCat(sourceDir, "/CMakePresets.json");
@@ -1101,10 +1279,9 @@ cmCMakePresetsFile::ReadProjectPresetsInternal(const std::string& sourceDir,
                         : ReadFileResult::FILE_NOT_FOUND;
   }
 
-  auto result = ComputePresetInheritance(this->ConfigurePresets);
-  if (result != ReadFileResult::READ_OK) {
-    return result;
-  }
+  CHECK_OK(ComputePresetInheritance(this->ConfigurePresets))
+  CHECK_OK(ComputePresetInheritance(this->BuildPresets))
+  CHECK_OK(ComputePresetInheritance(this->TestPresets))
 
   for (auto& it : this->ConfigurePresets) {
     if (!ExpandMacros(*this, it.second.Unexpanded, it.second.Expanded)) {
