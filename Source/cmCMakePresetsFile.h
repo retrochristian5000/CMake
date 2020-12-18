@@ -261,6 +261,33 @@ public:
                                     bool allowNoFiles = false);
   static const char* ResultToString(ReadFileResult result);
 
+  std::string GetGeneratorForPreset(const std::string& presetName) const
+  {
+    auto configurePresetName = presetName;
+
+    auto buildPresetIterator = this->BuildPresets.find(presetName);
+    if (buildPresetIterator != this->BuildPresets.end()) {
+      configurePresetName =
+        buildPresetIterator->second.Unexpanded.ConfigurePreset;
+    } else {
+      auto testPresetIterator = this->TestPresets.find(presetName);
+      if (testPresetIterator != this->TestPresets.end()) {
+        configurePresetName =
+          testPresetIterator->second.Unexpanded.ConfigurePreset;
+      }
+    }
+
+    auto configurePresetIterator =
+      this->ConfigurePresets.find(configurePresetName);
+    if (configurePresetIterator != this->ConfigurePresets.end()) {
+      return configurePresetIterator->second.Unexpanded.Generator;
+    }
+
+    // This should only happen if the preset is hidden
+    // or (for build or test presets) if ConfigurePreset is invalid.
+    return "";
+  }
+
 private:
   ReadFileResult ReadProjectPresetsInternal(const std::string& sourceDir,
                                             bool allowNoFiles);
