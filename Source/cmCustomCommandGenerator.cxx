@@ -29,7 +29,7 @@ namespace {
 std::string EvaluateSplitConfigGenex(
   cm::string_view input, cmGeneratorExpression const& ge, cmLocalGenerator* lg,
   bool useOutputConfig, std::string const& outputConfig,
-  std::string const& commandConfig,
+  std::string const& commandConfig, cmGeneratorTarget const* target,
   std::set<BT<std::pair<std::string, bool>>>* utils = nullptr)
 {
   std::string result;
@@ -87,7 +87,7 @@ std::string EvaluateSplitConfigGenex(
     // Evaluate this genex in the selected configuration.
     std::unique_ptr<cmCompiledGeneratorExpression> cge =
       ge.Parse(std::string(genex));
-    result += cge->Evaluate(lg, *config);
+    result += cge->Evaluate(lg, *config, target);
 
     // Record targets referenced by the genex.
     if (utils) {
@@ -107,14 +107,15 @@ std::vector<std::string> EvaluateDepends(std::vector<std::string> const& paths,
                                          cmGeneratorExpression const& ge,
                                          cmLocalGenerator* lg,
                                          std::string const& outputConfig,
-                                         std::string const& commandConfig)
+                                         std::string const& commandConfig,
+                                         cmGeneratorTarget const* target)
 {
   std::vector<std::string> depends;
   for (std::string const& p : paths) {
     std::string const& ep =
       EvaluateSplitConfigGenex(p, ge, lg, /*useOutputConfig=*/true,
                                /*outputConfig=*/outputConfig,
-                               /*commandConfig=*/commandConfig);
+                               /*commandConfig=*/commandConfig, target);
     cm::append(depends, cmExpandedList(ep));
   }
   for (std::string& p : depends) {
@@ -130,12 +131,14 @@ std::vector<std::string> EvaluateDepends(std::vector<std::string> const& paths,
 std::vector<std::string> EvaluateOutputs(std::vector<std::string> const& paths,
                                          cmGeneratorExpression const& ge,
                                          cmLocalGenerator* lg,
-                                         std::string const& config)
+                                         std::string const& config,
+                                         cmGeneratorTarget const* target)
 {
   std::vector<std::string> outputs;
   for (std::string const& p : paths) {
     std::unique_ptr<cmCompiledGeneratorExpression> cge = ge.Parse(p);
-    cm::append(outputs, lg->ExpandCustomCommandOutputPaths(*cge, config));
+    cm::append(outputs,
+               lg->ExpandCustomCommandOutputPaths(*cge, config, target));
   }
   return outputs;
 }
@@ -157,6 +160,7 @@ cmCustomCommandGenerator::cmCustomCommandGenerator(
   : CC(&cc)
   , OutputConfig(crossConfig ? *crossConfig : config)
   , CommandConfig(std::move(config))
+  , Target(cc.GetTarget())
   , LG(lg)
   , OldStyle(cc.GetEscapeOldStyle())
   , MakeVars(cc.GetEscapeAllowMakeVars())
@@ -171,6 +175,7 @@ cmCustomCommandGenerator::cmCustomCommandGenerator(
   }
 
   cmGeneratorExpression ge(cc.GetBacktrace());
+  cmGeneratorTarget const* target = lg->FindGeneratorTargetToUse(this->Target);
 
   const cmCustomCommandLines& cmdlines = this->CC->GetCommandLines();
   for (cmCustomCommandLine const& cmdline : cmdlines) {
@@ -180,7 +185,7 @@ cmCustomCommandGenerator::cmCustomCommandGenerator(
     for (std::string const& clarg : cmdline) {
       std::string parsed_arg = EvaluateSplitConfigGenex(
         clarg, ge, this->LG, useOutputConfig, this->OutputConfig,
-        this->CommandConfig, &this->Utilities);
+        this->CommandConfig, target, &this->Utilities);
       if (this->CC->GetCommandExpandLists()) {
         cm::append(argv, cmExpandedList(parsed_arg));
       } else {
@@ -241,17 +246,18 @@ cmCustomCommandGenerator::cmCustomCommandGenerator(
   }
 
   this->Outputs =
-    EvaluateOutputs(cc.GetOutputs(), ge, this->LG, this->OutputConfig);
-  this->Byproducts =
-    EvaluateOutputs(cc.GetByproducts(), ge, this->LG, this->OutputConfig);
-  this->Depends = EvaluateDepends(cc.GetDepends(), ge, this->LG,
-                                  this->OutputConfig, this->CommandConfig);
+    EvaluateOutputs(cc.GetOutputs(), ge, this->LG, this->OutputConfig, target);
+  this->Byproducts = EvaluateOutputs(cc.GetByproducts(), ge, this->LG,
+                                     this->OutputConfig, target);
+  this->Depends =
+    EvaluateDepends(cc.GetDepends(), ge, this->LG, this->OutputConfig,
+                    this->CommandConfig, target);
 
   const std::string& workingdirectory = this->CC->GetWorkingDirectory();
   if (!workingdirectory.empty()) {
-    this->WorkingDirectory =
-      EvaluateSplitConfigGenex(workingdirectory, ge, this->LG, true,
-                               this->OutputConfig, this->CommandConfig);
+    this->WorkingDirectory = EvaluateSplitConfigGenex(
+      workingdirectory, ge, this->LG, true, this->OutputConfig,
+      this->CommandConfig, target);
     // Convert working directory to a full path.
     if (!this->WorkingDirectory.empty()) {
       std::string const& build_dir = this->LG->GetCurrentBinaryDirectory();
