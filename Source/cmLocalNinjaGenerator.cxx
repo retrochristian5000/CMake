@@ -731,7 +731,7 @@ bool cmLocalNinjaGenerator::HasUniqueByproducts(
     std::unique_ptr<cmCompiledGeneratorExpression> cge = ge.Parse(p);
     for (std::string const& config : configs) {
       for (std::string const& b :
-           this->ExpandCustomCommandOutputPaths(*cge, config)) {
+           this->ExpandCustomCommandOutputPaths(*cge, config, nullptr)) {
         if (!seen.insert(b).second) {
           return false;
         }

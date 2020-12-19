@@ -1081,14 +1081,14 @@ cmSourceFile* cmLocalGenerator::AddCustomCommandToOutput(
   const char* comment, const char* workingDir,
   cmPolicies::PolicyStatus cmp0116, bool replace, bool escapeOldStyle,
   bool uses_terminal, bool command_expand_lists, const std::string& depfile,
-  const std::string& job_pool, bool stdPipesUTF8)
+  const std::string& job_pool, bool stdPipesUTF8, const std::string& target)
 {
   std::vector<std::string> no_byproducts;
   cmImplicitDependsList no_implicit_depends;
   return this->AddCustomCommandToOutput(
     { output }, no_byproducts, depends, main_dependency, no_implicit_depends,
     commandLines, comment, workingDir, cmp0116, replace, escapeOldStyle,
-    uses_terminal, command_expand_lists, depfile, job_pool, stdPipesUTF8);
+    uses_terminal, command_expand_lists, depfile, job_pool, stdPipesUTF8, target);
 }
 
 cmSourceFile* cmLocalGenerator::AddCustomCommandToOutput(
@@ -1099,7 +1099,7 @@ cmSourceFile* cmLocalGenerator::AddCustomCommandToOutput(
   const cmCustomCommandLines& commandLines, const char* comment,
   const char* workingDir, cmPolicies::PolicyStatus cmp0116, bool replace,
   bool escapeOldStyle, bool uses_terminal, bool command_expand_lists,
-  const std::string& depfile, const std::string& job_pool, bool stdPipesUTF8)
+  const std::string& depfile, const std::string& job_pool, bool stdPipesUTF8, const std::string& target)
 {
   // Make sure there is at least one output.
   if (outputs.empty()) {
@@ -1111,7 +1111,7 @@ cmSourceFile* cmLocalGenerator::AddCustomCommandToOutput(
     *this, this->DirectoryBacktrace, cmCommandOrigin::Generator, outputs,
     byproducts, depends, main_dependency, implicit_depends, commandLines,
     comment, workingDir, replace, escapeOldStyle, uses_terminal,
-    command_expand_lists, depfile, job_pool, stdPipesUTF8, cmp0116);
+    command_expand_lists, depfile, job_pool, stdPipesUTF8, cmp0116, target);
 }
 
 cmTarget* cmLocalGenerator::AddUtilityCommand(
@@ -3920,7 +3920,8 @@ void CreateGeneratedSource(cmLocalGenerator& lg, const std::string& output,
 
 std::string ComputeCustomCommandRuleFileName(cmLocalGenerator& lg,
                                              cmListFileBacktrace const& bt,
-                                             std::string const& output)
+                                             std::string const& output,
+                                             std::string const& target)
 {
   // If the output path has no generator expressions, use it directly.
   if (cmGeneratorExpression::Find(output) == std::string::npos) {
@@ -3943,7 +3944,7 @@ std::string ComputeCustomCommandRuleFileName(cmLocalGenerator& lg,
   // If the genex evaluates to the same value in all configurations, use that.
   {
     std::vector<std::string> allConfigOutputs =
-      lg.ExpandCustomCommandOutputGenex(output, bt);
+      lg.ExpandCustomCommandOutputGenex(output, bt, lg.FindGeneratorTargetToUse(target));
     if (allConfigOutputs.size() == 1) {
       return allConfigOutputs.front();
     }
@@ -3965,7 +3966,7 @@ cmSourceFile* AddCustomCommand(
   const char* workingDir, bool replace, bool escapeOldStyle,
   bool uses_terminal, bool command_expand_lists, const std::string& depfile,
   const std::string& job_pool, bool stdPipesUTF8,
-  cmPolicies::PolicyStatus cmp0116)
+  cmPolicies::PolicyStatus cmp0116, const std::string& target)
 {
   cmMakefile* mf = lg.GetMakefile();
 
@@ -3996,7 +3997,7 @@ cmSourceFile* AddCustomCommand(
 
     // Construct a rule file associated with the first output produced.
     std::string outName = gg->GenerateRuleFile(
-      ComputeCustomCommandRuleFileName(lg, lfbt, outputs[0]));
+      ComputeCustomCommandRuleFileName(lg, lfbt, outputs[0], target));
 
     // Check if the rule file already exists.
     file = mf->GetSource(outName, cmSourceFileLocationKind::Known);
@@ -4038,12 +4039,14 @@ cmSourceFile* AddCustomCommand(
     cc->SetDepfile(depfile);
     cc->SetJobPool(job_pool);
     cc->SetCMP0116Status(cmp0116);
+    cc->SetTarget(target);
     file->SetCustomCommand(std::move(cc));
 
+    cmGeneratorTarget const* generatorTarget = lg.FindGeneratorTargetToUse(target);
     lg.AddSourceOutputs(file, outputs, cmLocalGenerator::OutputRole::Primary,
-                        lfbt, origin);
+                        lfbt, origin, generatorTarget);
     lg.AddSourceOutputs(file, byproducts,
-                        cmLocalGenerator::OutputRole::Byproduct, lfbt, origin);
+                        cmLocalGenerator::OutputRole::Byproduct, lfbt, origin, generatorTarget);
   }
   return file;
 }
@@ -4096,6 +4099,7 @@ void AddCustomCommandToTarget(cmLocalGenerator& lg,
   cc.SetDepfile(depfile);
   cc.SetJobPool(job_pool);
   cc.SetCMP0116Status(cmp0116);
+  cc.SetTarget(target->GetName());
   switch (type) {
     case cmCustomCommandType::PRE_BUILD:
       target->AddPreBuildCommand(std::move(cc));
@@ -4121,13 +4125,13 @@ cmSourceFile* AddCustomCommandToOutput(
   const char* workingDir, bool replace, bool escapeOldStyle,
   bool uses_terminal, bool command_expand_lists, const std::string& depfile,
   const std::string& job_pool, bool stdPipesUTF8,
-  cmPolicies::PolicyStatus cmp0116)
+  cmPolicies::PolicyStatus cmp0116, const std::string& target)
 {
   return AddCustomCommand(lg, lfbt, origin, outputs, byproducts, depends,
                           main_dependency, implicit_depends, commandLines,
                           comment, workingDir, replace, escapeOldStyle,
                           uses_terminal, command_expand_lists, depfile,
-                          job_pool, stdPipesUTF8, cmp0116);
+                          job_pool, stdPipesUTF8, cmp0116, target);
 }
 
 void AppendCustomCommandToOutput(cmLocalGenerator& lg,
@@ -4135,7 +4139,8 @@ void AppendCustomCommandToOutput(cmLocalGenerator& lg,
                                  const std::string& output,
                                  const std::vector<std::string>& depends,
                                  const cmImplicitDependsList& implicit_depends,
-                                 const cmCustomCommandLines& commandLines)
+                                 const cmCustomCommandLines& commandLines,
+  const std::string& target)
 {
   // Lookup an existing command.
   cmSourceFile* sf = nullptr;
@@ -4145,7 +4150,7 @@ void AppendCustomCommandToOutput(cmLocalGenerator& lg,
     // This output path has a generator expression.  Evaluate it to
     // find the output for any configurations.
     for (std::string const& out :
-         lg.ExpandCustomCommandOutputGenex(output, lfbt)) {
+         lg.ExpandCustomCommandOutputGenex(output, lfbt, lg.FindGeneratorTargetToUse(target))) {
       sf = lg.GetSourceFileWithOutput(out);
       if (sf) {
         break;
@@ -4158,6 +4163,7 @@ void AppendCustomCommandToOutput(cmLocalGenerator& lg,
       cc->AppendCommands(commandLines);
       cc->AppendDepends(depends);
       cc->AppendImplicitDepends(implicit_depends);
+      cc->SetTarget(target);
       return;
     }
   }
@@ -4196,7 +4202,7 @@ void AddUtilityCommand(cmLocalGenerator& lg, const cmListFileBacktrace& lfbt,
     lg, lfbt, origin, { output }, byproducts, depends, no_main_dependency,
     no_implicit_depends, commandLines, comment, workingDir,
     /*replace=*/false, escapeOldStyle, uses_terminal, command_expand_lists,
-    /*depfile=*/"", job_pool, stdPipesUTF8, cmp0116);
+    /*depfile=*/"", job_pool, stdPipesUTF8, cmp0116, target->GetName());
   if (rule) {
     lg.AddTargetByproducts(target, byproducts, lfbt, origin);
   }
@@ -4319,9 +4325,9 @@ cmLocalGenerator::MakeCustomCommandGenerators(cmCustomCommand const& cc,
 }
 
 std::vector<std::string> cmLocalGenerator::ExpandCustomCommandOutputPaths(
-  cmCompiledGeneratorExpression const& cge, std::string const& config)
+  cmCompiledGeneratorExpression const& cge, std::string const& config, const cmGeneratorTarget* target)
 {
-  std::vector<std::string> paths = cmExpandedList(cge.Evaluate(this, config));
+  std::vector<std::string> paths = cmExpandedList(cge.Evaluate(this, config, target));
   for (std::string& p : paths) {
     p = cmSystemTools::CollapseFullPath(p, this->GetCurrentBinaryDirectory());
   }
@@ -4329,7 +4335,7 @@ std::vector<std::string> cmLocalGenerator::ExpandCustomCommandOutputPaths(
 }
 
 std::vector<std::string> cmLocalGenerator::ExpandCustomCommandOutputGenex(
-  std::string const& o, cmListFileBacktrace const& bt)
+  std::string const& o, cmListFileBacktrace const& bt, cmGeneratorTarget const* target)
 {
   std::vector<std::string> allConfigOutputs;
   cmGeneratorExpression ge(bt);
@@ -4338,7 +4344,7 @@ std::vector<std::string> cmLocalGenerator::ExpandCustomCommandOutputGenex(
     this->Makefile->GetGeneratorConfigs(cmMakefile::IncludeEmptyConfig);
   for (std::string const& config : configs) {
     std::vector<std::string> configOutputs =
-      this->ExpandCustomCommandOutputPaths(*cge, config);
+      this->ExpandCustomCommandOutputPaths(*cge, config, target);
     allConfigOutputs.reserve(allConfigOutputs.size() + configOutputs.size());
     std::move(configOutputs.begin(), configOutputs.end(),
               std::back_inserter(allConfigOutputs));
@@ -4361,7 +4367,7 @@ void cmLocalGenerator::AddTargetByproducts(
 
     // This byproduct path has a generator expression.  Evaluate it to
     // register the byproducts for all configurations.
-    for (std::string const& b : this->ExpandCustomCommandOutputGenex(o, bt)) {
+    for (std::string const& b : this->ExpandCustomCommandOutputGenex(o, bt, this->FindGeneratorTargetToUse(target->GetName()))) {
       this->UpdateOutputToSourceMap(b, target, bt, cmCommandOrigin::Generator);
     }
   }
@@ -4369,7 +4375,7 @@ void cmLocalGenerator::AddTargetByproducts(
 
 void cmLocalGenerator::AddSourceOutputs(
   cmSourceFile* source, const std::vector<std::string>& outputs,
-  OutputRole role, cmListFileBacktrace const& bt, cmCommandOrigin origin)
+  OutputRole role, cmListFileBacktrace const& bt, cmCommandOrigin origin, cmGeneratorTarget const* target)
 {
   for (std::string const& o : outputs) {
     if (cmGeneratorExpression::Find(o) == std::string::npos) {
@@ -4380,7 +4386,7 @@ void cmLocalGenerator::AddSourceOutputs(
     // This output path has a generator expression.  Evaluate it to
     // register the outputs for all configurations.
     for (std::string const& out :
-         this->ExpandCustomCommandOutputGenex(o, bt)) {
+         this->ExpandCustomCommandOutputGenex(o, bt, target)) {
       this->UpdateOutputToSourceMap(out, source, role, bt,
                                     cmCommandOrigin::Generator);
     }

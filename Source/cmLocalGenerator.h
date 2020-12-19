@@ -343,7 +343,7 @@ public:
     bool replace = false, bool escapeOldStyle = true,
     bool uses_terminal = false, bool command_expand_lists = false,
     const std::string& depfile = "", const std::string& job_pool = "",
-    bool stdPipesUTF8 = false);
+    bool stdPipesUTF8 = false, const std::string& target = "");
   cmSourceFile* AddCustomCommandToOutput(
     const std::vector<std::string>& outputs,
     const std::vector<std::string>& byproducts,
@@ -355,7 +355,7 @@ public:
     bool replace = false, bool escapeOldStyle = true,
     bool uses_terminal = false, bool command_expand_lists = false,
     const std::string& depfile = "", const std::string& job_pool = "",
-    bool stdPipesUTF8 = false);
+    bool stdPipesUTF8 = false, const std::string& target = "");
 
   /**
    * Add a utility to the build.  A utility target is a command that is run
@@ -378,9 +378,9 @@ public:
     cmCustomCommand const& cc, std::string const& config);
 
   std::vector<std::string> ExpandCustomCommandOutputPaths(
-    cmCompiledGeneratorExpression const& cge, std::string const& config);
+    cmCompiledGeneratorExpression const& cge, std::string const& config, const cmGeneratorTarget* target);
   std::vector<std::string> ExpandCustomCommandOutputGenex(
-    std::string const& o, cmListFileBacktrace const& bt);
+    std::string const& o, cmListFileBacktrace const& bt, cmGeneratorTarget const* target);
 
   /**
    * Add target byproducts.
@@ -402,7 +402,7 @@ public:
   void AddSourceOutputs(cmSourceFile* source,
                         std::vector<std::string> const& outputs,
                         OutputRole role, cmListFileBacktrace const& bt,
-                        cmCommandOrigin origin);
+                        cmCommandOrigin origin, cmGeneratorTarget const* target);
 
   /**
    * Return the target if the provided source name is a byproduct of a utility
@@ -699,14 +699,14 @@ cmSourceFile* AddCustomCommandToOutput(
   const char* workingDir, bool replace, bool escapeOldStyle,
   bool uses_terminal, bool command_expand_lists, const std::string& depfile,
   const std::string& job_pool, bool stdPipesUTF8,
-  cmPolicies::PolicyStatus cmp0116);
+  cmPolicies::PolicyStatus cmp0116, const std::string& target);
 
 void AppendCustomCommandToOutput(cmLocalGenerator& lg,
                                  const cmListFileBacktrace& lfbt,
                                  const std::string& output,
                                  const std::vector<std::string>& depends,
                                  const cmImplicitDependsList& implicit_depends,
-                                 const cmCustomCommandLines& commandLines);
+                                 const cmCustomCommandLines& commandLines, const std::string& target);
 
 void AddUtilityCommand(cmLocalGenerator& lg, const cmListFileBacktrace& lfbt,
                        cmCommandOrigin origin, cmTarget* target,

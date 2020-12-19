@@ -191,7 +191,7 @@ public:
     const CommandSourceCallback& callback = nullptr, bool replace = false,
     bool escapeOldStyle = true, bool uses_terminal = false,
     bool command_expand_lists = false, const std::string& depfile = "",
-    const std::string& job_pool = "", bool stdPipesUTF8 = false);
+    const std::string& job_pool = "", bool stdPipesUTF8 = false, const std::string& target = "");
   void AddCustomCommandToOutput(
     const std::vector<std::string>& outputs,
     const std::vector<std::string>& byproducts,
@@ -203,7 +203,7 @@ public:
     const CommandSourceCallback& callback = nullptr, bool replace = false,
     bool escapeOldStyle = true, bool uses_terminal = false,
     bool command_expand_lists = false, const std::string& depfile = "",
-    const std::string& job_pool = "", bool stdPipesUTF8 = false);
+    const std::string& job_pool = "", bool stdPipesUTF8 = false, const std::string& target = "");
   void AddCustomCommandOldStyle(const std::string& target,
                                 const std::vector<std::string>& outputs,
                                 const std::vector<std::string>& depends,
@@ -214,7 +214,7 @@ public:
   void AppendCustomCommandToOutput(
     const std::string& output, const std::vector<std::string>& depends,
     const cmImplicitDependsList& implicit_depends,
-    const cmCustomCommandLines& commandLines);
+    const cmCustomCommandLines& commandLines, const std::string& target);
 
   /**
    * Add a define flag to the build.
