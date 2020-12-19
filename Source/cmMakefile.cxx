@@ -1126,7 +1126,7 @@ void cmMakefile::AddCustomCommandToOutput(
   cmPolicies::PolicyStatus cmp0116, const CommandSourceCallback& callback,
   bool replace, bool escapeOldStyle, bool uses_terminal,
   bool command_expand_lists, const std::string& depfile,
-  const std::string& job_pool, bool stdPipesUTF8)
+  const std::string& job_pool, bool stdPipesUTF8, const std::string& target)
 {
   std::vector<std::string> no_byproducts;
   cmImplicitDependsList no_implicit_depends;
@@ -1134,7 +1134,7 @@ void cmMakefile::AddCustomCommandToOutput(
     { output }, no_byproducts, depends, main_dependency, no_implicit_depends,
     commandLines, comment, workingDir, cmp0116, callback, replace,
     escapeOldStyle, uses_terminal, command_expand_lists, depfile, job_pool,
-    stdPipesUTF8);
+    stdPipesUTF8, target);
 }
 
 void cmMakefile::AddCustomCommandToOutput(
@@ -1146,7 +1146,7 @@ void cmMakefile::AddCustomCommandToOutput(
   const char* workingDir, cmPolicies::PolicyStatus cmp0116,
   const CommandSourceCallback& callback, bool replace, bool escapeOldStyle,
   bool uses_terminal, bool command_expand_lists, const std::string& depfile,
-  const std::string& job_pool, bool stdPipesUTF8)
+  const std::string& job_pool, bool stdPipesUTF8, const std::string& target)
 {
   // Make sure there is at least one output.
   if (outputs.empty()) {
@@ -1176,7 +1176,7 @@ void cmMakefile::AddCustomCommandToOutput(
         main_dependency, implicit_depends, commandLines,
         GetCStrOrNull(commentStr), GetCStrOrNull(workingStr), replace,
         escapeOldStyle, uses_terminal, command_expand_lists, depfile, job_pool,
-        stdPipesUTF8, cmp0116);
+        stdPipesUTF8, cmp0116, target);
       if (callback && sf) {
         callback(sf);
       }
@@ -1251,7 +1251,7 @@ void cmMakefile::AddCustomCommandOldStyle(
 void cmMakefile::AppendCustomCommandToOutput(
   const std::string& output, const std::vector<std::string>& depends,
   const cmImplicitDependsList& implicit_depends,
-  const cmCustomCommandLines& commandLines)
+  const cmCustomCommandLines& commandLines, const std::string& target)
 {
   // Validate custom commands.
   if (this->ValidateCustomCommand(commandLines)) {
@@ -1259,8 +1259,8 @@ void cmMakefile::AppendCustomCommandToOutput(
     this->AddGeneratorAction(
       [=](cmLocalGenerator& lg, const cmListFileBacktrace& lfbt) {
         BacktraceGuard guard(this->Backtrace, lfbt);
-        detail::AppendCustomCommandToOutput(lg, lfbt, output, depends,
-                                            implicit_depends, commandLines);
+        detail::AppendCustomCommandToOutput(
+          lg, lfbt, output, depends, implicit_depends, commandLines, target);
       });
   }
 }

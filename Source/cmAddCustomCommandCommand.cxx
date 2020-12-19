@@ -306,7 +306,7 @@ bool cmAddCustomCommandCommand(std::vector<std::string> const& args,
   // Check for an append request.
   if (append) {
     mf.AppendCustomCommandToOutput(output[0], depends, implicit_depends,
-                                   commandLines);
+                                   commandLines, target);
     return true;
   }
 
@@ -324,13 +324,13 @@ bool cmAddCustomCommandCommand(std::vector<std::string> const& args,
       target, byproducts, no_depends, commandLines, cctype, comment,
       working.c_str(), mf.GetPolicyStatus(cmPolicies::CMP0116), escapeOldStyle,
       uses_terminal, depfile, job_pool, command_expand_lists);
-  } else if (target.empty()) {
+  } else if (source.empty()) {
     // Target is empty, use the output.
     mf.AddCustomCommandToOutput(
       output, byproducts, depends, main_dependency, implicit_depends,
       commandLines, comment, working.c_str(),
       mf.GetPolicyStatus(cmPolicies::CMP0116), nullptr, false, escapeOldStyle,
-      uses_terminal, command_expand_lists, depfile, job_pool);
+      uses_terminal, command_expand_lists, depfile, job_pool, false, target);
   } else if (!byproducts.empty()) {
     status.SetError("BYPRODUCTS may not be specified with SOURCE signatures");
     return false;
