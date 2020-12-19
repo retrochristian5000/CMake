@@ -1259,8 +1259,8 @@ void cmMakefile::AppendCustomCommandToOutput(
     this->AddGeneratorAction(
       [=](cmLocalGenerator& lg, const cmListFileBacktrace& lfbt) {
         BacktraceGuard guard(this->Backtrace, lfbt);
-        detail::AppendCustomCommandToOutput(lg, lfbt, output, depends,
-                                            implicit_depends, commandLines);
+        detail::AppendCustomCommandToOutput(
+          lg, lfbt, output, depends, implicit_depends, commandLines);
       });
   }
 }

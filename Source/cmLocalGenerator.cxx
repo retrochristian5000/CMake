@@ -4096,6 +4096,7 @@ void AddCustomCommandToTarget(cmLocalGenerator& lg,
   cc.SetDepfile(depfile);
   cc.SetJobPool(job_pool);
   cc.SetCMP0116Status(cmp0116);
+  cc.SetTarget(target->GetName());
   switch (type) {
     case cmCustomCommandType::PRE_BUILD:
       target->AddPreBuildCommand(std::move(cc));
@@ -4144,8 +4145,7 @@ void AppendCustomCommandToOutput(cmLocalGenerator& lg,
   } else {
     // This output path has a generator expression.  Evaluate it to
     // find the output for any configurations.
-    for (std::string const& out :
-         lg.ExpandCustomCommandOutputGenex(output, lfbt)) {
+    for (std::string const& out : lg.ExpandCustomCommandOutputGenex(output, lfbt)) {
       sf = lg.GetSourceFileWithOutput(out);
       if (sf) {
         break;
@@ -4321,7 +4321,8 @@ cmLocalGenerator::MakeCustomCommandGenerators(cmCustomCommand const& cc,
 std::vector<std::string> cmLocalGenerator::ExpandCustomCommandOutputPaths(
   cmCompiledGeneratorExpression const& cge, std::string const& config)
 {
-  std::vector<std::string> paths = cmExpandedList(cge.Evaluate(this, config));
+  std::vector<std::string> paths =
+    cmExpandedList(cge.Evaluate(this, config));
   for (std::string& p : paths) {
     p = cmSystemTools::CollapseFullPath(p, this->GetCurrentBinaryDirectory());
   }
