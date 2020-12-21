@@ -868,6 +868,12 @@ bool ExpandMacros(const cmCMakePresetsFile& file, const TestPreset& preset,
   if (out->FilterExclude) {
     CHECK_EXPAND(out, out->FilterExclude->Name, macroExpanders)
     CHECK_EXPAND(out, out->FilterExclude->Label, macroExpanders)
+
+    if (out->FilterExclude->Fixtures) {
+      CHECK_EXPAND(out, out->FilterExclude->Fixtures->Any, macroExpanders)
+      CHECK_EXPAND(out, out->FilterExclude->Fixtures->Setup, macroExpanders)
+      CHECK_EXPAND(out, out->FilterExclude->Fixtures->Cleanup, macroExpanders)
+    }
   }
 
   if (out->Execution) {
