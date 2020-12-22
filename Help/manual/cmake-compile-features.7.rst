@@ -359,6 +359,7 @@ following :variable:`compiler ids <CMAKE_<LANG>_COMPILER_ID>` as of the
 versions specified for each:
 
 * ``Cray``: Cray Compiler Environment version 8.1+.
+* ``Fujitsu``: Fujitsu HPC compiler 2.0+.
 * ``PGI``: PGI version 12.10+.
 * ``TI``: Texas Instruments compiler.
 * ``XL``: IBM XL version 10.1+.
