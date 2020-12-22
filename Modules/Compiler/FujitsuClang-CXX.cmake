@@ -1,0 +1,6 @@
+include(Compiler/FujitsuClang)
+include(Compiler/Clang-CXX)
+
+if(NOT DEFINED CMAKE_CXX_COMPILE_OPTIONS_EXPLICIT_LANGUAGE)
+  set(CMAKE_CXX_COMPILE_OPTIONS_EXPLICIT_LANGUAGE -x c++)
+endif()
