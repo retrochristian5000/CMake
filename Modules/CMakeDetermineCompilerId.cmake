@@ -147,6 +147,30 @@ function(CMAKE_DETERMINE_COMPILER_ID lang flagvar src)
     endif()
   endif()
 
+  # The Fujitsu compiler does not always convey version information through
+  # preprocessor symbols so we extract through command line info
+  if (CMAKE_${lang}_COMPILER_ID STREQUAL "Fujitsu")
+    if(NOT CMAKE_${lang}_COMPILER_VERSION)
+      execute_process(
+        COMMAND "${CMAKE_${lang}_COMPILER}" -V
+        OUTPUT_VARIABLE output
+        ERROR_VARIABLE output
+        RESULT_VARIABLE result
+        TIMEOUT 10
+      )
+      if (result EQUAL 0)
+        if (output MATCHES [[Fujitsu [^ ]* Compiler ([0-9]+\.[0-9]+\.[0-9]+)]])
+          set(CMAKE_${lang}_COMPILER_VERSION "${CMAKE_MATCH_1}")
+  elseif (output MATCHES [[Fujitsu [^ ]* Compiler Driver Version ([0-9]+\.[0-9]+\.[0-9]+)( P-id: ([A-Z])([0-9]+)-([0-9]+))?]])
+          set(CMAKE_${lang}_COMPILER_VERSION "${CMAKE_MATCH_1}")
+          if(CMAKE_MATCH_2)
+            string(APPEND CMAKE_${lang}_COMPILER_VERSION ".${CMAKE_MATCH_4}${CMAKE_MATCH_5}")
+          endif()
+        endif()
+      endif()
+    endif()
+  endif()
+
   # if the format is unknown after all files have been checked, put "Unknown" in the cache
   if(NOT CMAKE_EXECUTABLE_FORMAT)
     set(CMAKE_EXECUTABLE_FORMAT "Unknown" CACHE INTERNAL "Executable file format")
