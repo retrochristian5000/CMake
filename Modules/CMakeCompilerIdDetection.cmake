@@ -65,6 +65,7 @@ function(compiler_id_detection outvar lang)
       PGI
       Cray
       TI
+      FujitsuClang
       Fujitsu
       GHS
     )
