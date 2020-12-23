@@ -45,6 +45,8 @@ The following variables may be set to influence this module's behavior:
   * ``Arm_ilp64_mp``
   * ``EML``
   * ``EML_mt``
+  * ``Fujitsu_SSL2`` (Fujitsu serial BLAS / LAPACK)
+  * ``Fujitsu_SSL2BLAMP`` (Fujitsu parallel BLAS / LAPACK)
   * ``Generic``
 
   .. versionadded:: 3.6
@@ -68,6 +70,7 @@ The following variables may be set to influence this module's behavior:
 
   .. versionadded:: 3.20
     Elbrus Math Library support (``EML``, ``EML_mt``).
+    Fujitsu SSL2 support (``Fujitsu_SSL2``, ``Fujitsu_SSL2BLAMP``).
 
 ``BLA_F95``
   if ``ON`` tries to find the BLAS95/LAPACK95 interfaces
@@ -176,32 +179,34 @@ macro(CHECK_LAPACK_LIBRARIES LIBRARIES _prefix _name _flags _list _threadlibs _a
   endif()
   list(APPEND _extaddlibdir "${CMAKE_C_IMPLICIT_LINK_DIRECTORIES}")
 
-  foreach(_library ${_list})
+  foreach(_library ${_list} ${_threadlibs})
     if(_library MATCHES "^-Wl,--(start|end)-group$")
       # Respect linker flags like --start/end-group (required by MKL)
       set(${LIBRARIES} ${${LIBRARIES}} "${_library}")
     else()
-      set(_combined_name ${_combined_name}_${_library})
+      string(REGEX REPLACE "[^A-Za-z0-9]" "_" _lib_var "${_library}")
+      set(_combined_name ${_combined_name}__${_lib_var})
       if(_libraries_work)
-        find_library(${_prefix}_${_library}_LIBRARY
+        find_library(${_prefix}_${_lib_var}_LIBRARY
           NAMES ${_library}
           NAMES_PER_DIR
           PATHS ${_extaddlibdir}
           PATH_SUFFIXES ${_subdirs}
         )
-        #message("DEBUG: find_library(${_library}) got ${${_prefix}_${_library}_LIBRARY}")
-        mark_as_advanced(${_prefix}_${_library}_LIBRARY)
-        set(${LIBRARIES} ${${LIBRARIES}} ${${_prefix}_${_library}_LIBRARY})
-        set(_libraries_work ${${_prefix}_${_library}_LIBRARY})
+        mark_as_advanced(${_prefix}_${_lib_var}_LIBRARY)
+        set(${LIBRARIES} ${${LIBRARIES}} ${${_prefix}_${_lib_var}_LIBRARY})
+        set(_libraries_work ${${_prefix}_${_lib_var}_LIBRARY})
       endif()
     endif()
   endforeach()
-  unset(_library)
 
+  foreach(_flag ${_flags})
+    string(REGEX REPLACE "[^A-Za-z0-9]" "_" _flag_var "${_flag}")
+    set(_combined_name ${_combined_name}__${_flag_var})
+  endforeach()
   if(_libraries_work)
     # Test this combination of libraries.
     set(CMAKE_REQUIRED_LIBRARIES ${_flags} ${${LIBRARIES}} ${_blas} ${_threadlibs})
-    #message("DEBUG: CMAKE_REQUIRED_LIBRARIES = ${CMAKE_REQUIRED_LIBRARIES}")
     if(CMAKE_Fortran_COMPILER_LOADED)
       check_fortran_function_exists("${_name}" ${_prefix}${_combined_name}_WORKS)
     else()
@@ -544,6 +549,31 @@ if(NOT LAPACK_NOT_FOUND_MESSAGE)
     )
   endif()
 
+  # Fujitsu SSL2 Library?
+  if(NOT LAPACK_LIBRARIES
+      AND BLA_VENDOR MATCHES "Fujitsu_SSL2" OR BLA_VENDOR STREQUAL "All")
+    if(BLA_VENDOR STREQUAL "Fujitsu_SSL2BLAMP")
+      set(_ssl2_suffix BLAMP)
+    else()
+      set(_ssl2_suffix)
+    endif()
+    check_lapack_libraries(
+      LAPACK_LIBRARIES
+      LAPACK
+      cheev
+      "-SSL2${_ssl2_suffix}"
+      ""
+      ""
+      ""
+      ""
+      "${BLAS_LIBRARIES} ${BLAS_LINKER_FLAGS}"
+    )
+    if(LAPACK_LIBRARIES)
+      set(LAPACK_LINKER_FLAGS "-SSL2${_ssl2_suffix}")
+    endif()
+    unset(_ssl2_suffix)
+  endif()
+
   # Generic LAPACK library?
   if(NOT LAPACK_LIBRARIES
       AND (BLA_VENDOR STREQUAL "Generic"
@@ -571,18 +601,24 @@ if(LAPACK_NOT_FOUND_MESSAGE)
   set(LAPACK_NOT_FOUND_MESSAGE
     REASON_FAILURE_MESSAGE ${LAPACK_NOT_FOUND_MESSAGE})
 endif()
-find_package_handle_standard_args(LAPACK REQUIRED_VARS LAPACK_LIBRARIES
-  ${LAPACK_NOT_FOUND_MESSAGE})
-unset(LAPACK_NOT_FOUND_MESSAGE)
-
-if(BLA_F95)
-  set(LAPACK95_FOUND ${LAPACK_FOUND})
-endif()
 
 # On compilers that implicitly link LAPACK (such as ftn, cc, and CC on Cray HPC machines)
 # we used a placeholder for empty LAPACK_LIBRARIES to get through our logic above.
 if(LAPACK_LIBRARIES STREQUAL "LAPACK_LIBRARIES-PLACEHOLDER-FOR-EMPTY-LIBRARIES")
   set(LAPACK_LIBRARIES "")
+endif()
+
+if(NOT LAPACK_LIBRARIES)
+  find_package_handle_standard_args(LAPACK REQUIRED_VARS LAPACK_LINKER_FLAGS
+    ${LAPACK_NOT_FOUND_MESSAGE})
+else()
+  find_package_handle_standard_args(LAPACK REQUIRED_VARS LAPACK_LIBRARIES
+    ${LAPACK_NOT_FOUND_MESSAGE})
+endif()
+unset(LAPACK_NOT_FOUND_MESSAGE)
+
+if(BLA_F95)
+  set(LAPACK95_FOUND ${LAPACK_FOUND})
 endif()
 
 if(LAPACK_FOUND AND NOT TARGET LAPACK::LAPACK)
@@ -600,6 +636,20 @@ if(LAPACK_FOUND AND NOT TARGET LAPACK::LAPACK)
     )
   endif()
   unset(_lapack_libs)
+
+  set(_lapack_flags "${LAPACK_LINKER_FLAGS}")
+  if(_lapack_flags AND TARGET BLAS::BLAS)
+    # remove the ${BLAS_LIBKER_FLAGS} from the interface and replace it
+    # with the BLAS::BLAS target
+    list(REMOVE_ITEM _lapack_flags "${BLAS_LINKER_FLAGS}")
+  endif()
+
+  if(_lapack_libs)
+    set_target_properties(LAPACK::LAPACK PROPERTIES
+      INTERFACE_LINK_OPTIONS "${_lapack_flags}"
+    )
+  endif()
+  unset(_lapack_flags)
 endif()
 
 _lapack_find_library_teardown()
