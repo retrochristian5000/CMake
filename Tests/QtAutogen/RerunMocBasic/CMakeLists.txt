@@ -49,6 +49,7 @@ endmacro()
 
 # Configure the test project
 configure_file("${mocBasicSrcDir}/test1a.h.in" "${mocBasicBinDir}/test1.h" COPYONLY)
+configure_file("${mocBasicSrcDir}/myobject3a.h.in" "${mocBasicBinDir}/myobject3.h" @ONLY)
 execute_process(
   COMMAND "${CMAKE_COMMAND}" -B "${mocBasicBinDir}" -S "${mocBasicSrcDir}"
           -G "${CMAKE_GENERATOR}"
@@ -130,9 +131,23 @@ require_change()
 # - Rebuild
 acquire_timestamp(Before)
 sleep()
-message(STATUS "Add Q_OBJECT to header file for a MOC re-run")
+message(STATUS "Add Q_OBJECT to test1.h for a MOC re-run")
 configure_file("${mocBasicSrcDir}/test1a.h.in" "${mocBasicBinDir}/test1.h" COPYONLY)
 sleep()
 rebuild(5)
+acquire_timestamp(After)
+require_change()
+
+
+# - Ensure that the timestamp will change
+# - Add Q_OBJECT to MyObject3
+# - Rebuild
+acquire_timestamp(Before)
+sleep()
+message(STATUS "Add Q_OBJECT to myobject3.h file for a MOC re-run")
+set(CLASS_CONTENT "Q_OBJECT")
+configure_file("${mocBasicSrcDir}/myobject3a.h.in" "${mocBasicBinDir}/myobject3.h" @ONLY)
+sleep()
+rebuild(6)
 acquire_timestamp(After)
 require_change()
