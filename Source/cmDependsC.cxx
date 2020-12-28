@@ -7,6 +7,7 @@
 #include "cmsys/FStream.hxx"
 
 #include "cmFileTime.h"
+#include "cmGlobalUnixMakefileGenerator3.h"
 #include "cmLocalUnixMakefileGenerator3.h"
 #include "cmMakefile.h"
 #include "cmProperty.h"
@@ -215,16 +216,21 @@ bool cmDependsC::WriteDependencies(const std::set<std::string>& sources,
   // directory.  We must do the same here.
   std::string obj_m = this->LocalGenerator->ConvertToMakefilePath(obj_i);
   internalDepends << obj_i << '\n';
+  if (!dependencies.empty()) {
+    const auto& lineContinue = static_cast<cmGlobalUnixMakefileGenerator3*>(
+                                 this->LocalGenerator->GetGlobalGenerator())
+                                 ->LineContinueDirective;
+    makeDepends << obj_m << ':';
 
-  for (std::string const& dep : dependencies) {
-    makeDepends << obj_m << ": "
-                << this->LocalGenerator->ConvertToMakefilePath(
-                     this->LocalGenerator->MaybeConvertToRelativePath(binDir,
-                                                                      dep))
-                << '\n';
-    internalDepends << ' ' << dep << '\n';
+    for (std::string const& dep : dependencies) {
+      makeDepends << ' ' << lineContinue << ' '
+                  << this->LocalGenerator->ConvertToMakefilePath(
+                       this->LocalGenerator->MaybeConvertToRelativePath(binDir,
+                                                                        dep));
+      internalDepends << ' ' << dep << '\n';
+    }
+    makeDepends << '\n';
   }
-  makeDepends << '\n';
 
   return true;
 }
