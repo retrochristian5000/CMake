@@ -121,7 +121,6 @@ public:
     std::vector<std::string> NativeToolOptions;
 
     ReadFileResult VisitPresetInherit(const Preset& parent) override;
-    ReadFileResult VisitPresetBeforeInherit() override;
     ReadFileResult VisitPresetAfterInherit() override;
   };
 
@@ -233,7 +232,6 @@ public:
     cm::optional<ExecutionOptions> Execution;
 
     ReadFileResult VisitPresetInherit(const Preset& parent) override;
-    ReadFileResult VisitPresetBeforeInherit() override;
     ReadFileResult VisitPresetAfterInherit() override;
   };
 

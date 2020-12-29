@@ -1363,8 +1363,9 @@ cmCMakePresetsFile::ReadProjectPresetsInternal(const std::string& sourceDir,
   }
 
   for (auto& it : this->BuildPresets) {
-    if (this->ConfigurePresets.find(it.second.Unexpanded.ConfigurePreset) ==
-        this->ConfigurePresets.end()) {
+    if (!it.second.Unexpanded.Hidden &&
+        this->ConfigurePresets.find(it.second.Unexpanded.ConfigurePreset) ==
+          this->ConfigurePresets.end()) {
       return ReadFileResult::INVALID_PRESET;
     }
 
@@ -1374,8 +1375,9 @@ cmCMakePresetsFile::ReadProjectPresetsInternal(const std::string& sourceDir,
   }
 
   for (auto& it : this->TestPresets) {
-    if (this->ConfigurePresets.find(it.second.Unexpanded.ConfigurePreset) ==
-        this->ConfigurePresets.end()) {
+    if (!it.second.Unexpanded.Hidden &&
+        this->ConfigurePresets.find(it.second.Unexpanded.ConfigurePreset) ==
+          this->ConfigurePresets.end()) {
       return ReadFileResult::INVALID_PRESET;
     }
 

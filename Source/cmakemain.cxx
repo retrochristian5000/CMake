@@ -378,6 +378,8 @@ int do_build(int ac, char const* const* av)
   bool foundClean = false;
   bool foundNonClean = false;
   bool verbose = cmSystemTools::HasEnv("VERBOSE");
+  std::string presetName;
+  bool listPresets = false;
 
   enum Doing
   {
@@ -385,7 +387,8 @@ int do_build(int ac, char const* const* av)
     DoingDir,
     DoingTarget,
     DoingConfig,
-    DoingNative
+    DoingNative,
+    DoingPreset
   };
   Doing doing = DoingDir;
   for (int i = 2; i < ac; ++i) {
@@ -419,13 +422,22 @@ int do_build(int ac, char const* const* av)
       doing = DoingNone;
     } else if (strcmp(av[i], "--use-stderr") == 0) {
       /* tolerate legacy option */
+    } else if (strcmp(av[i], "--preset") == 0) {
+      doing = DoingPreset;
+    } else if (strcmp(av[i], "--list-presets") == 0) {
+      listPresets = true;
     } else if (strcmp(av[i], "--") == 0) {
       doing = DoingNative;
     } else {
       switch (doing) {
         case DoingDir:
-          dir = cmSystemTools::CollapseFullPath(av[i]);
-          doing = DoingNone;
+          if (strcmp(av[i], "--preset") == 0) {
+            /* If a preset is specified <dir> is not needed. */
+            doing = DoingPreset;
+          } else {
+            dir = cmSystemTools::CollapseFullPath(av[i]);
+            doing = DoingNone;
+          }
           break;
         case DoingTarget:
           if (strlen(av[i]) == 0) {
@@ -449,6 +461,14 @@ int do_build(int ac, char const* const* av)
         case DoingConfig:
           config = av[i];
           doing = DoingNone;
+          break;
+        case DoingPreset:
+          if (strlen(av[i]) == 0) {
+            std::cerr << "Warning: Argument number " << i
+                      << " after --preset option is empty." << std::endl;
+          } else {
+            presetName = av[i];
+          }
           break;
         default:
           std::cerr << "Unknown argument " << av[i] << std::endl;
@@ -486,12 +506,16 @@ int do_build(int ac, char const* const* av)
     }
   }
 
-  if (dir.empty()) {
+  if (dir.empty() && presetName.empty()) {
     /* clang-format off */
     std::cerr <<
-      "Usage: cmake --build <dir> [options] [-- [native-options]]\n"
+      "Usage: cmake --build [<dir> | --preset <preset>] [options] [-- [native-options]]\n"
       "Options:\n"
       "  <dir>          = Project binary directory to be built.\n"
+      "  --preset <preset>\n"
+      "                 = Specify a build preset.\n"
+      "  --list-presets\n"
+      "                 = List available build presets.\n"
       "  --parallel [<jobs>], -j [<jobs>]\n"
       "                 = Build in parallel using the given number of jobs. \n"
       "                   If <jobs> is omitted the native build tool's \n"
@@ -522,8 +546,10 @@ int do_build(int ac, char const* const* av)
   cm.SetProgressCallback([&cm](const std::string& msg, float prog) {
     cmakemainProgressCallback(msg, prog, &cm);
   });
-  return cm.Build(jobs, dir, targets, config, nativeOptions, cleanFirst,
-                  verbose);
+
+  return cm.Build(jobs, std::move(dir), std::move(targets), std::move(config),
+                  std::move(nativeOptions), cleanFirst, verbose, presetName,
+                  listPresets);
 #endif
 }
 
