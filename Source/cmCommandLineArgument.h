@@ -13,6 +13,7 @@ struct cmCommandLineArgument
     Zero,
     One,
     Two,
+    ZeroOrOne,
   };
 
   std::string InvalidSyntaxMessage;
@@ -76,11 +77,19 @@ struct cmCommandLineArgument
         parseState = ParseMode::SyntaxError;
       }
 
-    } else if (this->Type == cmCommandLineArgument::Values::One) {
+    } else if (this->Type == cmCommandLineArgument::Values::One ||
+               this->Type == cmCommandLineArgument::Values::ZeroOrOne) {
       if (input.size() == this->Name.size()) {
         ++index;
         if (index >= allArgs.size() || allArgs[index][0] == '-') {
-          parseState = ParseMode::ValueError;
+          if (this->Type == cmCommandLineArgument::Values::ZeroOrOne) {
+            parseState =
+              this->StoreCall(std::string{}, std::forward<CallState>(state)...)
+              ? ParseMode::Valid
+              : ParseMode::Invalid;
+          } else {
+            parseState = ParseMode::ValueError;
+          }
         } else {
           parseState =
             this->StoreCall(allArgs[index], std::forward<CallState>(state)...)
