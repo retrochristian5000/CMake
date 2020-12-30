@@ -47,11 +47,9 @@ struct cmCommandLineArgument
 
   bool matches(std::string const& input) const
   {
-    if (this->Type == cmCommandLineArgument::Values::Zero) {
-      return input == this->Name;
-    } else {
-      return cmHasPrefix(input, this->Name);
-    }
+    return (this->Type == cmCommandLineArgument::Values::Zero)
+      ? (input == this->Name)
+      : cmHasPrefix(input, this->Name);
   }
 
   template <typename T, typename... CallState>
