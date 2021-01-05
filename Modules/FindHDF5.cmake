@@ -991,10 +991,38 @@ if (HDF5_FOUND)
     add_library(HDF5::HDF5 INTERFACE IMPORTED)
     string(REPLACE "-D" "" _hdf5_definitions "${HDF5_DEFINITIONS}")
     set_target_properties(HDF5::HDF5 PROPERTIES
-      INTERFACE_LINK_LIBRARIES "${HDF5_LIBRARIES}"
       INTERFACE_INCLUDE_DIRECTORIES "${HDF5_INCLUDE_DIRS}"
       INTERFACE_COMPILE_DEFINITIONS "${_hdf5_definitions}")
     unset(_hdf5_definitions)
+    if ("optimized" IN_LIST HDF5_LIBRARIES AND
+        "debug" IN_LIST HDF5_LIBRARIES)
+      # Extract out the path to the debug and non-debug libraries.
+      list(FIND HDF5_LIBRARIES "debug" _hdf5_debug_library_idx)
+      list(FIND HDF5_LIBRARIES "optimized" _hdf5_optimized_library_idx)
+      math(EXPR _hdf5_debug_library_idx "${_hdf5_debug_library_idx} + 1")
+      math(EXPR _hdf5_optimized_library_idx "${_hdf5_optimized_library_idx} + 1")
+      list(GET HDF5_LIBRARIES "${_hdf5_debug_library_idx}" _hdf5_debug_library)
+      list(GET HDF5_LIBRARIES "${_hdf5_optimized_library_idx}" _hdf5_optimized_library)
+      unset(_hdf5_debug_library_idx)
+      unset(_hdf5_optimized_library_idx)
+      # Build the genex.
+      set(_hdf5_libraries
+        "$<IF:$<CONFIG:Debug>,${_hdf5_debug_library},${_hdf5_optimized_library}>")
+      unset(_hdf5_debug_library)
+      unset(_hdf5_optimized_library)
+      # Set the property.
+      set_target_properties(HDF5::HDF5 PROPERTIES
+        INTERFACE_LINK_LIBRARIES "${_hdf5_libraries}")
+      unset(_hdf5_libraries)
+    else ()
+      # We don't have both, so just remove the keywords and use the single
+      # library available.
+      set(_hdf5_libraries "${HDF5_LIBRARIES}")
+      list(REMOVE_ITEM _hdf5_libraries debug optimized)
+      set_target_properties(HDF5::HDF5 PROPERTIES
+        INTERFACE_LINK_LIBRARIES "${_hdf5_libraries}")
+      unset(_hdf5_libraries)
+    endif ()
   endif ()
 
   foreach (hdf5_lang IN LISTS HDF5_LANGUAGE_BINDINGS)
