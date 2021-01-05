@@ -933,18 +933,17 @@ bool ExpandMacros(const cmCMakePresetsFile& file, const T& preset,
     };
 
   const MacroExpander environmentMacroExpander =
-    [&macroExpanders, &preset, &envCycles](const std::string& macroNamespace,
-                                           const std::string& macroName,
-                                           std::string& out) {
-      if (macroNamespace == "env" && !macroName.empty()) {
-        auto v = preset.Environment.find(macroName);
-        if (v != preset.Environment.end() && v->second) {
-          auto e = VisitEnv(const_cast<std::string&>(*v->second),
-                            envCycles[macroName], macroExpanders);
+    [&macroExpanders, &out, &envCycles](const std::string& macroNamespace,
+                                        const std::string& macroName,
+                                        std::string& result) {
+      if (macroNamespace == "env" && !macroName.empty() && out) {
+        auto v = out->Environment.find(macroName);
+        if (v != out->Environment.end() && v->second) {
+          auto e = VisitEnv(*v->second, envCycles[macroName], macroExpanders);
           if (e != ExpandMacroResult::Ok) {
             return e;
           }
-          out += *v->second;
+          result += *v->second;
           return ExpandMacroResult::Ok;
         }
       }
@@ -955,7 +954,7 @@ bool ExpandMacros(const cmCMakePresetsFile& file, const T& preset,
         }
         const char* value = std::getenv(macroName.c_str());
         if (value) {
-          out += value;
+          result += value;
         }
         return ExpandMacroResult::Ok;
       }
