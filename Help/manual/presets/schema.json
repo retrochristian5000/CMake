@@ -486,8 +486,12 @@
             "description": "An optional string. Equivalent to passing --build-config on the command line."
           },
           "overwriteConfigurationFile": {
-            "type": "boolean",
-            "description": "An optional bool. If true, equivalent to passing --overwrite on the command line."
+            "type": "array",
+            "description": "An optional array of configuration options to overwrite options specified in the CTest configuration file.",
+            "items": {
+              "type": "string",
+              "description": "An option written as a key-value pair in the form \"key=value\"."
+            }
           },
           "output": {
             "type": "object",
@@ -584,10 +588,6 @@
                               "type": "integer",
                               "description": "An integer specifying the test to run by index."
                             }
-                          },
-                          "useUnion": {
-                            "type": "boolean",
-                            "description": "An optional bool. Equivalent to passing --union on the command line."
                           }
                         },
                         "additionalProperties": false
@@ -597,6 +597,10 @@
                         "description": "An optional string specifying a file with the command line syntax for --tests-information."
                       }
                     ]
+                  },
+                  "useUnion": {
+                    "type": "boolean",
+                    "description": "An optional bool. Equivalent to passing --union on the command line."
                   }
                 },
                 "additionalProperties": false
