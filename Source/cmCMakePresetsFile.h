@@ -227,7 +227,7 @@ public:
     std::string ConfigurePreset;
     cm::optional<bool> InheritConfigureEnvironment;
     std::string Configuration;
-    cm::optional<bool> OverwriteConfigurationFile;
+    std::vector<std::string> OverwriteConfigurationFile;
     cm::optional<OutputOptions> Output;
     cm::optional<Include> FilterInclude;
     cm::optional<Exclude> FilterExclude;

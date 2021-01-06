@@ -637,7 +637,7 @@ auto const TestPresetHelper =
     .Bind("configuration"_s, &TestPreset::Configuration, PresetStringHelper,
           false)
     .Bind("overwriteConfigurationFile"_s,
-          &TestPreset::OverwriteConfigurationFile, PresetOptionalBoolHelper,
+          &TestPreset::OverwriteConfigurationFile, PresetVectorStringHelper,
           false)
     .Bind("output"_s, &TestPreset::Output, TestPresetOptionalOutputHelper,
           false)
@@ -1226,8 +1226,8 @@ cmCMakePresetsFile::TestPreset::VisitPresetInherit(
   InheritOptionalValue(preset.InheritConfigureEnvironment,
                        parent.InheritConfigureEnvironment);
   InheritString(preset.Configuration, parent.Configuration);
-  InheritOptionalValue(preset.OverwriteConfigurationFile,
-                       parent.OverwriteConfigurationFile);
+  InheritVector(preset.OverwriteConfigurationFile,
+                parent.OverwriteConfigurationFile);
 
   if (parent.Output.has_value()) {
     if (preset.Output.has_value()) {
