@@ -69,15 +69,18 @@
 // support for realpath call
 #ifndef _WIN32
 #  include <climits>
+
 #  include <pwd.h>
+#  include <unistd.h>
+#  include <utime.h>
+
 #  include <sys/ioctl.h>
 #  include <sys/time.h>
 #  include <sys/wait.h>
-#  include <unistd.h>
-#  include <utime.h>
 #  ifndef __VMS
-#    include <sys/param.h>
 #    include <termios.h>
+
+#    include <sys/param.h>
 #  endif
 #  include <csignal> /* sigprocmask */
 #endif
@@ -89,6 +92,7 @@
 // Windows API.
 #if defined(_WIN32)
 #  include <windows.h>
+
 #  include <winioctl.h>
 #  ifndef INVALID_FILE_ATTRIBUTES
 #    define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
@@ -276,10 +280,11 @@ inline void Realpath(const std::string& path, std::string& resolved_path,
   }
 }
 #else
-#  include <sys/types.h>
-
 #  include <fcntl.h>
 #  include <unistd.h>
+
+#  include <sys/types.h>
+
 inline int Mkdir(const std::string& dir, const mode_t* mode)
 {
   return mkdir(dir.c_str(), mode ? *mode : 00777);
@@ -3987,6 +3992,37 @@ bool SystemTools::GetShortPath(const std::string& path, std::string& shortPath)
   }
 #else
   shortPath = path;
+  return true;
+#endif
+}
+
+bool SystemTools::GetLongPath(const std::string& path, std::string& longPath)
+{
+#if defined(_WIN32) && !defined(__CYGWIN__)
+  std::string tempPath = path; // create a buffer
+
+  // if the path passed in has quotes around it, first remove the quotes
+  if (!path.empty() && path[0] == '"' && path.back() == '"') {
+    tempPath.resize(path.length() - 1);
+    tempPath.erase(0, 1);
+  }
+
+  std::wstring wtempPath = Encoding::ToWide(tempPath);
+  DWORD ret = GetLongPathNameW(wtempPath.c_str(), nullptr, 0);
+  std::vector<wchar_t> buffer(ret);
+  if (ret != 0) {
+    ret = GetLongPathNameW(wtempPath.c_str(), &buffer[0],
+                           static_cast<DWORD>(buffer.size()));
+  }
+
+  if (ret == 0) {
+    return false;
+  } else {
+    longPath = Encoding::ToNarrow(&buffer[0]);
+    return true;
+  }
+#else
+  longPath = path;
   return true;
 #endif
 }

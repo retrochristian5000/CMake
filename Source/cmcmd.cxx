@@ -2,6 +2,7 @@
    file Copyright.txt or https://cmake.org/licensing for details.  */
 #include "cmcmd.h"
 
+#include <utility>
 #include <cmext/algorithm>
 
 #include <cm3p/uv.h>
@@ -231,11 +232,13 @@ private:
   bool ProcessLine() override
   {
     if (cmHasPrefix(this->Line, this->IncludePrefix)) {
-      this->DepFile << cmCMakePath(
-                         cmTrimWhitespace(this->Line.c_str() +
-                                          this->IncludePrefix.size()))
-                         .GenericString()
-                    << std::endl;
+      std::string longPath;
+      auto path =
+        cmTrimWhitespace(this->Line.c_str() + this->IncludePrefix.size());
+      if (cmSystemTools::GetLongPath(path, longPath)) {
+        path = std::move(longPath);
+      }
+      this->DepFile << cmCMakePath(path).GenericString() << std::endl;
     } else {
       this->Output << this->Line << std::endl << std::flush;
     }
