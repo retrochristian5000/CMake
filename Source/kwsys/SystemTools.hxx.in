@@ -510,6 +510,12 @@ public:
   static bool GetShortPath(const std::string& path, std::string& result);
 
   /**
+   * For windows return the long path for the given path,
+   * Unix just a pass through
+   */
+  static bool GetLongPath(const std::string& path, std::string& result);
+
+  /**
    * Read line from file. Make sure to read a full line and truncates it if
    * requested via sizeLimit. Returns true if any data were read before the
    * end-of-file was reached. If the has_newline argument is specified, it will
