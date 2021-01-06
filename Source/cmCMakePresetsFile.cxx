@@ -424,7 +424,7 @@ auto const TestPresetOptionalOutputHelper =
       .Bind("maxTestNameWidth"_s, &TestPreset::OutputOptions::MaxTestNameWidth,
             PresetOptionalIntHelper, false));
 
-auto const TestPresetOptionalFilterIncludeIndexHelper =
+auto const TestPresetOptionalFilterIncludeIndexObjectHelper =
   cmJSONOptionalHelper<TestPreset::Include::IndexOptions, ReadFileResult>(
     ReadFileResult::READ_OK,
     cmJSONObjectHelper<TestPreset::Include::IndexOptions, ReadFileResult>(
@@ -437,9 +437,26 @@ auto const TestPresetOptionalFilterIncludeIndexHelper =
             PresetOptionalIntHelper, false)
       .Bind("specificTests"_s,
             &TestPreset::Include::IndexOptions::SpecificTests,
-            PresetVectorIntHelper, false)
-      .Bind("useUnion"_s, &TestPreset::Include::IndexOptions::UseUnion,
-            PresetOptionalBoolHelper, false));
+            PresetVectorIntHelper, false));
+
+ReadFileResult TestPresetOptionalFilterIncludeIndexHelper(
+  cm::optional<TestPreset::Include::IndexOptions>& out,
+  const Json::Value* value)
+{
+  if (!value) {
+    out = cm::nullopt;
+    return ReadFileResult::READ_OK;
+  }
+
+  if (value->isString()) {
+    out->IndexFile = value->asString();
+    return ReadFileResult::READ_OK;
+  } else if (value->isObject()) {
+    return TestPresetOptionalFilterIncludeIndexObjectHelper(out, value);
+  }
+
+  return ReadFileResult::INVALID_PRESET;
+}
 
 auto const TestPresetOptionalFilterIncludeHelper =
   cmJSONOptionalHelper<TestPreset::Include, ReadFileResult>(
@@ -449,7 +466,9 @@ auto const TestPresetOptionalFilterIncludeHelper =
       .Bind("name"_s, &TestPreset::Include::Name, PresetStringHelper, false)
       .Bind("label"_s, &TestPreset::Include::Label, PresetStringHelper, false)
       .Bind("index"_s, &TestPreset::Include::Index,
-            TestPresetOptionalFilterIncludeIndexHelper, false));
+            TestPresetOptionalFilterIncludeIndexHelper, false)
+      .Bind("useUnion"_s, &TestPreset::Include::UseUnion,
+            PresetOptionalBoolHelper, false));
 
 auto const TestPresetOptionalFilterExcludeFixturesHelper =
   cmJSONOptionalHelper<TestPreset::Exclude::FixturesOptions, ReadFileResult>(

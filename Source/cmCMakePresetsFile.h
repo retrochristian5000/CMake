@@ -157,12 +157,14 @@ public:
         cm::optional<int> End;
         cm::optional<int> Stride;
         std::vector<int> SpecificTests;
-        cm::optional<bool> UseUnion;
+
+        std::string IndexFile;
       };
 
       std::string Name;
       std::string Label;
       cm::optional<IndexOptions> Index;
+      cm::optional<bool> UseUnion;
     };
 
     struct Exclude
