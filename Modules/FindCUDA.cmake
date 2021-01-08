@@ -834,7 +834,17 @@ if(NOT CUDA_TOOLKIT_ROOT_DIR AND NOT CMAKE_CROSSCOMPILING)
     )
 
   if (CUDA_TOOLKIT_ROOT_DIR_NVCC)
-    get_filename_component(CUDA_TOOLKIT_ROOT_DIR_NVCC_PAR "${CUDA_TOOLKIT_ROOT_DIR_NVCC}" DIRECTORY)
+    # Find the CUDA toolkit root by invoking nvcc. This is needed because nvcc can be a symlink to ccache or colornvcc,
+    # thus the directory it's in may not be the real CUDA toolkit root. Invoking the nvcc binary with `-v` always prints
+    # out the real directory.
+    execute_process(COMMAND ${CUDA_TOOLKIT_ROOT_DIR_NVCC} "-v" "foo" ERROR_VARIABLE NVCC_ERR)
+    if(NVCC_ERR MATCHES " _HERE_=([^\r\n]*)")
+      set(CUDA_TOOLKIT_ROOT_DIR_NVCC_PAR "${CMAKE_MATCH_1}")
+    else()
+      message(FATAL_ERROR "Could not execute nvcc with -v.")
+    endif()
+    unset(NVCC_ERR)
+
     get_filename_component(CUDA_TOOLKIT_ROOT_DIR "${CUDA_TOOLKIT_ROOT_DIR_NVCC_PAR}" DIRECTORY CACHE)
     string(REGEX REPLACE "[/\\\\]?bin[64]*[/\\\\]?$" "" CUDA_TOOLKIT_ROOT_DIR ${CUDA_TOOLKIT_ROOT_DIR})
     # We need to force this back into the cache.

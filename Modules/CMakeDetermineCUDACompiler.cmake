@@ -172,7 +172,17 @@ if(NOT CMAKE_CUDA_COMPILER_ID_RUN)
       endif()
     endif()
 
-    get_filename_component(CMAKE_CUDA_COMPILER_TOOLKIT_ROOT "${_CUDA_NVCC_EXECUTABLE}" DIRECTORY)
+    # Find the CUDA toolkit root by invoking nvcc. This is needed because nvcc can be a symlink to ccache or colornvcc,
+    # thus the directory it's in may not be the real CUDA toolkit root. Invoking the nvcc binary with `-v` always prints
+    # out the real directory.
+    execute_process(COMMAND ${_CUDA_NVCC_EXECUTABLE} "-v" "foo" ERROR_VARIABLE NVCC_ERR)
+    if(NVCC_ERR MATCHES " _HERE_=([^\r\n]*)")
+      set(CMAKE_CUDA_COMPILER_TOOLKIT_ROOT "${CMAKE_MATCH_1}")
+    else()
+      message(FATAL_ERROR "Could not execute nvcc with -v.")
+    endif()
+    unset(NVCC_ERR)
+
     set(CMAKE_CUDA_DEVICE_LINKER "${CMAKE_CUDA_COMPILER_TOOLKIT_ROOT}/nvlink${CMAKE_EXECUTABLE_SUFFIX}")
     set(CMAKE_CUDA_FATBINARY "${CMAKE_CUDA_COMPILER_TOOLKIT_ROOT}/fatbinary${CMAKE_EXECUTABLE_SUFFIX}")
     get_filename_component(CMAKE_CUDA_COMPILER_TOOLKIT_ROOT "${CMAKE_CUDA_COMPILER_TOOLKIT_ROOT}" DIRECTORY)
