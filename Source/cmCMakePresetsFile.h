@@ -181,6 +181,12 @@ public:
       cm::optional<FixturesOptions> Fixtures;
     };
 
+    struct FilterOptions
+    {
+      cm::optional<Include> Include;
+      cm::optional<Exclude> Exclude;
+    };
+
     struct ExecutionOptions
     {
       enum class ShowOnlyEnum
@@ -229,8 +235,7 @@ public:
     std::string Configuration;
     std::vector<std::string> OverwriteConfigurationFile;
     cm::optional<OutputOptions> Output;
-    cm::optional<Include> FilterInclude;
-    cm::optional<Exclude> FilterExclude;
+    cm::optional<FilterOptions> Filter;
     cm::optional<ExecutionOptions> Execution;
 
     ReadFileResult VisitPresetInherit(const Preset& parent) override;

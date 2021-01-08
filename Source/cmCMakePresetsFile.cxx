@@ -482,7 +482,7 @@ auto const TestPresetOptionalFilterExcludeFixturesHelper =
       .Bind("cleanup"_s, &TestPreset::Exclude::FixturesOptions::Cleanup,
             PresetStringHelper, false));
 
-auto const TestPresetFilterExcludeHelper =
+auto const TestPresetOptionalFilterExcludeHelper =
   cmJSONOptionalHelper<TestPreset::Exclude, ReadFileResult>(
     ReadFileResult::READ_OK,
     cmJSONObjectHelper<TestPreset::Exclude, ReadFileResult>(
@@ -590,9 +590,9 @@ auto const TestPresetExecutionHelper =
     ReadFileResult::READ_OK,
     cmJSONObjectHelper<TestPreset::ExecutionOptions, ReadFileResult>(
       ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET)
-      .Bind("StopOnFailure"_s, &TestPreset::ExecutionOptions::StopOnFailure,
+      .Bind("stopOnFailure"_s, &TestPreset::ExecutionOptions::StopOnFailure,
             PresetOptionalBoolHelper, false)
-      .Bind("EnableFailover"_s, &TestPreset::ExecutionOptions::EnableFailover,
+      .Bind("enableFailover"_s, &TestPreset::ExecutionOptions::EnableFailover,
             PresetOptionalBoolHelper, false)
       .Bind("jobs"_s, &TestPreset::ExecutionOptions::Jobs,
             PresetOptionalIntHelper, false)
@@ -616,6 +616,16 @@ auto const TestPresetExecutionHelper =
             PresetOptionalIntHelper, false)
       .Bind("noTestsAction"_s, &TestPreset::ExecutionOptions::NoTestsAction,
             TestPresetOptionalExecutionNoTestsActionHelper, false));
+
+auto const TestPresetFilterHelper =
+  cmJSONOptionalHelper<TestPreset::FilterOptions, ReadFileResult>(
+    ReadFileResult::READ_OK,
+    cmJSONObjectHelper<TestPreset::FilterOptions, ReadFileResult>(
+      ReadFileResult::READ_OK, ReadFileResult::INVALID_PRESET)
+      .Bind("include"_s, &TestPreset::FilterOptions::Include,
+            TestPresetOptionalFilterIncludeHelper, false)
+      .Bind("exclude"_s, &TestPreset::FilterOptions::Exclude,
+            TestPresetOptionalFilterExcludeHelper, false));
 
 auto const TestPresetHelper =
   cmJSONObjectHelper<TestPreset, ReadFileResult>(
@@ -641,10 +651,7 @@ auto const TestPresetHelper =
           false)
     .Bind("output"_s, &TestPreset::Output, TestPresetOptionalOutputHelper,
           false)
-    .Bind("include"_s, &TestPreset::FilterInclude,
-          TestPresetOptionalFilterIncludeHelper, false)
-    .Bind("exclude"_s, &TestPreset::FilterExclude,
-          TestPresetFilterExcludeHelper, false)
+    .Bind("filter"_s, &TestPreset::Filter, TestPresetFilterHelper, false)
     .Bind("execution"_s, &TestPreset::Execution, TestPresetExecutionHelper,
           false);
 
@@ -879,19 +886,23 @@ bool ExpandMacros(const cmCMakePresetsFile& file, const TestPreset& preset,
     CHECK_EXPAND(out, out->Output->OutputLogFile, macroExpanders)
   }
 
-  if (out->FilterInclude) {
-    CHECK_EXPAND(out, out->FilterInclude->Name, macroExpanders)
-    CHECK_EXPAND(out, out->FilterInclude->Label, macroExpanders)
-  }
+  if (out->Filter) {
+    if (out->Filter->Include) {
+      CHECK_EXPAND(out, out->Filter->Include->Name, macroExpanders)
+      CHECK_EXPAND(out, out->Filter->Include->Label, macroExpanders)
+    }
 
-  if (out->FilterExclude) {
-    CHECK_EXPAND(out, out->FilterExclude->Name, macroExpanders)
-    CHECK_EXPAND(out, out->FilterExclude->Label, macroExpanders)
+    if (out->Filter->Exclude) {
+      CHECK_EXPAND(out, out->Filter->Exclude->Name, macroExpanders)
+      CHECK_EXPAND(out, out->Filter->Exclude->Label, macroExpanders)
 
-    if (out->FilterExclude->Fixtures) {
-      CHECK_EXPAND(out, out->FilterExclude->Fixtures->Any, macroExpanders)
-      CHECK_EXPAND(out, out->FilterExclude->Fixtures->Setup, macroExpanders)
-      CHECK_EXPAND(out, out->FilterExclude->Fixtures->Cleanup, macroExpanders)
+      if (out->Filter->Exclude->Fixtures) {
+        CHECK_EXPAND(out, out->Filter->Exclude->Fixtures->Any, macroExpanders)
+        CHECK_EXPAND(out, out->Filter->Exclude->Fixtures->Setup,
+                     macroExpanders)
+        CHECK_EXPAND(out, out->Filter->Exclude->Fixtures->Cleanup,
+                     macroExpanders)
+      }
     }
   }
 
@@ -1229,8 +1240,8 @@ cmCMakePresetsFile::TestPreset::VisitPresetInherit(
   InheritVector(preset.OverwriteConfigurationFile,
                 parent.OverwriteConfigurationFile);
 
-  if (parent.Output.has_value()) {
-    if (preset.Output.has_value()) {
+  if (parent.Output) {
+    if (preset.Output) {
       auto& output = preset.Output.value();
       auto& parentOutput = parent.Output.value();
       InheritOptionalValue(output.ShortProgress, parentOutput.ShortProgress);
@@ -1253,34 +1264,36 @@ cmCMakePresetsFile::TestPreset::VisitPresetInherit(
     }
   }
 
-  if (parent.FilterInclude.has_value()) {
-    if (preset.FilterInclude.has_value()) {
-      auto& include = preset.FilterInclude.value();
-      auto& parentInclude = parent.FilterInclude.value();
-      InheritString(include.Name, parentInclude.Name);
-      InheritString(include.Label, parentInclude.Label);
-      InheritOptionalValue(include.Index, parentInclude.Index);
-    } else {
-      preset.FilterInclude = parent.FilterInclude;
+  if (parent.Filter) {
+    if (parent.Filter->Include) {
+      if (preset.Filter && preset.Filter->Include) {
+        auto& include = *preset.Filter->Include;
+        auto& parentInclude = *parent.Filter->Include;
+        InheritString(include.Name, parentInclude.Name);
+        InheritString(include.Label, parentInclude.Label);
+        InheritOptionalValue(include.Index, parentInclude.Index);
+      } else {
+        preset.Filter->Include = parent.Filter->Include;
+      }
+    }
+
+    if (parent.Filter->Exclude) {
+      if (preset.Filter && preset.Filter->Exclude) {
+        auto& exclude = *preset.Filter->Exclude;
+        auto& parentExclude = *parent.Filter->Exclude;
+        InheritString(exclude.Name, parentExclude.Name);
+        InheritString(exclude.Label, parentExclude.Label);
+        InheritOptionalValue(exclude.Fixtures, parentExclude.Fixtures);
+      } else {
+        preset.Filter->Exclude = parent.Filter->Exclude;
+      }
     }
   }
 
-  if (parent.FilterExclude.has_value()) {
-    if (preset.FilterExclude.has_value()) {
-      auto& exclude = preset.FilterExclude.value();
-      auto& parentExclude = parent.FilterExclude.value();
-      InheritString(exclude.Name, parentExclude.Name);
-      InheritString(exclude.Label, parentExclude.Label);
-      InheritOptionalValue(exclude.Fixtures, parentExclude.Fixtures);
-    } else {
-      preset.FilterExclude = parent.FilterExclude;
-    }
-  }
-
-  if (parent.Execution.has_value()) {
-    if (preset.Execution.has_value()) {
-      auto& execution = preset.Execution.value();
-      auto& parentExecution = parent.Execution.value();
+  if (parent.Execution) {
+    if (preset.Execution) {
+      auto& execution = *preset.Execution;
+      auto& parentExecution = *parent.Execution;
       InheritOptionalValue(execution.StopOnFailure,
                            parentExecution.StopOnFailure);
       InheritOptionalValue(execution.EnableFailover,
