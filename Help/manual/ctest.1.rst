@@ -28,6 +28,9 @@ This program will run the tests and report results.
 Options
 =======
 
+``--preset <preset>``
+ Read arguments from a test preset.
+
 ``-C <cfg>, --build-config <cfg>``
  Choose configuration to test.
 
