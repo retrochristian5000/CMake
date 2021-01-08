@@ -1154,3 +1154,120 @@ The members specific to ``cmakeFiles`` objects are:
   ``isCMake``
     Optional member that is present with boolean value ``true``
     if the path specifies a file in the CMake installation.
+
+Object Kind "toolchains"
+------------------------
+
+The ``toolchains`` object kind lists properties of the toolchains used during
+the build.  These include the language, compiler path, ID, and version.
+
+There is only one ``toolchains`` object major version, version 1.
+
+"toolchains" version 1
+^^^^^^^^^^^^^^^^^^^^^^
+
+``toolchains`` object version 1 is a JSON object:
+
+.. code-block:: json
+
+  {
+    "kind" : "toolchains",
+    "version" : { "major" : 1, "minor" : 0 },
+    "toolchains" :
+    [
+      {
+        "compilerId" : "MSVC",
+        "compilerPath" : "C:/Program Files (x86)/Microsoft Visual Studio/2019/Preview/VC/Tools/MSVC/14.28.29715/bin/Hostx64/x64/cl.exe",
+        "compilerVersion" : "19.28.29715.1",
+        "implicitIncludeDirectories" : [],
+        "implicitLinkDirectories" : [],
+        "implicitLinkFrameworkDirectories" : [],
+        "implicitLinkLibraries" : [],
+        "language" : "C",
+        "sourceFileExtensions" :
+        [
+          "c",
+          "m"
+        ]
+      },
+      {
+        "compilerId" : "MSVC",
+        "compilerPath" : "C:/Program Files (x86)/Microsoft Visual Studio/2019/Preview/VC/Tools/MSVC/14.28.29715/bin/Hostx64/x64/cl.exe",
+        "compilerVersion" : "19.28.29715.1",
+        "implicitIncludeDirectories" : [],
+        "implicitLinkDirectories" : [],
+        "implicitLinkFrameworkDirectories" : [],
+        "implicitLinkLibraries" : [],
+        "language" : "CXX",
+        "sourceFileExtensions" :
+        [
+          "C",
+          "M",
+          "c++",
+          "cc",
+          "cpp",
+          "cxx",
+          "mm",
+          "CPP"
+        ]
+      },
+      {
+        "compilerPath" : "rc",
+        "language" : "RC",
+        "sourceFileExtensions" :
+        [
+          "rc",
+          "RC"
+        ]
+      }
+    ]
+  }
+
+
+The members specific to ``toolchains`` objects are:
+
+``toolchains``
+  A JSON array whose entries are each a JSON object specifying a toolchain
+  associated with a particular language. The members of each entry are:
+
+  ``language``
+    A string specifying the toolchain language, like C or CXX. Language
+    names are the same as langauge names that can be passed to the
+    :command:`project` command. Because CMake only supports a single toolchain
+    per language, this field can be used as a key.
+
+  ``compilerPath``
+    Optional member that has the same value as
+    :variable:`CMAKE_<LANG>_COMPILER` if it is defined for the current language.
+
+  ``compilerId``
+    Optional member that has the same value as
+    :variable:`CMAKE_<LANG>_COMPILER_ID` if it is defined for the current language.
+
+  ``compilerVersion``
+    Optional member that has the same value as
+    :variable:`CMAKE_<LANG>_COMPILER_VERSION` if it is defined for the current language.
+
+  ``compilerTarget``
+    Optional member that has the same value as
+    :variable:`CMAKE_<LANG>_COMPILER_TARGET` if it is defined for the current language.
+
+  ``implicitIncludeDirectories``
+    Optional JSON array that has the same value as
+    :variable:`CMAKE_<LANG>_IMPLICIT_INCLUDE_DIRECTORIES` if it is defined for the current language.
+
+  ``implicitLinkDirectories``
+    Optional JSON array that has the same value as
+    :variable:`CMAKE_<LANG>_IMPLICIT_LINK_DIRECTORIES` if it is defined for the current language.
+
+  ``implicitLinkFrameworkDirectories``
+    Optional JSON array that has the same value as
+    :variable:`CMAKE_<LANG>_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES` if it is defined for the current language.
+
+  ``implicitLinkLibraries``
+    Optional JSON array that has the same value as
+    :variable:`CMAKE_<LANG>_IMPLICIT_LINK_LIBRARIES` if it is defined for the current language.
+
+  ``sourceFileExtensions``
+    Optional JSON array that has the same value as
+    :variable:`CMAKE_<LANG>_SOURCE_FILE_EXTENSIONS` if it is defined for the current language.
