@@ -29,7 +29,9 @@ Options
 =======
 
 ``--preset <preset>``
- Read arguments from a test preset.
+ Use a test preset to specify test options. The project binary directory
+ is inferred from the ``configurePreset`` key.
+ See :manual:`preset <cmake-presets(7)>` for more details.
 
 ``-C <cfg>, --build-config <cfg>``
  Choose configuration to test.
