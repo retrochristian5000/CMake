@@ -2247,7 +2247,7 @@ void cmCTest::SetPersistentOptionIfNotEmpty(const std::string& value,
 }
 
 bool cmCTest::SetArgsFromPreset(const std::string& presetName,
-                                std::string& errormsg)
+                                bool listPresets, std::string& errormsg)
 {
   const auto workingDirectory = cmSystemTools::GetCurrentWorkingDirectory();
 
@@ -2260,10 +2260,10 @@ bool cmCTest::SetArgsFromPreset(const std::string& presetName,
     return false;
   }
 
-  // if (listPresets) {
-  //   settingsFile.PrintTestPresetList();
-  //   return 0;
-  // }
+  if (listPresets) {
+    settingsFile.PrintTestPresetList();
+    return 0;
+  }
 
   auto presetPair = settingsFile.TestPresets.find(presetName);
   if (presetPair == settingsFile.TestPresets.end()) {
@@ -2556,16 +2556,25 @@ int cmCTest::Run(std::vector<std::string>& args, std::string* output)
   cm::append(this->Impl->InitialCommandLineArguments, args);
 
   // check if a test preset was specified
+
+  bool listPresets =
+    find(args.begin(), args.end(), "--list-presets") != args.end();
   auto it = find(args.begin(), args.end(), "--preset");
-  if (it != args.end()) {
+  if (listPresets || it != args.end()) {
     std::string errormsg;
     bool success;
-    if (++it != args.end()) {
-      auto presetName = *it;
-      success = this->SetArgsFromPreset(presetName, errormsg);
+
+    if (listPresets) {
+      // If listing presets we don't need a presetName
+      success = this->SetArgsFromPreset("", listPresets, errormsg);
     } else {
-      errormsg = "'--preset' requires an argument";
-      success = false;
+      if (++it != args.end()) {
+        auto presetName = *it;
+        success = this->SetArgsFromPreset(presetName, listPresets, errormsg);
+      } else {
+        errormsg = "'--preset' requires an argument";
+        success = false;
+      }
     }
 
     if (!success) {

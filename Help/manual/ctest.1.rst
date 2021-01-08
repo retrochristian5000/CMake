@@ -33,6 +33,9 @@ Options
  is inferred from the ``configurePreset`` key.
  See :manual:`preset <cmake-presets(7)>` for more details.
 
+``--list-presets``
+ List available test presets.
+
 ``-C <cfg>, --build-config <cfg>``
  Choose configuration to test.
 

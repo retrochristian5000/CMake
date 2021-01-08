@@ -489,7 +489,7 @@ private:
 
   /** set command line arguments read from a test preset */
   bool cmCTest::SetArgsFromPreset(const std::string& presetName,
-                                  std::string& errormsg);
+                                  bool listPresets, std::string& errormsg);
 
   /** parse and process most common command line arguments */
   bool HandleCommandLineArguments(size_t& i, std::vector<std::string>& args,
