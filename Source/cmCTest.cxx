@@ -2578,7 +2578,9 @@ int cmCTest::Run(std::vector<std::string>& args, std::string* output)
     }
 
     if (!success) {
-      cmSystemTools::Error(errormsg);
+      if (!errormsg.empty()) {
+        cmSystemTools::Error(errormsg);
+      }
       return 1;
     }
   }
