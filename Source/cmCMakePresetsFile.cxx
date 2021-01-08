@@ -881,7 +881,9 @@ bool ExpandMacros(const cmCMakePresetsFile& file, const TestPreset& preset,
                   cm::optional<TestPreset>& out,
                   const std::vector<MacroExpander>& macroExpanders)
 {
-  CHECK_EXPAND(out, out->Configuration, macroExpanders)
+  for (auto& overwrite : out->OverwriteConfigurationFile) {
+    CHECK_EXPAND(out, overwrite, macroExpanders);
+  }
 
   if (out->Output) {
     CHECK_EXPAND(out, out->Output->OutputLogFile, macroExpanders)
@@ -891,6 +893,11 @@ bool ExpandMacros(const cmCMakePresetsFile& file, const TestPreset& preset,
     if (out->Filter->Include) {
       CHECK_EXPAND(out, out->Filter->Include->Name, macroExpanders)
       CHECK_EXPAND(out, out->Filter->Include->Label, macroExpanders)
+
+      if (out->Filter->Include->Index) {
+        CHECK_EXPAND(out, out->Filter->Include->Index->IndexFile,
+                     macroExpanders);
+      }
     }
 
     if (out->Filter->Exclude) {

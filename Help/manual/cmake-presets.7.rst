@@ -336,7 +336,7 @@ Format
 
     ``targets``
 
-      An optional string or array of strings. Equivalent to passing ``--target`` or ``-t`` on the command line. Vendors may ignore the targets property or hide build presets that explicitly specify targets.
+      An optional string or array of strings. Equivalent to passing ``--target`` or ``-t`` on the command line. Vendors may ignore the targets property or hide build presets that explicitly specify targets. This field supports macro expansion.
 
     ``configuration``
 
@@ -352,7 +352,7 @@ Format
 
     ``nativeToolOptions``
 
-      An optional array of strings. Equivalent to passing options after ``--`` on the command line.
+      An optional array of strings. Equivalent to passing options after ``--`` on the command line. The array values support macro expansion.
 
   ``testPresets``
 
@@ -404,7 +404,7 @@ Format
 
     ``overwriteConfigurationFile``
 
-      An optional bool. If true, equivalent to passing ``--overwrite`` on the command line.
+      An optional array of configuration options to overwrite options specified in the CTest configuration file. Equivalent to passing ``--overwrite`` for each value in the array. The array values support macro expansion.
 
     ``output``
 
@@ -444,7 +444,7 @@ Format
 
       ``outputLogFile``
 
-        An optional string specifying a path to a log file. Equivalent to passing ``--output-log`` on the command line.
+        An optional string specifying a path to a log file. Equivalent to passing ``--output-log`` on the command line. This field supports macro expansion.
 
       ``labelSummary``
 
@@ -476,12 +476,12 @@ Format
 
         ``name``
 
-          An optional string specifying a regex for test names. Equivalent to passing ``--tests-regex`` on the command line.
+          An optional string specifying a regex for test names. Equivalent to passing ``--tests-regex`` on the command line. This field supports macro expansion.
 
 
         ``label``
 
-          An optional string specifying a regex for test labels. Equivalent to passing ``--label-regex`` on the command line.
+          An optional string specifying a regex for test labels. Equivalent to passing ``--label-regex`` on the command line. This field supports macro expansion.
 
         ``useUnion``
 
@@ -489,7 +489,7 @@ Format
 
         ``index``
 
-          An optional object specifying tests to include by test index. The object may contain the following fields. Can also be an optional string specifying a file with the command line syntax for ``--tests-information``.
+          An optional object specifying tests to include by test index. The object may contain the following fields. Can also be an optional string specifying a file with the command line syntax for ``--tests-information``. If specified as a string, this field supports macro expansion.
 
           ``start``
 
@@ -513,11 +513,11 @@ Format
 
         ``name``
 
-          An optional string specifying a regex for test names. Equivalent to passing ``--exclude-regex`` on the command line.
+          An optional string specifying a regex for test names. Equivalent to passing ``--exclude-regex`` on the command line. This field supports macro expansion.
 
         ``label``
 
-          An optional string specifying a regex for test labels. Equivalent to passing ``--label-exclude`` on the command line.
+          An optional string specifying a regex for test labels. Equivalent to passing ``--label-exclude`` on the command line. This field supports macro expansion.
 
         ``fixtures``
 
@@ -525,15 +525,15 @@ Format
 
           ``any``
 
-            An optional string specifying a regex for text fixtures to exclude from adding any tests. Equivalent to ``--fixture-exclude-any`` on the command line.
+            An optional string specifying a regex for text fixtures to exclude from adding any tests. Equivalent to ``--fixture-exclude-any`` on the command line. This field supports macro expansion.
 
           ``setup``
 
-            An optional string specifying a regex for text fixtures to exclude from adding setup tests. Equivalent to ``--fixture-exclude-setup`` on the command line.
+            An optional string specifying a regex for text fixtures to exclude from adding setup tests. Equivalent to ``--fixture-exclude-setup`` on the command line. This field supports macro expansion.
 
           ``cleanup``
 
-            An optional string specifying a regex for text fixtures to exclude from adding cleanup tests. Equivalent to ``--fixture-exclude-cleanup`` on the command line.
+            An optional string specifying a regex for text fixtures to exclude from adding cleanup tests. Equivalent to ``--fixture-exclude-cleanup`` on the command line. This field supports macro expansion.
 
     ``execution``
 
@@ -553,7 +553,7 @@ Format
 
       ``resourceSpecFile``
 
-        An optional string. Equivalent to passing ``--resource-spec-file`` on the command line.
+        An optional string. Equivalent to passing ``--resource-spec-file`` on the command line. This field supports macro expansion.
 
       ``testLoad``
 
