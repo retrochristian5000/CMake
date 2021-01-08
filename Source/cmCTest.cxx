@@ -2260,23 +2260,23 @@ bool cmCTest::SetArgsFromPreset(const std::string& presetName,
     return false;
   }
 
-  //   if (listPresets) {
-  //     this->PrintBuildPresetList(settingsFile);
-  //     return 0;
-  //   }
+  // if (listPresets) {
+  //   settingsFile.PrintTestPresetList();
+  //   return 0;
+  // }
 
   auto presetPair = settingsFile.TestPresets.find(presetName);
   if (presetPair == settingsFile.TestPresets.end()) {
     cmSystemTools::Error(cmStrCat("No such test preset in ", workingDirectory,
                                   ": \"", presetName, '"'));
-    // this->PrintBuildPresetList(settingsFile);
+    settingsFile.PrintTestPresetList();
     return false;
   }
 
   if (presetPair->second.Unexpanded.Hidden) {
     cmSystemTools::Error(cmStrCat("Cannot use hidden test preset in ",
                                   workingDirectory, ": \"", presetName, '"'));
-    // this->PrintBuildPresetList(settingsFile);
+    settingsFile.PrintTestPresetList();
     return false;
   }
 
@@ -2284,7 +2284,7 @@ bool cmCTest::SetArgsFromPreset(const std::string& presetName,
   if (!expandedPreset) {
     cmSystemTools::Error(cmStrCat("Could not evaluate test preset \"",
                                   presetName, "\": Invalid macro expansion"));
-    // this->PrintBuildPresetList(settingsFile);
+    settingsFile.PrintTestPresetList();
     return false;
   }
 
@@ -2294,7 +2294,7 @@ bool cmCTest::SetArgsFromPreset(const std::string& presetName,
     cmSystemTools::Error(cmStrCat("No such configure preset in ",
                                   workingDirectory, ": \"",
                                   expandedPreset->ConfigurePreset, '"'));
-    // this->PrintPresetList(settingsFile);
+    settingsFile.PrintConfigurePresetList();
     return false;
   }
 
@@ -2302,7 +2302,7 @@ bool cmCTest::SetArgsFromPreset(const std::string& presetName,
     cmSystemTools::Error(cmStrCat("Cannot use hidden configure preset in ",
                                   workingDirectory, ": \"",
                                   expandedPreset->ConfigurePreset, '"'));
-    // this->PrintPresetList(settingsFile);
+    settingsFile.PrintConfigurePresetList();
     return false;
   }
 

@@ -240,9 +240,6 @@ public:
 #ifndef CMAKE_BOOTSTRAP
   //! Print list of configure presets
   void PrintPresetList(const cmCMakePresetsFile& file) const;
-
-  //! Print list of build presets
-  void PrintBuildPresetList(const cmCMakePresetsFile& file) const;
 #endif
 
   //! Return the global generator assigned to this instance of cmake

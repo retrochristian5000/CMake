@@ -4,6 +4,7 @@
 
 #include <cstdlib>
 #include <functional>
+#include <iostream>
 #include <utility>
 
 #include <cmext/string_view>
@@ -1552,4 +1553,80 @@ void cmCMakePresetsFile::ClearPresets()
   this->ConfigurePresetOrder.clear();
   this->BuildPresetOrder.clear();
   this->TestPresetOrder.clear();
+}
+
+void cmCMakePresetsFile::PrintPresets(
+  const std::vector<const cmCMakePresetsFile::Preset*>& presets)
+{
+  if (presets.empty()) {
+    return;
+  }
+
+  std::cout << "Available presets:\n\n";
+
+  auto longestPresetName =
+    std::max_element(presets.begin(), presets.end(),
+                     [](const cmCMakePresetsFile::Preset* a,
+                        const cmCMakePresetsFile::Preset* b) {
+                       return a->Name.length() < b->Name.length();
+                     });
+  auto longestLength = (*longestPresetName)->Name.length();
+
+  for (auto const preset : presets) {
+    std::cout << "  \"" << preset->Name << '"';
+    auto const& description = preset->DisplayName;
+    if (!description.empty()) {
+      for (std::size_t i = 0; i < longestLength - preset->Name.length(); ++i) {
+        std::cout << ' ';
+      }
+      std::cout << " - " << description;
+    }
+    std::cout << '\n';
+  }
+}
+
+void cmCMakePresetsFile::PrintConfigurePresetList() const
+{
+  PrintConfigurePresetList([](const ConfigurePreset& preset) { return true; });
+}
+
+void cmCMakePresetsFile::PrintConfigurePresetList(
+  std::function<bool(const ConfigurePreset&)> filter) const
+{
+  std::vector<const cmCMakePresetsFile::Preset*> presets;
+  for (auto const& p : this->ConfigurePresetOrder) {
+    auto const& preset = this->ConfigurePresets.at(p);
+    if (!preset.Unexpanded.Hidden && preset.Expanded &&
+        filter(preset.Unexpanded)) {
+      presets.push_back((cmCMakePresetsFile::Preset*)&preset.Unexpanded);
+    }
+  }
+
+  cmCMakePresetsFile::PrintPresets(presets);
+}
+
+void cmCMakePresetsFile::PrintBuildPresetList() const
+{
+  std::vector<const cmCMakePresetsFile::Preset*> presets;
+  for (auto const& p : this->BuildPresetOrder) {
+    auto const& preset = this->BuildPresets.at(p);
+    if (!preset.Unexpanded.Hidden && preset.Expanded) {
+      presets.push_back((cmCMakePresetsFile::Preset*)&preset.Unexpanded);
+    }
+  }
+
+  cmCMakePresetsFile::PrintPresets(presets);
+}
+
+void cmCMakePresetsFile::PrintTestPresetList() const
+{
+  std::vector<const cmCMakePresetsFile::Preset*> presets;
+  for (auto const& p : this->TestPresetOrder) {
+    auto const& preset = this->TestPresets.at(p);
+    if (!preset.Unexpanded.Hidden && preset.Expanded) {
+      presets.push_back((cmCMakePresetsFile::Preset*)&preset.Unexpanded);
+    }
+  }
+
+  cmCMakePresetsFile::PrintPresets(presets);
 }

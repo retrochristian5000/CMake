@@ -1652,67 +1652,20 @@ bool cmake::CreateAndSetGlobalGenerator(const std::string& name,
 }
 
 #ifndef CMAKE_BOOTSTRAP
-void PrintPresets(
-  const std::vector<const cmCMakePresetsFile::Preset*>& presets)
-{
-  if (presets.empty()) {
-    return;
-  }
-
-  std::cout << "Available presets:\n\n";
-
-  auto longestPresetName =
-    std::max_element(presets.begin(), presets.end(),
-                     [](const cmCMakePresetsFile::Preset* a,
-                        const cmCMakePresetsFile::Preset* b) {
-                       return a->Name.length() < b->Name.length();
-                     });
-  auto longestLength = (*longestPresetName)->Name.length();
-
-  for (auto const preset : presets) {
-    std::cout << "  \"" << preset->Name << '"';
-    auto const& description = preset->DisplayName;
-    if (!description.empty()) {
-      for (std::size_t i = 0; i < longestLength - preset->Name.length(); ++i) {
-        std::cout << ' ';
-      }
-      std::cout << " - " << description;
-    }
-    std::cout << '\n';
-  }
-}
-
 void cmake::PrintPresetList(const cmCMakePresetsFile& file) const
 {
   std::vector<GeneratorInfo> generators;
   this->GetRegisteredGenerators(generators, false);
+  auto filter =
+    [&generators](const cmCMakePresetsFile::ConfigurePreset& preset) {
+      auto condition = [&preset](const GeneratorInfo& info) {
+        return info.name == preset.Generator;
+      };
+      auto it = std::find_if(generators.begin(), generators.end(), condition);
+      return it != generators.end();
+    };
 
-  std::vector<const cmCMakePresetsFile::Preset*> presets;
-  for (auto const& p : file.ConfigurePresetOrder) {
-    auto const& preset = file.ConfigurePresets.at(p);
-    if (!preset.Unexpanded.Hidden && preset.Expanded &&
-        std::find_if(generators.begin(), generators.end(),
-                     [&preset](const GeneratorInfo& info) {
-                       return info.name == preset.Unexpanded.Generator;
-                     }) != generators.end()) {
-      presets.push_back((cmCMakePresetsFile::Preset*)&preset.Unexpanded);
-    }
-  }
-
-  PrintPresets(presets);
-}
-
-void cmake::PrintBuildPresetList(const cmCMakePresetsFile& file) const
-{
-  std::vector<const cmCMakePresetsFile::Preset*> presets;
-  for (auto const& p : file.BuildPresetOrder) {
-    auto const& preset = file.BuildPresets.at(p);
-    if (!preset.Unexpanded.Hidden && preset.Expanded) {
-      presets.push_back((cmCMakePresetsFile::Preset*)&preset.Unexpanded);
-    }
-  }
-
-  PrintPresets(presets);
+  file.PrintConfigurePresetList(filter);
 }
 #endif
 
@@ -3203,7 +3156,7 @@ int cmake::Build(int jobs, std::string dir, std::vector<std::string> targets,
     }
 
     if (listPresets) {
-      this->PrintBuildPresetList(settingsFile);
+      settingsFile.PrintBuildPresetList();
       return 0;
     }
 
@@ -3212,7 +3165,7 @@ int cmake::Build(int jobs, std::string dir, std::vector<std::string> targets,
       cmSystemTools::Error(cmStrCat("No such build preset in ",
                                     this->GetHomeDirectory(), ": \"",
                                     presetName, '"'));
-      this->PrintBuildPresetList(settingsFile);
+      settingsFile.PrintBuildPresetList();
       return 1;
     }
 
@@ -3220,7 +3173,7 @@ int cmake::Build(int jobs, std::string dir, std::vector<std::string> targets,
       cmSystemTools::Error(cmStrCat("Cannot use hidden build preset in ",
                                     this->GetHomeDirectory(), ": \"",
                                     presetName, '"'));
-      this->PrintBuildPresetList(settingsFile);
+      settingsFile.PrintBuildPresetList();
       return 1;
     }
 
@@ -3229,7 +3182,7 @@ int cmake::Build(int jobs, std::string dir, std::vector<std::string> targets,
       cmSystemTools::Error(cmStrCat("Could not evaluate build preset \"",
                                     presetName,
                                     "\": Invalid macro expansion"));
-      this->PrintBuildPresetList(settingsFile);
+      settingsFile.PrintBuildPresetList();
       return 1;
     }
 

@@ -2,6 +2,7 @@
    file Copyright.txt or https://cmake.org/licensing for details.  */
 #pragma once
 
+#include <functional>
 #include <map>
 #include <string>
 #include <utility>
@@ -292,6 +293,14 @@ public:
     // or (for build or test presets) if ConfigurePreset is invalid.
     return "";
   }
+
+  static void PrintPresets(
+    const std::vector<const cmCMakePresetsFile::Preset*>& presets);
+  void PrintConfigurePresetList() const;
+  void PrintConfigurePresetList(
+    std::function<bool(const ConfigurePreset&)> filter) const;
+  void PrintBuildPresetList() const;
+  void PrintTestPresetList() const;
 
 private:
   ReadFileResult ReadProjectPresetsInternal(const std::string& sourceDir,
