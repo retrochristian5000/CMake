@@ -400,3 +400,5 @@ Changes made since CMake 3.19.0 include the following.
   * The naming pattern ``cmake-$ver-macos10.10-universal`` is a universal
     binary with ``x86_64`` and ``arm64`` architectures.  It requires
     macOS 10.10 or newer.
+
+* ``--trace-expand`` no longer expands :ref:`Bracket Argument`s.
