@@ -42,6 +42,8 @@
 class cmExecutionStatus;
 class cmFileList;
 
+cmFindPackageCommand::PathLabel cmFindPackageCommand::PathLabel::PackageRedirect(
+  "PACKAGE_REDIRECT");
 cmFindPackageCommand::PathLabel cmFindPackageCommand::PathLabel::UserRegistry(
   "PACKAGE_REGISTRY");
 cmFindPackageCommand::PathLabel cmFindPackageCommand::PathLabel::Builds(
@@ -111,6 +113,7 @@ void cmFindPackageCommand::AppendSearchPathGroups()
 
   // Update the All group with new paths
   labels = &this->PathGroupLabelMap[PathGroup::All];
+  labels->insert(labels->begin(), PathLabel::PackageRedirect);
   labels->insert(
     std::find(labels->begin(), labels->end(), PathLabel::CMakeSystem),
     PathLabel::UserRegistry);
@@ -121,6 +124,8 @@ void cmFindPackageCommand::AppendSearchPathGroups()
                  PathLabel::SystemRegistry);
 
   // Create the new path objects
+  this->LabeledPaths.insert(
+    std::make_pair(PathLabel::PackageRedirect, cmSearchPath(this)));
   this->LabeledPaths.insert(
     std::make_pair(PathLabel::UserRegistry, cmSearchPath(this)));
   this->LabeledPaths.insert(
@@ -523,6 +528,39 @@ bool cmFindPackageCommand::InitialPass(std::vector<std::string> const& args)
   }
 
   this->SetModuleVariables(components);
+
+  // See if we have been told to delegate to FetchContent for population first.
+  // We have to check all names that find_package() may look for, but only need
+  // to invoke the override for the first one it will find.
+  auto overrideNames = this->Names;
+  if (overrideNames.empty()) {
+    overrideNames.push_back(this->Name);
+  }
+  for (const auto& overrideName : overrideNames) {
+    const auto nameLower = cmSystemTools::LowerCase(overrideName);
+    const auto delegatePropName =
+      cmStrCat("_FetchContent_", nameLower, "_override_find_package");
+    cmProp delegateToFetchContentProp =
+      this->Makefile->GetState()->GetGlobalProperty(delegatePropName);
+    if (cmIsOn(delegateToFetchContentProp)) {
+      // If this property is set, then the FetchContent module has already been
+      // included at least once and we know the FetchContent_MakeAvailable()
+      // command will be defined
+      cmListFileFunction func(
+        "FetchContent_MakeAvailable", 0,
+        { cmListFileArgument(overrideName, cmListFileArgument::Unquoted, 0) });
+      if (!this->Makefile->ExecuteCommand(func, this->Status)) {
+        return false;
+      }
+      // Any future find_package() calls for this package will by-pass this
+      // once-only delegation. Both this case now and all future find_package()
+      // calls for this package should load the redirected package config files
+      // that FetchContent will have just created, so we still need to fall
+      // through to the next block for that processing.
+      // TODO: Need some way to indicate config mode must be used
+      break;
+    }
+  }
 
   // See if there is a Find<PackageName>.cmake module.
   bool loadedPackage = false;
@@ -1292,6 +1330,8 @@ inline std::size_t collectPathsForDebug(std::string& buffer,
 
 void cmFindPackageCommand::ComputePrefixes()
 {
+  this->FillPrefixesPackageRedirect();
+
   if (!this->NoDefaultPath) {
     if (!this->NoPackageRootPath) {
       this->FillPrefixesPackageRoot();
@@ -1323,6 +1363,23 @@ void cmFindPackageCommand::ComputePrefixes()
   this->FillPrefixesUserGuess();
 
   this->ComputeFinalPaths();
+}
+
+void cmFindPackageCommand::FillPrefixesPackageRedirect()
+{
+  cmSearchPath& paths = this->LabeledPaths[PathLabel::PackageRedirect];
+
+  const auto redirectDir =
+    this->Makefile->GetDefinition("CMAKE_FIND_PACKAGE_REDIRECTS_DIR");
+  if (redirectDir && !redirectDir->empty()) {
+    paths.AddPath(*redirectDir);
+  }
+  if (this->DebugMode) {
+    std::string debugBuffer =
+      "The internally managed CMAKE_FIND_PACKAGE_REDIRECTS_DIR.\n";
+    collectPathsForDebug(debugBuffer, paths);
+    this->DebugBuffer = cmStrCat(this->DebugBuffer, debugBuffer, "\n");
+  }
 }
 
 void cmFindPackageCommand::FillPrefixesPackageRoot()

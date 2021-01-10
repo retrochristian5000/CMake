@@ -658,19 +658,83 @@ current working directory.
 function(__FetchContent_declareDetails contentName)
 
   string(TOLOWER ${contentName} contentNameLower)
-  set(propertyName "_FetchContent_${contentNameLower}_savedDetails")
+  set(prefix "_FetchContent_${contentNameLower}")
+
+  set(propertyName "${prefix}_savedDetails")
   get_property(alreadyDefined GLOBAL PROPERTY ${propertyName} DEFINED)
-  if(NOT alreadyDefined)
-    define_property(GLOBAL PROPERTY ${propertyName}
-      BRIEF_DOCS "Internal implementation detail of FetchContent_Populate()"
-      FULL_DOCS  "Details used by FetchContent_Populate() for ${contentName}"
+  if(alreadyDefined)
+    return()
+  endif()
+
+  if("${FETCHCONTENT_TRY_FIND_PACKAGE_MODE}" STREQUAL "ALWAYS")
+    set(__tryFindPackage TRUE)
+    set(__tryFindPackageAllowed TRUE)
+  elseif("${FETCHCONTENT_TRY_FIND_PACKAGE_MODE}" STREQUAL "NEVER")
+    set(__tryFindPackage FALSE)
+    set(__tryFindPackageAllowed FALSE)
+  elseif("${FETCHCONTENT_TRY_FIND_PACKAGE_MODE}" STREQUAL "OPT_IN" OR
+         "${FETCHCONTENT_TRY_FIND_PACKAGE_MODE}" STREQUAL "")
+    set(__tryFindPackage FALSE)
+    set(__tryFindPackageAllowed TRUE)
+  else()
+    message(FATAL_ERROR
+      "Unsupported value for FETCHCONTENT_TRY_FIND_PACKAGE_MODE: "
+      "${FETCHCONTENT_TRY_FIND_PACKAGE_MODE}"
     )
-    set(__cmdArgs)
-    foreach(__item IN LISTS ARGN)
-      string(APPEND __cmdArgs " [==[${__item}]==]")
-    endforeach()
+  endif()
+  set(__overrideFindPackage FALSE)
+
+  set(__cmdArgs)
+  set(__findPackageArgs)
+  set(__argVar __cmdArgs)
+  foreach(__item IN LISTS ARGN)
+    if(__item STREQUAL "FIND_PACKAGE_ARGS")
+      if(__tryFindPackageAllowed)
+        set(__tryFindPackage TRUE)
+      endif()
+      # All arguments after this keyword are for find_package().
+      # Note that there could be no more args, that is still a valid case.
+      # We automatically provide ${contentName} as the package name, the
+      # rest of the args from here come after that.
+      set(__argVar __findPackageArgs)
+      continue()  # Don't store this
+    elseif(__item STREQUAL "OVERRIDE_FIND_PACKAGE")
+      set(__overrideFindPackage TRUE)
+      set(__tryFindPackageAllowed FALSE)
+    endif()
+
+    string(APPEND ${__argVar} " [==[${__item}]==]")
+  endforeach()
+
+  define_property(GLOBAL PROPERTY ${propertyName}
+    BRIEF_DOCS "Internal implementation detail of FetchContent_Populate()"
+    FULL_DOCS  "Details used by FetchContent_Populate() for ${contentName}"
+  )
+  cmake_language(EVAL CODE
+    "set_property(GLOBAL PROPERTY ${propertyName} ${__cmdArgs})")
+
+  if(__overrideFindPackage)
+    # Define a separate dedicated property for find_package() to check
+    # in its implementation. This will be a placeholder until FetchContent
+    # actually does the population. After that, we will have created a
+    # stand-in config file that find_package() will pick up instead.
+    set(propertyName "${prefix}_override_find_package")
+    define_property(GLOBAL PROPERTY ${propertyName}
+      BRIEF_DOCS "Internal implementation detail of FetchContent_DeclareDetails()"
+      FULL_DOCS  "Indicates whether find_package(${contentName}) should delegate to FetchContent"
+    )
+    set_property(GLOBAL PROPERTY ${propertyName} TRUE)
+  elseif(__tryFindPackage AND __tryFindPackageAllowed)
+    set(propertyName "${prefix}_find_package_args")
+    define_property(GLOBAL PROPERTY ${propertyName}
+      BRIEF_DOCS "Internal implementation detail of FetchContent_MakeAvailable()"
+      FULL_DOCS  "Details used by FetchContent_MakeAvailable() for ${contentName}"
+    )
+    if(NOT QUIET IN_LIST __findPackageArgs)
+      list(INSERT __findPackageArgs 0 QUIET)
+    endif()
     cmake_language(EVAL CODE
-      "set_property(GLOBAL PROPERTY ${propertyName} ${__cmdArgs})")
+      "set_property(GLOBAL PROPERTY ${propertyName} ${__findPackageArgs})")
   endif()
 
 endfunction()
@@ -698,6 +762,15 @@ endfunction()
 # Saves population details of the content, sets defaults for the
 # SOURCE_DIR and BUILD_DIR.
 function(FetchContent_Declare contentName)
+
+  # Always check this even if we won't save these details.
+  # This helps projects catch errors earlier.
+  if("OVERRIDE_FIND_PACKAGE" IN_LIST ARGN AND "FIND_PACKAGE_ARGS" IN_LIST ARGN)
+    message(FATAL_ERROR
+      "Cannot specify both OVERRIDE_FIND_PACKAGE and FIND_PACKAGE_ARGS "
+      "when declaring details for ${contentName}"
+    )
+  endif()
 
   set(options "")
   set(oneValueArgs SVN_REPOSITORY)
@@ -750,7 +823,16 @@ endfunction()
 # intended for use by the FetchContent_Populate() function to
 # record when FetchContent_Populate() is called for a particular
 # content name.
-function(__FetchContent_setPopulated contentName sourceDir binaryDir)
+function(__FetchContent_setPopulated contentName)
+
+  cmake_parse_arguments(PARSE_ARGV 1 ARG
+    "REDIRECT_FIND_PACKAGE"
+    "SOURCE_DIR;BINARY_DIR"
+    ""
+  )
+  if(NOT "${ARG_UNPARSED_ARGUMENTS}" STREQUAL "")
+    message(FATAL_ERROR "Unsupported arguments: ${ARG_UNPARSED_ARGUMENTS}")
+  endif()
 
   string(TOLOWER ${contentName} contentNameLower)
   set(prefix "_FetchContent_${contentNameLower}")
@@ -760,21 +842,54 @@ function(__FetchContent_setPopulated contentName sourceDir binaryDir)
     BRIEF_DOCS "Internal implementation detail of FetchContent_Populate()"
     FULL_DOCS  "Details used by FetchContent_Populate() for ${contentName}"
   )
-  set_property(GLOBAL PROPERTY ${propertyName} ${sourceDir})
+  set_property(GLOBAL PROPERTY ${propertyName} "${ARG_SOURCE_DIR}")
 
   set(propertyName "${prefix}_binaryDir")
   define_property(GLOBAL PROPERTY ${propertyName}
     BRIEF_DOCS "Internal implementation detail of FetchContent_Populate()"
     FULL_DOCS  "Details used by FetchContent_Populate() for ${contentName}"
   )
-  set_property(GLOBAL PROPERTY ${propertyName} ${binaryDir})
+  set_property(GLOBAL PROPERTY ${propertyName} "${ARG_BINARY_DIR}")
 
   set(propertyName "${prefix}_populated")
   define_property(GLOBAL PROPERTY ${propertyName}
     BRIEF_DOCS "Internal implementation detail of FetchContent_Populate()"
     FULL_DOCS  "Details used by FetchContent_Populate() for ${contentName}"
   )
-  set_property(GLOBAL PROPERTY ${propertyName} True)
+  set_property(GLOBAL PROPERTY ${propertyName} TRUE)
+
+  if(ARG_REDIRECT_FIND_PACKAGE)
+    # Note that we write out dep-config.cmake and dep-config-version.cmake
+    # file name forms below because they are forced to lowercase. FetchContent
+    # dependency names are case-insensitive, but find_package() config files
+    # are only case-insensitive for the -config and -config-version forms, not
+    # the Config and ConfigVersion forms.
+    set(inFileDir ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/FetchContent)
+    set(configFilePrefix1 "${CMAKE_FIND_PACKAGE_REDIRECTS_DIR}/${contentName}Config")
+    set(configFilePrefix2 "${CMAKE_FIND_PACKAGE_REDIRECTS_DIR}/${contentNameLower}-config")
+    if(NOT EXISTS "${configFilePrefix1}.cmake" AND
+       NOT EXISTS "${configFilePrefix2}.cmake")
+      configure_file(${inFileDir}/package-config.cmake.in
+        "${configFilePrefix2}.cmake" @ONLY
+      )
+    endif()
+    if(NOT EXISTS "${configFilePrefix1}Version.cmake" AND
+       NOT EXISTS "${configFilePrefix2}-version.cmake")
+      configure_file(${inFileDir}/package-config-version.cmake.in
+        "${configFilePrefix2}-version.cmake" @ONLY
+      )
+    endif()
+
+    # Now that we've created the redirected package config files, prevent
+    # find_package() from delegating to FetchContent and let it find these
+    # config files through its normal processing.
+    set(propertyName "${prefix}_override_find_package")
+    set(GLOBAL PROPERTY ${propertyName} FALSE)
+    set(${contentName}_DIR "${CMAKE_FIND_PACKAGE_REDIRECTS_DIR}" CACHE
+      PATH "Redirected by FetchContent" INTERNAL
+    )
+
+  endif()
 
 endfunction()
 
@@ -852,6 +967,7 @@ function(__FetchContent_directPopulate contentName)
       # We need special processing if DOWNLOAD_NO_EXTRACT is true
       DOWNLOAD_NO_EXTRACT
       # Prevent the following from being passed through
+      OVERRIDE_FIND_PACKAGE
       CONFIGURE_COMMAND
       BUILD_COMMAND
       INSTALL_COMMAND
@@ -1042,7 +1158,13 @@ function(FetchContent_Populate contentName)
   # populated this content before in case the caller forgot to check.
   FetchContent_GetProperties(${contentName})
   if(${contentNameLower}_POPULATED)
-    message(FATAL_ERROR "Content ${contentName} already populated in ${${contentNameLower}_SOURCE_DIR}")
+    if("${${contentNameLower}_SOURCE_DIR}" STREQUAL "")
+      message(FATAL_ERROR
+        "Content ${contentName} already populated in ${${contentNameLower}_SOURCE_DIR}")
+    else()
+      message(FATAL_ERROR
+        "Content ${contentName} already populated by find_package()")
+    endif()
   endif()
 
   __FetchContent_getSavedDetails(${contentName} contentDetails)
@@ -1054,6 +1176,13 @@ function(FetchContent_Populate contentName)
   set(FETCHCONTENT_SOURCE_DIR_${contentNameUpper}
       "${FETCHCONTENT_SOURCE_DIR_${contentNameUpper}}"
       CACHE PATH "When not empty, overrides where to find pre-populated content for ${contentName}")
+
+  cmake_parse_arguments(savedDetails
+    "OVERRIDE_FIND_PACKAGE"
+    "SOURCE_DIR;BINARY_DIR"
+    ""
+    ${contentDetails}
+  )
 
   if(FETCHCONTENT_SOURCE_DIR_${contentNameUpper})
     # The source directory has been explicitly provided in the cache,
@@ -1074,8 +1203,6 @@ function(FetchContent_Populate contentName)
 
     set(${contentNameLower}_SOURCE_DIR "${FETCHCONTENT_SOURCE_DIR_${contentNameUpper}}")
 
-    cmake_parse_arguments(savedDetails "" "BINARY_DIR" "" ${contentDetails})
-
     if(savedDetails_BINARY_DIR)
       set(${contentNameLower}_BINARY_DIR ${savedDetails_BINARY_DIR})
     else()
@@ -1085,8 +1212,6 @@ function(FetchContent_Populate contentName)
   elseif(FETCHCONTENT_FULLY_DISCONNECTED)
     # Bypass population and assume source is already there from a previous run.
     # Declared details may override the default source or build directories.
-
-    cmake_parse_arguments(savedDetails "" "SOURCE_DIR;BINARY_DIR" "" ${contentDetails})
 
     if(savedDetails_SOURCE_DIR)
       set(${contentNameLower}_SOURCE_DIR ${savedDetails_SOURCE_DIR})
@@ -1138,10 +1263,27 @@ function(FetchContent_Populate contentName)
     )
   endif()
 
+  if(savedDetails_OVERRIDE_FIND_PACKAGE)
+    set(redirectOpt REDIRECT_FIND_PACKAGE)
+  else()
+    set(propertyName "_FetchContent_${contentNameLower}_find_package_args")
+    get_property(haveFindPackageArgs GLOBAL PROPERTY ${propertyName} DEFINED)
+    if(haveFindPackageArgs)
+      # There was an attempt to use find_package(), but it failed and we did
+      # the population instead. Make future find_package() calls for this
+      # dependency use our populated version of it and don't try to use
+      # find_package() any more.
+      set(redirectOpt REDIRECT_FIND_PACKAGE)
+    else()
+      set(redirectOpt "")
+    endif()
+  endif()
+
   __FetchContent_setPopulated(
     ${contentName}
-    ${${contentNameLower}_SOURCE_DIR}
-    ${${contentNameLower}_BINARY_DIR}
+    SOURCE_DIR ${${contentNameLower}_SOURCE_DIR}
+    BINARY_DIR ${${contentNameLower}_BINARY_DIR}
+    ${redirectOpt}
   )
 
   # Pass variables back to the caller. The variables passed back here
@@ -1149,7 +1291,7 @@ function(FetchContent_Populate contentName)
   # with just the content name.
   set(${contentNameLower}_SOURCE_DIR "${${contentNameLower}_SOURCE_DIR}" PARENT_SCOPE)
   set(${contentNameLower}_BINARY_DIR "${${contentNameLower}_BINARY_DIR}" PARENT_SCOPE)
-  set(${contentNameLower}_POPULATED  True PARENT_SCOPE)
+  set(${contentNameLower}_POPULATED  TRUE PARENT_SCOPE)
 
 endfunction()
 
@@ -1161,11 +1303,36 @@ endfunction()
 # calls will be available to the caller.
 macro(FetchContent_MakeAvailable)
 
-  foreach(contentName IN ITEMS ${ARGV})
-    string(TOLOWER ${contentName} contentNameLower)
-    FetchContent_GetProperties(${contentName})
-    if(NOT ${contentNameLower}_POPULATED)
-      FetchContent_Populate(${contentName})
+  foreach(__contentName IN ITEMS ${ARGV})
+    string(TOLOWER ${__contentName} __contentNameLower)
+    string(TOUPPER ${__contentName} __contentNameUpper)
+    set(__prefix "_FetchContent_${__contentNameLower}")
+
+    # If user specified SOURCE_DIR, that overrides everything else
+    if("${FETCHCONTENT_SOURCE_DIR_${__contentNameUpper}}" STREQUAL "")
+      # Check if we've been asked to try find_package() first, even if we
+      # have already populated this dependency. If we previously tried to
+      # use find_package() for this and it succeeded, those things might
+      # no longer be in scope, so we have to do it again.
+      set(__fpArgsPropName "${__prefix}_find_package_args")
+      get_property(__haveFpArgs GLOBAL PROPERTY ${__fpArgsPropName} DEFINED)
+      if(__haveFpArgs)
+        message(VERBOSE "Trying find_package(${__contentName} ...) before FetchContent")
+        get_property(__fpArgs GLOBAL PROPERTY ${__fpArgsPropName})
+        find_package(${__contentName} ${__fpArgs})
+        if(${__contentName}_FOUND)
+          set(${__contentNameLower}_SOURCE_DIR "")
+          set(${__contentNameLower}_BINARY_DIR "")
+          set(${__contentNameLower}_POPULATED  TRUE)
+          __FetchContent_setPopulated(${__contentName})
+          continue()
+        endif()
+      endif()
+    endif()
+
+    FetchContent_GetProperties(${__contentName})
+    if(NOT ${__contentNameLower}_POPULATED)
+      FetchContent_Populate(${__contentName})
 
       # Only try to call add_subdirectory() if the populated content
       # can be treated that way. Protecting the call with the check
@@ -1176,10 +1343,10 @@ macro(FetchContent_MakeAvailable)
       # for ExternalProject. It won't matter if it was passed through
       # to the ExternalProject sub-build, since it would have been
       # ignored there.
-      set(__fc_srcdir "${${contentNameLower}_SOURCE_DIR}")
-      __FetchContent_getSavedDetails(${contentName} contentDetails)
+      set(__fc_srcdir "${${__contentNameLower}_SOURCE_DIR}")
+      __FetchContent_getSavedDetails(${__contentName} contentDetails)
       if("${contentDetails}" STREQUAL "")
-        message(FATAL_ERROR "No details have been set for content: ${contentName}")
+        message(FATAL_ERROR "No details have been set for content: ${__contentName}")
       endif()
       cmake_parse_arguments(__fc_arg "" "SOURCE_SUBDIR" "" ${contentDetails})
       if(NOT "${__fc_arg_SOURCE_SUBDIR}" STREQUAL "")
@@ -1187,11 +1354,19 @@ macro(FetchContent_MakeAvailable)
       endif()
 
       if(EXISTS ${__fc_srcdir}/CMakeLists.txt)
-        add_subdirectory(${__fc_srcdir} ${${contentNameLower}_BINARY_DIR})
+        add_subdirectory(${__fc_srcdir} ${${__contentNameLower}_BINARY_DIR})
       endif()
 
       unset(__fc_srcdir)
+      unset(__fc_arg_SOURCE_SUBDIR)
     endif()
   endforeach()
+
+  unset(__fpArgsPropName)
+  unset(__haveFpArgs)
+  unset(__fpArgs)
+  unset(__contentName)
+  unset(__contentNameLower)
+  unset(__prefix)
 
 endmacro()

@@ -76,6 +76,7 @@ private:
       : cmFindCommon::PathLabel(label)
     {
     }
+    static PathLabel PackageRedirect;
     static PathLabel UserRegistry;
     static PathLabel Builds;
     static PathLabel SystemRegistry;
@@ -121,6 +122,7 @@ private:
   void StoreVersionFound();
 
   void ComputePrefixes();
+  void FillPrefixesPackageRedirect();
   void FillPrefixesPackageRoot();
   void FillPrefixesCMakeEnvironment();
   void FillPrefixesCMakeVariable();

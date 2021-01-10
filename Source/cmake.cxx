@@ -1417,6 +1417,19 @@ int cmake::AddCMakePaths()
   this->AddCacheEntry("CMAKE_ROOT", cmSystemTools::GetCMakeRoot().c_str(),
                       "Path to CMake installation.", cmStateEnums::INTERNAL);
 
+  const auto redirectsDir =
+    cmStrCat(this->GetHomeOutputDirectory(), "/CMakeFiles/pkgRedirects/");
+  cmSystemTools::RemoveADirectory(redirectsDir);
+  if (!cmSystemTools::MakeDirectory(redirectsDir)) {
+    cmSystemTools::Error(
+      "Unable to (re)create the private pkgRedirects directory:\n" +
+      redirectsDir);
+    return 0;
+  }
+
+  this->AddCacheEntry("CMAKE_FIND_PACKAGE_REDIRECTS_DIR", redirectsDir.c_str(),
+                      "Value Computed by CMake.", cmStateEnums::STATIC);
+
   return 1;
 }
 
