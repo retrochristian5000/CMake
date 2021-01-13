@@ -1,0 +1,4 @@
+.*TEST_ENV_=Environment variable
+.*TEST_ENV_OVERRIDE_=Overridden
+.*TEST_ENV_OVERRIDE_REF=xOverriddenx
+.*TEST_ENV_REF=xEnvironment variablex
