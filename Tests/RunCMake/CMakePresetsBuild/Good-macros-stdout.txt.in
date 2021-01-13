@@ -1,0 +1,8 @@
+.*TEST_DOLLAR=x\$x
+.*TEST_GENERATOR=x@RunCMake_GENERATOR@x
+.*TEST_PRESET_NAME=xmacrosx
+.*TEST_SOURCE_DIR_=x[^
+]*/Tests/RunCMake/CMakePresetsBuild/Goodx
+.*TEST_SOURCE_DIR_NAME=xGoodx
+.*TEST_SOURCE_PARENT_DIR=x[^
+]*/Tests/RunCMake/CMakePresetsBuildx
