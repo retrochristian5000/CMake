@@ -801,3 +801,5 @@ add_RunCMake_test(TransformDepfile)
 if(WIN32)
   add_RunCMake_test(Win32GenEx)
 endif()
+
+add_RunCMake_test(ArtifactOutputDirs)
