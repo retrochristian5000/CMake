@@ -253,7 +253,7 @@ void CMakeSetupDialog::initialize()
                    &QCMake::propertiesChanged, this->CacheValues->cacheModel(),
                    &QCMakeCacheModel::setProperties);
 
-  QObject::connect(this->ConfigureButton, &QPushButton::clicked, this,
+  QObject::connect(this->ConfigureButton, &QAbstractButton::clicked, this,
                    &CMakeSetupDialog::doConfigure);
 
   QObject::connect(this->CMakeThread->cmakeInstance(), &QCMake::configureDone,
@@ -261,14 +261,14 @@ void CMakeSetupDialog::initialize()
   QObject::connect(this->CMakeThread->cmakeInstance(), &QCMake::generateDone,
                    this, &CMakeSetupDialog::exitLoop);
 
-  QObject::connect(this->GenerateButton, &QPushButton::clicked, this,
+  QObject::connect(this->GenerateButton, &QAbstractButton::clicked, this,
                    &CMakeSetupDialog::doGenerate);
-  QObject::connect(this->OpenProjectButton, &QPushButton::clicked, this,
+  QObject::connect(this->OpenProjectButton, &QAbstractButton::clicked, this,
                    &CMakeSetupDialog::doOpenProject);
 
-  QObject::connect(this->BrowseSourceDirectoryButton, &QPushButton::clicked,
+  QObject::connect(this->BrowseSourceDirectoryButton, &QAbstractButton::clicked,
                    this, &CMakeSetupDialog::doSourceBrowse);
-  QObject::connect(this->BrowseBinaryDirectoryButton, &QPushButton::clicked,
+  QObject::connect(this->BrowseBinaryDirectoryButton, &QAbstractButton::clicked,
                    this, &CMakeSetupDialog::doBinaryBrowse);
 
   QObject::connect(this->BinaryDirectory, &QComboBox::editTextChanged, this,
@@ -324,12 +324,12 @@ void CMakeSetupDialog::initialize()
   QObject::connect(this->CacheValues->selectionModel(),
                    &QItemSelectionModel::selectionChanged, this,
                    &CMakeSetupDialog::selectionChanged);
-  QObject::connect(this->RemoveEntry, &QToolButton::clicked, this,
+  QObject::connect(this->RemoveEntry, &QAbstractButton::clicked, this,
                    &CMakeSetupDialog::removeSelectedCacheEntries);
-  QObject::connect(this->AddEntry, &QToolButton::clicked, this,
+  QObject::connect(this->AddEntry, &QAbstractButton::clicked, this,
                    &CMakeSetupDialog::addCacheEntry);
 
-  QObject::connect(this->Environment, &QToolButton::clicked, this,
+  QObject::connect(this->Environment, &QAbstractButton::clicked, this,
                    &CMakeSetupDialog::editEnvironment);
 
   QObject::connect(this->WarnUninitializedAction, &QAction::triggered,
