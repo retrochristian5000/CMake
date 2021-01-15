@@ -128,16 +128,21 @@ endforeach()
 target_link_libraries(testlib PRIVATE ${testlib_names})
 
 add_executable(topexe macos/topexe.c)
+add_executable(topexe_weak macos/topexe.c)
 add_library(toplib SHARED macos/toplib.c)
 add_library(topmod MODULE macos/toplib.c)
 target_link_libraries(topexe PRIVATE testlib)
+target_link_libraries(topexe_weak PRIVATE testlib)
 target_link_libraries(toplib PRIVATE testlib)
 target_link_libraries(topmod PRIVATE testlib)
+# Ugly hardcoded path, CMake doesn't support weak linking to libraries: https://gitlab.kitware.com/cmake/cmake/-/issues/18751
+set_target_properties(topexe_weak PROPERTIES LINK_FLAGS "-weak_library libtestlib.dylib")
 
 set_property(TARGET topexe toplib topmod PROPERTY INSTALL_RPATH "${CMAKE_BINARY_DIR}/root-all/executable/lib")
+set_property(TARGET topexe_weak toplib topmod PROPERTY INSTALL_RPATH "${CMAKE_BINARY_DIR}/root-all/executable/lib")
 
-install(TARGETS topexe toplib topmod testlib testlib_conflict RUNTIME DESTINATION executable/bin LIBRARY DESTINATION executable/lib)
-install(TARGETS topexe toplib topmod testlib testlib_conflict RUNTIME DESTINATION bundle_executable/bin LIBRARY DESTINATION bundle_executable/lib)
+install(TARGETS topexe topexe_weak toplib topmod testlib testlib_conflict RUNTIME DESTINATION executable/bin LIBRARY DESTINATION executable/lib)
+install(TARGETS topexe topexe_weak toplib topmod testlib testlib_conflict RUNTIME DESTINATION bundle_executable/bin LIBRARY DESTINATION bundle_executable/lib)
 
 install(CODE [[
   function(exec_get_runtime_dependencies depsfile udepsfile cdepsfile)
@@ -212,5 +217,13 @@ install(CODE [[
     LIBRARIES
       "${CMAKE_INSTALL_PREFIX}/executable/lib/$<TARGET_FILE_NAME:testlib_conflict>"
     BUNDLE_EXECUTABLE "${CMAKE_INSTALL_PREFIX}/bundle_executable/bin/$<TARGET_FILE_NAME:topexe>"
+    )
+
+  exec_get_runtime_dependencies(
+    deps7.txt udeps7.txt cdeps7.txt
+    EXECUTABLES
+      "${CMAKE_INSTALL_PREFIX}/executable/bin/$<TARGET_FILE_NAME:topexe_weak>"
+    LIBRARIES
+      "${CMAKE_INSTALL_PREFIX}/executable/lib/$<TARGET_FILE_NAME:testlib_conflict>"
     )
   ]])
