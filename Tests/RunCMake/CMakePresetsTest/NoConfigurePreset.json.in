@@ -1,0 +1,15 @@
+{
+    "version": 1,
+    "configurePresets": [
+        {
+            "name": "default",
+            "generator": "@RunCMake_GENERATOR@",
+            "binaryDir": "@RunCMake_TEST_BINARY_DIR@/${presetName}"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "noConfigurePreset"
+        }
+    ]
+}

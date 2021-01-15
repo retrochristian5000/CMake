@@ -1,0 +1,12 @@
+Test project [^
+]*/Tests/RunCMake/CMakePresetsTest/Good/build/default
+.*
+    Start 5: test-env
+.*
+5: TEST_ENV=Environment variable
+5: TEST_ENV_OVERRIDE=Override
+5: TEST_ENV_OVERRIDE_REF=xOverridex
+5: TEST_ENV_REF=xEnvironment variablex
+.*
+
+100% tests passed, 0 tests failed out of 1

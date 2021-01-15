@@ -53,7 +53,6 @@ function(run_cmake_build_presets name CMakePresetsBuild_CONFIGURE_PRESETS CMakeP
     set(RunCMake-stdout-file "${name}-${BUILD_PRESET}-stdout.txt")
     set(RunCMake-stderr-file "${name}-${BUILD_PRESET}-stderr.txt")
 
-
     set(RunCMake_TEST_COMMAND ${CMAKE_COMMAND}
       "--build"
       "--preset" "${BUILD_PRESET}"
@@ -68,7 +67,7 @@ run_cmake_build_presets(Good "default;other" "build-other;withEnvironment;noEnvi
 file(REMOVE "${RunCMake_SOURCE_DIR}/Good-macros-stdout.txt")
 
 set(CMakePresetsBuild_BUILD_ONLY 1)
-run_cmake_build_presets(ListPresets "default" "x" "--list-presets")
-run_cmake_build_presets(NoConfigurePreset "default" "noConfigurePreset")
-run_cmake_build_presets(Invalid "default" "hidden;vendorMacro;badConfigurePreset")
+run_cmake_build_presets(ListPresets "x" "x" "--list-presets")
+run_cmake_build_presets(NoConfigurePreset "x" "noConfigurePreset")
+run_cmake_build_presets(Invalid "x" "hidden;vendorMacro;badConfigurePreset")
 set(CMakePresetsBuild_BUILD_ONLY 0)
