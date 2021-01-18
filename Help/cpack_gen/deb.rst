@@ -279,6 +279,21 @@ List of CPack DEB generator specific variables:
  - bzip2
  - gzip
 
+.. variable:: CPACK_DEBIAN_THREADS
+
+ .. versionadded:: 3.20
+
+  The number of threads to use when performing the compression. If set to
+  ``0``, the number of available cores on the machine will be used instead.
+  The default is ``1`` which limits compression to a single thread. Note that
+  not all compression modes support threading in all environments. Currently,
+  only the XZ compression may support it.
+
+.. note::
+
+    Official CMake binaries available on ``cmake.org`` ship with a ``liblzma``
+    that does not support parallel compression.
+
 .. variable:: CPACK_DEBIAN_PACKAGE_PRIORITY
               CPACK_DEBIAN_<COMPONENT>_PACKAGE_PRIORITY
 
