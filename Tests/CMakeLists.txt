@@ -1152,7 +1152,9 @@ if(BUILD_TESTING)
                                      "components-shlibdeps1"
                                      "components-depend1"
                                      "components-depend2"
-                                     "compression")
+                                     "compression"
+                                     "shlibdeps-with-private-lib-failure"
+                                     "shlibdeps-with-private-lib-success")
       set(CPackGen "DEB")
       set(CPackRun_CPackGen "-DCPackGen=${CPackGen}")
 
