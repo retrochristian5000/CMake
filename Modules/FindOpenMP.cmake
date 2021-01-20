@@ -53,6 +53,8 @@ variables are provided:
   Location of the individual libraries needed for OpenMP support in ``<lang>``.
 ``OpenMP_<lang>_LIBRARIES``
   A list of libraries needed to link with OpenMP code written in ``<lang>``.
+``OpenMP_<lang>_LINK_OPTIONS``
+  A list of link options needed to link with OpenMP code written in ``<lang>``.
 
 Additionally, the module provides :prop_tgt:`IMPORTED` targets:
 
@@ -186,6 +188,16 @@ endfunction()
 
 include(${CMAKE_CURRENT_LIST_DIR}/CMakeParseImplicitLinkInfo.cmake)
 
+macro(_OPENMP_SET_LINK_OPTIONS LANG)
+  # Some platforms requires static linking of openmp.
+  # TODO: we should have an option here for manual configuration and on other platforms.
+  if(ANDROID)
+    if(CMAKE_${LANG}_COMPILER_ID MATCHES "Clang" AND (CMAKE_${LANG}_COMPILER_VERSION VERSION_GREATER_EQUAL "10.0"))
+      set(OpenMP_${LANG}_LINK_OPTIONS "-static-openmp")
+    endif()
+  endif()
+endmacro()
+
 function(_OPENMP_GET_FLAGS LANG FLAG_MODE OPENMP_FLAG_VAR OPENMP_LIB_NAMES_VAR)
   _OPENMP_FLAG_CANDIDATES("${LANG}")
   _OPENMP_WRITE_SOURCE_FILE("${LANG}" "TEST_SOURCE" OpenMPTryFlag _OPENMP_TEST_SRC)
@@ -207,6 +219,7 @@ function(_OPENMP_GET_FLAGS LANG FLAG_MODE OPENMP_FLAG_VAR OPENMP_LIB_NAMES_VAR)
     try_compile( OpenMP_COMPILE_RESULT_${FLAG_MODE}_${OPENMP_PLAIN_FLAG} ${CMAKE_BINARY_DIR} ${_OPENMP_TEST_SRC}
       CMAKE_FLAGS "-DCOMPILE_DEFINITIONS:STRING=${OPENMP_FLAGS_TEST}"
       LINK_LIBRARIES ${CMAKE_${LANG}_VERBOSE_FLAG}
+      LINK_OPTIONS ${CMAKE_${LANG}_LINK_OPTIONS}
       OUTPUT_VARIABLE OpenMP_TRY_COMPILE_OUTPUT
     )
 
@@ -456,6 +469,7 @@ foreach(LANG IN ITEMS C CXX)
         CACHE STRING "${LANG} compiler libraries for OpenMP parallelization" FORCE)
       mark_as_advanced(OpenMP_${LANG}_FLAGS OpenMP_${LANG}_LIB_NAMES)
     endif()
+    _OPENMP_SET_LINK_OPTIONS("${LANG}")
   endif()
 endforeach()
 
@@ -570,6 +584,10 @@ foreach(LANG IN LISTS OpenMP_FINDLIST)
       if(OpenMP_${LANG}_LIBRARIES)
         set_property(TARGET OpenMP::OpenMP_${LANG} PROPERTY
           INTERFACE_LINK_LIBRARIES "${OpenMP_${LANG}_LIBRARIES}")
+      endif()
+      if(OpenMP_${LANG}_LINK_OPTIONS)
+        set_property(TARGET OpenMP::OpenMP_${LANG} PROPERTY
+          INTERFACE_LINK_OPTIONS "${OpenMP_${LANG}_LINK_OPTIONS}")
       endif()
     endif()
   endif()
