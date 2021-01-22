@@ -55,7 +55,7 @@ public:
   cmQtAutoMocUicT(cmQtAutoMocUicT const&) = delete;
   cmQtAutoMocUicT& operator=(cmQtAutoMocUicT const&) = delete;
 
-public:
+
   // -- Types
 
   /** Include string with sub parts.  */
@@ -112,7 +112,7 @@ public:
     using FileHandleT = std::shared_ptr<FileT>;
     using GetOrInsertT = std::pair<FileHandleT, bool>;
 
-  public:
+  
     ParseCacheT();
     ~ParseCacheT();
 
@@ -135,7 +135,7 @@ public:
     {
     }
 
-  public:
+  
     std::string FileName;
     cmFileTime FileTime;
     ParseCacheT::FileHandleT ParseData;
@@ -266,7 +266,7 @@ public:
       std::vector<std::string> Options;
     };
 
-  public:
+  
     UicSettingsT();
     ~UicSettingsT();
 
@@ -379,7 +379,7 @@ public:
     void MocIncludes();
     void UicIncludes();
 
-  protected:
+  
     SourceFileHandleT FileHandle;
     std::string Content;
   };
@@ -572,7 +572,7 @@ private:
   static std::vector<std::string> dependenciesFromDepFile(
     const char* filePath);
 
-private:
+
   // -- Settings
   BaseSettingsT BaseConst_;
   BaseEvalT BaseEval_;

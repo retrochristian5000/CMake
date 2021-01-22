@@ -209,7 +209,7 @@ public:
     TLLCommands;
   cmListFileBacktrace Backtrace;
 
-public:
+
   bool CheckImportedLibName(std::string const& prop,
                             std::string const& value) const;
 

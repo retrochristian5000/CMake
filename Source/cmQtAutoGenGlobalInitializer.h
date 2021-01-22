@@ -45,7 +45,7 @@ public:
     std::string ui;
   };
 
-public:
+
   cmQtAutoGenGlobalInitializer(
     std::vector<std::unique_ptr<cmLocalGenerator>> const& localGenerators);
   ~cmQtAutoGenGlobalInitializer();
@@ -73,7 +73,7 @@ private:
     std::string const& generator, std::string const& executable,
     std::string& error);
 
-private:
+
   std::vector<std::unique_ptr<cmQtAutoGenInitializer>> Initializers_;
   std::map<cmLocalGenerator*, std::string> GlobalAutoGenTargets_;
   std::map<cmLocalGenerator*, std::string> GlobalAutoRccTargets_;

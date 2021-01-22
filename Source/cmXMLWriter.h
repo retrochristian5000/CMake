@@ -75,7 +75,7 @@ private:
 
   void CloseStartElement();
 
-private:
+
   static cmXMLSafe SafeAttribute(const char* value) { return { value }; }
 
   static cmXMLSafe SafeAttribute(std::string const& value)
@@ -121,7 +121,7 @@ private:
     return value;
   }
 
-private:
+
   std::ostream& Output;
   std::stack<std::string, std::vector<std::string>> Elements;
   std::string IndentationElement;

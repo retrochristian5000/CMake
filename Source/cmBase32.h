@@ -17,7 +17,7 @@ class cmBase32Encoder
 public:
   static const char paddingChar = '=';
 
-public:
+
   cmBase32Encoder();
   ~cmBase32Encoder() = default;
 

@@ -152,7 +152,7 @@ public:
 
   bool IsGCCOnWindows() const { return this->UsingGCCOnWindows; }
 
-public:
+
   cmGlobalNinjaGenerator(cmake* cm);
 
   static std::unique_ptr<cmGlobalGeneratorFactory> NewFactory()
@@ -570,7 +570,7 @@ private:
 
   bool DiagnosedCxxModuleSupport = false;
 
-private:
+
   void InitOutputPathPrefix();
 
   std::string OutputPathPrefix;

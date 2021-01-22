@@ -52,7 +52,7 @@ private:
   bool GenerateRcc();
   bool GenerateWrapper();
 
-private:
+
   // -- Config settings
   bool MultiConfig_ = false;
   // -- Directories

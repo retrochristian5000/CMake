@@ -288,6 +288,6 @@ private:
   const char* GetPrefixVariableInternal(
     cmStateEnums::ArtifactType artifact) const;
 
-private:
+
   std::unique_ptr<cmTargetInternals> impl;
 };

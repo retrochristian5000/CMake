@@ -98,7 +98,7 @@ public:
       , GenNameUpper(cmQtAutoGen::GeneratorNameUpper(gen)){};
   };
 
-public:
+
   /** @return The detected Qt version and the required Qt major version.  */
   static std::pair<IntegerVersion, unsigned int> GetQtVersion(
     cmGeneratorTarget const* genTarget);
@@ -149,7 +149,7 @@ private:
   bool GetQtExecutable(GenVarsT& genVars, const std::string& executable,
                        bool ignoreMissingTarget) const;
 
-private:
+
   cmQtAutoGenGlobalInitializer* GlobalInitializer = nullptr;
   cmGeneratorTarget* GenTarget = nullptr;
   cmGlobalGenerator* GlobalGen = nullptr;

@@ -97,7 +97,7 @@ private:
   void ComputeRelativePathTopSource();
   void ComputeRelativePathTopBinary();
 
-private:
+
   cmLinkedTree<cmStateDetail::BuildsystemDirectoryStateType>::iterator
     DirectoryState;
   cmStateSnapshot Snapshot_;
