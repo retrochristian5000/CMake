@@ -952,7 +952,7 @@ void cmComputeLinkInformation::AddLinkExtension(std::string const& e,
 }
 
 std::string cmComputeLinkInformation::CreateExtensionRegex(
-  std::vector<std::string> const& exts, LinkType type)
+  std::vector<std::string> const& exts, LinkType type) const
 {
   // Build a list of extension choices.
   std::string libext = "(";

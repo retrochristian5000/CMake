@@ -146,7 +146,7 @@ private:
   void AddLinkPrefix(std::string const& p);
   void AddLinkExtension(std::string const& e, LinkType type);
   std::string CreateExtensionRegex(std::vector<std::string> const& exts,
-                                   LinkType type);
+                                   LinkType type) const;
   std::string NoCaseExpression(std::string const& str);
 
   // Handling of link items.
