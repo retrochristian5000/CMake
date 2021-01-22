@@ -181,13 +181,9 @@ bool cmRuntimeDependencyArchive::GetRuntimeDependencies(
       return false;
     }
   }
-  for (auto const& mod : modules) {
-    if (!this->Linker->ScanDependencies(mod, cmStateEnums::MODULE_LIBRARY)) {
-      return false;
-    }
-  }
-
-  return true;
+  return std::all_of(modules.begin(), modules.end(), [this](auto const& mod) {
+    return this->Linker->ScanDependencies(mod, cmStateEnums::MODULE_LIBRARY);
+  });
 }
 
 void cmRuntimeDependencyArchive::SetError(const std::string& e)
