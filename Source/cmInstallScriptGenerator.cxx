@@ -55,7 +55,7 @@ bool cmInstallScriptGenerator::Compute(cmLocalGenerator* lg)
 
 void cmInstallScriptGenerator::AddScriptInstallRule(std::ostream& os,
                                                     Indent indent,
-                                                    std::string const& script)
+                                                    std::string const& script) const
 {
   if (this->Code) {
     os << indent << script << "\n";
