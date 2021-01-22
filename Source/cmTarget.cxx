@@ -1328,7 +1328,7 @@ void cmTarget::SetProperty(const std::string& prop, const char* value)
       this->impl->Makefile->IssueMessage(MessageType::FATAL_ERROR, e.str());
       return;
     }
-    auto reusedTarget = this->impl->Makefile->GetCMakeInstance()
+    auto *reusedTarget = this->impl->Makefile->GetCMakeInstance()
                           ->GetGlobalGenerator()
                           ->FindTarget(value);
     if (!reusedTarget) {
