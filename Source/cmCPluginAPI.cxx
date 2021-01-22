@@ -221,7 +221,7 @@ void CCONV cmAddUtilityCommand(void* arg, const char* utilityName,
 
   // Pass the call to the makefile instance.
   std::vector<std::string> no_byproducts;
-  mf->AddUtilityCommand(utilityName, (all ? false : true), nullptr,
+  mf->AddUtilityCommand(utilityName, !all, nullptr,
                         no_byproducts, depends2, commandLines);
 }
 
