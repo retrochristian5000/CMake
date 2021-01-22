@@ -2615,16 +2615,25 @@ void cmLocalGenerator::AddPchDependencies(cmGeneratorTarget* target)
                 }
               }
 
-              if (reuseTarget->GetType() != cmStateEnums::OBJECT_LIBRARY) {
-                std::string pchSourceObj =
-                  reuseTarget->GetPchFileObject(config, lang, arch);
+              // Link to the pch object file
+              std::string pchSourceObj =
+                reuseTarget->GetPchFileObject(config, lang, arch);
 
-                // Link to the pch object file
+              if (target->GetType() != cmStateEnums::OBJECT_LIBRARY) {
+                std::string linkerProperty = "LINK_FLAGS_";
+                if (target->GetType() == cmStateEnums::STATIC_LIBRARY) {
+                  linkerProperty = "STATIC_LIBRARY_FLAGS_";
+                }
                 target->Target->AppendProperty(
-                  cmStrCat("LINK_FLAGS_", configUpper),
+                  cmStrCat(linkerProperty, configUpper),
                   cmStrCat(" ",
                            this->ConvertToOutputFormat(pchSourceObj, SHELL)),
                   true);
+              } else {
+                target->Target->AppendProperty(
+                  "INTERFACE_LINK_LIBRARIES",
+                  cmStrCat("$<$<CONFIG:", config, ">:$<LINK_ONLY:",
+                           pchSourceObj, ">>"));
               }
             }
           } else {
@@ -2743,7 +2752,7 @@ void cmLocalGenerator::CopyPchCompilePdb(
     this->AddCustomCommandToTarget(
       target->GetName(), outputs, no_deps, commandLines,
       cmCustomCommandType::PRE_BUILD, no_message, no_current_dir, true, false,
-      "", "", false, cmObjectLibraryCommands::Reject, stdPipesUTF8);
+      "", "", false, cmObjectLibraryCommands::Accept, stdPipesUTF8);
   } else {
     cmImplicitDependsList no_implicit_depends;
     cmSourceFile* copy_rule = this->AddCustomCommandToOutput(
