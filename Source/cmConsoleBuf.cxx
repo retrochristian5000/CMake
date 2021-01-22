@@ -12,7 +12,7 @@ cmConsoleBuf::cmConsoleBuf()
 cmConsoleBuf::cmConsoleBuf() = default;
 #endif
 
-cmConsoleBuf::~cmConsoleBuf() = default;
+
 
 void cmConsoleBuf::SetUTF8Pipes()
 {

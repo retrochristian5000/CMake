@@ -36,7 +36,7 @@ cmQtAutoGenerator::Logger::Logger()
   }
 }
 
-cmQtAutoGenerator::Logger::~Logger() = default;
+
 
 void cmQtAutoGenerator::Logger::RaiseVerbosity(unsigned int value)
 {

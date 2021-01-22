@@ -51,7 +51,7 @@ cmProcessOutput::cmProcessOutput(Encoding encoding, unsigned int maxSize)
 #endif
 }
 
-cmProcessOutput::~cmProcessOutput() = default;
+
 
 bool cmProcessOutput::DecodeText(std::string raw, std::string& decoded,
                                  size_t id)
