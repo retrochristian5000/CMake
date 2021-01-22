@@ -11,14 +11,18 @@
 
 std::string cmTrimWhitespace(cm::string_view str)
 {
-  auto start = str.begin();
+  // XXX(clang-tidy): This declaration and the next cannot be `const auto*`
+  // because the qualification of `auto` is platform-dependent.
+  // NOLINTNEXTLINE(readability-qualified-auto)
+  const auto start = str.begin();
   while (start != str.end() && cmIsSpace(*start)) {
     ++start;
   }
   if (start == str.end()) {
     return std::string();
   }
-  auto stop = str.end() - 1;
+  // NOLINTNEXTLINE(readability-qualified-auto)
+  const auto stop = str.end() - 1;
   while (cmIsSpace(*stop)) {
     --stop;
   }
