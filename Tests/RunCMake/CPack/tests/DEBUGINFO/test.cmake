@@ -1,7 +1,8 @@
 set(CMAKE_BUILD_WITH_INSTALL_RPATH 1)
 
-# PGI compiler doesn't add build id to binaries by default
-if(CMAKE_CXX_COMPILER_ID STREQUAL "PGI")
+# PGI and IntelLLVM compilers don't add build id to binaries by default
+if(CMAKE_CXX_COMPILER_ID STREQUAL "PGI"
+  OR CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
   string(APPEND CMAKE_EXE_LINKER_FLAGS "-Wl,--build-id")
   string(APPEND CMAKE_SHARED_LINKER_FLAGS "-Wl,--build-id")
 endif()
