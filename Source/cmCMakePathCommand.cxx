@@ -194,7 +194,7 @@ bool HandleGetCommand(std::vector<std::string> const& args,
                  }
                  return path.GetNarrowStem();
                } },
-             { "RELATIVE_PATH"_s,
+             { "ROOT_RELATIVE_PATH"_s,
                [](const cmCMakePath& path, bool) -> cmCMakePath {
                  return path.GetRelativePath();
                } },

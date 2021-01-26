@@ -36,7 +36,7 @@ Synopsis
     cmake_path(`GET`_ <path-var> :ref:`FILENAME <GET_FILENAME>` <out-var>)
     cmake_path(`GET`_ <path-var> :ref:`EXTENSION <GET_EXTENSION>` [LAST_ONLY] <out-var>)
     cmake_path(`GET`_ <path-var> :ref:`STEM <GET_STEM>` [LAST_ONLY] <out-var>)
-    cmake_path(`GET`_ <path-var> :ref:`RELATIVE_PATH <GET_RELATIVE_PATH>` <out-var>)
+    cmake_path(`GET`_ <path-var> :ref:`ROOT_RELATIVE_PATH <GET_ROOT_RELATIVE_PATH>` <out-var>)
     cmake_path(`GET`_ <path-var> :ref:`PARENT_PATH <GET_PARENT_PATH>` <out-var>)
 
   `Query`_
@@ -339,11 +339,11 @@ Relative paths
 Two other forms of the ``GET`` subcommand interpret a path and return
 another path derived from it.
 
-.. _GET_RELATIVE_PATH:
+.. _GET_ROOT_RELATIVE_PATH:
 
 ::
 
-  cmake_path(GET <path-var> RELATIVE_PATH <out-var>)
+  cmake_path(GET <path-var> ROOT_RELATIVE_PATH <out-var>)
 
 Returns the path with any ``root-name`` and ``root-directory-separator``
 removed.  This leaves just the part of the path relative to the root
@@ -355,12 +355,12 @@ For example:
 
 .. code-block:: cmake
 
-  set(path "/a/b")
-  cmake_path(GET path RELATIVE_PATH result)
+  set(path "c:/a/b")
+  cmake_path(GET path ROOT_RELATIVE_PATH result)
   message("Relative path is \"${result}\"")
 
   set(path "/")
-  cmake_path(GET path RELATIVE_PATH result)
+  cmake_path(GET path ROOT_RELATIVE_PATH result)
   message("Relative path is \"${result}\"")
 
 Output::
