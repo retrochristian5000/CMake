@@ -9,7 +9,7 @@
         - if: '($CMAKE_CI_PROJECT_CONTINUOUS_BRANCH != "" && $CI_COMMIT_BRANCH == $CMAKE_CI_PROJECT_CONTINUOUS_BRANCH && $CMAKE_CI_JOB_CONTINUOUS == "true")'
           when: delayed
           start_in: 5 minutes
-        - if: '$CI_MERGE_REQUEST_ID'
+        - if: '($CI_MERGE_REQUEST_ID && $CMAKE_CI_NO_MR == "")'
           when: manual
         - if: '$CI_PROJECT_PATH == "cmake/cmake"'
           when: delayed
@@ -24,7 +24,7 @@
           when: on_success
         - if: '($CMAKE_CI_PROJECT_CONTINUOUS_BRANCH != "" && $CI_COMMIT_BRANCH == $CMAKE_CI_PROJECT_CONTINUOUS_BRANCH && $CMAKE_CI_JOB_CONTINUOUS == "true")'
           when: on_success
-        - if: '$CI_MERGE_REQUEST_ID'
+        - if: '($CI_MERGE_REQUEST_ID && $CMAKE_CI_NO_MR == "")'
           when: on_success
         - if: '$CI_PROJECT_PATH == "cmake/cmake"'
           when: on_success
@@ -36,7 +36,7 @@
           when: never
         - if: '$CMAKE_CI_NIGHTLY == "true"'
           when: on_success
-        - if: '$CI_MERGE_REQUEST_ID'
+        - if: '($CI_MERGE_REQUEST_ID && $CMAKE_CI_NO_MR == "")'
           when: on_success
         - if: '$CI_PROJECT_PATH == "cmake/cmake"'
           when: on_success
