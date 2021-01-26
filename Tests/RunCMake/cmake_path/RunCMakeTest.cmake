@@ -7,7 +7,7 @@ set (RunCMake-stderr-file "wrong-path-stderr.txt")
 
 ### GET sub-command
 foreach (subcommand IN ITEMS ROOT_NAME ROOT_DIRECTORY ROOT_PATH FILENAME EXTENSION
-                             STEM RELATIVE_PATH PARENT_PATH)
+                             STEM ROOT_RELATIVE_PATH PARENT_PATH)
   run_cmake_command (GET-${subcommand}-wrong-path "${CMAKE_COMMAND}" "-DCMAKE_PATH_ARGUMENTS=GET wrong_path ${subcommand} output" -P "${RunCMake_SOURCE_DIR}/call-cmake_path.cmake")
 endforeach()
 
@@ -36,7 +36,7 @@ set (RunCMake-stderr-file "missing-output-stderr.txt")
 
 ### GET sub-command
 foreach (subcommand IN ITEMS ROOT_NAME ROOT_DIRECTORY ROOT_PATH FILENAME EXTENSION
-                             STEM RELATIVE_PATH PARENT_PATH)
+                             STEM ROOT_RELATIVE_PATH PARENT_PATH)
   run_cmake_command (GET-${subcommand}-missing-output "${CMAKE_COMMAND}" "-DCMAKE_PATH_ARGUMENTS=GET path ${subcommand}" -P "${RunCMake_SOURCE_DIR}/call-cmake_path.cmake")
 endforeach()
 
@@ -79,7 +79,7 @@ set (RunCMake-stderr-file "invalid-output-var-stderr.txt")
 
 ### GET sub-command
 foreach (subcommand IN ITEMS ROOT_NAME ROOT_DIRECTORY ROOT_PATH FILENAME EXTENSION
-                             STEM RELATIVE_PATH PARENT_PATH)
+                             STEM ROOT_RELATIVE_PATH PARENT_PATH)
   run_cmake_command (GET-${subcommand}-invalid-output "${CMAKE_COMMAND}" "-DCMAKE_PATH_ARGUMENTS=GET path ${subcommand}"  -DCHECK_INVALID_OUTPUT=ON -P "${RunCMake_SOURCE_DIR}/call-cmake_path.cmake")
 endforeach()
 
@@ -118,7 +118,7 @@ set (RunCMake-stderr-file "unexpected-arg-stderr.txt")
 
 ### GET sub-command
 foreach (subcommand IN ITEMS ROOT_NAME ROOT_DIRECTORY ROOT_PATH FILENAME EXTENSION
-                             STEM RELATIVE_PATH PARENT_PATH)
+                             STEM ROOT_RELATIVE_PATH PARENT_PATH)
   if (subcommand STREQUAL "EXTENSION" OR subcommand STREQUAL "STEM")
     set (extra_args LAST_ONLY)
   else()
