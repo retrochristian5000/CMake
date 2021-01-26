@@ -36,7 +36,7 @@ Synopsis
     cmake_path(`GET`_ <path-var> :ref:`FILENAME <GET_FILENAME>` <out-var>)
     cmake_path(`GET`_ <path-var> :ref:`EXTENSION <GET_EXTENSION>` [LAST_ONLY] <out-var>)
     cmake_path(`GET`_ <path-var> :ref:`STEM <GET_STEM>` [LAST_ONLY] <out-var>)
-    cmake_path(`GET`_ <path-var> :ref:`RELATIVE_PATH <GET_RELATIVE_PATH>` <out-var>)
+    cmake_path(`GET`_ <path-var> :ref:`RELATIVE_PART <GET_RELATIVE_PART>` <out-var>)
     cmake_path(`GET`_ <path-var> :ref:`PARENT_PATH <GET_PARENT_PATH>` <out-var>)
 
   `Query`_
@@ -46,7 +46,7 @@ Synopsis
     cmake_path(`HAS_FILENAME`_ <path-var> <out-var>)
     cmake_path(`HAS_EXTENSION`_ <path-var> <out-var>)
     cmake_path(`HAS_STEM`_ <path-var> <out-var>)
-    cmake_path(`HAS_RELATIVE_PATH`_ <path-var> <out-var>)
+    cmake_path(`HAS_RELATIVE_PART`_ <path-var> <out-var>)
     cmake_path(`HAS_PARENT_PATH`_ <path-var> <out-var>)
     cmake_path(`IS_ABSOLUTE`_ <path-var> <out-var>)
     cmake_path(`IS_RELATIVE`_ <path-var> <out-var>)
@@ -224,6 +224,7 @@ Decomposition
 .. _GET_FILENAME:
 .. _GET_EXTENSION:
 .. _GET_STEM:
+.. _GET_RELATIVE_PART:
 
 The following forms of the ``GET`` subcommand each retrieve a different
 component or group of components from a path.
@@ -237,12 +238,16 @@ component or group of components from a path.
   cmake_path(GET <path-var> FILENAME <out-var>)
   cmake_path(GET <path-var> EXTENSION [LAST_ONLY] <out-var>)
   cmake_path(GET <path-var> STEM [LAST_ONLY] <out-var>)
+  cmake_path(GET <path-var> RELATIVE_PART <out-var>)
 
 If a requested component is not present in the path, an empty string will be
 stored in ``<out-var>``.  For example, only Windows systems have the concept
 of a ``root-name``, so when the host machine is non-Windows, the ``ROOT_NAME``
 subcommand will always return an empty string.
 
+``RELATIVE_PART`` sub-command returns the part of the path with any
+``root-name`` and ``root-directory-separator`` removed (or put another way,
+every component of ``<path-var>`` after ``root-path``).
 
 Root examples
 """""""""""""
@@ -333,48 +338,42 @@ Extension and stem examples
   .some.more stem is ".some"
 
 
-Relative paths
-""""""""""""""
-
-Two other forms of the ``GET`` subcommand interpret a path and return
-another path derived from it.
-
-.. _GET_RELATIVE_PATH:
-
-::
-
-  cmake_path(GET <path-var> RELATIVE_PATH <out-var>)
-
-Returns the path with any ``root-name`` and ``root-directory-separator``
-removed.  This leaves just the part of the path relative to the root
-directory (or put another way, every component of ``<path-var>`` after
-``root-path``).  If ``<path-var>`` is an empty path, it returns an empty
-path.
-
-For example:
+Relative part examples
+""""""""""""""""""""""
 
 .. code-block:: cmake
 
-  set(path "/a/b")
-  cmake_path(GET path RELATIVE_PATH result)
-  message("Relative path is \"${result}\"")
+  set(path "c:/a/b")
+  cmake_path(GET path RELATIVE_PART result)
+  message("Relative part is \"${result}\"")
+
+  set(path "c/d")
+  cmake_path(GET path RELATIVE_PART result)
+  message("Relative part is \"${result}\"")
 
   set(path "/")
-  cmake_path(GET path RELATIVE_PATH result)
-  message("Relative path is \"${result}\"")
+  cmake_path(GET path RELATIVE_PART result)
+  message("Relative part is \"${result}\"")
 
-Output::
+::
 
-  Relative path is "a/b"
-  Relative path is ""
+  Relative part is "a/b"
+  Relative part is "c/d"
+  Relative part is ""
+
+
+Relative paths
+""""""""""""""
+
+An other form of the ``GET`` subcommand returns the parent of the path:
 
 .. _GET_PARENT_PATH:
 
-The other form returns the parent of the path::
+::
 
   cmake_path(GET <path-var> PARENT_PATH <out-var>)
 
-If the `HAS_RELATIVE_PATH`_ sub-command returns false, the result is a
+If the `HAS_RELATIVE_PART`_ sub-command returns false, the result is a
 copy of ``<path-var>``.  Otherwise, the result is ``<path-var>`` with
 one fewer element.
 
@@ -393,7 +392,7 @@ For example:
 Output::
 
   Parent path is "c:/a"
-  Relative path is "c:/"
+  Parent path is "c:/"
 
 Query
 ^^^^^
@@ -424,13 +423,13 @@ to true if the path has the associated component, or false otherwise.
 In the case of ``HAS_ROOT_PATH``, a true result will only be returned if
 at least one of ``root-name`` or ``root-directory`` is non-empty.
 
-.. _HAS_RELATIVE_PATH:
+.. _HAS_RELATIVE_PART:
 
 ::
 
-  cmake_path(HAS_RELATIVE_PATH <path-var> <out-var>)
+  cmake_path(HAS_RELATIVE_PART <path-var> <out-var>)
 
-A relative path in this context means everything after the ``root-path``,
+A relative part in this context means everything after the ``root-path``,
 if present.  This command sets ``<out-var>`` to true if there is at least
 one ``item-name`` or ``filename`` in the path.
 
