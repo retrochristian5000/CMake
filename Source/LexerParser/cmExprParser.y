@@ -19,6 +19,7 @@ Run bison like this:
 #include <stdexcept>
 
 /*-------------------------------------------------------------------------*/
+#define YY_ATTRIBUTE_UNUSED /* Suppress -Wused-but-marked-unused warning. */
 #define YYDEBUG 1
 #include "cmExprParserHelper.h" /* Interface to parser object.  */
 #include "cmExprLexer.h"  /* Interface to lexer object.  */
