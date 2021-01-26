@@ -62,6 +62,7 @@ function(compiler_id_detection outvar lang)
       XLClang
       XL
       VisualAge
+      NVHPC
       PGI
       Cray
       TI
