@@ -1132,8 +1132,8 @@ void cmake::SetArgs(const std::vector<std::string>& args)
       this->PrintPresetList(settingsFile);
       return;
     }
-    auto preset = settingsFile.Presets.find(presetName);
-    if (preset == settingsFile.Presets.end()) {
+    auto preset = settingsFile.ConfigurePresets.find(presetName);
+    if (preset == settingsFile.ConfigurePresets.end()) {
       cmSystemTools::Error(cmStrCat("No such preset in ",
                                     this->GetHomeDirectory(), ": \"",
                                     presetName, '"'));
@@ -1562,44 +1562,16 @@ void cmake::PrintPresetList(const cmCMakePresetsFile& file) const
 {
   std::vector<GeneratorInfo> generators;
   this->GetRegisteredGenerators(generators, false);
+  auto filter =
+    [&generators](const cmCMakePresetsFile::ConfigurePreset& preset) {
+      auto condition = [&preset](const GeneratorInfo& info) {
+        return info.name == preset.Generator;
+      };
+      auto it = std::find_if(generators.begin(), generators.end(), condition);
+      return it != generators.end();
+    };
 
-  std::vector<cmCMakePresetsFile::UnexpandedPreset> presets;
-  for (auto const& p : file.PresetOrder) {
-    auto const& preset = file.Presets.at(p);
-    if (!preset.Unexpanded.Hidden && preset.Expanded &&
-        std::find_if(generators.begin(), generators.end(),
-                     [&preset](const GeneratorInfo& info) {
-                       return info.name == preset.Unexpanded.Generator;
-                     }) != generators.end()) {
-      presets.push_back(preset.Unexpanded);
-    }
-  }
-
-  if (presets.empty()) {
-    return;
-  }
-
-  std::cout << "Available presets:\n\n";
-
-  auto longestPresetName =
-    std::max_element(presets.begin(), presets.end(),
-                     [](const cmCMakePresetsFile::UnexpandedPreset& a,
-                        const cmCMakePresetsFile::UnexpandedPreset& b) {
-                       return a.Name.length() < b.Name.length();
-                     });
-  auto longestLength = longestPresetName->Name.length();
-
-  for (auto const& preset : presets) {
-    std::cout << "  \"" << preset.Name << '"';
-    auto const& description = preset.DisplayName;
-    if (!description.empty()) {
-      for (std::size_t i = 0; i < longestLength - preset.Name.length(); ++i) {
-        std::cout << ' ';
-      }
-      std::cout << " - " << description;
-    }
-    std::cout << '\n';
-  }
+  file.PrintConfigurePresetList(filter);
 }
 #endif
 
@@ -3068,15 +3040,119 @@ std::vector<std::string> cmake::GetDebugConfigs()
   return configs;
 }
 
-int cmake::Build(int jobs, const std::string& dir,
-                 const std::vector<std::string>& targets,
-                 const std::string& config,
-                 const std::vector<std::string>& nativeOptions, bool clean,
-                 bool verbose)
+int cmake::Build(int jobs, std::string dir, std::vector<std::string> targets,
+                 std::string config, std::vector<std::string> nativeOptions,
+                 bool clean, bool verbose, const std::string& presetName,
+                 bool listPresets)
 {
-
   this->SetHomeDirectory("");
   this->SetHomeOutputDirectory("");
+
+#if !defined(CMAKE_BOOTSTRAP)
+  if (!presetName.empty() || listPresets) {
+    this->SetHomeDirectory(cmSystemTools::GetCurrentWorkingDirectory());
+    this->SetHomeOutputDirectory(cmSystemTools::GetCurrentWorkingDirectory());
+
+    cmCMakePresetsFile settingsFile;
+    auto result = settingsFile.ReadProjectPresets(this->GetHomeDirectory());
+    if (result != cmCMakePresetsFile::ReadFileResult::READ_OK) {
+      cmSystemTools::Error(
+        cmStrCat("Could not read presets from ", this->GetHomeDirectory(),
+                 ": ", cmCMakePresetsFile::ResultToString(result)));
+      return 1;
+    }
+
+    if (listPresets) {
+      settingsFile.PrintBuildPresetList();
+      return 0;
+    }
+
+    auto presetPair = settingsFile.BuildPresets.find(presetName);
+    if (presetPair == settingsFile.BuildPresets.end()) {
+      cmSystemTools::Error(cmStrCat("No such build preset in ",
+                                    this->GetHomeDirectory(), ": \"",
+                                    presetName, '"'));
+      settingsFile.PrintBuildPresetList();
+      return 1;
+    }
+
+    if (presetPair->second.Unexpanded.Hidden) {
+      cmSystemTools::Error(cmStrCat("Cannot use hidden build preset in ",
+                                    this->GetHomeDirectory(), ": \"",
+                                    presetName, '"'));
+      settingsFile.PrintBuildPresetList();
+      return 1;
+    }
+
+    auto const& expandedPreset = presetPair->second.Expanded;
+    if (!expandedPreset) {
+      cmSystemTools::Error(cmStrCat("Could not evaluate build preset \"",
+                                    presetName,
+                                    "\": Invalid macro expansion"));
+      settingsFile.PrintBuildPresetList();
+      return 1;
+    }
+
+    auto configurePresetPair =
+      settingsFile.ConfigurePresets.find(expandedPreset->ConfigurePreset);
+    if (configurePresetPair == settingsFile.ConfigurePresets.end()) {
+      cmSystemTools::Error(cmStrCat("No such configure preset in ",
+                                    this->GetHomeDirectory(), ": \"",
+                                    expandedPreset->ConfigurePreset, '"'));
+      this->PrintPresetList(settingsFile);
+      return 1;
+    }
+
+    if (configurePresetPair->second.Unexpanded.Hidden) {
+      cmSystemTools::Error(cmStrCat("Cannot use hidden configure preset in ",
+                                    this->GetHomeDirectory(), ": \"",
+                                    expandedPreset->ConfigurePreset, '"'));
+      this->PrintPresetList(settingsFile);
+      return 1;
+    }
+
+    auto const& expandedConfigurePreset = configurePresetPair->second.Expanded;
+    if (!expandedConfigurePreset) {
+      cmSystemTools::Error(cmStrCat("Could not evaluate configure preset \"",
+                                    expandedPreset->ConfigurePreset,
+                                    "\": Invalid macro expansion"));
+      return 1;
+    }
+
+    dir = expandedConfigurePreset->BinaryDir;
+
+    this->UnprocessedPresetEnvironment = expandedPreset->Environment;
+    this->ProcessPresetEnvironment();
+
+    if (jobs == cmake::DEFAULT_BUILD_PARALLEL_LEVEL && expandedPreset->Jobs) {
+      jobs = *expandedPreset->Jobs;
+    }
+
+    if (targets.empty()) {
+      targets.insert(targets.begin(), expandedPreset->Targets.begin(),
+                     expandedPreset->Targets.end());
+    }
+
+    if (config.empty()) {
+      config = expandedPreset->Configuration;
+    }
+
+    if (!clean && expandedPreset->CleanFirst) {
+      clean = *expandedPreset->CleanFirst;
+    }
+
+    if (!verbose && expandedPreset->Verbose) {
+      verbose = *expandedPreset->Verbose;
+    }
+
+    if (nativeOptions.empty()) {
+      nativeOptions.insert(nativeOptions.begin(),
+                           expandedPreset->NativeToolOptions.begin(),
+                           expandedPreset->NativeToolOptions.end());
+    }
+  }
+#endif
+
   if (!cmSystemTools::FileIsDirectory(dir)) {
     std::cerr << "Error: " << dir << " is not a directory\n";
     return 1;

@@ -408,7 +408,16 @@ This abstracts a native build tool's command-line interface with the
 following options:
 
 ``--build <dir>``
-  Project binary directory to be built.  This is required and must be first.
+  Project binary directory to be built.  This is required (unless a preset
+  is specified) and must be first.
+
+``--preset <preset>``
+  Use a build preset to specify build options. The project binary directory
+  is inferred from the ``configurePreset`` key.
+  See :manual:`preset <cmake-presets(7)>` for more details.
+
+``--list-presets``
+  Lists the available build presets.
 
 ``--parallel [<jobs>], -j [<jobs>]``
   The maximum number of concurrent processes to use when building.

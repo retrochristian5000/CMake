@@ -1,0 +1,5 @@
+Available presets:
+
+  "build-default" - build-default displayName
+  "empty"
+  "display"       - display displayName
