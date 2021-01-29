@@ -1200,46 +1200,46 @@ function(_ep_parse_arguments keywords name ns args)
 
 endfunction()
 
+if(NOT DEFINED CMAKE_SCRIPT_MODE_FILE)
+  define_property(DIRECTORY PROPERTY "EP_BASE" INHERITED
+    BRIEF_DOCS "Base directory for External Project storage."
+    FULL_DOCS
+    "See documentation of the ExternalProject_Add() function in the "
+    "ExternalProject module."
+    )
 
-define_property(DIRECTORY PROPERTY "EP_BASE" INHERITED
-  BRIEF_DOCS "Base directory for External Project storage."
-  FULL_DOCS
-  "See documentation of the ExternalProject_Add() function in the "
-  "ExternalProject module."
-  )
+  define_property(DIRECTORY PROPERTY "EP_PREFIX" INHERITED
+    BRIEF_DOCS "Top prefix for External Project storage."
+    FULL_DOCS
+    "See documentation of the ExternalProject_Add() function in the "
+    "ExternalProject module."
+    )
 
-define_property(DIRECTORY PROPERTY "EP_PREFIX" INHERITED
-  BRIEF_DOCS "Top prefix for External Project storage."
-  FULL_DOCS
-  "See documentation of the ExternalProject_Add() function in the "
-  "ExternalProject module."
-  )
+  define_property(DIRECTORY PROPERTY "EP_STEP_TARGETS" INHERITED
+    BRIEF_DOCS
+    "List of ExternalProject steps that automatically get corresponding targets"
+    FULL_DOCS
+    "These targets will be dependent on the main target dependencies. "
+    "See documentation of the ExternalProject_Add_StepTargets() function in the "
+    "ExternalProject module."
+    )
 
-define_property(DIRECTORY PROPERTY "EP_STEP_TARGETS" INHERITED
-  BRIEF_DOCS
-  "List of ExternalProject steps that automatically get corresponding targets"
-  FULL_DOCS
-  "These targets will be dependent on the main target dependencies. "
-  "See documentation of the ExternalProject_Add_StepTargets() function in the "
-  "ExternalProject module."
-  )
+  define_property(DIRECTORY PROPERTY "EP_INDEPENDENT_STEP_TARGETS" INHERITED
+    BRIEF_DOCS
+    "List of ExternalProject steps that automatically get corresponding targets"
+    FULL_DOCS
+    "These targets will not be dependent on the main target dependencies. "
+    "See documentation of the ExternalProject_Add_StepTargets() function in the "
+    "ExternalProject module."
+    )
 
-define_property(DIRECTORY PROPERTY "EP_INDEPENDENT_STEP_TARGETS" INHERITED
-  BRIEF_DOCS
-  "List of ExternalProject steps that automatically get corresponding targets"
-  FULL_DOCS
-  "These targets will not be dependent on the main target dependencies. "
-  "See documentation of the ExternalProject_Add_StepTargets() function in the "
-  "ExternalProject module."
-  )
-
-define_property(DIRECTORY PROPERTY "EP_UPDATE_DISCONNECTED" INHERITED
-  BRIEF_DOCS "Never update automatically from the remote repo."
-  FULL_DOCS
-  "See documentation of the ExternalProject_Add() function in the "
-  "ExternalProject module."
-  )
-
+  define_property(DIRECTORY PROPERTY "EP_UPDATE_DISCONNECTED" INHERITED
+    BRIEF_DOCS "Never update automatically from the remote repo."
+    FULL_DOCS
+    "See documentation of the ExternalProject_Add() function in the "
+    "ExternalProject module."
+    )
+endif()
 
 function(_ep_write_gitclone_script
          script_filename
@@ -1578,7 +1578,8 @@ function(_ep_write_extractfile_script
 endfunction()
 
 
-# This function is an implementation detail of ExternalProject_Add().
+# This function is an implementation detail of ExternalProject_Add() and
+# _ep_do_preconfigure_steps_now().
 #
 # The function expects keyword arguments to have already been parsed into
 # variables of the form _EP_<keyword>. It will create the various directories
@@ -2054,7 +2055,7 @@ if(result)
     message(FATAL_ERROR \"\${msg}\")
   endif()
 else()
-  if(NOT \"${CMAKE_GENERATOR}\" MATCHES \"Ninja\")
+  if(NOT \"${CMAKE_GENERATOR}\" MATCHES \"Ninja\" AND NOT \"${_EP_QUIET}\")
     set(msg \"${name} ${step} command succeeded.  See also ${logbase}-*.log\")
     message(STATUS \"\${msg}\")
   endif()
@@ -2598,7 +2599,8 @@ function(_ep_add_preconfigure_command name step)
   )
 endfunction()
 
-# This function is an implementation detail of ExternalProject_Add().
+# This function is an implementation detail of ExternalProject_Add() and
+# _ep_do_preconfigure_steps_now().
 #
 # The function expects keyword arguments to have already been parsed into
 # variables of the form _EP_<keyword>. It will populate the variable
@@ -3074,7 +3076,8 @@ function(_ep_get_update_disconnected var)
   set(${var} "${update_disconnected}" PARENT_SCOPE)
 endfunction()
 
-# This function is an implementation detail of ExternalProject_Add().
+# This function is an implementation detail of ExternalProject_Add() and
+# _ep_do_preconfigure_steps_now().
 #
 # The function expects keyword arguments to have already been parsed into
 # variables of the form _EP_<keyword>.
@@ -3275,7 +3278,8 @@ Update to Mercurial >= 2.1.1.
 
 endfunction()
 
-# This function is an implementation detail of ExternalProject_Add().
+# This function is an implementation detail of ExternalProject_Add() and
+# _ep_do_preconfigure_steps_now().
 #
 # The function expects keyword arguments to have already been parsed into
 # variables of the form _EP_<keyword>.
@@ -3831,6 +3835,85 @@ macro(_ep_get_add_keywords out_var)
   )
 endmacro()
 
+
+# Internal function called by FetchContent to populate immediately.
+# It only executes steps up to and including "patch". It takes the same
+# arguments as ExternalProject_Add() plus one additional argument: QUIET.
+#
+# Not to be used outside of CMake.
+#
+function(_ep_do_preconfigure_steps_now name)
+
+  cmake_policy(GET CMP0097 _EP_CMP0097
+    PARENT_SCOPE # undocumented, do not use outside of CMake
+  )
+
+  set(genex_supported FALSE)
+
+  _ep_get_add_keywords(keywords)
+  _ep_parse_arguments_to_vars("${keywords};QUIET" ${name} _EP_ "${ARGN}")
+
+  _ep_get_update_disconnected(update_disconnected)
+
+  if("${_EP_QUIET}")
+    # Treat QUIET as log all steps, displaying the logs if there is an error.
+    # This will show just the log of the failing step and elide some of the
+    # output if it is too long (it shows the path to the log file in that case).
+    # Combine stdout and stderr so the output stays in order.
+    set(_EP_LOG_DOWNLOAD          TRUE)
+    set(_EP_LOG_UPDATE            TRUE)
+    set(_EP_LOG_PATCH             TRUE)
+    set(_EP_LOG_MERGED_STDOUTERR  TRUE)
+    set(_EP_LOG_OUTPUT_ON_FAILURE TRUE)
+  endif()
+
+  _ep_prepare_directories(${name})
+  _ep_prepare_download(${name} ${genex_supported})
+  _ep_prepare_update(${name} ${genex_supported})
+  _ep_prepare_patch(${name} ${genex_supported})
+
+  set(stamp_dir "${_EP_STAMP_DIR}")
+  set(tmp_dir   "${_EP_TMP_DIR}")
+
+  # Once any step has to run, all later steps have to be run too
+  set(need_to_run FALSE)
+  foreach(step IN ITEMS download update parse)
+    if(update_disconnected AND "${step}" STREQUAL "update")
+      continue()
+    endif()
+
+    string(TOUPPER "${step}" STEP)
+    if("${_EPcommand_${STEP}}" STREQUAL "")
+      continue()
+    endif()
+
+    set(stamp_file "${stamp_dir}/${name}-${step}")
+    set(script_file ${tmp_dir}/${name}-${step}.cmake)
+
+    if(NOT EXISTS ${stamp_file})
+      set(need_to_run TRUE)
+    endif()
+
+    if(NOT need_to_run)
+      foreach(dep_file ${script_file} ${_EPdepends_${STEP}})
+        if(NOT EXISTS ${dep_file} OR ${dep_file} IS_NEWER_THAN ${stamp_file})
+          set(need_to_run TRUE)
+          break()
+        endif()
+      endforeach()
+    endif()
+
+    if(need_to_run)
+      include(${script_file})
+      file(TOUCH ${stamp_file})
+    endif()
+  endforeach()
+
+  if("${_EP_DOWNLOAD_NO_EXTRACT}")
+    file(COPY "${_EP_DOWNLOADED_FILE}" DESTINATION "${_EP_SOURCE_DIR}")
+  endif()
+
+endfunction()
 
 function(ExternalProject_Add name)
   cmake_policy(GET CMP0097 _EP_CMP0097
