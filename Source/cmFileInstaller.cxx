@@ -275,53 +275,55 @@ bool cmFileInstaller::HandleInstallDestination()
     return false;
   }
 
-  std::string sdestdir;
-  if (cmSystemTools::GetEnv("DESTDIR", sdestdir) && !sdestdir.empty()) {
-    cmSystemTools::ConvertToUnixSlashes(sdestdir);
-    char ch1 = destination[0];
-    char ch2 = destination[1];
-    char ch3 = 0;
-    if (destination.size() > 2) {
-      ch3 = destination[2];
-    }
-    int skip = 0;
-    if (ch1 != '/') {
-      int relative = 0;
-      if (((ch1 >= 'a' && ch1 <= 'z') || (ch1 >= 'A' && ch1 <= 'Z')) &&
-          ch2 == ':') {
-        // Assume windows
-        // let's do some destdir magic:
-        skip = 2;
-        if (ch3 != '/') {
+  if (!this->NoDestDir) {
+    std::string sdestdir;
+    if (cmSystemTools::GetEnv("DESTDIR", sdestdir) && !sdestdir.empty()) {
+      cmSystemTools::ConvertToUnixSlashes(sdestdir);
+      char ch1 = destination[0];
+      char ch2 = destination[1];
+      char ch3 = 0;
+      if (destination.size() > 2) {
+        ch3 = destination[2];
+      }
+      int skip = 0;
+      if (ch1 != '/') {
+        int relative = 0;
+        if (((ch1 >= 'a' && ch1 <= 'z') || (ch1 >= 'A' && ch1 <= 'Z')) &&
+            ch2 == ':') {
+          // Assume windows
+          // let's do some destdir magic:
+          skip = 2;
+          if (ch3 != '/') {
+            relative = 1;
+          }
+        } else {
           relative = 1;
         }
+        if (relative) {
+          // This is relative path on unix or windows. Since we are doing
+          // destdir, this case does not make sense.
+          this->Status.SetError(
+            "called with relative DESTINATION. This "
+            "does not make sense when using DESTDIR. Specify "
+            "absolute path or remove DESTDIR environment variable.");
+          return false;
+        }
       } else {
-        relative = 1;
+        if (ch2 == '/') {
+          // looks like a network path.
+          std::string message =
+            cmStrCat("called with network path DESTINATION. This "
+                     "does not make sense when using DESTDIR. Specify local "
+                     "absolute path or remove DESTDIR environment variable."
+                     "\nDESTINATION=\n",
+                     destination);
+          this->Status.SetError(message);
+          return false;
+        }
       }
-      if (relative) {
-        // This is relative path on unix or windows. Since we are doing
-        // destdir, this case does not make sense.
-        this->Status.SetError(
-          "called with relative DESTINATION. This "
-          "does not make sense when using DESTDIR. Specify "
-          "absolute path or remove DESTDIR environment variable.");
-        return false;
-      }
-    } else {
-      if (ch2 == '/') {
-        // looks like a network path.
-        std::string message =
-          cmStrCat("called with network path DESTINATION. This "
-                   "does not make sense when using DESTDIR. Specify local "
-                   "absolute path or remove DESTDIR environment variable."
-                   "\nDESTINATION=\n",
-                   destination);
-        this->Status.SetError(message);
-        return false;
-      }
+      destination = sdestdir + destination.substr(skip);
+      this->DestDirLength = int(sdestdir.size());
     }
-    destination = sdestdir + destination.substr(skip);
-    this->DestDirLength = int(sdestdir.size());
   }
 
   // check if default dir creation permissions were set

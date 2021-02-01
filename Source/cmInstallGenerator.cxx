@@ -6,6 +6,7 @@
 #include <utility>
 
 #include "cmMakefile.h"
+#include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
 
 cmInstallGenerator::cmInstallGenerator(
@@ -97,8 +98,10 @@ void cmInstallGenerator::AddInstallRule(
        << "${CMAKE_ABSOLUTE_DESTINATION_FILES}\")\n";
     os << indent << "endif()\n";
   }
-  std::string absDest = this->ConvertToAbsoluteDestination(dest);
-  os << "file(INSTALL DESTINATION \"" << absDest << "\" TYPE " << stype;
+  std::string absDest =
+    cmStrCat("$ENV{DESTDIR}", this->ConvertToAbsoluteDestination(dest));
+  os << "file(INSTALL DESTINATION \"" << absDest << "\" TYPE " << stype
+     << " NO_DESTDIR";
   if (optional) {
     os << " OPTIONAL";
   }

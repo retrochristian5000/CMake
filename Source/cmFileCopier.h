@@ -90,6 +90,7 @@ protected:
   bool UseSourcePermissions;
   bool FollowSymlinkChain;
   std::string Destination;
+  bool NoDestDir = false;
   std::string FilesFromDir;
   std::vector<std::string> Files;
   int Doing;
