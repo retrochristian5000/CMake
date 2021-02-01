@@ -276,7 +276,7 @@ bool cmFileInstaller::HandleInstallDestination()
   }
 
   std::string sdestdir;
-  if (cmSystemTools::GetEnv("DESTDIR", sdestdir) && !sdestdir.empty()) {
+  if (cmSystemTools::GetEnv("DESTDIR", sdestdir) && !sdestdir.empty() && !this->noDestDir) {
     cmSystemTools::ConvertToUnixSlashes(sdestdir);
     char ch1 = destination[0];
     char ch2 = destination[1];

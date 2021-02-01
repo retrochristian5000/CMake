@@ -300,6 +300,8 @@ bool cmFileCopier::CheckKeyword(std::string const& arg)
       this->Doing = DoingNone;
       this->MatchlessFiles = false;
     }
+  } else if (arg == "NO_DESTDIR") {
+      this->noDestDir = true;
   } else {
     return false;
   }
