@@ -370,21 +370,27 @@ bool cmGlobalGenerator::CheckTargetsForPchCompilePdb() const
         continue;
       }
 
-      std::string const& reuseFrom =
-        target->GetSafeProperty("PRECOMPILE_HEADERS_REUSE_FROM");
-      std::string const& compilePdb =
-        target->GetSafeProperty("COMPILE_PDB_NAME");
+      std::vector<std::string> configs =
+        generator->GetMakefile()->GetGeneratorConfigs(
+          cmMakefile::IncludeEmptyConfig);
 
-      if (!reuseFrom.empty() && reuseFrom != compilePdb) {
-        const std::string e = cmStrCat(
-          "PRECOMPILE_HEADERS_REUSE_FROM property is set on target (\"",
-          target->GetName(),
-          "\"). Reusable precompile headers requires the COMPILE_PDB_NAME"
-          " property to have the value \"",
-          reuseFrom, "\"\n");
-        this->GetCMakeInstance()->IssueMessage(MessageType::FATAL_ERROR, e,
-                                               target->GetBacktrace());
-        failed = true;
+      for (std::string const& c : configs) {
+        std::string const& reuseFrom =
+          cmToCStrSafe(target->GetPchReuseFrom(c));
+        std::string const& compilePdb =
+          target->GetSafeProperty("COMPILE_PDB_NAME");
+
+        if (!reuseFrom.empty() && reuseFrom != compilePdb) {
+          const std::string e = cmStrCat(
+            "PRECOMPILE_HEADERS_REUSE_FROM property is set on target (\"",
+            target->GetName(),
+            "\"). Reusable precompile headers requires the COMPILE_PDB_NAME"
+            " property to have the value \"",
+            reuseFrom, "\"\n");
+          this->GetCMakeInstance()->IssueMessage(MessageType::FATAL_ERROR, e,
+                                                 target->GetBacktrace());
+          failed = true;
+        }
       }
     }
   }

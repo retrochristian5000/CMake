@@ -530,6 +530,7 @@ public:
   std::string GetPchUseCompileOptions(const std::string& config,
                                       const std::string& language,
                                       const std::string& arch = std::string());
+  cmProp GetPchReuseFrom(const std::string& config) const;
 
   void AddSourceFileToUnityBatch(const std::string& sourceFilename);
   bool IsSourceFilePartOfUnityBatch(const std::string& sourceFilename) const;
@@ -1015,6 +1016,7 @@ private:
   mutable std::map<std::string, std::string> PchFiles;
   mutable std::map<std::string, std::string> PchCreateCompileOptions;
   mutable std::map<std::string, std::string> PchUseCompileOptions;
+  mutable std::map<std::string, std::string> PchReuseFrom;
 
   std::unordered_set<std::string> UnityBatchedSourceFiles;
 
