@@ -3877,8 +3877,7 @@ std::string cmGeneratorTarget::GetPchHeader(const std::string& config,
     return std::string();
   }
   const cmGeneratorTarget* generatorTarget = this;
-  cmProp pchReuseFrom =
-    generatorTarget->GetProperty("PRECOMPILE_HEADERS_REUSE_FROM");
+  cmProp pchReuseFrom = generatorTarget->GetPchReuseFrom(config);
 
   const auto inserted =
     this->PchHeaders.insert(std::make_pair(language + config + arch, ""));
@@ -3990,8 +3989,7 @@ std::string cmGeneratorTarget::GetPchSource(const std::string& config,
     std::string& filename = inserted.first->second;
 
     const cmGeneratorTarget* generatorTarget = this;
-    cmProp pchReuseFrom =
-      generatorTarget->GetProperty("PRECOMPILE_HEADERS_REUSE_FROM");
+    cmProp pchReuseFrom = generatorTarget->GetPchReuseFrom(config);
     if (pchReuseFrom) {
       generatorTarget =
         this->GetGlobalGenerator()->FindGeneratorTarget(*pchReuseFrom);
@@ -4088,8 +4086,7 @@ std::string cmGeneratorTarget::GetPchFile(const std::string& config,
       };
 
       cmGeneratorTarget* generatorTarget = this;
-      cmProp pchReuseFrom =
-        generatorTarget->GetProperty("PRECOMPILE_HEADERS_REUSE_FROM");
+      cmProp pchReuseFrom = generatorTarget->GetPchReuseFrom(config);
       if (pchReuseFrom) {
         generatorTarget =
           this->GetGlobalGenerator()->FindGeneratorTarget(*pchReuseFrom);
@@ -4180,6 +4177,55 @@ std::string cmGeneratorTarget::GetPchUseCompileOptions(
     cmSystemTools::ReplaceString(useOptionList, "<PCH_FILE>", pchFile);
   }
   return inserted.first->second;
+}
+
+cmProp cmGeneratorTarget::GetPchReuseFrom(const std::string& config) const
+{
+  cmProp value = this->GetProperty("PRECOMPILE_HEADERS_REUSE_FROM");
+  if (!value) {
+    return value;
+  }
+
+  const auto inserted = this->PchReuseFrom.insert(std::make_pair(config, ""));
+  if (inserted.second) {
+    std::string& pchReuseFrom = inserted.first->second;
+
+    if (pchReuseFrom.empty()) {
+      std::string evaluatedValue =
+        cmGeneratorExpression::Evaluate(*value, this->LocalGenerator, config);
+      if (evaluatedValue.empty()) {
+        return nullptr;
+      }
+
+      auto* reusedTarget =
+        this->Makefile->GetCMakeInstance()->GetGlobalGenerator()->FindTarget(
+          evaluatedValue);
+      if (!reusedTarget) {
+        const std::string e = cmStrCat(
+          "PRECOMPILE_HEADERS_REUSE_FROM set with non existing target: ",
+          evaluatedValue);
+        this->Makefile->IssueMessage(MessageType::FATAL_ERROR, e);
+        return nullptr;
+      }
+
+      pchReuseFrom = cmGeneratorExpression::Evaluate(
+        reusedTarget->GetSafeProperty("PRECOMPILE_HEADERS_REUSE_FROM"),
+        this->LocalGenerator, config);
+      if (pchReuseFrom.empty()) {
+        pchReuseFrom = evaluatedValue;
+      }
+
+      reusedTarget->SetProperty("COMPILE_PDB_NAME", pchReuseFrom);
+      reusedTarget->SetProperty("COMPILE_PDB_OUTPUT_DIRECTORY",
+                                cmStrCat(pchReuseFrom, ".dir/"));
+
+      cmProp tmp = reusedTarget->GetProperty("COMPILE_PDB_NAME");
+      this->Target->SetProperty("COMPILE_PDB_NAME", cmToCStr(tmp));
+      this->Target->AddUtility(pchReuseFrom, false, this->Makefile);
+    }
+  }
+
+  return &inserted.first->second;
 }
 
 void cmGeneratorTarget::AddSourceFileToUnityBatch(

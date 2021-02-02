@@ -357,40 +357,6 @@ bool cmGlobalGenerator::CheckTargetsForType() const
   return failed;
 }
 
-bool cmGlobalGenerator::CheckTargetsForPchCompilePdb() const
-{
-  if (!this->GetLanguageEnabled("C") && !this->GetLanguageEnabled("CXX")) {
-    return false;
-  }
-  bool failed = false;
-  for (const auto& generator : this->LocalGenerators) {
-    for (const auto& target : generator->GetGeneratorTargets()) {
-      if (!target->CanCompileSources() ||
-          cmIsOn(target->GetProperty("ghs_integrity_app"))) {
-        continue;
-      }
-
-      std::string const& reuseFrom =
-        target->GetSafeProperty("PRECOMPILE_HEADERS_REUSE_FROM");
-      std::string const& compilePdb =
-        target->GetSafeProperty("COMPILE_PDB_NAME");
-
-      if (!reuseFrom.empty() && reuseFrom != compilePdb) {
-        const std::string e = cmStrCat(
-          "PRECOMPILE_HEADERS_REUSE_FROM property is set on target (\"",
-          target->GetName(),
-          "\"). Reusable precompile headers requires the COMPILE_PDB_NAME"
-          " property to have the value \"",
-          reuseFrom, "\"\n");
-        this->GetCMakeInstance()->IssueMessage(MessageType::FATAL_ERROR, e,
-                                               target->GetBacktrace());
-        failed = true;
-      }
-    }
-  }
-  return failed;
-}
-
 bool cmGlobalGenerator::IsExportedTargetsFile(
   const std::string& filename) const
 {
@@ -1483,10 +1449,6 @@ bool cmGlobalGenerator::Compute()
   this->ComputeTargetOrder();
 
   if (this->CheckTargetsForType()) {
-    return false;
-  }
-
-  if (this->CheckTargetsForPchCompilePdb()) {
     return false;
   }
 
