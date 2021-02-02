@@ -2545,8 +2545,7 @@ void cmLocalGenerator::AddPchDependencies(cmGeneratorTarget* target)
           continue;
         }
 
-        cmProp ReuseFrom =
-          target->GetProperty("PRECOMPILE_HEADERS_REUSE_FROM");
+        cmProp ReuseFrom = target->GetPchReuseFrom(config);
 
         auto* pch_sf = this->Makefile->GetOrCreateSource(
           pchSource, false, cmSourceFileLocationKind::Known);
