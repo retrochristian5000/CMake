@@ -3630,10 +3630,15 @@ void cmGlobalXCodeGenerator::AddDependAndLinkInformation(cmXCodeObject* target)
           }
           const auto libPath = GetLibraryOrFrameworkPath(cleanPath);
           if (cmSystemTools::StringEndsWith(libPath.c_str(), ".framework")) {
+            // The path of this framework will have already been added to the
+            // search path in cmComputeLinkInformation::AddFrameworkItem().
+            // If it happens to be a path that matches one of the implicit
+            // search paths, that path will be discarded. This is essential for
+            // getting device-and-simulator builds to work, otherwise we end up
+            // hard-coding a path to the wrong SDK for SDK-provided frameworks
+            // that are added by their full path.
             const auto fwName =
               cmSystemTools::GetFilenameWithoutExtension(libPath);
-            const auto fwDir = cmSystemTools::GetParentDirectory(libPath);
-            libPaths.Add("-F " + this->XCodeEscapePath(fwDir));
             libPaths.Add("-framework " + fwName);
           } else {
             libPaths.Add(this->XCodeEscapePath(cleanPath));
