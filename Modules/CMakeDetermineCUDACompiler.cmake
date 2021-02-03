@@ -172,18 +172,17 @@ if(NOT CMAKE_CUDA_COMPILER_ID_RUN)
       endif()
     endif()
 
-    # If NVCC is a symlink due to a wrapper script (e.g. ccache or colornvcc), then invoke it to find the
-    # real non-scattered toolkit.
-    if(IS_SYMLINK ${_CUDA_NVCC_EXECUTABLE})
+    # Given that NVCC can be provided by multiple different sources (NVIDIA HPC SDK, CUDA Toolkit, distro)
+    # each of which has a different layout, we need to extract the CUDA toolkit root from the compiler
+    # itself, allowing us to support numerious different scattered toolkit layouts
+    if("${_CUDA_NVCC_EXECUTABLE}")
       execute_process(COMMAND ${_CUDA_NVCC_EXECUTABLE} "-v" "__cmake_determine_cuda" ERROR_VARIABLE NVCC_ERR)
       if(NVCC_ERR MATCHES " _HERE_=([^\r\n]*)")
         set(CMAKE_CUDA_COMPILER_TOOLKIT_ROOT "${CMAKE_MATCH_1}")
       else()
-        message(FATAL_ERROR "Could not execute nvcc with -v.")
+        get_filename_component(CMAKE_CUDA_COMPILER_TOOLKIT_ROOT "${_CUDA_NVCC_EXECUTABLE}" DIRECTORY)
       endif()
       unset(NVCC_ERR)
-    else()
-      get_filename_component(CMAKE_CUDA_COMPILER_TOOLKIT_ROOT "${_CUDA_NVCC_EXECUTABLE}" DIRECTORY)
     endif()
 
     set(CMAKE_CUDA_DEVICE_LINKER "${CMAKE_CUDA_COMPILER_TOOLKIT_ROOT}/nvlink${CMAKE_EXECUTABLE_SUFFIX}")
