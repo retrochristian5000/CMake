@@ -1327,30 +1327,7 @@ void cmTarget::SetProperty(const std::string& prop, const char* value)
       this->impl->Makefile->IssueMessage(MessageType::FATAL_ERROR, e.str());
       return;
     }
-    auto* reusedTarget = this->impl->Makefile->GetCMakeInstance()
-                           ->GetGlobalGenerator()
-                           ->FindTarget(value);
-    if (!reusedTarget) {
-      const std::string e(
-        "PRECOMPILE_HEADERS_REUSE_FROM set with non existing target");
-      this->impl->Makefile->IssueMessage(MessageType::FATAL_ERROR, e);
-      return;
-    }
-
-    std::string reusedFrom = reusedTarget->GetSafeProperty(prop);
-    if (reusedFrom.empty()) {
-      reusedFrom = value;
-    }
-
-    this->impl->Properties.SetProperty(prop, reusedFrom.c_str());
-
-    reusedTarget->SetProperty("COMPILE_PDB_NAME", reusedFrom);
-    reusedTarget->SetProperty("COMPILE_PDB_OUTPUT_DIRECTORY",
-                              cmStrCat(reusedFrom, ".dir/"));
-
-    cmProp tmp = reusedTarget->GetProperty("COMPILE_PDB_NAME");
-    this->SetProperty("COMPILE_PDB_NAME", cmToCStr(tmp));
-    this->AddUtility(reusedFrom, false, this->impl->Makefile);
+    this->impl->Properties.SetProperty(prop, value);
   } else if (prop == propC_STANDARD || prop == propCXX_STANDARD ||
              prop == propCUDA_STANDARD || prop == propOBJC_STANDARD ||
              prop == propOBJCXX_STANDARD) {
