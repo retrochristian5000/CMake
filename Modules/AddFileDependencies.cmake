@@ -14,7 +14,7 @@ Add dependencies to a source file.
 Adds the given ``<files>`` to the dependencies of file ``<source>``.
 #]=======================================================================]
 
-macro(ADD_FILE_DEPENDENCIES _file)
+function(ADD_FILE_DEPENDENCIES _file)
 
   get_source_file_property(_deps ${_file} OBJECT_DEPENDS)
   if (_deps)
@@ -25,4 +25,4 @@ macro(ADD_FILE_DEPENDENCIES _file)
 
   set_source_files_properties(${_file} PROPERTIES OBJECT_DEPENDS "${_deps}")
 
-endmacro()
+endfunction()
