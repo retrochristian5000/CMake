@@ -1273,6 +1273,7 @@ syn keyword cmakeVariable contained
             \ CMAKE_OSX_ARCHITECTURES
             \ CMAKE_OSX_DEPLOYMENT_TARGET
             \ CMAKE_OSX_SYSROOT
+            \ CMAKE_OUTPUT_NAME
             \ CMAKE_PARENT_LIST_FILE
             \ CMAKE_PATCH_VERSION
             \ CMAKE_PCH_INSTANTIATE_TEMPLATES

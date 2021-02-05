@@ -448,6 +448,7 @@ Variables that Control the Build
    /variable/CMAKE_OSX_ARCHITECTURES
    /variable/CMAKE_OSX_DEPLOYMENT_TARGET
    /variable/CMAKE_OSX_SYSROOT
+   /variable/CMAKE_OUTPUT_NAME
    /variable/CMAKE_PCH_WARN_INVALID
    /variable/CMAKE_PCH_INSTANTIATE_TEMPLATES
    /variable/CMAKE_PDB_OUTPUT_DIRECTORY

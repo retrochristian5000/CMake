@@ -4,7 +4,8 @@ OUTPUT_NAME
 Output name for target files.
 
 This sets the base name for output files created for an executable or
-library target.  If not set, the logical target name is used by
+library target. If not set, the value of the variable CMAKE_OUTPUT_NAME
+is used. If it is also not set, the logical target name is used by
 default during generation. The value is not set by default during
 configuration.
 
