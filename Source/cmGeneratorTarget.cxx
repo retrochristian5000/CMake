@@ -464,6 +464,9 @@ std::string cmGeneratorTarget::GetOutputName(
     i = this->OutputNameMap.insert(entry).first;
 
     // Compute output name.
+    std::string outName =
+      this->Target->GetMakefile()->GetSafeDefinition("CMAKE_OUTPUT_NAME");
+
     std::vector<std::string> props;
     std::string type = this->GetOutputTargetType(artifact);
     std::string configUpper = cmSystemTools::UpperCase(config);
@@ -484,11 +487,12 @@ std::string cmGeneratorTarget::GetOutputName(
     // OUTPUT_NAME
     props.emplace_back("OUTPUT_NAME");
 
-    std::string outName;
-    for (std::string const& p : props) {
-      if (cmProp outNameProp = this->GetProperty(p)) {
-        outName = *outNameProp;
-        break;
+    if (outName.empty()) {
+      for (std::string const& p : props) {
+        if (cmProp outNameProp = this->GetProperty(p)) {
+          outName = *outNameProp;
+          break;
+        }
       }
     }
 
