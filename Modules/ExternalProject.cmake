@@ -1241,21 +1241,10 @@ if(NOT DEFINED CMAKE_SCRIPT_MODE_FILE)
     )
 endif()
 
-# Unlike configure_file(), this implementation avoids writing any files at all
-# if the new contents match existing contents. This makes it more efficient on
-# systems where writing files has poor performance.
-function(_ep_configure_file source_filename destination_filename)
-  file(READ ${destination_filename} existing_contents)
-  file(READ ${source_filename} source_template)
-  string(CONFIGURE "${source_template}" new_contents ${ARGN})
-  if(NOT new_contents STREQUAL existing_contents)
-    file(WRITE ${destination_filename} "${new_contents}")
-  endif()
-endfunction()
-
-# A more specialized version of the above where we already have the new
-# contents and just want to avoid writing a file if the existing contents
-# already match.
+# Unlike configure_file(), the implementations of this function and the next
+# avoid writing any files at all if the new contents match existing contents.
+# This makes them more efficient on systems where writing files has poor
+# performance.
 function(_ep_write_if_different filename new_contents)
   if(EXISTS ${filename})
     file(READ ${filename} existing_contents)
@@ -1265,6 +1254,14 @@ function(_ep_write_if_different filename new_contents)
   endif()
   file(WRITE ${filename} "${new_contents}")
 endfunction()
+
+# More efficient drop-in replacement for configure_file()
+function(_ep_configure_file source_filename destination_filename)
+  file(READ ${source_filename} source_template)
+  string(CONFIGURE "${source_template}" new_contents ${ARGN})
+  _ep_write_if_different(${destination_filename} "${new_contents}")
+endfunction()
+
 
 function(_ep_write_gitclone_script
          script_filename

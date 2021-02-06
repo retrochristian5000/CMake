@@ -836,6 +836,7 @@ endfunction()
 #=======================================================================
 # Performing the population
 #=======================================================================
+include(ExternalProject)   # Only need to do this once, not per call
 
 # The value of contentName will always have been lowercased by the caller.
 # All other arguments are assumed to be options that are understood by
@@ -899,7 +900,6 @@ function(__FetchContent_directPopulate contentName)
     message(STATUS "Populating ${contentName}")
   endif()
 
-  include(ExternalProject)
   set(argsQuoted)
   foreach(__item IN LISTS ARG_UNPARSED_ARGUMENTS)
     string(APPEND argsQuoted " [==[${__item}]==]")
