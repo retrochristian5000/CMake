@@ -1241,6 +1241,28 @@ if(NOT DEFINED CMAKE_SCRIPT_MODE_FILE)
     )
 endif()
 
+# Unlike configure_file(), the implementations of this function and the next
+# avoid writing any files at all if the new contents match existing contents.
+# This makes them more efficient on systems where writing files has poor
+# performance.
+function(_ep_write_if_different filename new_contents)
+  if(EXISTS ${filename})
+    file(READ ${filename} existing_contents)
+    if(new_contents STREQUAL existing_contents)
+      return()
+    endif()
+  endif()
+  file(WRITE ${filename} "${new_contents}")
+endfunction()
+
+# More efficient drop-in replacement for configure_file()
+function(_ep_configure_file source_filename destination_filename)
+  file(READ ${source_filename} source_template)
+  string(CONFIGURE "${source_template}" new_contents ${ARGN})
+  _ep_write_if_different(${destination_filename} "${new_contents}")
+endfunction()
+
+
 function(_ep_write_gitclone_script
          script_filename
          source_dir
@@ -1306,7 +1328,7 @@ function(_ep_write_gitclone_script
   endif()
   string (REPLACE ";" " " git_options "${git_options}")
 
-  configure_file(
+  _ep_configure_file(
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ExternalProject/gitclone.cmake.in
     ${script_filename}
     @ONLY
@@ -1330,7 +1352,7 @@ function(_ep_write_hgclone_script
     message(FATAL_ERROR "Tag for hg checkout should not be empty.")
   endif()
 
-  configure_file(
+  _ep_configure_file(
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ExternalProject/hgclone.cmake.in
     ${script_filename}
     @ONLY
@@ -1364,7 +1386,7 @@ function(_ep_write_gitupdate_script
     list(APPEND git_stash_save_options --all)
   endif()
 
-  configure_file(
+  _ep_configure_file(
     "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ExternalProject/gitupdate.cmake.in"
     "${script_filename}"
     @ONLY
@@ -1378,7 +1400,7 @@ function(_ep_write_hgupdate_script
          work_dir
          quiet)
 
-  configure_file(
+  _ep_configure_file(
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ExternalProject/hgupdate.cmake.in
     ${script_filename}
     @ONLY
@@ -1391,7 +1413,7 @@ function(_ep_write_copydir_script
          from_dir
          to_dir)
 
-  configure_file(
+  _ep_configure_file(
     "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ExternalProject/copydir.cmake.in"
     "${script_filename}"
     @ONLY
@@ -1517,7 +1539,7 @@ function(_ep_write_downloadfile_script
   # * TIMEOUT_MSG
   # * USERPWD_ARGS
   # * HTTP_HEADERS_ARGS
-  configure_file(
+  _ep_configure_file(
     "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ExternalProject/download.cmake.in"
     "${script_filename}"
     @ONLY
@@ -1545,7 +1567,7 @@ function(_ep_write_verifyfile_script
   # * EXPECT_VALUE
   # * LOCAL
   # * extract_script_filename
-  configure_file(
+  _ep_configure_file(
     "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ExternalProject/verify.cmake.in"
     "${script_filename}"
     @ONLY
@@ -1576,7 +1598,7 @@ function(_ep_write_extractfile_script
       ".7z, .tar, .tar.bz2, .tar.gz, .tar.xz, .tbz2, .tgz, .txz and .zip")
   endif()
 
-  configure_file(
+  _ep_configure_file(
     "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ExternalProject/extractfile.cmake.in"
     "${script_filename}"
     @ONLY
@@ -1684,7 +1706,7 @@ function(_ep_prepare_directories name)
   # generation time for Borland make and wmake so that CMake may generate
   # makefiles with "cd C:\short\paths\with\no\spaces" commands in them.
   set(script_filename "${tmp_dir}/${name}-mkdirs.cmake")
-  configure_file(
+  _ep_configure_file(
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ExternalProject/mkdirs.cmake.in
     ${script_filename}
     @ONLY
@@ -2648,7 +2670,7 @@ function(_ep_prepare_download name genex_supported)
   set(last_run_file ${stamp_dir}/${name}-download-lastrun.txt)
   set(script_does_something TRUE)
 
-  # We use configure_file() to write the repo_info_file below so that the
+  # We use _ep_configure_file() to write the repo_info_file below so that the
   # file's timestamp is not updated if we don't change the contents of an
   # existing file.
 
@@ -2660,11 +2682,7 @@ command=${_EP_DOWNLOAD_COMMAND}
 source_dir=${source_dir}
 work_dir=${work_dir}
 ")
-    configure_file(
-      ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ExternalProject/RepositoryInfo.txt.in
-      ${repo_info_file}
-      @ONLY
-    )
+    _ep_write_if_different(${repo_info_file} "${repo_info_content}")
 
     _ep_write_command_script(
       "${script_filename}"
@@ -2693,11 +2711,7 @@ module=${_EP_CVS_MODULE}
 tag=${_EP_CVS_TAG}
 source_dir=${source_dir}
 ")
-    configure_file(
-      ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ExternalProject/RepositoryInfo.txt.in
-      ${repo_info_file}
-      @ONLY
-    )
+    _ep_write_if_different(${repo_info_file} "${repo_info_content}")
 
     get_filename_component(src_name "${source_dir}" NAME)
     get_filename_component(work_dir "${source_dir}" PATH)
@@ -2746,11 +2760,7 @@ password=${svn_password}
 revision=${svn_revision}
 source_dir=${source_dir}
 ")
-    configure_file(
-      ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ExternalProject/RepositoryInfo.txt.in
-      ${repo_info_file}
-      @ONLY
-    )
+    _ep_write_if_different(${repo_info_file} "${repo_info_content}")
 
     get_filename_component(src_name "${source_dir}" NAME)
     get_filename_component(work_dir "${source_dir}" PATH)
@@ -2820,11 +2830,7 @@ repository=${_EP_GIT_REPOSITORY}
 remote=${git_remote_name}
 source_dir=${source_dir}
 ")
-    configure_file(
-      ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ExternalProject/RepositoryInfo.txt.in
-      ${repo_info_file}
-      @ONLY
-    )
+    _ep_write_if_different(${repo_info_file} "${repo_info_content}")
 
     get_filename_component(src_name "${source_dir}" NAME)
     get_filename_component(work_dir "${source_dir}" PATH)
@@ -2874,11 +2880,7 @@ source_dir=${source_dir}
 repository=${_EP_HG_REPOSITORY}
 source_dir=${source_dir}
 ")
-    configure_file(
-      ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ExternalProject/RepositoryInfo.txt.in
-      ${repo_info_file}
-      @ONLY
-    )
+    _ep_write_if_different(${repo_info_file} "${repo_info_content}")
 
     get_filename_component(src_name "${source_dir}" NAME)
     get_filename_component(work_dir "${source_dir}" PATH)
@@ -2927,11 +2929,7 @@ url=${url}
 hash=${hash}
 source_dir=${source_dir}
 ")
-    configure_file(
-      ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ExternalProject/RepositoryInfo.txt.in
-      ${repo_info_file}
-      @ONLY
-    )
+    _ep_write_if_different(${repo_info_file} "${repo_info_content}")
 
     set(fname "${_EP_DOWNLOAD_NAME}")
 
@@ -3056,11 +3054,7 @@ source_dir=${source_dir}
 "method=source_dir
 source_dir=${source_dir}
 ")
-    configure_file(
-      ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ExternalProject/RepositoryInfo.txt.in
-      ${repo_info_file}
-      @ONLY
-    )
+    _ep_write_if_different(${repo_info_file} "${repo_info_content}")
 
     set(comment "Skipping download step (SOURCE_DIR given) for '${name}'")
     set(script_does_something FALSE)
@@ -3520,7 +3514,7 @@ function(_ep_add_configure_command name)
   # used, cmake args or cmake generator) then re-run the configure step.
   # Fixes issue https://gitlab.kitware.com/cmake/cmake/-/issues/10258
   #
-  configure_file(
+  _ep_configure_file(
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ExternalProject/cfgcmd.txt.in
     ${tmp_dir}/${name}-cfgcmd.txt
     @ONLY
