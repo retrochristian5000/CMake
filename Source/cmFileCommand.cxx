@@ -1624,6 +1624,7 @@ bool HandleDownloadCommand(std::vector<std::string> const& args,
   std::unique_ptr<cmCryptoHash> hash;
   bool showProgress = false;
   std::string userpwd;
+  std::string hashMismatchErrorVariable;
 
   std::vector<std::string> curl_headers;
 
@@ -1701,6 +1702,14 @@ bool HandleDownloadCommand(std::vector<std::string> const& args,
       expectedHash = cmSystemTools::LowerCase(*i);
     } else if (*i == "SHOW_PROGRESS") {
       showProgress = true;
+    } else if (*i == "HASH_MISMATCH_ERROR_VARIABLE") {
+      ++i;
+      if (i == args.end()) {
+        status.SetError(
+          "DOWNLOAD missing VAR for HASH_MISMATCH_ERROR_VARIABLE.");
+        return false;
+      }
+      hashMismatchErrorVariable = *i;
     } else if (*i == "EXPECTED_HASH") {
       ++i;
       if (i == args.end()) {
@@ -1784,6 +1793,12 @@ bool HandleDownloadCommand(std::vector<std::string> const& args,
       status.SetError(errstring);
       return false;
     }
+  }
+
+  if (!hashMismatchErrorVariable.empty() && expectedHash.empty()) {
+    status.SetError("DOWNLOAD error: HASH_MISMATCH_ERROR_VARIABLE option "
+                    "expects either EXPECTED_MD5 or EXPECTED_HASH option.");
+    return false;
   }
 
   cmsys::ofstream fout;
@@ -1941,6 +1956,11 @@ bool HandleDownloadCommand(std::vector<std::string> const& args,
     if (actualHash.empty()) {
       status.SetError("DOWNLOAD cannot compute hash on downloaded file");
       return false;
+    }
+
+    if (!hashMismatchErrorVariable.empty()) {
+      status.GetMakefile().AddDefinitionBool(hashMismatchErrorVariable,
+                                             expectedHash != actualHash);
     }
 
     if (expectedHash != actualHash) {

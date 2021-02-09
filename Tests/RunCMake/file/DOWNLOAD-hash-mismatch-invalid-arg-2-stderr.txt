@@ -1,0 +1,5 @@
+CMake Error at DOWNLOAD-hash-mismatch-invalid-arg-2.cmake:[0-9]+ \(file\):
+  file DOWNLOAD error: HASH_MISMATCH_ERROR_VARIABLE option expects either
+  EXPECTED_MD5 or EXPECTED_HASH option.
+Call Stack \(most recent call first\):
+  CMakeLists.txt:[0-9]+ \(include\)

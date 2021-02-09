@@ -6,5 +6,7 @@ file(DOWNLOAD
   ${CMAKE_CURRENT_BINARY_DIR}/hash-mismatch.txt
   EXPECTED_HASH SHA1=0123456789abcdef0123456789abcdef01234567
   STATUS status
+  HASH_MISMATCH_ERROR_VARIABLE hash_mismatch
   )
 message("status='${status}'")
+message("hash_mismatch=${hash_mismatch}")

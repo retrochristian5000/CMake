@@ -1028,6 +1028,13 @@ Additional options to ``DOWNLOAD`` are:
   Historical short-hand for ``EXPECTED_HASH MD5=<value>``. It is an error to
   specify this if ``DOWNLOAD`` is not given a ``<file>``.
 
+``HASH_MISMATCH_ERROR_VARIABLE <variable>``
+  .. versionadded:: 3.21
+
+  Store the result of hash mismatch in the ``<variable>``. This argument
+  expects either ``EXPECTED_HASH`` or ``EXPECTED_MD5`` option.
+
+
 Locking
 ^^^^^^^
 

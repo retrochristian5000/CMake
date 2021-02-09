@@ -1,0 +1,4 @@
+CMake Error at DOWNLOAD-hash-mismatch-invalid-arg-1.cmake:[0-9]+ \(file\):
+  file DOWNLOAD missing VAR for HASH_MISMATCH_ERROR_VARIABLE.
+Call Stack \(most recent call first\):
+  CMakeLists.txt:[0-9]+ \(include\)
