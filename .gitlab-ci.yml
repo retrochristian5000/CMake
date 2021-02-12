@@ -50,7 +50,7 @@ prep:doc-package:
         - .cmake_prep_doc_linux
         - .linux_builder_tags_qt
         - .cmake_doc_artifacts
-        - .run_only_for_package
+        - .run_manually
 
 upload:source-package:
     extends:
@@ -70,21 +70,21 @@ build:debian10-iwyu:
         - .debian10_iwyu
         - .cmake_build_linux
         - .linux_builder_tags
-        - .run_automatically
+        - .run_manually
 
 build:fedora33-tidy:
     extends:
         - .fedora33_tidy
         - .cmake_build_linux
         - .linux_builder_tags_qt
-        - .run_automatically
+        - .run_manually
 
 build:fedora33-sphinx:
     extends:
         - .fedora33_sphinx
         - .cmake_build_linux
         - .linux_builder_tags_qt
-        - .run_automatically
+        - .run_manually
     variables:
         CMAKE_CI_JOB_CONTINUOUS: "true"
         CMAKE_CI_JOB_HELP: "true"
@@ -292,7 +292,7 @@ build:macos-package:
         - .cmake_build_macos_package
         - .cmake_release_artifacts
         - .macos_builder_tags_package
-        - .run_only_for_package
+        - .run_manually
     dependencies:
         - prep:doc-package
     needs:

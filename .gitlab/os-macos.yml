@@ -82,6 +82,7 @@
         - xcode-12.3
         - nonconcurrent
         - finder
+        - dres
 
 .macos_builder_ext_tags:
     tags:
