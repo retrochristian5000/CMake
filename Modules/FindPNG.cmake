@@ -55,6 +55,7 @@ find_package(ZLIB ${_FIND_ZLIB_ARG})
 
 if(ZLIB_FOUND)
   find_path(PNG_PNG_INCLUDE_DIR png.h PATH_SUFFIXES include/libpng)
+  mark_as_advanced(PNG_PNG_INCLUDE_DIR)
 
   list(APPEND PNG_NAMES png libpng)
   unset(PNG_NAMES_DEBUG)
@@ -159,4 +160,6 @@ find_package_handle_standard_args(PNG
                                   REQUIRED_VARS PNG_LIBRARY PNG_PNG_INCLUDE_DIR
                                   VERSION_VAR PNG_VERSION_STRING)
 
-mark_as_advanced(PNG_PNG_INCLUDE_DIR PNG_LIBRARY )
+if (PNG_LIBRARY)
+  mark_as_advanced(PNG_LIBRARY)
+endif ()
