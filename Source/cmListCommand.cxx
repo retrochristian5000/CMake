@@ -167,7 +167,10 @@ bool HandleGetCommand(std::vector<std::string> const& args,
   size_t nitem = varArgsExpanded.size();
   for (cc = 2; cc < args.size() - 1; cc++) {
     int item;
-    GetIndexArg(args[cc].c_str(), &item);
+    if (!GetIndexArg(args[cc].c_str(), &item)) {
+      status.SetError(cmStrCat("index: ", args[cc], " is not a valid index"));
+      return false;
+    }
     value += sep;
     sep = ";";
     if (item < 0) {
@@ -377,7 +380,10 @@ bool HandleInsertCommand(std::vector<std::string> const& args,
   // expand the variable
   char const* pos_arg = args[2].c_str();
   int item;
-  GetIndexArg(args[2].c_str(), &item);
+  if (!GetIndexArg(args[2].c_str(), &item)) {
+    status.SetError(cmStrCat("index: ", args[2], " is not a valid index"));
+    return false;
+  }
   std::vector<std::string> varArgsExpanded;
   if ((!GetList(varArgsExpanded, listName, status.GetMakefile()) ||
        varArgsExpanded.empty()) &&
@@ -1299,8 +1305,14 @@ bool HandleSublistCommand(std::vector<std::string> const& args,
 
   int start;
   int length;
-  GetIndexArg(args[2].c_str(), &start);
-  GetIndexArg(args[3].c_str(), &length);
+  if (!GetIndexArg(args[2].c_str(), &start)) {
+    status.SetError(cmStrCat("index: ", args[2], " is not a valid index"));
+    return false;
+  }
+  if (!GetIndexArg(args[3].c_str(), &length)) {
+    status.SetError(cmStrCat("index: ", args[3], " is not a valid index"));
+    return false;
+  }
 
   using size_type = decltype(varArgsExpanded)::size_type;
 
@@ -1356,7 +1368,10 @@ bool HandleRemoveAtCommand(std::vector<std::string> const& args,
   size_t nitem = varArgsExpanded.size();
   for (cc = 2; cc < args.size(); ++cc) {
     int item;
-    GetIndexArg(args[cc].c_str(), &item);
+    if (!GetIndexArg(args[cc].c_str(), &item)) {
+      status.SetError(cmStrCat("index: ", args[cc], " is not a valid index"));
+      return false;
+    }
     if (item < 0) {
       item = static_cast<int>(nitem) + item;
     }
