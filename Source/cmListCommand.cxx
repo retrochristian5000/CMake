@@ -6,7 +6,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdio>
-#include <cstdlib> // required for atoi
+#include <cstdlib> // required for strtol
 #include <functional>
 #include <iterator>
 #include <set>
@@ -38,7 +38,13 @@ namespace {
 
 bool GetIndexArg(char const* arg, int* idx)
 {
-  *idx = atoi(arg);
+  char* end = nullptr;
+  *idx = strtol(arg, &end, 10);
+
+  if (*arg && *end) {
+    // An error was detected.
+  }
+
   // Ignore errors.
   return true;
 }
