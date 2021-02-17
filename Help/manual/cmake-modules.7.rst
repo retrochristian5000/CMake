@@ -54,6 +54,7 @@ These modules are loaded using the :command:`include` command.
    /module/CMakeAddFortranSubdirectory
    /module/CMakeBackwardCompatibilityCXX
    /module/CMakeDependentOption
+   /module/CMakeDetectLibraryType
    /module/CMakeFindDependencyMacro
    /module/CMakeFindFrameworks
    /module/CMakeFindPackageMode

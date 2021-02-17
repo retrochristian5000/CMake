@@ -1,0 +1,5 @@
+CMake Error at .*/Modules/CMakeDetectLibraryType.cmake:[0-9]* \(message\):
+  The `PATH` argument is required.
+Call Stack \(most recent call first\):
+  MissingPath.cmake:2 \(cmake_detect_library_type\)
+  CMakeLists.txt:3 \(include\)
