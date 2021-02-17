@@ -561,17 +561,14 @@ foreach(LANG IN LISTS OpenMP_FINDLIST)
       endif()
       if(OpenMP_${LANG}_FLAGS)
         separate_arguments(_OpenMP_${LANG}_OPTIONS NATIVE_COMMAND "${OpenMP_${LANG}_FLAGS}")
-        set_property(TARGET OpenMP::OpenMP_${LANG} PROPERTY
-          INTERFACE_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:${LANG}>:${_OpenMP_${LANG}_OPTIONS}>")
+        set_target_properties(OpenMP::OpenMP_${LANG} PROPERTIES
+          INTERFACE_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:${LANG}>:${_OpenMP_${LANG}_OPTIONS}>"
+          INTERFACE_LINK_OPTIONS "$<$<COMPILE_LANGUAGE:${LANG}>:${_OpenMP_${LANG}_OPTIONS}>")
         unset(_OpenMP_${LANG}_OPTIONS)
       endif()
       if(OpenMP_${LANG}_INCLUDE_DIRS)
         set_property(TARGET OpenMP::OpenMP_${LANG} PROPERTY
           INTERFACE_INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${OpenMP_${LANG}_INCLUDE_DIRS}>")
-      endif()
-      if(OpenMP_${LANG}_LIBRARIES)
-        set_property(TARGET OpenMP::OpenMP_${LANG} PROPERTY
-          INTERFACE_LINK_LIBRARIES "${OpenMP_${LANG}_LIBRARIES}")
       endif()
     endif()
   endif()
