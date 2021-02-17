@@ -1,0 +1,5 @@
+CMake Error at .*/Modules/CMakeDetectLibraryType.cmake:[0-9]* \(message\):
+  Unparsed arguments for cmake_detect_library_type: UNKNOWN_KEYWORD
+Call Stack \(most recent call first\):
+  ExtraArguments.cmake:2 \(cmake_detect_library_type\)
+  CMakeLists.txt:3 \(include\)

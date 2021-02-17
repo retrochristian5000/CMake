@@ -220,6 +220,7 @@ add_RunCMake_test(BuildDepends
 if(UNIX AND "${CMAKE_GENERATOR}" MATCHES "Unix Makefiles|Ninja")
   add_RunCMake_test(Byproducts)
 endif()
+add_RunCMake_test(CMakeDetectLibraryType)
 add_RunCMake_test(CMakeRoleGlobalProperty)
 if(UNIX AND "${CMAKE_GENERATOR}" MATCHES "Unix Makefiles|Ninja")
   add_RunCMake_test(CompilerChange)
