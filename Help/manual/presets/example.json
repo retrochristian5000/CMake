@@ -1,8 +1,8 @@
 {
-  "version": 1,
+  "version": 2,
   "cmakeMinimumRequired": {
     "major": 3,
-    "minor": 19,
+    "minor": 20,
     "patch": 0
   },
   "configurePresets": [
@@ -41,5 +41,14 @@
     "example.com/ExampleIDE/1.0": {
       "autoFormat": false
     }
-  }
+  },
+  "testPresets": [
+    {
+      "name": "default",
+      "configurePreset": "default",
+      "output": {"outputOnFailure": true},
+      "execution": {"noTestsAction": "error",
+        "stopOnFailure": true}
+    }
+  ]
 }

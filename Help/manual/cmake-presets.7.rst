@@ -38,8 +38,8 @@ The root object recognizes the following fields:
 
 ``version``
 
-  A required integer representing the version of the JSON schema. Currently,
-  the only supported version is 1.
+  A required integer representing the version of the JSON schema.
+  Currently supported versions are 1 and 2.
 
 ``cmakeMinimumRequired``
 
@@ -91,6 +91,9 @@ that may contain the following fields:
   This identifier is used in the ``--preset`` argument. There must not be
   two presets in the union of ``CMakePresets.json`` and
   ``CMakeUserPresets.json`` in the same directory with the same name.
+  However, there can be the same name of configure, build, and/or test
+  presets that are not in the same array. Example: a configure preset
+  named "default" and a test preset named "default" is OK.
 
 ``hidden``
 
@@ -373,8 +376,8 @@ that may contain the following fields:
   An optional string specifying the name of a configure preset to
   associate with this build preset. If ``configurePreset`` is not
   specified, it must be inherited from the inherits preset (unless this
-  preset is hidden). The build tree directory is inferred from the
-  configure preset.
+  preset is hidden). The build directory is inferred from the configure
+  preset.
 
 ``inheritConfigureEnvironment``
 
@@ -491,8 +494,9 @@ that may contain the following fields:
   An optional string specifying the name of a configure preset to
   associate with this test preset. If ``configurePreset`` is not
   specified, it must be inherited from the inherits preset (unless this
-  preset is hidden). The build tree directory is inferred from the
-  configure preset.
+  preset is hidden). The build directory is inferred from the configure
+  preset, so ``ctest`` will run tests in the same ``binaryDir`` where the
+  configuration and build took place.
 
 ``inheritConfigureEnvironment``
 
