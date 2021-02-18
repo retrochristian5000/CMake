@@ -27,6 +27,20 @@ run_cmake_with_options(ManualSourceDirectoryRelative
   -D "FETCHCONTENT_SOURCE_DIR_WITHPROJECT:STRING=WithProject"
 )
 
+function(run_FetchContent_TimeStamps)
+  set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/TimeStamps)
+  file(REMOVE_RECURSE "${RunCMake_TEST_BINARY_DIR}")
+  file(MAKE_DIRECTORY "${RunCMake_TEST_BINARY_DIR}")
+
+  # First run should execute the commands
+  run_cmake(TimeStamps)
+
+  # Run again with no changes, no commands should re-execute
+  set(RunCMake_TEST_NO_CLEAN 1)
+  run_cmake(TimeStampsRerun)
+endfunction()
+run_FetchContent_TimeStamps()
+
 function(run_FetchContent_DirOverrides)
   set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/DirOverrides-build)
   file(REMOVE_RECURSE "${RunCMake_TEST_BINARY_DIR}")
