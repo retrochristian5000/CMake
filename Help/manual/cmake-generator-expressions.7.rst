@@ -938,6 +938,14 @@ which is just the string ``tgt``.
   :ref:`Target Usage Requirements` this is the consuming target rather
   than the target specifying the requirement.
 
+.. genex:: $<TARGET_RUNTIME_DLLS:tgt>
+
+  List of DLLs that the target depends on at runtime. This is determined by
+  the locations of all the ``SHARED`` and ``MODULE`` targets in the target's
+  transitive dependencies. Using this generator expression on targets other
+  than executables, ``SHARED`` libraries, and ``MODULE`` libraries is an error.
+  On non-DLL platforms, it evaluates to an empty string.
+
 .. genex:: $<INSTALL_PREFIX>
 
   Content of the install prefix when the target is exported via
