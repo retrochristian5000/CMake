@@ -1224,6 +1224,11 @@ void cmake::SetArgs(const std::vector<std::string>& args)
     this->UnprocessedPresetVariables = expandedPreset->CacheVariables;
     this->UnprocessedPresetEnvironment = expandedPreset->Environment;
 
+    if (!expandedPreset->InstallDir.empty() &&
+        this->State->GetInitializedCacheValue("CMAKE_INSTALL_PREFIX") == nullptr) {
+      this->UnprocessedPresetVariables["CMAKE_INSTALL_PREFIX"] = { "PATH", expandedPreset->InstallDir };
+    }
+
     if (!expandedPreset->ArchitectureStrategy ||
         expandedPreset->ArchitectureStrategy ==
           cmCMakePresetsFile::ArchToolsetStrategy::Set) {
