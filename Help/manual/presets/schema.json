@@ -167,6 +167,10 @@
             "type": "string",
             "description": "An optional string representing the path to the output binary directory. This field supports macro expansion. If a relative path is specified, it is calculated relative to the source directory. If binaryDir is not specified, it must be inherited from the inherits preset (unless this preset is hidden)."
           },
+          "installDir": {
+            "type": "string",
+            "description": "An optional string representing the path to the installation directory. Available in version 3 and higher. This field supports macro expansion. If a relative path is specified, it is calculated relative to the source directory."
+          },
           "cmakeExecutable": {
             "type": "string",
             "description": "An optional string representing the path to the CMake executable to use for this preset. This is reserved for use by IDEs, and is not used by CMake itself. IDEs that use this field should expand any macros in it."
