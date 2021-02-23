@@ -77,6 +77,9 @@ operation and would not normally be the way the module is used, but it is
 sometimes useful as part of implementing some higher level feature or to
 populate some content in CMake's script mode.
 
+.. versionchanged:: 3.14
+  ``FetchContent`` commands can access the terminal. This is necessary
+  for password prompts and real-time progress displays to work.
 
 Commands
 ^^^^^^^^
@@ -371,6 +374,8 @@ is simpler and provides additional features over the pattern above.
   :variable:`CMAKE_MAKE_PROGRAM` variables will need to be set appropriately
   on the command line invoking the script.
 
+  .. versionadded:: 3.18
+    Added support for ``DOWNLOAD_NO_EXTRACT`` and ``SOURCE_SUBDIR`` options.
 
 .. command:: FetchContent_GetProperties
 
@@ -415,6 +420,8 @@ is simpler and provides additional features over the pattern above.
   .. code-block:: cmake
 
     FetchContent_MakeAvailable( <name1> [<name2>...] )
+
+  .. versionadded:: 3.14
 
   This command implements the common pattern typically needed for most
   dependencies.  It iterates over each of the named dependencies in turn
@@ -842,8 +849,6 @@ function(__FetchContent_directPopulate contentName)
       SUBBUILD_DIR
       SOURCE_DIR
       BINARY_DIR
-      # We need special processing if DOWNLOAD_NO_EXTRACT is true
-      DOWNLOAD_NO_EXTRACT
       # Prevent the following from being passed through
       CONFIGURE_COMMAND
       BUILD_COMMAND
@@ -887,107 +892,28 @@ function(__FetchContent_directPopulate contentName)
   set(${contentName}_SOURCE_DIR "${ARG_SOURCE_DIR}" PARENT_SCOPE)
   set(${contentName}_BINARY_DIR "${ARG_BINARY_DIR}" PARENT_SCOPE)
 
-  # The unparsed arguments may contain spaces, so build up ARG_EXTRA
-  # in such a way that it correctly substitutes into the generated
-  # CMakeLists.txt file with each argument quoted.
-  unset(ARG_EXTRA)
-  foreach(arg IN LISTS ARG_UNPARSED_ARGUMENTS)
-    set(ARG_EXTRA "${ARG_EXTRA} \"${arg}\"")
-  endforeach()
-
-  if(ARG_DOWNLOAD_NO_EXTRACT)
-    set(ARG_EXTRA "${ARG_EXTRA} DOWNLOAD_NO_EXTRACT YES")
-    set(__FETCHCONTENT_COPY_FILE
-"
-ExternalProject_Get_Property(${contentName}-populate DOWNLOADED_FILE)
-get_filename_component(dlFileName \"\${DOWNLOADED_FILE}\" NAME)
-
-ExternalProject_Add_Step(${contentName}-populate copyfile
-  COMMAND    \"${CMAKE_COMMAND}\" -E copy_if_different
-             \"<DOWNLOADED_FILE>\" \"${ARG_SOURCE_DIR}\"
-  DEPENDEES  patch
-  DEPENDERS  configure
-  BYPRODUCTS \"${ARG_SOURCE_DIR}/\${dlFileName}\"
-  COMMENT    \"Copying file to SOURCE_DIR\"
-)
-")
+  if(ARG_QUIET)
+    set(quiet TRUE)
   else()
-    unset(__FETCHCONTENT_COPY_FILE)
-  endif()
-
-  # Hide output if requested, but save it to a variable in case there's an
-  # error so we can show the output upon failure. When not quiet, don't
-  # capture the output to a variable because the user may want to see the
-  # output as it happens (e.g. progress during long downloads). Combine both
-  # stdout and stderr in the one capture variable so the output stays in order.
-  if (ARG_QUIET)
-    set(outputOptions
-        OUTPUT_VARIABLE capturedOutput
-        ERROR_VARIABLE  capturedOutput
-    )
-  else()
-    set(capturedOutput)
-    set(outputOptions)
+    set(quiet FALSE)
     message(STATUS "Populating ${contentName}")
   endif()
 
-  if(CMAKE_GENERATOR)
-    set(subCMakeOpts "-G${CMAKE_GENERATOR}")
-    if(CMAKE_GENERATOR_PLATFORM)
-      list(APPEND subCMakeOpts "-A${CMAKE_GENERATOR_PLATFORM}")
-    endif()
-    if(CMAKE_GENERATOR_TOOLSET)
-      list(APPEND subCMakeOpts "-T${CMAKE_GENERATOR_TOOLSET}")
-    endif()
-
-    if(CMAKE_MAKE_PROGRAM)
-      list(APPEND subCMakeOpts "-DCMAKE_MAKE_PROGRAM:FILEPATH=${CMAKE_MAKE_PROGRAM}")
-    endif()
-
-  else()
-    # Likely we've been invoked via CMake's script mode where no
-    # generator is set (and hence CMAKE_MAKE_PROGRAM could not be
-    # trusted even if provided). We will have to rely on being
-    # able to find the default generator and build tool.
-    unset(subCMakeOpts)
-  endif()
-
-  if(DEFINED CMAKE_EP_GIT_REMOTE_UPDATE_STRATEGY)
-    list(APPEND subCMakeOpts
-      "-DCMAKE_EP_GIT_REMOTE_UPDATE_STRATEGY=${CMAKE_EP_GIT_REMOTE_UPDATE_STRATEGY}")
-  endif()
-
-  # Create and build a separate CMake project to carry out the population.
-  # If we've already previously done these steps, they will not cause
-  # anything to be updated, so extra rebuilds of the project won't occur.
-  # Make sure to pass through CMAKE_MAKE_PROGRAM in case the main project
-  # has this set to something not findable on the PATH.
-  configure_file("${CMAKE_CURRENT_FUNCTION_LIST_DIR}/FetchContent/CMakeLists.cmake.in"
-                 "${ARG_SUBBUILD_DIR}/CMakeLists.txt")
-  execute_process(
-    COMMAND ${CMAKE_COMMAND} ${subCMakeOpts} .
-    RESULT_VARIABLE result
-    ${outputOptions}
-    WORKING_DIRECTORY "${ARG_SUBBUILD_DIR}"
+  include(ExternalProject)
+  set(argsQuoted)
+  foreach(__item IN LISTS ARG_UNPARSED_ARGUMENTS)
+    string(APPEND argsQuoted " [==[${__item}]==]")
+  endforeach()
+  cmake_language(EVAL CODE "
+    _ep_do_preconfigure_steps_now(${contentName}
+      ${argsQuoted}
+      QUIET                   ${quiet}
+      SOURCE_DIR              [==[${ARG_SOURCE_DIR}]==]
+      BINARY_DIR              [==[${ARG_BINARY_DIR}]==]
+      USES_TERMINAL_DOWNLOAD  YES
+      USES_TERMINAL_UPDATE    YES
+    )"
   )
-  if(result)
-    if(capturedOutput)
-      message("${capturedOutput}")
-    endif()
-    message(FATAL_ERROR "CMake step for ${contentName} failed: ${result}")
-  endif()
-  execute_process(
-    COMMAND ${CMAKE_COMMAND} --build .
-    RESULT_VARIABLE result
-    ${outputOptions}
-    WORKING_DIRECTORY "${ARG_SUBBUILD_DIR}"
-  )
-  if(result)
-    if(capturedOutput)
-      message("${capturedOutput}")
-    endif()
-    message(FATAL_ERROR "Build step for ${contentName} failed: ${result}")
-  endif()
 
 endfunction()
 

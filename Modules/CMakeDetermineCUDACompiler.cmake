@@ -47,6 +47,10 @@ if(NOT $ENV{CUDAHOSTCXX} STREQUAL "")
   endif()
 endif()
 
+if(NOT "$ENV{CUDAARCHS}" STREQUAL "")
+  set(CMAKE_CUDA_ARCHITECTURES "$ENV{CUDAARCHS}" CACHE STRING "CUDA architectures")
+endif()
+
 # Build a small source file to identify the compiler.
 if(NOT CMAKE_CUDA_COMPILER_ID_RUN)
   set(CMAKE_CUDA_COMPILER_ID_RUN 1)
@@ -168,10 +172,22 @@ if(NOT CMAKE_CUDA_COMPILER_ID_RUN)
       endif()
     endif()
 
-    get_filename_component(CMAKE_CUDA_COMPILER_TOOLKIT_ROOT "${_CUDA_NVCC_EXECUTABLE}" DIRECTORY)
-    set(CMAKE_CUDA_DEVICE_LINKER "${CMAKE_CUDA_COMPILER_TOOLKIT_ROOT}/nvlink${CMAKE_EXECUTABLE_SUFFIX}")
-    set(CMAKE_CUDA_FATBINARY "${CMAKE_CUDA_COMPILER_TOOLKIT_ROOT}/fatbinary${CMAKE_EXECUTABLE_SUFFIX}")
-    get_filename_component(CMAKE_CUDA_COMPILER_TOOLKIT_ROOT "${CMAKE_CUDA_COMPILER_TOOLKIT_ROOT}" DIRECTORY)
+    # Given that NVCC can be provided by multiple different sources (NVIDIA HPC SDK, CUDA Toolkit, distro)
+    # each of which has a different layout, we need to extract the CUDA toolkit root from the compiler
+    # itself, allowing us to support numerous different scattered toolkit layouts
+    execute_process(COMMAND ${_CUDA_NVCC_EXECUTABLE} "-v" "__cmake_determine_cuda"
+      OUTPUT_VARIABLE _CUDA_NVCC_OUT ERROR_VARIABLE _CUDA_NVCC_OUT)
+    if(_CUDA_NVCC_OUT MATCHES "TOP=([^\r\n]*)")
+      get_filename_component(CMAKE_CUDA_COMPILER_TOOLKIT_ROOT "${CMAKE_MATCH_1}" ABSOLUTE)
+    else()
+      get_filename_component(CMAKE_CUDA_COMPILER_TOOLKIT_ROOT "${_CUDA_NVCC_EXECUTABLE}" DIRECTORY)
+      get_filename_component(CMAKE_CUDA_COMPILER_TOOLKIT_ROOT "${CMAKE_CUDA_COMPILER_TOOLKIT_ROOT}" DIRECTORY)
+    endif()
+    unset(_CUDA_NVCC_OUT)
+
+    set(CMAKE_CUDA_DEVICE_LINKER "${CMAKE_CUDA_COMPILER_TOOLKIT_ROOT}/bin/nvlink${CMAKE_EXECUTABLE_SUFFIX}")
+    set(CMAKE_CUDA_FATBINARY "${CMAKE_CUDA_COMPILER_TOOLKIT_ROOT}/bin/fatbinary${CMAKE_EXECUTABLE_SUFFIX}")
+
 
     # In a non-scattered installation the following are equivalent to CMAKE_CUDA_COMPILER_TOOLKIT_ROOT.
     # We first check for a non-scattered installation to prefer it over a scattered installation.
