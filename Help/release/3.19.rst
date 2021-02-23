@@ -425,3 +425,11 @@ Changes made since CMake 3.19.0 include the following.
   *Link Binaries With Libraries* build phase broke the ability to switch
   between device and simulator builds without reconfiguring.  That capability
   has now been restored.
+
+
+3.19.6
+------
+
+* The ability to include comments in
+  :manual:`CMakePresets.json <cmake-presets(7)>` has been removed. This ability
+  was not documented, and its inclusion was a mistake.
