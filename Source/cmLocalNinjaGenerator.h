@@ -91,9 +91,8 @@ public:
 
 protected:
   std::string ConvertToIncludeReference(
-    std::string const& path,
-    cmOutputConverter::OutputFormat format = cmOutputConverter::SHELL,
-    bool forceFullPaths = false) override;
+    std::string const& path, IncludePathStyle pathStyle,
+    cmOutputConverter::OutputFormat format) override;
 
 private:
   cmGeneratedFileStream& GetImplFileStream(const std::string& config) const;
