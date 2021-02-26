@@ -503,14 +503,7 @@ std::unique_ptr<cmLocalGenerator> cmGlobalNinjaGenerator::CreateLocalGenerator(
 
 codecvt::Encoding cmGlobalNinjaGenerator::GetMakefileEncoding() const
 {
-#ifdef _WIN32
-  // Ninja on Windows does not support non-ANSI characters.
-  // https://github.com/ninja-build/ninja/issues/1195
-  return codecvt::ANSI;
-#else
-  // No encoding conversion needed on other platforms.
-  return codecvt::None;
-#endif
+  return this->NinjaExpectedEncoding;
 }
 
 void cmGlobalNinjaGenerator::GetDocumentation(cmDocumentationEntry& entry)
@@ -731,6 +724,63 @@ void cmGlobalNinjaGenerator::CheckNinjaFeatures()
   this->NinjaSupportsMetadataOnRegeneration = !cmSystemTools::VersionCompare(
     cmSystemTools::OP_LESS, this->NinjaVersion.c_str(),
     RequiredNinjaVersionForMetadataOnRegeneration().c_str());
+#ifdef _WIN32
+  this->NinjaSupportsCodePage = !cmSystemTools::VersionCompare(
+    cmSystemTools::OP_LESS, this->NinjaVersion.c_str(),
+    RequiredNinjaVersionForCodePage().c_str());
+  if (this->NinjaSupportsCodePage) {
+    this->CheckNinjaCodePage();
+  } else {
+    this->NinjaExpectedEncoding = codecvt::ANSI;
+  }
+#endif
+}
+
+void cmGlobalNinjaGenerator::CheckNinjaCodePage()
+{
+  std::vector<std::string> command{ this->NinjaCommand, "-t", "wincodepage" };
+  std::string output;
+  std::string error;
+  int result;
+  if (!cmSystemTools::RunSingleCommand(command, &output, &error, &result,
+                                       nullptr,
+                                       cmSystemTools::OUTPUT_NONE)) {
+    this->GetCMakeInstance()->IssueMessage(MessageType::FATAL_ERROR,
+                                           cmStrCat("Running\n '",
+                                                    cmJoin(command, "' '"),
+                                                    "'\n"
+                                                    "failed with:\n ",
+                                                    error));
+    cmSystemTools::SetFatalErrorOccured();
+  } else if (result == 0) {
+    std::istringstream outputStream(output);
+    std::string line;
+    bool found = false;
+    while (cmSystemTools::GetLineFromStream(outputStream, line)) {
+      if (line.find("ANSI code page: ") == 0) {
+        std::string codePage = line.substr(cmStrLen("ANSI code page: "));
+        if (codePage == "65001") {
+          this->NinjaExpectedEncoding = codecvt::None;
+        } else if (codePage == "1252") {
+          this->NinjaExpectedEncoding = codecvt::ANSI;
+        } else {
+          this->GetCMakeInstance()->IssueMessage(
+            MessageType::WARNING,
+            cmStrCat("Ninja uses unrecognized code page ", codePage,
+                     ", defaulting to UTF-8"));
+          this->NinjaExpectedEncoding = codecvt::None;
+        }
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      this->GetCMakeInstance()->IssueMessage(MessageType::WARNING, "Could not determine Ninja's code page, defaulting to UTF-8");
+      this->NinjaExpectedEncoding = codecvt::None;
+    }
+  } else {
+    this->NinjaExpectedEncoding = codecvt::ANSI;
+  }
 }
 
 bool cmGlobalNinjaGenerator::CheckLanguages(
