@@ -54,31 +54,26 @@ void cmCTestGenericHandler::SetPersistentOption(const std::string& op,
  * set key `op` to `value` if key `op` does not exist in the map,
  * or append `value` to the existing value in the map if it does.
  */
-static void SetMapMultiValue(cmCTestGenericHandler::t_StringToString& map,
+static void SetMapMultiValue(cmCTestGenericHandler::t_StringToMultiString& map,
                              const std::string& op, const char* value)
 {
   if (value) {
-    auto remit = map.find(op);
-    if (remit != map.end()) {
-      auto extended = remit->second + char(0) + std::string(value);
-      map[op] = extended;
-    } else {
-      map[op] = value;
-    }
+    // std::map adds a default value for a non-existent key
+    map[op].emplace_back(value);
   }
 }
 
 void cmCTestGenericHandler::AddMultiOption(const std::string& op,
                                            const char* value)
 {
-  SetMapMultiValue(this->Options, op, value);
+  SetMapMultiValue(this->MultiOptions, op, value);
 }
 
 void cmCTestGenericHandler::AddPersistentMultiOption(const std::string& op,
                                                      const char* value)
 {
   this->AddMultiOption(op, value);
-  SetMapMultiValue(this->PersistentOptions, op, value);
+  SetMapMultiValue(this->PersistentMultiOptions, op, value);
 }
 
 void cmCTestGenericHandler::Initialize()
@@ -100,25 +95,15 @@ const char* cmCTestGenericHandler::GetOption(const std::string& op)
   return remit->second.c_str();
 }
 
-std::vector<const char*> cmCTestGenericHandler::GetMultiOption(
+std::vector<std::string> cmCTestGenericHandler::GetMultiOption(
   const std::string& op)
 {
-  auto remit = this->Options.find(op);
-  if (remit == this->Options.end()) {
-    return std::vector<const char*>();
+  // Avoid inserting a key, which MultiOptions[op] would do.
+  auto remit = this->MultiOptions.find(op);
+  if (remit == this->MultiOptions.end()) {
+    return std::vector<std::string>();
   }
-
-  std::vector<const char*> parts;
-  auto* str = remit->second.c_str();
-  size_t c = 0;
-  while ((c != std::string::npos) && (c < remit->second.length())) {
-    parts.push_back(str + c);
-    // Find next NUL-separator and step over it
-    c = remit->second.find(char(0), c);
-    if ((c != std::string::npos) && ((c + 1) < remit->second.length()))
-      c++;
-  }
-  return parts;
+  return remit->second;
 }
 
 bool cmCTestGenericHandler::StartResultingXML(cmCTest::Part part,

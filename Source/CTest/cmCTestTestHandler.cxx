@@ -483,7 +483,7 @@ int cmCTestTestHandler::ProcessHandler()
  * regular expressions in `expressions`. Skip empty values.
  * Returns true if there were any expressions.
  */
-static bool BuildLabelRE(const std::vector<const char*>& parts,
+static bool BuildLabelRE(const std::vector<std::string>& parts,
                          std::vector<cmsys::RegularExpression>& expressions)
 {
   expressions.clear();
@@ -491,7 +491,7 @@ static bool BuildLabelRE(const std::vector<const char*>& parts,
     expressions.resize(parts.size());
     int c = 0;
     for (const auto& p : parts) {
-      if (!std::string(p).empty()) {
+      if (!p.empty()) {
         expressions[c].compile(p);
       }
       ++c;

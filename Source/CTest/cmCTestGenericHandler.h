@@ -72,17 +72,19 @@ public:
   virtual ~cmCTestGenericHandler();
 
   using t_StringToString = std::map<std::string, std::string>;
+  using t_StringToMultiString =
+    std::map<std::string, std::vector<std::string>>;
 
   /**
    * Options collect a single value from flags; passing the
    * flag multiple times on the command-line *overwrites* values,
-   * and only the last one specified counts.
+   * and only the last one specified counts. Set an option to
+   * nullptr to "unset" it.
    *
-   * The value is stored as a string. Mixing the single-option
-   * API with the multi-option API will give weird results, except
-   * that GetOption() for a multi-option will return nullptr if
-   * the option is not set at all, and a pointer to the first
-   * value that was set otherwise.
+   * The value is stored as a string. The values set for single
+   * and multi-options (see below) live in different spaces,
+   * so calling a single-getter for a key that has only been set
+   * as a multi-value will return nullptr.
    *
    */
   void SetPersistentOption(const std::string& op, const char* value);
@@ -94,17 +96,16 @@ public:
    * the flag multiple times on the command-line *adds* values,
    * rather than overwriting the previous values.
    *
-   * The value is stored as a NUL-separated string;
-   * this is done so the storage doesn't need to distinguish
-   * single-options from multi-options. Mixing the multi-option
-   * API with the single-option API will give weird results, except
-   * that GetMultiOption() for a single-option will return an
-   * empty vector if the option is not set at all, and a vector
-   * with one value (the single value that has been set) otherwise.
+   * Adding a nullptr does nothing.
+   *
+   * The value is stored as a vector of strings. The values set for single
+   * (see above) and multi-options live in different spaces,
+   * so calling a multi-getter for a key that has only been set
+   * as a single-value will return an empty vector.
    */
   void AddPersistentMultiOption(const std::string& op, const char* value);
   void AddMultiOption(const std::string& op, const char* value);
-  std::vector<const char*> GetMultiOption(const std::string& op);
+  std::vector<std::string> GetMultiOption(const std::string& op);
 
   void SetCommand(cmCTestCommand* command) { this->Command = command; }
 
@@ -129,6 +130,8 @@ protected:
   cmCTest* CTest;
   t_StringToString Options;
   t_StringToString PersistentOptions;
+  t_StringToMultiString MultiOptions;
+  t_StringToMultiString PersistentMultiOptions;
   t_StringToString LogFileNames;
 
   cmCTestCommand* Command;
