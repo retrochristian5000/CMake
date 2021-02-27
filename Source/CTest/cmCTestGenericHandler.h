@@ -103,9 +103,11 @@ public:
    * so calling a multi-getter for a key that has only been set
    * as a single-value will return an empty vector.
    */
-  void AddPersistentMultiOption(const std::string& op, const char* value);
-  void AddMultiOption(const std::string& op, const char* value);
-  std::vector<std::string> GetMultiOption(const std::string& op);
+  void AddPersistentMultiOption(const std::string& optionName,
+                                const char* value);
+  void AddMultiOption(const std::string& optionName, const char* value);
+  bool MultiOptionHasValue(const std::string& optionName) const;
+  std::vector<std::string> GetMultiOption(const std::string& op) const;
 
   void SetCommand(cmCTestCommand* command) { this->Command = command; }
 

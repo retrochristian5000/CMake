@@ -541,18 +541,16 @@ bool cmCTestTestHandler::ProcessOptions()
   }
 
   const char* val;
-  // LabelRegularExpression is a multi-option, but you can still use
-  // the single-valued version to check if the option is set at all.
-  val = this->GetOption("LabelRegularExpression");
-  if (val) {
+  const std::string dashLincludeRE("LabelRegularExpression");
+  if (this->MultiOptionHasValue(dashLincludeRE)) {
     this->UseIncludeLabelRegExpFlag =
-      BuildLabelRE(this->GetMultiOption("LabelRegularExpression"),
+      BuildLabelRE(this->GetMultiOption(dashLincludeRE),
                    this->IncludeLabelRegularExpressions);
   }
-  val = this->GetOption("ExcludeLabelRegularExpression");
-  if (val) {
+  const std::string dashLEexcludeRE("ExcludeLabelRegularExpression");
+  if (this->MultiOptionHasValue(dashLEexcludeRE)) {
     this->UseExcludeLabelRegExpFlag =
-      BuildLabelRE(this->GetMultiOption("ExcludeLabelRegularExpression"),
+      BuildLabelRE(this->GetMultiOption(dashLEexcludeRE),
                    this->ExcludeLabelRegularExpressions);
   }
   val = this->GetOption("IncludeRegularExpression");

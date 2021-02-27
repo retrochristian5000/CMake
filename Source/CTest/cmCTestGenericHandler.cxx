@@ -96,14 +96,20 @@ const char* cmCTestGenericHandler::GetOption(const std::string& op)
 }
 
 std::vector<std::string> cmCTestGenericHandler::GetMultiOption(
-  const std::string& op)
+  const std::string& optionName) const
 {
   // Avoid inserting a key, which MultiOptions[op] would do.
-  auto remit = this->MultiOptions.find(op);
+  auto remit = this->MultiOptions.find(optionName);
   if (remit == this->MultiOptions.end()) {
     return std::vector<std::string>();
   }
   return remit->second;
+}
+
+bool cmCTestGenericHandler::MultiOptionHasValue(
+  const std::string& optionName) const
+{
+  return this->MultiOptions.find(optionName) != this->MultiOptions.end();
 }
 
 bool cmCTestGenericHandler::StartResultingXML(cmCTest::Part part,
