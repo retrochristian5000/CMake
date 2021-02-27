@@ -325,15 +325,13 @@ private:
   bool UseIncludeRegExpFlag;
   bool UseExcludeRegExpFlag;
   bool UseExcludeRegExpFirst;
-  std::string IncludeLabelRegExp;
-  std::string ExcludeLabelRegExp;
   std::string IncludeRegExp;
   std::string ExcludeRegExp;
   std::string ExcludeFixtureRegExp;
   std::string ExcludeFixtureSetupRegExp;
   std::string ExcludeFixtureCleanupRegExp;
-  cmsys::RegularExpression IncludeLabelRegularExpression;
-  cmsys::RegularExpression ExcludeLabelRegularExpression;
+  std::vector<cmsys::RegularExpression> IncludeLabelRegularExpressions;
+  std::vector<cmsys::RegularExpression> ExcludeLabelRegularExpressions;
   cmsys::RegularExpression IncludeTestsRegularExpression;
   cmsys::RegularExpression ExcludeTestsRegularExpression;
 
