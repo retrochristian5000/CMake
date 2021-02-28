@@ -847,7 +847,9 @@ void cmGlobalUnixMakefileGenerator3::InitializeProgressMarks()
 
       // Consider the directory containing the target and all its
       // parents until something excludes the target.
-      for (; csnp.IsValid() && !this->IsExcluded(csnp, tsnp);
+      for (; csnp.IsValid() &&
+           (!this->IsExcluded(csnp, tsnp) ||
+            IsExplicitlyIncluded(tlg, gt.get()));
            csnp = csnp.GetBuildsystemDirectoryParent()) {
         // This local generator includes the target.
         std::set<cmGeneratorTarget const*>& targetSet =

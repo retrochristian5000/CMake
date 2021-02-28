@@ -563,6 +563,10 @@ protected:
   bool IsExcluded(cmLocalGenerator* root, cmLocalGenerator* gen) const;
   bool IsExcluded(cmLocalGenerator* root,
                   const cmGeneratorTarget* target) const;
+  // Checks if a target has a explicitly set EXCLUDE_FROM_ALL that is FALSE
+  // (and returns true in that case, the target is included).
+  bool IsExplicitlyIncluded(cmLocalGenerator* root,
+                            const cmGeneratorTarget* target) const;
   virtual void InitializeProgressMarks() {}
 
   struct GlobalTargetInfo

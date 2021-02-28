@@ -2236,6 +2236,20 @@ bool cmGlobalGenerator::IsExcluded(cmLocalGenerator* root,
   if (!target->IsInBuildSystem()) {
     return true;
   }
+
+  if (IsExplicitlyIncluded(root, target)) {
+    return false;
+  }
+
+  // This target is included (or not explicitly excluded) in its directory.
+  // Check whether the directory is excluded.
+  bool excludeDir = this->IsExcluded(root, target->GetLocalGenerator());
+  return excludeDir;
+}
+
+bool cmGlobalGenerator::IsExplicitlyIncluded(
+  cmLocalGenerator* root, const cmGeneratorTarget* target) const
+{
   cmMakefile* mf = root->GetMakefile();
   const std::string EXCLUDE_FROM_ALL = "EXCLUDE_FROM_ALL";
   if (cmProp exclude = target->GetProperty(EXCLUDE_FROM_ALL)) {
@@ -2262,11 +2276,11 @@ bool cmGlobalGenerator::IsExcluded(cmLocalGenerator* root,
         << root->GetGlobalGenerator()->GetName() << "\" generator.";
       mf->IssueMessage(MessageType::FATAL_ERROR, e.str());
     }
-    return trueCount;
+    // Explicitly set to FALSE
+    return falseCount > 0;
   }
-  // This target is included in its directory.  Check whether the
-  // directory is excluded.
-  return this->IsExcluded(root, target->GetLocalGenerator());
+  // Not explicitly set
+  return false;
 }
 
 void cmGlobalGenerator::GetEnabledLanguages(
