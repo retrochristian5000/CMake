@@ -846,10 +846,44 @@ void cmGlobalUnixMakefileGenerator3::InitializeProgressMarks()
       cmStateSnapshot csnp = lg->GetStateSnapshot();
       cmStateSnapshot tsnp = tlg->GetStateSnapshot();
 
+      // Does this target have an explicit EXCLUDE_FROM_ALL setting,
+      // (and if so, what is it).
+      //
+      // If there is not explicit setting:
+      //  - ex.has_value() is false
+      // If there is an explicit setting to TRUE / ON:
+      //  - ex.has_value() is true
+      //  - ex.value() is true
+      // .. and we should have hit the continue, above, because  IsExcluded(),
+      //    but let's check again and continue.
+      // If there is an explicit setting to FALSE / OFF:
+      //  - ex.has_value() is true
+      //  - ex.value() is false
+      // .. this target has been explicitly **in**cluded, and should end up
+      //    in the root ALL target.
+      auto ex = this->IsExplicitlyExcluded(tlg, target.get());
+      if (ex.has_value() && ex.value()) {
+        continue;
+      }
+      const bool targetExplicitlyIncluded = ex.has_value();
+
       // Consider the directory containing the target and all its
       // parents until something excludes the target.
-      for (; csnp.IsValid() && !this->IsExcluded(csnp, tsnp);
-           csnp = csnp.GetBuildsystemDirectoryParent()) {
+      for (; csnp.IsValid(); csnp = csnp.GetBuildsystemDirectoryParent()) {
+        if (this->IsExcluded(csnp, tsnp)) {
+          if (targetExplicitlyIncluded &&
+              csnp.GetDirectory().GetPropertyAsBool("EXCLUDE_FROM_ALL")) {
+            // An explicitly included target, at a level (csnp) that is
+            // itself explicitly excluded, can still be added to
+            // higher levels, so keep going up (but skip this level).
+            continue;
+          }
+          if (!targetExplicitlyIncluded) {
+            break;
+          }
+          // Remaining case is explicitly included, and this level is
+          // not explicitly excluded: add the target here.
+        }
         // This local generator includes the target.
         std::set<cmGeneratorTarget const*>& targetSet =
           this->DirectoryTargetsMap[csnp];
