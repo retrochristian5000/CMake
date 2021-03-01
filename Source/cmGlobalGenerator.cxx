@@ -2230,6 +2230,45 @@ bool cmGlobalGenerator::IsExcluded(cmLocalGenerator* root,
   return this->IsExcluded(rootSnp, snp);
 }
 
+cm::optional<bool> cmGlobalGenerator::IsExplicitlyExcluded(
+  cmLocalGenerator* root, const cmGeneratorTarget* target) const
+{
+  cmMakefile* mf = root->GetMakefile();
+  const std::string EXCLUDE_FROM_ALL = "EXCLUDE_FROM_ALL";
+  if (cmProp exclude = target->GetProperty(EXCLUDE_FROM_ALL)) {
+    // Expand the property value per configuration.
+    unsigned int trueCount = 0;
+    unsigned int falseCount = 0;
+    const std::vector<std::string>& configs =
+      mf->GetGeneratorConfigs(cmMakefile::IncludeEmptyConfig);
+    for (const std::string& config : configs) {
+      cmGeneratorExpressionInterpreter genexInterpreter(root, config, target);
+      if (cmIsOn(genexInterpreter.Evaluate(*exclude, EXCLUDE_FROM_ALL))) {
+        ++trueCount;
+      } else {
+        ++falseCount;
+      }
+    }
+
+    // Check whether the genex expansion of the property agrees in all
+    // configurations.
+    if (trueCount && falseCount) {
+      std::ostringstream e;
+      e << "The EXCLUDE_FROM_ALL property of target \"" << target->GetName()
+        << "\" varies by configuration. This is not supported by the \""
+        << root->GetGlobalGenerator()->GetName() << "\" generator.";
+      mf->IssueMessage(MessageType::FATAL_ERROR, e.str());
+      // Set explicitly, but inconsistent: pretend it's not set at all
+      return cm::optional<bool>();
+    }
+    // Explicitly set and consistent, so return a value (true if at least one
+    // evaluated to TRUE / ON).
+    return cm::optional<bool>(trueCount > 0);
+  }
+  // Not explicitly set
+  return cm::optional<bool>();
+}
+
 bool cmGlobalGenerator::IsExcluded(cmLocalGenerator* root,
                                    const cmGeneratorTarget* target) const
 {
