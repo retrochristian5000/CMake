@@ -8,6 +8,7 @@
 #include <utility>
 
 #include <cm/memory>
+#include <cm/optional>
 #include <cmext/algorithm>
 #include <cmext/memory>
 
@@ -144,12 +145,14 @@ void cmGlobalUnixMakefileGenerator3::Generate()
     total += pmi.second.NumberOfActions;
   }
 
-  // write each target's progress.make this loop is done twice. Basically the
-  // Generate pass counts all the actions, the first loop below determines
+  // write each target's progress.make
+  //
+  // This loop is done twice. Basically the Generate pass counts all the
+  // actions, the first loop (above) below determines a total of
   // how many actions have progress updates for each target and writes to
   // corrrect variable values for everything except the all targets. The
   // second loop actually writes out correct values for the all targets as
-  // well. This is because the all targets require more information that is
+  // well. This is because the all targets require more information than is
   // computed in the first loop.
   unsigned long current = 0;
   for (auto& pmi : this->ProgressMap) {
@@ -835,30 +838,64 @@ void cmGlobalUnixMakefileGenerator3::InitializeProgressMarks()
   this->DirectoryTargetsMap.clear();
   // Loop over all targets in all local generators.
   for (const auto& lg : this->LocalGenerators) {
-    for (const auto& gt : lg->GetGeneratorTargets()) {
-      cmLocalGenerator* tlg = gt->GetLocalGenerator();
+    for (const auto& target : lg->GetGeneratorTargets()) {
+      cmLocalGenerator* tlg = target->GetLocalGenerator();
 
-      if (!gt->IsInBuildSystem() || this->IsExcluded(lg.get(), gt.get())) {
+      if (!target->IsInBuildSystem() ||
+          this->IsExcluded(lg.get(), target.get())) {
         continue;
       }
 
       cmStateSnapshot csnp = lg->GetStateSnapshot();
       cmStateSnapshot tsnp = tlg->GetStateSnapshot();
 
+      // Does this target have an explicit EXCLUDE_FROM_ALL setting:
+      //
+      // If there is no explicit setting:
+      //  - ex.has_value() is false
+      // If there is an explicit setting to TRUE / ON:
+      //  - ex.has_value() is true
+      //  - ex.value() is true
+      // .. we should have hit the `continue`, above, because IsExcluded().
+      //    Check it again and `continue`.
+      // If there is an explicit setting to FALSE / OFF:
+      //  - ex.has_value() is true
+      //  - ex.value() is false
+      // .. this target has been explicitly **in**cluded, and should end up
+      //    in the root ALL target.
+      auto ex = this->IsExplicitlyExcluded(tlg, target.get());
+      if (ex.has_value() && ex.value()) {
+        continue;
+      }
+      const bool targetExplicitlyIncluded = ex.has_value();
+
       // Consider the directory containing the target and all its
       // parents until something excludes the target.
-      for (; csnp.IsValid() && !this->IsExcluded(csnp, tsnp);
-           csnp = csnp.GetBuildsystemDirectoryParent()) {
+      for (; csnp.IsValid(); csnp = csnp.GetBuildsystemDirectoryParent()) {
+        if (this->IsExcluded(csnp, tsnp)) {
+          if (targetExplicitlyIncluded &&
+              csnp.GetDirectory().GetPropertyAsBool("EXCLUDE_FROM_ALL")) {
+            // An explicitly included target, at a level (csnp) that is
+            // itself explicitly excluded, can still be added to
+            // higher levels, so keep going up (but skip this level).
+            continue;
+          }
+          if (!targetExplicitlyIncluded) {
+            break;
+          }
+          // Remaining case is explicitly included, and this level is
+          // not explicitly excluded: add the target here.
+        }
         // This local generator includes the target.
         std::set<cmGeneratorTarget const*>& targetSet =
           this->DirectoryTargetsMap[csnp];
-        targetSet.insert(gt.get());
+        targetSet.insert(target.get());
 
         // Add dependencies of the included target.  An excluded
         // target may still be included if it is a dependency of a
         // non-excluded target.
         for (cmTargetDepend const& tgtdep :
-             this->GetTargetDirectDepends(gt.get())) {
+             this->GetTargetDirectDepends(target.get())) {
           targetSet.insert(tgtdep);
         }
       }

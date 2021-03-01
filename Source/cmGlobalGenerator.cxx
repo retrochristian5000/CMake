@@ -2230,12 +2230,9 @@ bool cmGlobalGenerator::IsExcluded(cmLocalGenerator* root,
   return this->IsExcluded(rootSnp, snp);
 }
 
-bool cmGlobalGenerator::IsExcluded(cmLocalGenerator* root,
-                                   const cmGeneratorTarget* target) const
+cm::optional<bool> cmGlobalGenerator::IsExplicitlyExcluded(
+  cmLocalGenerator* root, const cmGeneratorTarget* target) const
 {
-  if (!target->IsInBuildSystem()) {
-    return true;
-  }
   cmMakefile* mf = root->GetMakefile();
   const std::string EXCLUDE_FROM_ALL = "EXCLUDE_FROM_ALL";
   if (cmProp exclude = target->GetProperty(EXCLUDE_FROM_ALL)) {
@@ -2261,9 +2258,29 @@ bool cmGlobalGenerator::IsExcluded(cmLocalGenerator* root,
         << "\" varies by configuration. This is not supported by the \""
         << root->GetGlobalGenerator()->GetName() << "\" generator.";
       mf->IssueMessage(MessageType::FATAL_ERROR, e.str());
+      // Set explicitly, but inconsistent: pretend it's not set at all
+      return cm::optional<bool>();
     }
-    return trueCount;
+    // Explicitly set and consistent, so return a value (true if at least one
+    // evaluated to TRUE / ON).
+    return cm::optional<bool>(trueCount > 0);
   }
+  // Not explicitly set
+  return cm::optional<bool>();
+}
+
+bool cmGlobalGenerator::IsExcluded(cmLocalGenerator* root,
+                                   const cmGeneratorTarget* target) const
+{
+  if (!target->IsInBuildSystem()) {
+    return true;
+  }
+
+  auto ex = this->IsExplicitlyExcluded(root, target);
+  if (ex.has_value() && ex.value()) {
+    return true;
+  }
+
   // This target is included in its directory.  Check whether the
   // directory is excluded.
   return this->IsExcluded(root, target->GetLocalGenerator());
