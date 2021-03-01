@@ -835,10 +835,11 @@ void cmGlobalUnixMakefileGenerator3::InitializeProgressMarks()
   this->DirectoryTargetsMap.clear();
   // Loop over all targets in all local generators.
   for (const auto& lg : this->LocalGenerators) {
-    for (const auto& gt : lg->GetGeneratorTargets()) {
-      cmLocalGenerator* tlg = gt->GetLocalGenerator();
+    for (const auto& target : lg->GetGeneratorTargets()) {
+      cmLocalGenerator* tlg = target->GetLocalGenerator();
 
-      if (!gt->IsInBuildSystem() || this->IsExcluded(lg.get(), gt.get())) {
+      if (!target->IsInBuildSystem() ||
+          this->IsExcluded(lg.get(), target.get())) {
         continue;
       }
 
@@ -852,13 +853,13 @@ void cmGlobalUnixMakefileGenerator3::InitializeProgressMarks()
         // This local generator includes the target.
         std::set<cmGeneratorTarget const*>& targetSet =
           this->DirectoryTargetsMap[csnp];
-        targetSet.insert(gt.get());
+        targetSet.insert(target.get());
 
         // Add dependencies of the included target.  An excluded
         // target may still be included if it is a dependency of a
         // non-excluded target.
         for (cmTargetDepend const& tgtdep :
-             this->GetTargetDirectDepends(gt.get())) {
+             this->GetTargetDirectDepends(target.get())) {
           targetSet.insert(tgtdep);
         }
       }
