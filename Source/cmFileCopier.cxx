@@ -36,6 +36,7 @@ cmFileCopier::cmFileCopier(cmExecutionStatus& status, const char* name)
   , UseGivenPermissionsDir(false)
   , UseSourcePermissions(true)
   , FollowSymlinkChain(false)
+  , ErrorOccurred(false)
   , Doing(DoingNone)
 {
 }
@@ -244,6 +245,8 @@ bool cmFileCopier::CheckKeyword(std::string const& arg)
     } else {
       this->Doing = DoingFilesFromDir;
     }
+  } else if (arg == "RESULT") {
+    this->Doing = DoingResult;
   } else if (arg == "PATTERN") {
     this->Doing = DoingPattern;
   } else if (arg == "REGEX") {
@@ -321,6 +324,10 @@ bool cmFileCopier::CheckValue(std::string const& arg)
       }
       this->Doing = DoingNone;
       break;
+    case DoingResult:
+      this->Result = arg;
+      this->Doing = DoingNone;
+      break;
     case DoingFilesFromDir:
       if (cmSystemTools::FileIsFullPath(arg)) {
         this->FilesFromDir = arg;
@@ -388,6 +395,7 @@ bool cmFileCopier::Run(std::vector<std::string> const& args)
   if (!this->Parse(args)) {
     return false;
   }
+  this->ErrorOccurred = false;
 
   for (std::string const& f : this->Files) {
     std::string file;
@@ -441,6 +449,12 @@ bool cmFileCopier::Run(std::vector<std::string> const& args)
       return false;
     }
   }
+
+  // Set the result variable to ``0`` since everything succeeded.
+  if (!this->Result.empty() && !this->ErrorOccurred) {
+    this->Makefile->AddDefinition(this->Result, "0");
+  }
+
   return true;
 }
 
@@ -540,6 +554,11 @@ bool cmFileCopier::InstallSymlink(const std::string& fromFile,
     e << this->Name << " cannot read symlink \"" << fromFile
       << "\" to duplicate at \"" << toFile
       << "\": " << cmSystemTools::GetLastSystemError() << ".";
+    if (!this->Result.empty()) {
+      this->Makefile->AddDefinition(this->Result, e.str());
+      this->ErrorOccurred = true;
+      return true;
+    }
     this->Status.SetError(e.str());
     return false;
   }
@@ -572,6 +591,11 @@ bool cmFileCopier::InstallSymlink(const std::string& fromFile,
       e << this->Name << " cannot duplicate symlink \"" << fromFile
         << "\" at \"" << toFile
         << "\": " << cmSystemTools::GetLastSystemError() << ".";
+      if (!this->Result.empty()) {
+        this->Makefile->AddDefinition(this->Result, e.str());
+        this->ErrorOccurred = true;
+        return true;
+      }
       this->Status.SetError(e.str());
       return false;
     }
@@ -601,6 +625,11 @@ bool cmFileCopier::InstallFile(const std::string& fromFile,
     std::ostringstream e;
     e << this->Name << " cannot copy file \"" << fromFile << "\" to \""
       << toFile << "\": " << cmSystemTools::GetLastSystemError() << ".";
+    if (!this->Result.empty()) {
+      this->Makefile->AddDefinition(this->Result, e.str());
+      this->ErrorOccurred = true;
+      return true;
+    }
     this->Status.SetError(e.str());
     return false;
   }
@@ -617,6 +646,11 @@ bool cmFileCopier::InstallFile(const std::string& fromFile,
       std::ostringstream e;
       e << this->Name << " cannot set modification time on \"" << toFile
         << "\": " << cmSystemTools::GetLastSystemError() << ".";
+      if (!this->Result.empty()) {
+        this->Makefile->AddDefinition(this->Result, e.str());
+        this->ErrorOccurred = true;
+        return true;
+      }
       this->Status.SetError(e.str());
       return false;
     }
@@ -654,6 +688,11 @@ bool cmFileCopier::InstallDirectory(const std::string& source,
     std::ostringstream e;
     e << this->Name << " cannot make directory \"" << destination
       << "\": " << cmSystemTools::GetLastSystemError() << ".";
+    if (!this->Result.empty()) {
+      this->Makefile->AddDefinition(this->Result, e.str());
+      this->ErrorOccurred = true;
+      return true;
+    }
     this->Status.SetError(e.str());
     return false;
   }
