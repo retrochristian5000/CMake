@@ -929,7 +929,7 @@ function(_ExternalData_link_or_copy src dst)
   file(MAKE_DIRECTORY "${dst_dir}")
   _ExternalData_random(random)
   set(tmp "${dst}.tmp${random}")
-  if(UNIX AND NOT ExternalData_NO_SYMLINKS)
+  if(NOT ExternalData_NO_SYMLINKS)
     # Create a symbolic link.
     set(tgt "${src}")
     if(relative_top)
