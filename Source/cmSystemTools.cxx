@@ -87,6 +87,7 @@
 #  include <unistd.h>
 
 #  include <sys/time.h>
+#  include <sys/types.h>
 #endif
 
 #if defined(_WIN32) &&                                                        \
@@ -989,6 +990,149 @@ bool cmMoveFile(std::wstring const& oldname, std::wstring const& newname,
 }
 }
 #endif
+
+/**
+ * Blockwise copy source to destination file
+ */
+static bool CopyFileContentBlockwise(const std::string& source,
+                                     const std::string& destination)
+{
+  // Open files
+  cmsys::ifstream fin(source.c_str(), std::ios::in | std::ios::binary);
+  if (!fin) {
+    return false;
+  }
+
+  // try and remove the destination file so that read only destination files
+  // can be written to.
+  // If the remove fails continue so that files in read only directories
+  // that do not allow file removal can be modified.
+  cmSystemTools::RemoveFile(destination);
+
+  cmsys::ofstream fout(destination.c_str(),
+                       std::ios::out | std::ios::trunc | std::ios::binary);
+  if (!fout) {
+    return false;
+  }
+
+  // This copy loop is very sensitive on certain platforms with
+  // slightly broken stream libraries (like HPUX).  Normally, it is
+  // incorrect to not check the error condition on the fin.read()
+  // before using the data, but the fin.gcount() will be zero if an
+  // error occurred.  Therefore, the loop should be safe everywhere.
+  while (fin) {
+    const int bufferSize = 4096;
+    char buffer[bufferSize];
+
+    fin.read(buffer, bufferSize);
+    if (fin.gcount()) {
+      fout.write(buffer, fin.gcount());
+    } else {
+      break;
+    }
+  }
+
+  // Make sure the operating system has finished writing the file
+  // before closing it.  This will ensure the file is finished before
+  // the check below.
+  fout.flush();
+
+  fin.close();
+  fout.close();
+
+  return !fout.fail();
+}
+
+/**
+ * Clone the source file to the destination file
+ *
+ * If available, the Linux FICLONE ioctl is used to create a check
+ * copy-on-write clone of the source file.
+ *
+ * The method returns false for the following cases:
+ * - The code has not been compiled on Linux or the ioctl was unknown
+ * - The source and destination is on different file systems
+ * - The underlying filesystem does not support file cloning
+ * - An unspecified error occurred
+ */
+static bool CloneFileContent(const std::string& source,
+                             const std::string& destination)
+{
+#if defined(__linux) && defined(FICLONE)
+  int in = open(source.c_str(), O_RDONLY);
+  if (in < 0) {
+    return false;
+  }
+
+  cmSystemTools::RemoveFile(destination);
+
+  int out =
+    open(destination.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+  if (out < 0) {
+    close(in);
+    return false;
+  }
+
+  int result = ioctl(out, FICLONE, in);
+  close(in);
+  close(out);
+
+  if (result < 0) {
+    return false;
+  }
+
+  return true;
+#else
+  (void)source;
+  (void)destination;
+  return false;
+#endif
+}
+
+bool cmSystemTools::CopySingleFile(const std::string& oldname,
+                                   const std::string& newname)
+{
+  return cmSystemTools::CopySingleFile(oldname, newname, CopyWhen::Always) ==
+    CopyResult::Success;
+}
+
+cmSystemTools::CopyResult cmSystemTools::CopySingleFile(
+  std::string const& oldname, std::string const& newname, CopyWhen when,
+  std::string* err)
+{
+  switch (when) {
+    case CopyWhen::Always:
+      break;
+    case CopyWhen::OnlyIfDifferent:
+      if (!FilesDiffer(oldname, newname)) {
+        return CopyResult::Success;
+      }
+      break;
+  }
+
+  mode_t perm = 0;
+  bool perms = SystemTools::GetPermissions(oldname, perm);
+
+  // If files are the same do not copy
+  if (SystemTools::SameFile(oldname, newname)) {
+    return CopyResult::Success;
+  }
+
+  if (!CloneFileContent(oldname, newname)) {
+    // if cloning did not succeed, fall back to blockwise copy
+    if (!CopyFileContentBlockwise(oldname, newname)) {
+      ReportError(err);
+      return CopyResult::Failure;
+    }
+  }
+  if (perms) {
+    if (!SystemTools::SetPermissions(newname, perm)) {
+      ReportError(err);
+      return CopyResult::Failure;
+    }
+  }
+  return CopyResult::Success;
+}
 
 bool cmSystemTools::RenameFile(const std::string& oldname,
                                const std::string& newname)
