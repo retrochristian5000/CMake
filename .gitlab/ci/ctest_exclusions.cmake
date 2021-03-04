@@ -15,10 +15,6 @@ endif ()
 
 if (CMAKE_HOST_WIN32)
   list(APPEND test_exclusions
-    # This test often fails with an undiagnosed subtle race due to the test
-    # re-using the same objects for many files.  Some copy operations fail
-    # to open their input with ERROR_SHARING_VIOLATION.
-    "^Module.ExternalData$"
     )
 endif()
 
