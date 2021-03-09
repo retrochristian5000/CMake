@@ -1693,15 +1693,18 @@ function(_ep_prepare_directories name)
 
   set(comment "Creating directories for '${name}'")
   set(cmd ${CMAKE_COMMAND} -P ${script_filename})
+  set(work_dir ${CMAKE_CURRENT_BINARY_DIR})
 
   # Provide variables that can be used later to create a custom command or
   # invoke the step directly
   set(_EPcomment_MKDIR         "${comment}" PARENT_SCOPE)
   set(_EPcommand_MKDIR         "${cmd}"     PARENT_SCOPE)
+  set(_EPsteptargetcmd_MKDIR   "${cmd}"     PARENT_SCOPE)
   set(_EPalways_MKDIR          FALSE        PARENT_SCOPE)
   set(_EPexcludefrommain_MKDIR FALSE        PARENT_SCOPE)
   set(_EPdepends_MKDIR         ""           PARENT_SCOPE)
   set(_EPdependees_MKDIR       ""           PARENT_SCOPE)
+  set(_EPworkdir_MKDIR         "${work_dir}" PARENT_SCOPE)
 
   foreach(var ${places})
     string(TOUPPER "${var}" VAR)
@@ -2526,12 +2529,80 @@ function(_ep_get_git_submodules_recurse git_submodules_recurse)
 
 endfunction()
 
+# Modelled after the C++ code in cmOutputConverter. We only need a much smaller
+# subset of its functionality here, just for Unix or Windows command shells.
+function(_ep_escape_command_token token out_var)
+  # Special case, empty strings must be preserved
+  if(token STREQUAL "")
+    set(${out_var} [[""]] PARENT_SCOPE)
+    return()
+  endif()
+
+  # Leave shell operators alone
+  set(shell_operators
+    "<" ">" "<<" ">>" "|" "||" "&&" "&>" "1>" "2>" "2>&1" "1>&2"
+  )
+  if(token IN_LIST shell_operators)
+    set(${out_var} ${token} PARENT_SCOPE)
+    return()
+  endif()
+
+  if(CMAKE_HOST_WIN32)
+    # See cmOutputConverter.cxx --> Shell_CharNeedsQuotesOnWindows()
+    # We add % as well because we put the command in a batch file and that requires
+    # % characters to be escaped too, unlike direct cmd invocation.
+    set(need_quotes_regex "[ \t\r\n'#&%<>\\|\\^]")
+  else()
+    # See cmOutputConverter.cxx --> Shell_CharNeedsQuotesOnUnix()
+    set(need_quotes_regex "[ \t\r\n'`;#&\\$\\(\\)~<>\\|\\*\\^\\\\]")
+  endif()
+  if(NOT token MATCHES "${need_quotes_regex}")
+    set(${out_var} "${token}" PARENT_SCOPE)
+    return()
+  endif()
+
+  # See cmOutputConverter::Shell_GetArgument()
+  set(escaped_token "")
+  if(CMAKE_HOST_WIN32)
+    # Only % " and \ need escaping, but for backslashes we only escape them if
+    # they precede a double-quote. The need to escape % characters and duplicate
+    # escaped " characters is because we put this in a batch file rather than
+    # directly in a cmd invocation.
+    # FIXME: Shouldn't need to duplicate double-quotes and it doesn't fully work anyway.
+    #        The batch command parser gets confused about the special character state.
+    # FIXME: Note the special rule for handling tokens that end in a backslash.
+    #        A separate bug means they have already been stripped off by here.
+    string(REGEX REPLACE [==[((\\*)")]==] [==[\2\2\\""]==] escaped_token "${token}")
+    #string(REGEX REPLACE [==[(\\+)$]==] [==[\1\1]==] escaped_token "${escaped_token}")
+    string(REPLACE "%" "%%" escaped_token "${escaped_token}")
+  else()
+    set(escape_regex [==[(["\\`\$\;])]==])
+    string(REGEX REPLACE "${escape_regex}" [==[\\\1]==] escaped_token "${token}")
+  endif()
+  set(${out_var} "\"${escaped_token}\"" PARENT_SCOPE)
+endfunction()
+
+function(_ep_write_if_different filename content)
+  if(EXISTS "${filename}")
+    file(READ "${filename}" existing_content)
+    if(existing_content STREQUAL content)
+      return()
+    endif()
+  endif()
+  file(WRITE "${filename}" "${content}")
+endfunction()
+
+function(_ep_write_if_different_shell_script filename content)
+  _ep_write_if_different("${filename}" "${content}")
+  file(CHMOD "${filename}" PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
+endfunction()
+
 function(_ep_write_command_script
          script_filename
          commands
          work_dir
-         genex_supported
          quiet
+         extra_deps_var
          have_commands_var)
 
   set(sep "${_EP_LIST_SEPARATOR}")
@@ -2540,28 +2611,53 @@ function(_ep_write_command_script
   endif()
   _ep_replace_location_tags_from_vars(commands)
 
+  if(CMAKE_HOST_WIN32)
+    set(shell_extension bat)
+    set(shell_header "@echo off\n")
+  else()
+    set(shell_extension sh)
+    set(shell_header "#!/bin/sh\n")
+  endif()
+
   file(READ
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ExternalProject/customcommand.cmake.in
     exec_command_template
   )
   set(script_content)
   set(this_command)
+  set(sep "")
+  set(counter 0)
+  set(extra_deps "")
   foreach(token IN LISTS commands)
     if(token STREQUAL "COMMAND")
-      if("${this_command}" STREQUAL "")
+      set(sep "")
+      if("${this_command}" MATCHES [[^(\"\")?$]])
         # Silently skip empty commands
         continue()
       endif()
+      set(shell_script_filename "${script_filename}.${counter}.${shell_extension}")
+      _ep_write_if_different_shell_script("${shell_script_filename}" "${shell_header}${this_command}")
+      list(APPEND extra_deps ${shell_script_filename})
+      math(EXPR counter "${counter} + 1")
       string(CONFIGURE "${exec_command_template}" content @ONLY)
       string(APPEND script_content "${content}")
       set(this_command)
     else()
-      # Ensure we quote every token so we preserve empty items, quotes, etc
-      string(APPEND this_command " [==[${token}]==]")
+      if(sep STREQUAL "")
+        file(TO_NATIVE_PATH "${token}" token)
+      endif()
+      # Ensure we quote and escape the token as needed to preserve empty items,
+      # quotes, special characters, etc.
+      _ep_escape_command_token("${token}" token)
+      string(APPEND this_command "${sep}${token}")
+      set(sep " ")
     endif()
   endforeach()
 
   if(NOT "${this_command}" STREQUAL "")
+    set(shell_script_filename "${script_filename}.${counter}.${shell_extension}")
+    _ep_write_if_different_shell_script("${shell_script_filename}" "${shell_header}${this_command}")
+    list(APPEND extra_deps ${shell_script_filename})
     string(CONFIGURE "${exec_command_template}" content @ONLY)
     string(APPEND script_content "${content}")
   endif()
@@ -2577,27 +2673,14 @@ function(_ep_write_command_script
     string(CONFIGURE "${exec_command_preamble}" exec_command_preamble @ONLY)
     string(PREPEND script_content "${exec_command_preamble}")
   endif()
+  set("${extra_deps_var}" "${extra_deps}" PARENT_SCOPE)
 
-  if(genex_supported)
-    # Only written at generation phase. This will only change the file's
-    # timestamp if the contents change.
-    file(GENERATE OUTPUT "${script_filename}" CONTENT "${script_content}")
-  else()
-    # Update the file immediately, needed if script has to be invoked in the
-    # configure phase (e.g. via FetchContent). We need to be careful to avoid
-    # updating the timestamp if the file contents don't change. The file(WRITE)
-    # command always updates the file, so avoid it if we don't need to call it.
-    set(doWrite TRUE)
-    if(EXISTS "${script_filename}")
-      file(READ "${script_filename}" existing_content)
-      if(existing_content STREQUAL script_content)
-        set(doWrite FALSE)
-      endif()
-    endif()
-    if(doWrite)
-      file(WRITE "${script_filename}" "${script_content}")
-    endif()
-  endif()
+  # The script needs to be available during the configure phase, so it cannot
+  # support generator expressions and has to be written out now. We also need
+  # to be careful to avoid updating the timestamp if the file contents don't
+  # change. The file(WRITE) command always updates the file, so avoid it if we
+  # don't need to call it.
+  _ep_write_if_different("${script_filename}" "${script_content}")
 
 endfunction()
 
@@ -2611,16 +2694,36 @@ function(_ep_add_preconfigure_command name step)
     set(uses_terminal FALSE)
   endif()
 
-  # Pre-configure steps are expected to set their own work_dir
-  ExternalProject_Add_Step(${name} ${step}
-    INDEPENDENT        TRUE
-    COMMENT           "${_EPcomment_${STEP}}"
-    COMMAND            ${_EPcommand_${STEP}}
-    ALWAYS             ${_EPalways_${STEP}}
-    EXCLUDE_FROM_MAIN  ${_EPexcludefrommain_${STEP}}
-    DEPENDS            ${_EPdepends_${STEP}}
-    DEPENDEES          ${_EPdependees_${STEP}}
-    USES_TERMINAL      ${uses_terminal}
+  # In the case of custom commands, _EPsteptargetcmd_${STEP} contains the
+  # original command arguments given to the ExternalProject_Add() command.
+  # We need these because they may contain special contents like $(MAKE),
+  # which are handled specially by the add_custom_command() call inside
+  # ExternalProject_Add_Step() - see the C++ cmOutputConverter class for the
+  # sort of things than need to be handled. This is why we don't use the
+  # generated CMake script file here, even though it contains code to run the
+  # step. The script is only suitable for FetchContent which doesn't have the
+  # same need to support things related to the build tool, since it executes
+  # the step at configure time rather than build time. We still use the
+  # script file as a dependency here though to robustly ensure that we re-run
+  # the step if anything about the command changes.
+  # The use of cmake_language() is necessary to preserve empty arguments.
+
+  set(cmd_quoted)
+  foreach(item IN LISTS _EPsteptargetcmd_${STEP})
+    string(APPEND cmd_quoted " [==[${item}]==]")
+  endforeach()
+  cmake_language(EVAL CODE "
+    ExternalProject_Add_Step(${name} ${step}
+      INDEPENDENT        TRUE
+      COMMENT           \${_EPcomment_${STEP}}
+      COMMAND            ${cmd_quoted}
+      WORKING_DIRECTORY  ${_EPworkdir_${STEP}}
+      ALWAYS             ${_EPalways_${STEP}}
+      EXCLUDE_FROM_MAIN  ${_EPexcludefrommain_${STEP}}
+      DEPENDS            ${_EPdepends_${STEP}}
+      DEPENDEES          ${_EPdependees_${STEP}}
+      USES_TERMINAL      ${uses_terminal}
+    )"
   )
 endfunction()
 
@@ -2635,15 +2738,13 @@ endfunction()
 # Variables will also be set in the calling scope to enable subsequently
 # calling _ep_add_preconfigure_command() for the download step.
 #
-function(_ep_prepare_download name genex_supported)
+function(_ep_prepare_download name)
 
   set(stamp_dir    "${_EP_STAMP_DIR}")
   set(tmp_dir      "${_EP_TMP_DIR}")
   set(source_dir   "${_EP_SOURCE_DIR}")
   set(download_dir "${_EP_DOWNLOAD_DIR}")
   set(quiet        "${_EP_QUIET}")
-
-  set(comment)
 
   # We handle the log setting directly here rather than deferring it to
   # be handled by ExternalProject_Add_Step()
@@ -2660,6 +2761,10 @@ function(_ep_prepare_download name genex_supported)
   set(repo_info_file  ${tmp_dir}/${name}-download-repoinfo.txt)
   set(last_run_file ${stamp_dir}/${name}-download-lastrun.txt)
   set(script_does_something TRUE)
+  set(step_target_cmd)
+  set(work_dir ${CMAKE_CURRENT_BINARY_DIR})
+  set(comment)
+  set(extra_deps)
 
   # We use configure_file() to write the repo_info_file below so that the
   # file's timestamp is not updated if we don't change the contents of an
@@ -2679,12 +2784,13 @@ work_dir=${work_dir}
       @ONLY
     )
 
+    set(step_target_cmd "${_EP_DOWNLOAD_COMMAND}")
     _ep_write_command_script(
       "${script_filename}"
-      "${_EP_DOWNLOAD_COMMAND}"
+      "${step_target_cmd}"
       "${work_dir}"
-      "${genex_supported}"
       "${quiet}"
+      extra_deps
       script_does_something
     )
     set(comment "Performing download step (custom command) for '${name}'")
@@ -2715,15 +2821,15 @@ source_dir=${source_dir}
     get_filename_component(src_name "${source_dir}" NAME)
     get_filename_component(work_dir "${source_dir}" PATH)
 
-    set(cmd "${CVS_EXECUTABLE}" -d "${_EP_CVS_REPOSITORY}" -q
+    set(step_target_cmd "${CVS_EXECUTABLE}" -d "${_EP_CVS_REPOSITORY}" -q
       co ${_EP_CVS_TAG} -d "${src_name}" "${_EP_CVS_MODULE}"
     )
     _ep_write_command_script(
       "${script_filename}"
-      "${cmd}"
+      "${step_target_cmd}"
       "${work_dir}"
-      "${genex_supported}"
       "${quiet}"
+      extra_deps
       script_does_something
     )
     set(comment "Performing download step (CVS checkout) for '${name}'")
@@ -2768,15 +2874,15 @@ source_dir=${source_dir}
     get_filename_component(src_name "${source_dir}" NAME)
     get_filename_component(work_dir "${source_dir}" PATH)
 
-    set(cmd "${Subversion_SVN_EXECUTABLE}" co "${svn_repository}"
+    set(step_target_cmd "${Subversion_SVN_EXECUTABLE}" co "${svn_repository}"
       ${svn_revision} ${svn_options} "${src_name}"
     )
     _ep_write_command_script(
       "${script_filename}"
-      "${cmd}"
+      "${step_target_cmd}"
       "${work_dir}"
-      "${genex_supported}"
       "${quiet}"
+      extra_deps
       script_does_something
     )
     set(comment "Performing download step (SVN checkout) for '${name}'")
@@ -2864,6 +2970,7 @@ source_dir=${source_dir}
       "${tls_verify}"
       "${quiet}"
     )
+    set(step_target_cmd ${CMAKE_COMMAND} -P ${script_filename})
     set(comment "Performing download step (git clone) for '${name}'")
 
   elseif(DEFINED _EP_HG_REPOSITORY)
@@ -2910,6 +3017,7 @@ source_dir=${source_dir}
       "${last_run_file}"
       "${quiet}"
     )
+    set(step_target_cmd ${CMAKE_COMMAND} -P ${script_filename})
     set(comment "Performing download step (hg clone) for '${name}'")
 
   elseif(DEFINED _EP_URL)
@@ -3047,6 +3155,7 @@ source_dir=${source_dir}
         )
       endif()
     endif()
+    set(step_target_cmd ${CMAKE_COMMAND} -P ${script_filename})
     set(comment "Performing download step (${steps}) for '${name}'")
 
   else()
@@ -3084,9 +3193,10 @@ source_dir=${source_dir}
   if(script_does_something)
     set(cmd ${CMAKE_COMMAND} -P ${script_filename})
     if(log)
+      set(genex_supported FALSE)
       _ep_write_log_script(${name} download "${genex_supported}" cmd)
     endif()
-    set(depends ${repo_info_file})
+    set(depends ${repo_info_file} ${extra_deps})
   else()
     set(cmd)
     set(depends)
@@ -3095,10 +3205,12 @@ source_dir=${source_dir}
 
   set(_EPcomment_DOWNLOAD         "${comment}" PARENT_SCOPE)
   set(_EPcommand_DOWNLOAD         "${cmd}"     PARENT_SCOPE)
+  set(_EPsteptargetcmd_DOWNLOAD   "${step_target_cmd}" PARENT_SCOPE)
   set(_EPalways_DOWNLOAD          FALSE        PARENT_SCOPE)
   set(_EPexcludefrommain_DOWNLOAD FALSE        PARENT_SCOPE)
   set(_EPdepends_DOWNLOAD         "${depends}" PARENT_SCOPE)
   set(_EPdependees_DOWNLOAD       mkdir        PARENT_SCOPE)
+  set(_EPworkdir_DOWNLOAD         "${work_dir}" PARENT_SCOPE)
 
 endfunction()
 
@@ -3120,13 +3232,16 @@ endfunction()
 # Variables will also be set in the calling scope to enable subsequently
 # calling _ep_add_preconfigure_command() for the updated step.
 #
-function(_ep_prepare_update name genex_supported)
+function(_ep_prepare_update name)
 
   set(tmp_dir    "${_EP_TMP_DIR}")
   set(source_dir "${_EP_SOURCE_DIR}")
   set(quiet      "${_EP_QUIET}")
 
   set(comment)
+  set(step_target_cmd)
+  set(extra_deps)
+  set(work_dir ${CMAKE_CURRENT_BINARY_DIR})
 
   _ep_get_update_disconnected(update_disconnected)
 
@@ -3144,12 +3259,13 @@ function(_ep_prepare_update name genex_supported)
 
   if(DEFINED _EP_UPDATE_COMMAND)
     set(work_dir ${source_dir})
+    set(step_target_cmd "${_EP_UPDATE_COMMAND}")
     _ep_write_command_script(
       "${script_filename}"
-      "${_EP_UPDATE_COMMAND}"
+      "${step_target_cmd}"
       "${work_dir}"
-      "${genex_supported}"
       "${quiet}"
+      extra_deps
       script_does_something
     )
     set(comment "Performing update step (custom command) for '${name}'")
@@ -3160,15 +3276,15 @@ function(_ep_prepare_update name genex_supported)
     endif()
 
     set(work_dir ${source_dir})
-    set(cmd "${CVS_EXECUTABLE}" -d "${_EP_CVS_REPOSITORY}" -q
+    set(step_target_cmd "${CVS_EXECUTABLE}" -d "${_EP_CVS_REPOSITORY}" -q
       up -dP ${_EP_CVS_TAG}
     )
     _ep_write_command_script(
       "${script_filename}"
-      "${cmd}"
+      "${step_target_cmd}"
       "${work_dir}"
-      "${genex_supported}"
       "${quiet}"
+      extra_deps
       script_does_something
     )
     set(comment "Performing update step (CVS update) for '${name}'")
@@ -3195,14 +3311,14 @@ function(_ep_prepare_update name genex_supported)
     endif()
 
     set(work_dir ${source_dir})
-    set(cmd "${Subversion_SVN_EXECUTABLE}" up ${svn_revision} ${svn_options})
+    set(step_target_cmd "${Subversion_SVN_EXECUTABLE}" up ${svn_revision} ${svn_options})
 
     _ep_write_command_script(
       "${script_filename}"
-      "${cmd}"
+      "${step_target_cmd}"
       "${work_dir}"
-      "${genex_supported}"
       "${quiet}"
+      extra_deps
       script_does_something
     )
     set(comment "Performing update step (SVN update) for '${name}'")
@@ -3263,6 +3379,7 @@ function(_ep_prepare_update name genex_supported)
       "${quiet}"
     )
     set(script_does_something TRUE)
+    set(step_target_cmd ${CMAKE_COMMAND} -P ${script_filename})
     set(comment "Performing update step (git update) for '${name}'")
 
   elseif(DEFINED _EP_HG_REPOSITORY)
@@ -3292,6 +3409,7 @@ Update to Mercurial >= 2.1.1.
       "${quiet}"
     )
     set(script_does_something TRUE)
+    set(step_target_cmd ${CMAKE_COMMAND} -P ${script_filename})
     set(comment "Performing update step (hg pull) for '${name}'")
 
   else()
@@ -3304,6 +3422,7 @@ Update to Mercurial >= 2.1.1.
     set(always TRUE)
     set(cmd ${CMAKE_COMMAND} -P ${script_filename})
     if(log)
+      set(genex_supported FALSE)
       _ep_write_log_script(${name} update "${genex_supported}" cmd)
     endif()
   else()
@@ -3313,10 +3432,12 @@ Update to Mercurial >= 2.1.1.
 
   set(_EPcomment_UPDATE         "${comment}"  PARENT_SCOPE)
   set(_EPcommand_UPDATE         "${cmd}"      PARENT_SCOPE)
+  set(_EPsteptargetcmd_UPDATE   "${step_target_cmd}" PARENT_SCOPE)
   set(_EPalways_UPDATE          "${always}"   PARENT_SCOPE)
   set(_EPexcludefrommain_UPDATE "${update_disconnected}" PARENT_SCOPE)
-  set(_EPdepends_UPDATE         ""            PARENT_SCOPE)
+  set(_EPdepends_UPDATE         "${extra_deps}"          PARENT_SCOPE)
   set(_EPdependees_UPDATE       download      PARENT_SCOPE)
+  set(_EPworkdir_UPDATE         "${work_dir}" PARENT_SCOPE)
 
 endfunction()
 
@@ -3329,7 +3450,7 @@ endfunction()
 # Variables will also be set in the calling scope to enable subsequently
 # calling _ep_add_preconfigure_command() for the patch step.
 #
-function(_ep_prepare_patch name genex_supported)
+function(_ep_prepare_patch name)
 
   set(tmp_dir    "${_EP_TMP_DIR}")
   set(source_dir "${_EP_SOURCE_DIR}")
@@ -3354,19 +3475,26 @@ function(_ep_prepare_patch name genex_supported)
     set(log FALSE)
   endif()
 
+  set(cmd)
+  set(step_target_cmd)
+  set(extra_deps)
+  set(work_dir ${CMAKE_CURRENT_BINARY_DIR})
+
   if(DEFINED _EP_PATCH_COMMAND)
     set(work_dir "${source_dir}")
+    set(step_target_cmd "${_EP_PATCH_COMMAND}")
     _ep_write_command_script(
       "${script_filename}"
-      "${_EP_PATCH_COMMAND}"
+      "${step_target_cmd}"
       "${work_dir}"
-      "${genex_supported}"
       "${quiet}"
+      extra_deps
       script_does_something
     )
     if(script_does_something)
       set(cmd ${CMAKE_COMMAND} -P ${script_filename})
       if(log)
+        set(genex_supported FALSE)
         _ep_write_log_script(${name} patch "${genex_supported}" cmd)
       endif()
       set(comment "Performing patch step (custom command) for '${name}'")
@@ -3383,10 +3511,12 @@ function(_ep_prepare_patch name genex_supported)
   # invoke the step directly
   set(_EPcomment_PATCH         "${comment}"   PARENT_SCOPE)
   set(_EPcommand_PATCH         "${cmd}"       PARENT_SCOPE)
+  set(_EPsteptargetcmd_PATCH   "${step_target_cmd}" PARENT_SCOPE)
   set(_EPalways_PATCH          FALSE          PARENT_SCOPE)
   set(_EPexcludefrommain_PATCH FALSE          PARENT_SCOPE)
-  set(_EPdepends_PATCH         ""             PARENT_SCOPE)
+  set(_EPdepends_PATCH         "${extra_deps}" PARENT_SCOPE)
   set(_EPdependees_PATCH       "${patch_dep}" PARENT_SCOPE)
+  set(_EPworkdir_PATCH         "${work_dir}"  PARENT_SCOPE)
 
 endfunction()
 
@@ -3893,17 +4023,15 @@ function(_ep_do_preconfigure_steps_now name)
     PARENT_SCOPE # undocumented, do not use outside of CMake
   )
 
-  set(genex_supported FALSE)
-
   _ep_get_add_keywords(keywords)
   _ep_parse_arguments_to_vars("${keywords};QUIET" ${name} _EP_ "${ARGN}")
 
   _ep_get_update_disconnected(update_disconnected)
 
   _ep_prepare_directories(${name})
-  _ep_prepare_download(${name} ${genex_supported})
-  _ep_prepare_update(${name} ${genex_supported})
-  _ep_prepare_patch(${name} ${genex_supported})
+  _ep_prepare_download(${name})
+  _ep_prepare_update(${name})
+  _ep_prepare_patch(${name})
 
   set(stamp_dir "${_EP_STAMP_DIR}")
   set(tmp_dir   "${_EP_TMP_DIR}")
@@ -3973,14 +4101,12 @@ function(ExternalProject_Add name)
     set(cmp0114 "NEW")
   endif()
 
-  set(genex_supported TRUE)
-
   _ep_get_add_keywords(keywords)
   _ep_parse_arguments_to_vars("${keywords}" ${name} _EP_ "${ARGN}")
   _ep_prepare_directories(${name})
-  _ep_prepare_download(${name} ${genex_supported})
-  _ep_prepare_update(${name} ${genex_supported})
-  _ep_prepare_patch(${name} ${genex_supported})
+  _ep_prepare_download(${name})
+  _ep_prepare_update(${name})
+  _ep_prepare_patch(${name})
 
   _ep_get_configuration_subdir_suffix(cfgdir)
 

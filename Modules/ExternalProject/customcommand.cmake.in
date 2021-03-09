@@ -1,6 +1,6 @@
 
 execute_process(
-  COMMAND @this_command@
+  COMMAND [====[@shell_script_filename@]====]
   WORKING_DIRECTORY "@work_dir@"
   RESULT_VARIABLE result
   ${capture_output}

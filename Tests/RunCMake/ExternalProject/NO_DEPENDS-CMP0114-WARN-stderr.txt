@@ -11,7 +11,9 @@
   but the option is deprecated in favor of policy CMP0114.
 Call Stack \(most recent call first\):
   [^
-]*/Modules/ExternalProject.cmake:[0-9]+ \(ExternalProject_Add_Step\)
+]*/Modules/ExternalProject.cmake:[0-9]+:EVAL:2 \(ExternalProject_Add_Step\)
+  [^
+]*/Modules/ExternalProject.cmake:[0-9]+ \(cmake_language\)
   [^
 ]*/Modules/ExternalProject.cmake:[0-9]+ \(_ep_add_preconfigure_command\)
   NO_DEPENDS-CMP0114-Common.cmake:[0-9]+ \(ExternalProject_Add\)
@@ -66,7 +68,9 @@ CMake Warning \(dev\) at [^
   but the option is deprecated in favor of policy CMP0114.
 Call Stack \(most recent call first\):
   [^
-]*/Modules/ExternalProject.cmake:[0-9]+ \(ExternalProject_Add_Step\)
+]*/Modules/ExternalProject.cmake:[0-9]+:EVAL:2 \(ExternalProject_Add_Step\)
+  [^
+]*/Modules/ExternalProject.cmake:[0-9]+ \(cmake_language\)
   [^
 ]*/Modules/ExternalProject.cmake:[0-9]+ \(_ep_add_preconfigure_command\)
   NO_DEPENDS-CMP0114-Common.cmake:[0-9]+ \(ExternalProject_Add\)

@@ -118,6 +118,7 @@ function(__ep_test_with_build_with_server testName)
 endfunction()
 
 __ep_test_with_build(MultiCommand)
+__ep_test_with_build(ShellFeatures)
 
 set(RunCMake_TEST_OUTPUT_MERGE 1)
 __ep_test_with_build(PreserveEmptyArgs)

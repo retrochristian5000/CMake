@@ -3,6 +3,7 @@ include(RunCMake)
 unset(RunCMake_TEST_NO_CLEAN)
 
 run_cmake(MultiCommand)
+run_cmake(ShellFeatures)
 run_cmake(MissingDetails)
 run_cmake(DirectIgnoresDetails)
 run_cmake(FirstDetailsWin)
