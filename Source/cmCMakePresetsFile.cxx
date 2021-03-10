@@ -981,7 +981,7 @@ bool ExpandMacros(const cmCMakePresetsFile& file, const T& preset,
   MacroExpander defaultMacroExpander =
     [&file, &preset](const std::string& macroNamespace,
                      const std::string& macroName, std::string& macroOut,
-                     int /*version*/) -> ExpandMacroResult {
+                     int version) -> ExpandMacroResult {
     if (macroNamespace.empty()) {
       if (macroName == "sourceDir") {
         macroOut += file.SourceDir;
@@ -1008,6 +1008,17 @@ bool ExpandMacros(const cmCMakePresetsFile& file, const T& preset,
       }
       if (macroName == "dollar") {
         macroOut += '$';
+        return ExpandMacroResult::Ok;
+      }
+      if (macroName == "hostSystemName") {
+        if (version < 3) {
+          return ExpandMacroResult::Error;
+        }
+        auto systemName = cmSystemTools::GetSystemName();
+        if (systemName == "Darwin") {
+          systemName = "macOS";
+        }
+        macroOut += systemName;
         return ExpandMacroResult::Ok;
       }
     }
