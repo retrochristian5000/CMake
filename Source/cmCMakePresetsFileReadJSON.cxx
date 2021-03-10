@@ -8,6 +8,7 @@
 #include "cmsys/FStream.hxx"
 
 #include "cmCMakePresetsFile.h"
+#include "cmCMakePresetsFileInternal.h"
 #include "cmJSONHelpers.h"
 #include "cmVersion.h"
 
@@ -36,6 +37,180 @@ struct RootPresets
   std::vector<cmCMakePresetsFile::BuildPreset> BuildPresets;
   std::vector<cmCMakePresetsFile::TestPreset> TestPresets;
 };
+
+cmCMakePresetsFileInternal::NotCondition* InvertCondition(
+  std::unique_ptr<cmCMakePresetsFile::Condition> condition)
+{
+  auto* retval = new cmCMakePresetsFileInternal::NotCondition;
+  retval->SubCondition = std::move(condition);
+  return retval;
+}
+
+auto const ConditionStringHelper = cmJSONStringHelper<ReadFileResult>(
+  ReadFileResult::READ_OK, ReadFileResult::INVALID_CONDITION);
+
+auto const ConditionBoolHelper = cmJSONBoolHelper<ReadFileResult>(
+  ReadFileResult::READ_OK, ReadFileResult::INVALID_CONDITION);
+
+auto const ConditionStringListHelper =
+  cmJSONVectorHelper<std::string, ReadFileResult>(
+    ReadFileResult::READ_OK, ReadFileResult::INVALID_CONDITION,
+    ConditionStringHelper);
+
+auto const ConstConditionHelper =
+  cmJSONObjectHelper<cmCMakePresetsFileInternal::ConstCondition,
+                     ReadFileResult>(ReadFileResult::READ_OK,
+                                     ReadFileResult::INVALID_CONDITION, false)
+    .Bind<std::string>("type"_s, nullptr, ConditionStringHelper, true)
+    .Bind("value"_s, &cmCMakePresetsFileInternal::ConstCondition::Value,
+          ConditionBoolHelper, true);
+
+auto const EqualsConditionHelper =
+  cmJSONObjectHelper<cmCMakePresetsFileInternal::EqualsCondition,
+                     ReadFileResult>(ReadFileResult::READ_OK,
+                                     ReadFileResult::INVALID_CONDITION, false)
+    .Bind<std::string>("type"_s, nullptr, ConditionStringHelper, true)
+    .Bind("lhs"_s, &cmCMakePresetsFileInternal::EqualsCondition::Lhs,
+          ConditionStringHelper, true)
+    .Bind("rhs"_s, &cmCMakePresetsFileInternal::EqualsCondition::Rhs,
+          ConditionStringHelper, true);
+
+auto const InListConditionHelper =
+  cmJSONObjectHelper<cmCMakePresetsFileInternal::InListCondition,
+                     ReadFileResult>(ReadFileResult::READ_OK,
+                                     ReadFileResult::INVALID_CONDITION, false)
+    .Bind<std::string>("type"_s, nullptr, ConditionStringHelper, true)
+    .Bind("string"_s, &cmCMakePresetsFileInternal::InListCondition::String,
+          ConditionStringHelper, true)
+    .Bind("list"_s, &cmCMakePresetsFileInternal::InListCondition::List,
+          ConditionStringListHelper, true);
+
+ReadFileResult SubConditionHelper(
+  std::unique_ptr<cmCMakePresetsFile::Condition>& out,
+  const Json::Value* value);
+
+auto const ListConditionVectorHelper =
+  cmJSONVectorHelper<std::unique_ptr<cmCMakePresetsFile::Condition>,
+                     ReadFileResult>(ReadFileResult::READ_OK,
+                                     ReadFileResult::INVALID_CONDITION,
+                                     SubConditionHelper);
+auto const AnyAllOfConditionHelper =
+  cmJSONObjectHelper<cmCMakePresetsFileInternal::AnyAllOfCondition,
+                     ReadFileResult>(ReadFileResult::READ_OK,
+                                     ReadFileResult::INVALID_CONDITION, false)
+    .Bind<std::string>("type"_s, nullptr, ConditionStringHelper, true)
+    .Bind("conditions"_s,
+          &cmCMakePresetsFileInternal::AnyAllOfCondition::Conditions,
+          ListConditionVectorHelper);
+
+auto const NotConditionHelper =
+  cmJSONObjectHelper<cmCMakePresetsFileInternal::NotCondition, ReadFileResult>(
+    ReadFileResult::READ_OK, ReadFileResult::INVALID_CONDITION, false)
+    .Bind<std::string>("type"_s, nullptr, ConditionStringHelper, true)
+    .Bind("condition"_s,
+          &cmCMakePresetsFileInternal::NotCondition::SubCondition,
+          SubConditionHelper);
+
+ReadFileResult ConditionHelper(cmCMakePresetsFile::Condition*& out,
+                               const Json::Value* value)
+{
+  if (!value) {
+    out = nullptr;
+    return ReadFileResult::READ_OK;
+  }
+
+  if (value->isBool()) {
+    auto* c = new cmCMakePresetsFileInternal::ConstCondition;
+    c->Value = value->asBool();
+    out = c;
+    return ReadFileResult::READ_OK;
+  }
+
+  if (value->isNull()) {
+    out = new cmCMakePresetsFileInternal::NullCondition;
+    return ReadFileResult::READ_OK;
+  }
+
+  if (value->isObject()) {
+    if (!value->isMember("type")) {
+      return ReadFileResult::INVALID_CONDITION;
+    }
+
+    if (!(*value)["type"].isString()) {
+      return ReadFileResult::INVALID_CONDITION;
+    }
+    auto type = (*value)["type"].asString();
+
+    if (type == "const") {
+      auto* c = new cmCMakePresetsFileInternal::ConstCondition;
+      CHECK_OK(ConstConditionHelper(*c, value));
+      out = c;
+      return ReadFileResult::READ_OK;
+    }
+
+    if (type == "equals" || type == "notEquals") {
+      auto* c = new cmCMakePresetsFileInternal::EqualsCondition;
+      CHECK_OK(EqualsConditionHelper(*c, value));
+      out = c;
+      if (type == "notEquals") {
+        out =
+          InvertCondition(std::unique_ptr<cmCMakePresetsFile::Condition>(out));
+      }
+      return ReadFileResult::READ_OK;
+    }
+
+    if (type == "inList" || type == "notInList") {
+      auto* c = new cmCMakePresetsFileInternal::InListCondition;
+      CHECK_OK(InListConditionHelper(*c, value));
+      out = c;
+      if (type == "notInList") {
+        out =
+          InvertCondition(std::unique_ptr<cmCMakePresetsFile::Condition>(out));
+      }
+      return ReadFileResult::READ_OK;
+    }
+
+    if (type == "anyOf" || type == "allOf") {
+      auto* c = new cmCMakePresetsFileInternal::AnyAllOfCondition;
+      c->StopValue = (type == "anyOf");
+      CHECK_OK(AnyAllOfConditionHelper(*c, value));
+      out = c;
+      return ReadFileResult::READ_OK;
+    }
+
+    if (type == "not") {
+      auto* c = new cmCMakePresetsFileInternal::NotCondition;
+      CHECK_OK(NotConditionHelper(*c, value));
+      out = c;
+      return ReadFileResult::READ_OK;
+    }
+  }
+
+  return ReadFileResult::INVALID_CONDITION;
+}
+
+ReadFileResult PresetConditionHelper(
+  std::shared_ptr<cmCMakePresetsFile::Condition>& out,
+  const Json::Value* value)
+{
+  cmCMakePresetsFile::Condition* ptr = nullptr;
+  auto result = ConditionHelper(ptr, value);
+  out.reset(ptr);
+  return result;
+}
+
+ReadFileResult SubConditionHelper(
+  std::unique_ptr<cmCMakePresetsFile::Condition>& out,
+  const Json::Value* value)
+{
+  cmCMakePresetsFile::Condition* ptr = nullptr;
+  auto result = ConditionHelper(ptr, value);
+  if (ptr && ptr->IsNull()) {
+    return ReadFileResult::INVALID_CONDITION;
+  }
+  out.reset(ptr);
+  return result;
+}
 
 cmJSONHelper<std::nullptr_t, ReadFileResult> VendorHelper(ReadFileResult error)
 {
@@ -299,7 +474,9 @@ auto const ConfigurePresetHelper =
           false)
     .Bind("warnings"_s, PresetWarningsHelper, false)
     .Bind("errors"_s, PresetErrorsHelper, false)
-    .Bind("debug"_s, PresetDebugHelper, false);
+    .Bind("debug"_s, PresetDebugHelper, false)
+    .Bind("condition"_s, &ConfigurePreset::ConditionEvaluator,
+          PresetConditionHelper, false);
 
 auto const BuildPresetHelper =
   cmJSONObjectHelper<BuildPreset, ReadFileResult>(
@@ -328,7 +505,9 @@ auto const BuildPresetHelper =
           false)
     .Bind("verbose"_s, &BuildPreset::Verbose, PresetOptionalBoolHelper, false)
     .Bind("nativeToolOptions"_s, &BuildPreset::NativeToolOptions,
-          PresetVectorStringHelper, false);
+          PresetVectorStringHelper, false)
+    .Bind("condition"_s, &BuildPreset::ConditionEvaluator,
+          PresetConditionHelper, false);
 
 ReadFileResult TestPresetOutputVerbosityHelper(
   TestPreset::OutputOptions::VerbosityEnum& out, const Json::Value* value)
@@ -644,7 +823,9 @@ auto const TestPresetHelper =
           false)
     .Bind("filter"_s, &TestPreset::Filter, TestPresetFilterHelper, false)
     .Bind("execution"_s, &TestPreset::Execution, TestPresetExecutionHelper,
-          false);
+          false)
+    .Bind("condition"_s, &TestPreset::ConditionEvaluator,
+          PresetConditionHelper, false);
 
 auto const ConfigurePresetsHelper =
   cmJSONVectorHelper<ConfigurePreset, ReadFileResult>(
@@ -759,6 +940,11 @@ cmCMakePresetsFile::ReadFileResult cmCMakePresetsFile::ReadJSONFile(
       return ReadFileResult::INSTALL_PREFIX_UNSUPPORTED;
     }
 
+    // Support for conditions added in version 3.
+    if (v < 3 && preset.ConditionEvaluator) {
+      return ReadFileResult::CONDITION_UNSUPPORTED;
+    }
+
     this->ConfigurePresetOrder.push_back(preset.Name);
   }
 
@@ -774,6 +960,12 @@ cmCMakePresetsFile::ReadFileResult cmCMakePresetsFile::ReadJSONFile(
     if (!this->BuildPresets.emplace(preset.Name, presetPair).second) {
       return ReadFileResult::DUPLICATE_PRESETS;
     }
+
+    // Support for conditions added in version 3.
+    if (v < 3 && preset.ConditionEvaluator) {
+      return ReadFileResult::CONDITION_UNSUPPORTED;
+    }
+
     this->BuildPresetOrder.push_back(preset.Name);
   }
 
@@ -789,6 +981,12 @@ cmCMakePresetsFile::ReadFileResult cmCMakePresetsFile::ReadJSONFile(
     if (!this->TestPresets.emplace(preset.Name, presetPair).second) {
       return ReadFileResult::DUPLICATE_PRESETS;
     }
+
+    // Support for conditions added in version 3.
+    if (v < 3 && preset.ConditionEvaluator) {
+      return ReadFileResult::CONDITION_UNSUPPORTED;
+    }
+
     this->TestPresetOrder.push_back(preset.Name);
   }
 
