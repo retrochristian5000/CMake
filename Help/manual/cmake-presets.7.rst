@@ -119,6 +119,10 @@ that may contain the following fields:
   This field can also be a string, which is equivalent to an array
   containing one string.
 
+``condition``
+
+  An optional `Condition`_ object. New in file version ``3``.
+
 ``vendor``
 
   An optional map containing vendor-specific information. CMake does not
@@ -345,6 +349,10 @@ that may contain the following fields:
   This field can also be a string, which is equivalent to an array
   containing one string.
 
+``condition``
+
+  An optional `Condition`_ object. New in file version ``3``.
+
 ``vendor``
 
   An optional map containing vendor-specific information. CMake does not
@@ -463,6 +471,10 @@ that may contain the following fields:
 
   This field can also be a string, which is equivalent to an array
   containing one string.
+
+``condition``
+
+  An optional `Condition`_ object. New in file version ``3``.
 
 ``vendor``
 
@@ -788,6 +800,68 @@ that may contain the following fields:
     ``ignore``
 
       Equivalent to passing ``--no-tests=ignore`` on the command line.
+
+Condition
+^^^^^^^^^
+
+The ``condition`` field of a preset, new in file version ``3``, is used to
+determine whether or not the preset is enabled. For example, this can be used
+to disable a preset on platforms other than Windows. ``condition`` may be
+either a boolean (``true`` means the preset is always enabled, ``false`` means
+it is always disabled), ``null`` (which means the preset is always enabled), or
+an object with the following fields:
+
+``type``
+
+  A required string with one of the following values:
+
+  ``"const"``
+
+    Indicates that the condition is constant. This is equivalent to using a
+    boolean in place of the object. The condition object will have the
+    following additional fields:
+
+    ``value``
+
+      A required boolean which provides a constant value for the condition's
+      evaluation.
+
+  ``"equals"``
+
+  ``"notEquals"``
+
+    Indicates that the condition compares two strings to see if they are equal
+    (or not equal). The condition object will have the following additional
+    fields:
+
+    ``lhs``
+
+      First string to compare. This field supports macro expansion.
+
+    ``rhs``
+
+      Second string to compare. This field supports macro expansion.
+
+  ``"anyOf"``
+
+  ``"allOf"``
+
+    Indicates that the condition is an aggregation of zero or more nested
+    conditions. The condition object will have the following additional fields:
+
+    ``conditions``
+
+      A required array of condition objects. These conditions use short-circuit
+      evaluation.
+
+  ``"not"``
+
+    Indicates that the condition is an inversion of another condition. The
+    condition object will have the following additional fields:
+
+    ``condition``
+
+      A required condition object.
 
 Macro Expansion
 ^^^^^^^^^^^^^^^

@@ -1,0 +1,16 @@
+Available configure presets:
+
+  "SimpleTrue"
+  "Null"
+  "ConstTrue"
+  "EqualsTrue"
+  "EqualsMacroLeft"
+  "EqualsMacroRight"
+  "NotEqualsTrue"
+  "AnyOfTrue1"
+  "AnyOfTrue2"
+  "AnyOfShortCircuit"
+  "AllOfTrue"
+  "AllOfEmpty"
+  "NotFalse"
+  "InheritanceChildTrue"$
