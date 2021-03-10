@@ -4,6 +4,7 @@
 
 #include <functional>
 #include <map>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -34,6 +35,8 @@ public:
     BUILD_TEST_PRESETS_UNSUPPORTED,
     INVALID_CONFIGURE_PRESET,
     INSTALL_PREFIX_UNSUPPORTED,
+    INVALID_CONDITION,
+    CONDITION_UNSUPPORTED,
   };
 
   enum class ArchToolsetStrategy
@@ -48,6 +51,8 @@ public:
     std::string Type;
     std::string Value;
   };
+
+  class Condition;
 
   class Preset
   {
@@ -70,6 +75,9 @@ public:
     bool User;
     std::string DisplayName;
     std::string Description;
+
+    std::shared_ptr<Condition> ConditionEvaluator;
+    bool ConditionResult = true;
 
     std::map<std::string, cm::optional<std::string>> Environment;
 
