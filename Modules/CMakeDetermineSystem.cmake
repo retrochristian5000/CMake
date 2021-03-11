@@ -158,26 +158,7 @@ endif()
 
 include(Platform/${CMAKE_SYSTEM_NAME}-Determine OPTIONAL)
 
-macro(ADJUST_CMAKE_SYSTEM_VARIABLES _PREFIX)
-  if(NOT ${_PREFIX}_NAME)
-    set(${_PREFIX}_NAME "UnknownOS")
-  endif()
-
-  # fix for BSD/OS , remove the /
-  if(${_PREFIX}_NAME MATCHES BSD.OS)
-    set(${_PREFIX}_NAME BSDOS)
-  endif()
-
-  # fix for GNU/kFreeBSD, remove the GNU/
-  if(${_PREFIX}_NAME MATCHES kFreeBSD)
-    set(${_PREFIX}_NAME kFreeBSD)
-  endif()
-
-  # fix for CYGWIN which has windows version in it
-  if(${_PREFIX}_NAME MATCHES CYGWIN)
-    set(${_PREFIX}_NAME CYGWIN)
-  endif()
-
+macro(SET_CMAKE_SYSTEM_VARIABLES _PREFIX)
   # set CMAKE_SYSTEM to the CMAKE_SYSTEM_NAME
   set(${_PREFIX}  ${${_PREFIX}_NAME})
   # if there is a CMAKE_SYSTEM_VERSION then add a -${CMAKE_SYSTEM_VERSION}
@@ -187,8 +168,8 @@ macro(ADJUST_CMAKE_SYSTEM_VARIABLES _PREFIX)
 
 endmacro()
 
-ADJUST_CMAKE_SYSTEM_VARIABLES(CMAKE_SYSTEM)
-ADJUST_CMAKE_SYSTEM_VARIABLES(CMAKE_HOST_SYSTEM)
+SET_CMAKE_SYSTEM_VARIABLES(CMAKE_SYSTEM)
+SET_CMAKE_SYSTEM_VARIABLES(CMAKE_HOST_SYSTEM)
 
 # this file is also executed from cpack, then we don't need to generate these files
 # in this case there is no CMAKE_BINARY_DIR
