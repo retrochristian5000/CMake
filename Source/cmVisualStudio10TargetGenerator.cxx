@@ -623,14 +623,13 @@ void cmVisualStudio10TargetGenerator::Generate()
     }
 
     switch (this->ProjectType) {
-      case vcxproj:
-        if (this->GlobalGenerator->GetPlatformToolsetVersion()) {
-          Elem(e0, "Import")
-            .Attribute("Project",
-                       this->GlobalGenerator->GetAuxiliaryToolset());
+      case vcxproj: {
+        std::string const& auxProps = this->GlobalGenerator->GetAuxProps();
+        if (!auxProps.empty()) {
+          Elem(e0, "Import").Attribute("Project", auxProps);
         }
         Elem(e0, "Import").Attribute("Project", VS10_CXX_DEFAULT_PROPS);
-        break;
+      } break;
       case csproj:
         Elem(e0, "Import")
           .Attribute("Project", VS10_CSharp_DEFAULT_PROPS)

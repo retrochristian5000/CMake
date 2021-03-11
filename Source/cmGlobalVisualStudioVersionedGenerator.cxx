@@ -2,6 +2,10 @@
    file Copyright.txt or https://cmake.org/licensing for details.  */
 #include "cmGlobalVisualStudioVersionedGenerator.h"
 
+#include <utility>
+
+#include <cmext/string_view>
+
 #include "cmAlgorithms.h"
 #include "cmDocumentationEntry.h"
 #include "cmLocalVisualStudio10Generator.h"
@@ -391,27 +395,6 @@ bool cmGlobalVisualStudioVersionedGenerator::GetVSInstanceVersion(
   return vsSetupAPIHelper.GetVSInstanceVersion(vsInstanceVersion);
 }
 
-bool cmGlobalVisualStudioVersionedGenerator::IsDefaultToolset(
-  const std::string& version) const
-{
-  if (version.empty()) {
-    return true;
-  }
-
-  std::string vcToolsetVersion;
-  if (this->vsSetupAPIHelper.GetVCToolsetVersion(vcToolsetVersion)) {
-
-    cmsys::RegularExpression regex("[0-9][0-9]\\.[0-9]+");
-    if (regex.find(version) && regex.find(vcToolsetVersion)) {
-      const auto majorMinorEnd = vcToolsetVersion.find('.', 3);
-      const auto majorMinor = vcToolsetVersion.substr(0, majorMinorEnd);
-      return version == majorMinor;
-    }
-  }
-
-  return false;
-}
-
 bool cmGlobalVisualStudioVersionedGenerator::IsStdOutEncodingSupported() const
 {
   // Supported from Visual Studio 16.7 Preview 3.
@@ -446,29 +429,54 @@ cmGlobalVisualStudioVersionedGenerator::GetAndroidApplicationTypeRevision()
   return "";
 }
 
-std::string cmGlobalVisualStudioVersionedGenerator::GetAuxiliaryToolset() const
+cmGlobalVisualStudioVersionedGenerator::AuxToolset
+cmGlobalVisualStudioVersionedGenerator::FindAuxToolset(
+  std::string& props) const
 {
-  const char* version = this->GetPlatformToolsetVersion();
-  if (version) {
-    std::string instancePath;
-    GetVSInstance(instancePath);
-    std::string toolsetDir = instancePath + "/VC/Auxiliary/Build";
-    char sep = '/';
-    if (cmSystemTools::VersionCompareGreaterEq(version, "14.20")) {
-      std::string toolsetDot =
-        cmStrCat(toolsetDir, '.', version, "/Microsoft.VCToolsVersion.",
-                 version, ".props");
-      if (cmSystemTools::PathExists(toolsetDot)) {
-        sep = '.';
+  std::string const& version = this->GetPlatformToolsetVersionString();
+  if (version.empty()) {
+    return AuxToolset::None;
+  }
+
+  std::string instancePath;
+  this->GetVSInstance(instancePath);
+  cmSystemTools::ConvertToUnixSlashes(instancePath);
+  if (cmSystemTools::VersionCompareGreaterEq(version, "14.20")) {
+    props = cmStrCat(instancePath, "/VC/Auxiliary/Build.", version,
+                     "/Microsoft.VCToolsVersion.", version, ".props");
+    if (cmSystemTools::PathExists(props)) {
+      return AuxToolset::PropsExist;
+    }
+  }
+  props = cmStrCat(instancePath, "/VC/Auxiliary/Build/", version,
+                   "/Microsoft.VCToolsVersion.", version, ".props");
+  if (cmSystemTools::PathExists(props)) {
+    return AuxToolset::PropsExist;
+  }
+
+  // Accept the toolset version that is default in the current VS version
+  // by matching the name later VS versions will use for the SxS props files.
+  std::string vcToolsetVersion;
+  if (this->vsSetupAPIHelper.GetVCToolsetVersion(vcToolsetVersion)) {
+    // Known SxS props file names using more than two version components.
+    if (version == "14.28.16.9" &&
+        cmSystemTools::VersionCompareEqual(vcToolsetVersion, "14.28.29910")) {
+      return AuxToolset::Default;
+    }
+
+    // The first two components of the default toolset version typically
+    // match the name used by later VS versions for the SxS props files.
+    cmsys::RegularExpression regex("[0-9][0-9]\\.[0-9]+");
+    if (regex.find(version) && regex.find(vcToolsetVersion)) {
+      const auto majorMinorEnd = vcToolsetVersion.find('.', 3);
+      const auto majorMinor = vcToolsetVersion.substr(0, majorMinorEnd);
+      if (version == majorMinor) {
+        return AuxToolset::Default;
       }
     }
-    std::string toolsetPath =
-      cmStrCat(toolsetDir, sep, version, "/Microsoft.VCToolsVersion.", version,
-               ".props");
-    cmSystemTools::ConvertToUnixSlashes(toolsetPath);
-    return toolsetPath;
   }
-  return {};
+
+  return AuxToolset::PropsMissing;
 }
 
 bool cmGlobalVisualStudioVersionedGenerator::InitializeWindows(cmMakefile* mf)

@@ -120,8 +120,7 @@ public:
   std::string Encoding() override;
   const char* GetToolsVersion() const;
 
-  virtual bool IsDefaultToolset(const std::string& version) const;
-  virtual std::string GetAuxiliaryToolset() const;
+  std::string const& GetAuxProps() const { return this->AuxProps; }
 
   bool GetSupportsUnityBuilds() const { return this->SupportsUnityBuilds; }
 
@@ -168,6 +167,15 @@ protected:
   virtual bool SelectWindowsPhoneToolset(std::string& toolset) const;
   virtual bool SelectWindowsStoreToolset(std::string& toolset) const;
 
+  enum class AuxToolset
+  {
+    None,
+    Default,
+    PropsExist,
+    PropsMissing
+  };
+  virtual AuxToolset FindAuxToolset(std::string& props) const;
+
   std::string const& GetMSBuildCommand();
 
   cmIDEFlagTable const* LoadFlagTable(std::string const& optionsName,
@@ -197,6 +205,7 @@ protected:
   std::string DefaultMasmFlagTableName;
   std::string DefaultNasmFlagTableName;
   std::string DefaultRCFlagTableName;
+  std::string AuxProps;
   bool SupportsUnityBuilds = false;
   bool SystemIsWindowsCE = false;
   bool SystemIsWindowsPhone = false;

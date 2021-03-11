@@ -329,15 +329,18 @@ bool cmGlobalVisualStudio10Generator::SetGeneratorToolset(
       this->GeneratorToolsetVersion.clear();
     }
 
-    bool const isDefaultToolset =
-      this->IsDefaultToolset(this->GeneratorToolsetVersion);
-    if (isDefaultToolset) {
-      // If the given version is the default toolset, remove the setting
-      this->GeneratorToolsetVersion.clear();
-    } else {
-      std::string const toolsetPath = this->GetAuxiliaryToolset();
-      if (!toolsetPath.empty() && !cmSystemTools::FileExists(toolsetPath)) {
-
+    std::string auxProps;
+    switch (this->FindAuxToolset(auxProps)) {
+      case AuxToolset::None:
+        break;
+      case AuxToolset::Default:
+        // The given version is the default toolset.  Remove the setting.
+        this->GeneratorToolsetVersion.clear();
+        break;
+      case AuxToolset::PropsExist:
+        this->AuxProps = auxProps;
+        break;
+      case AuxToolset::PropsMissing: {
         std::ostringstream e;
         /* clang-format off */
         e <<
@@ -347,14 +350,14 @@ bool cmGlobalVisualStudio10Generator::SetGeneratorToolset(
           "  " << this->GetPlatformToolsetString() << ",version=" <<
           this->GeneratorToolsetVersion << "\n"
           "does not seem to be installed at\n" <<
-          "  " << toolsetPath;
+          "  " << auxProps;
         ;
         /* clang-format on */
         mf->IssueMessage(MessageType::FATAL_ERROR, e.str());
 
         // Clear the configured tool-set
         this->GeneratorToolsetVersion.clear();
-      }
+      } break;
     }
   }
 
@@ -792,15 +795,10 @@ cmGlobalVisualStudio10Generator::GetPlatformToolsetCudaCustomDirString() const
   return this->GeneratorToolsetCudaCustomDir;
 }
 
-bool cmGlobalVisualStudio10Generator::IsDefaultToolset(
-  const std::string&) const
+cmGlobalVisualStudio10Generator::AuxToolset
+cmGlobalVisualStudio10Generator::FindAuxToolset(std::string&) const
 {
-  return true;
-}
-
-std::string cmGlobalVisualStudio10Generator::GetAuxiliaryToolset() const
-{
-  return {};
+  return AuxToolset::None;
 }
 
 bool cmGlobalVisualStudio10Generator::FindMakeProgram(cmMakefile* mf)

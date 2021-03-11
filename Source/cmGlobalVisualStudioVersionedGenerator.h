@@ -30,8 +30,7 @@ public:
 
   bool GetVSInstanceVersion(unsigned long long& vsInstanceVersion) const;
 
-  bool IsDefaultToolset(const std::string& version) const override;
-  std::string GetAuxiliaryToolset() const override;
+  AuxToolset FindAuxToolset(std::string& props) const override;
 
   bool IsStdOutEncodingSupported() const override;
 
