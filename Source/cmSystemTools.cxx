@@ -103,6 +103,10 @@
 #  include <malloc.h> /* for malloc/free on QNX */
 #endif
 
+#if !defined(_WIN32) && !defined(__ANDROID__)
+#  include <sys/utsname.h>
+#endif
+
 namespace {
 
 cmSystemTools::InterruptCallback s_InterruptCallback;
@@ -3206,4 +3210,21 @@ bool cmSystemTools::CreateLink(const std::string& origName,
   }
 
   return true;
+}
+
+cm::string_view cmSystemTools::GetSystemName()
+{
+#if defined(_WIN32)
+  return "Windows";
+#elif defined(__ANDROID__)
+  return "Android";
+#else
+  static struct utsname uts_name;
+  static bool initialized = false;
+  if (initialized || uname(&uts_name) >= 0) {
+    initialized = true;
+    return uts_name.sysname;
+  }
+  return "";
+#endif
 }
