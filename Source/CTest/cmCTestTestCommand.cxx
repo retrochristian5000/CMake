@@ -73,11 +73,12 @@ cmCTestGenericHandler* cmCTestTestCommand::InitializeHandler()
     handler->SetOption("IncludeRegularExpression", this->Include.c_str());
   }
   if (!this->ExcludeLabel.empty()) {
-    handler->SetOption("ExcludeLabelRegularExpression",
-                       this->ExcludeLabel.c_str());
+    handler->AddMultiOption("ExcludeLabelRegularExpression",
+                            this->ExcludeLabel.c_str());
   }
   if (!this->IncludeLabel.empty()) {
-    handler->SetOption("LabelRegularExpression", this->IncludeLabel.c_str());
+    handler->AddMultiOption("LabelRegularExpression",
+                            this->IncludeLabel.c_str());
   }
   if (!this->ExcludeFixture.empty()) {
     handler->SetOption("ExcludeFixtureRegularExpression",
