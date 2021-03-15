@@ -2268,6 +2268,15 @@ void cmCTest::SetPersistentOptionIfNotEmpty(const std::string& value,
   }
 }
 
+void cmCTest::AddPersistentMultiOptionIfNotEmpty(const std::string& value,
+                                                 const std::string& optionName)
+{
+  if (!value.empty()) {
+    this->GetTestHandler()->AddPersistentMultiOption(optionName, value);
+    this->GetMemCheckHandler()->AddPersistentMultiOption(optionName, value);
+  }
+}
+
 bool cmCTest::SetArgsFromPreset(const std::string& presetName,
                                 bool listPresets)
 {
@@ -2412,7 +2421,7 @@ bool cmCTest::SetArgsFromPreset(const std::string& presetName,
     if (expandedPreset->Filter->Include) {
       this->SetPersistentOptionIfNotEmpty(
         expandedPreset->Filter->Include->Name, "IncludeRegularExpression");
-      this->SetPersistentOptionIfNotEmpty(
+      this->AddPersistentMultiOptionIfNotEmpty(
         expandedPreset->Filter->Include->Label, "LabelRegularExpression");
 
       if (expandedPreset->Filter->Include->Index) {
@@ -2445,7 +2454,7 @@ bool cmCTest::SetArgsFromPreset(const std::string& presetName,
     if (expandedPreset->Filter->Exclude) {
       this->SetPersistentOptionIfNotEmpty(
         expandedPreset->Filter->Exclude->Name, "ExcludeRegularExpression");
-      this->SetPersistentOptionIfNotEmpty(
+      this->AddPersistentMultiOptionIfNotEmpty(
         expandedPreset->Filter->Exclude->Label,
         "ExcludeLabelRegularExpression");
 
