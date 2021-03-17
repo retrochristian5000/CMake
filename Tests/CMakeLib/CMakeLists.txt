@@ -21,6 +21,7 @@ set(CMakeLib_TESTS
   testStringAlgorithms.cxx
   testSystemTools.cxx
   testUTF8.cxx
+  testXMLEditor.cxx
   testXMLParser.cxx
   testXMLSafe.cxx
   testFindPackageCommand.cxx
@@ -49,6 +50,9 @@ if(WIN32)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/testVisualStudioSlnParser.h.in
                  ${CMAKE_CURRENT_BINARY_DIR}/testVisualStudioSlnParser.h @ONLY)
 endif()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/testXMLEditor.h.in
+               ${CMAKE_CURRENT_BINARY_DIR}/testXMLEditor.h @ONLY)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/testXMLParser.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/testXMLParser.h @ONLY)

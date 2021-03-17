@@ -1,0 +1,18 @@
+set(build_generator_args --build-generator uVision)
+
+macro(ADD_UVISION_TEST_MACRO SubFolder)
+  set(TEST_COMMAND)
+  set(VERIFY_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/${SubFolder}/verify.cmake)
+  if (EXISTS ${VERIFY_SCRIPT})
+    set(TEST_COMMAND ${CMAKE_COMMAND} -P ${VERIFY_SCRIPT})
+  endif()
+  ADD_TEST_MACRO(uVision.${SubFolder} ${TEST_COMMAND})
+endmacro()
+
+ADD_UVISION_TEST_MACRO(BuildEvents)
+ADD_UVISION_TEST_MACRO(CompileFlags)
+ADD_UVISION_TEST_MACRO(Complex)
+ADD_UVISION_TEST_MACRO(CustomCommand)
+ADD_UVISION_TEST_MACRO(CustomTarget)
+ADD_UVISION_TEST_MACRO(SimpleLibrary)
+ADD_UVISION_TEST_MACRO(Toolset)

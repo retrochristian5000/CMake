@@ -356,6 +356,19 @@ Properties on Targets
    /prop_tgt/UNITY_BUILD_CODE_BEFORE_INCLUDE
    /prop_tgt/UNITY_BUILD_MODE
    /prop_tgt/UNITY_BUILD_UNIQUE_ID
+   /prop_tgt/UV_BROWSE_INFORMATION
+   /prop_tgt/UV_COMPONENT
+   /prop_tgt/UV_COMPONENT_VERSION
+   /prop_tgt/UV_CREATE_HEX_FILE
+   /prop_tgt/UV_DEBUG_SIMULATOR
+   /prop_tgt/UV_DEBUG_SIMULATOR_INI
+   /prop_tgt/UV_DEBUG_TARGET
+   /prop_tgt/UV_DEBUG_TARGET_DLL
+   /prop_tgt/UV_DEBUG_TARGET_INI
+   /prop_tgt/UV_PACK
+   /prop_tgt/UV_PACK_VERSION
+   /prop_tgt/UV_PREPROCESSOR_LISTING
+   /prop_tgt/UV_USE_MICROLIB
    /prop_tgt/VERSION
    /prop_tgt/VISIBILITY_INLINES_HIDDEN
    /prop_tgt/VS_CONFIGURATION_TYPE

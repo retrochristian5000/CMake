@@ -2001,27 +2001,34 @@ int cmGlobalGenerator::Build(
     std::vector<GeneratedMakeCommand> cleanCommand =
       this->GenerateBuildCommand(makeCommandCSTR, projectName, bindir,
                                  { "clean" }, realConfig, fast, jobs, verbose);
-    output += "\nRun Clean Command:";
-    output += cleanCommand.front().Printable();
-    output += "\n";
-    if (cleanCommand.size() != 1) {
-      this->GetCMakeInstance()->IssueMessage(MessageType::INTERNAL_ERROR,
-                                             "The generator did not produce "
-                                             "exactly one command for the "
-                                             "'clean' target");
-      return 1;
-    }
-    if (!cmSystemTools::RunSingleCommand(cleanCommand.front().PrimaryCommand,
-                                         outputPtr, outputPtr, &retVal,
-                                         nullptr, outputflag, timeout)) {
-      cmSystemTools::SetRunCommandHideConsole(hideconsole);
-      cmSystemTools::Error("Generator: execution of make clean failed.");
-      output += *outputPtr;
-      output += "\nGenerator: execution of make clean failed.\n";
+    std::string cleanCommandStr;
+    output += "\nRun Clean Command(s):";
 
-      return 1;
+    for (auto command = cleanCommand.begin();
+         command != cleanCommand.end() && retVal == 0; ++command) {
+      cleanCommandStr = command->Printable();
+      if (command != cleanCommand.end()) {
+        cleanCommandStr += " && ";
+      }
+
+      output += cleanCommandStr + "\n";
+      if (!cmSystemTools::RunSingleCommand(command->PrimaryCommand, outputPtr,
+                                           outputPtr, &retVal, nullptr,
+                                           outputflag, timeout)) {
+        cmSystemTools::SetRunCommandHideConsole(hideconsole);
+        cmSystemTools::Error(
+          "Generator: execution of make clean failed. Clean command was: " +
+          cleanCommandStr);
+        output += *outputPtr;
+        output +=
+          "\nGenerator: execution of make clean failed. Clean command was: " +
+          cleanCommandStr + "\n";
+
+        return 1;
+      }
+      output += *outputPtr;
     }
-    output += *outputPtr;
+    output += "\n";
   }
 
   // now build
@@ -2036,7 +2043,7 @@ int cmGlobalGenerator::Build(
       makeCommandStr += " && ";
     }
 
-    output += makeCommandStr;
+    output += makeCommandStr + "\n";
     if (!cmSystemTools::RunSingleCommand(command->PrimaryCommand, outputPtr,
                                          outputPtr, &retVal, nullptr,
                                          outputflag, timeout)) {

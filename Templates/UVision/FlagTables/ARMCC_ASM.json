@@ -1,0 +1,141 @@
+[
+  {
+    "comment": "Assemble by using ArmClang V6",
+    "path": "Aads/uClangAs",
+    "default": "0",
+    "options": [ "ArmAds", "OnlyIfPresent" ]
+  },
+  {
+    "comment": "Assembler Option",
+    "path": "Aads/ClangAsOpt",
+    "default": "4",
+    "options": [ "ArmAds", "OnlyIfPresent" ]
+  },
+  {
+    "comment": "Big Endian",
+    "path": "TargetOption/TargetArmAds/ArmAdsMisc/BigEnd",
+    "modifiers": [
+      {
+        "flag": "--li",
+        "set": "0"
+      },
+      {
+        "flag": "--littleend",
+        "set": "0"
+      },
+      {
+        "flag": "--bi",
+        "set": "1"
+      },
+      {
+        "flag": "--bigend",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Debug Information",
+    "path": "TargetOption/TargetCommonOption/DebugInformation",
+    "default": "0",
+    "modifiers": [
+      {
+        "flag": "-g",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Read-Only Position Independent",
+    "path": "Aads/Ropi",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "--apcs=/ropi",
+        "set": "1"
+      },
+      {
+        "flag": "--apcs",
+        "value": ".*?/ropi.*?",
+        "set": "1",
+        "options": [ "RegexInValue" ]
+      }
+    ]
+  },
+  {
+    "comment": "Read-Write Position Independent",
+    "path": "Aads/Rwpi",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "--apcs=/rwpi",
+        "set": "1"
+      },
+      {
+        "flag": "--apcs",
+        "value": ".*?/rwpi.*?",
+        "set": "1",
+        "options": [ "RegexInValue" ]
+      }
+    ]
+  },
+  {
+    "comment": "Split Load and Store Multiple",
+    "path": "Aads/SplitLS",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "--split_ldm",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Thumb Mode",
+    "path": "Aads/thumb",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "--thumb",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Execute-only Code",
+    "path": "Aads/useXO",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "--execute_only",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "No Warnings",
+    "path": "Aads/NoWarn",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "-nowarn",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Ignored flags",
+    "options": [ "Ignore" ],
+    "modifiers": [
+      {
+        "flag": "-mcpu=.*",
+        "options": [ "RegexInFlag" ]
+      }
+    ]
+  }
+]

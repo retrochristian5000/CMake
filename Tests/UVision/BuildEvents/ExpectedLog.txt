@@ -1,0 +1,4 @@
+BuildEvent: PRE_BUILD1
+BuildEvent: PRE_BUILD2
+BuildEvent: POST_BUILD1
+BuildEvent: POST_BUILD2

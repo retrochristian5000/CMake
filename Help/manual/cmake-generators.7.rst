@@ -99,6 +99,7 @@ Other Generators
    :maxdepth: 1
 
    /generator/Green Hills MULTI
+   /generator/uVision
    /generator/Xcode
 
 Extra Generators

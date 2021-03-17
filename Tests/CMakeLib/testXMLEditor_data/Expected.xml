@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Root>
+    <Element Found="True" Name="Element1">
+        <SubElement Name="SubElement1">Text Content</SubElement>
+        <SubElement Name="SubElement2">Text Content of SubElement2</SubElement>
+    </Element>
+    <Element Found="True" Name="Element2">Text Content of Element2</Element>
+</Root>

@@ -1,0 +1,237 @@
+[
+  {
+    "comment": "Big Endian",
+    "path": "TargetOption/TargetCommonOption/TargetArmAds/ArmAdsMisc/BigEnd",
+    "modifiers": [
+      {
+        "flag": "--li",
+        "set": "0"
+      },
+      {
+        "flag": "--littleend",
+        "set": "0"
+      },
+      {
+        "flag": "--bi",
+        "set": "1"
+      },
+      {
+        "flag": "--bigend",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Debug Information",
+    "path": "TargetOption/TargetCommonOption/DebugInformation",
+    "default": "0",
+    "modifiers": [
+      {
+        "flag": "-g",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Execute-only Code",
+    "path": "Cads/useXO",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "--execute_only",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Strict ANSI C",
+    "path": "Cads/Strict",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "--strict",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Warnings",
+    "path": "Cads/wLevel",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "-W",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Optimization",
+    "path": "Cads/Optim",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "-O0",
+        "set": "1"
+      },
+      {
+        "flag": "-O1",
+        "set": "2"
+      },
+      {
+        "flag": "-O2",
+        "set": "3"
+      },
+      {
+        "flag": "-O3",
+        "set": "4"
+      }
+    ]
+  },
+  {
+    "comment": "Enum Container always int",
+    "path": "Cads/EnumInt",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "--enum_is_int",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Thumb Mode",
+    "path": "Cads/uThumb",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "--thumb",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Optimize for Time",
+    "path": "Cads/oTime",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "-OTime",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Plain Char is Signed",
+    "path": "Cads/PlainCh",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "-signed_chars",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Split Load and Store Multiple",
+    "path": "Cads/SplitLS",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "--split_ldm",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Read-Only Position Independent",
+    "path": "Cads/Ropi",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "--apcs=/ropi",
+        "set": "1"
+      },
+      {
+        "flag": "--apcs",
+        "value": ".*?/ropi.*?",
+        "set": "1",
+        "options": [ "RegexInValue" ]
+      }
+    ]
+  },
+  {
+    "comment": "Read-Write Position Independent",
+    "path": "Cads/Rwpi",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "--apcs=/rwpi",
+        "set": "1"
+      },
+      {
+        "flag": "--apcs",
+        "value": ".*?/rwpi.*?",
+        "set": "1",
+        "options": [ "RegexInValue" ]
+      }
+    ]
+  },
+  {
+    "comment": "C99 Mode",
+    "path": "Cads/uC99",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "--c99",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "One ELF Section per Function",
+    "path": "Cads/OneElfS",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "--split_sections",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "GNU extensions",
+    "path": "Cads/uGnu",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "--gnu",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Ignored flags",
+    "options": [ "Ignore" ],
+    "modifiers": [
+      {
+        "flag": "-mcpu=.*",
+        "options": [ "RegexInFlag" ]
+      }
+    ]
+  }
+]

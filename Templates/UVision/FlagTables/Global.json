@@ -1,0 +1,155 @@
+[
+  {
+    "comment": "Output: Debug Information",
+    "path": "TargetOption/TargetCommonOption/DebugInformation",
+    "default": "0"
+  },
+  {
+    "comment": "Output: Create HEX File",
+    "path": "TargetOption/TargetCommonOption/CreateHexFile",
+    "default": "0",
+    "modifiers": [
+      {
+        "property": "UV_CREATE_HEX_FILE",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Output: Browse Information",
+    "path": "TargetOption/TargetCommonOption/BrowseInformation",
+    "default": "0",
+    "modifiers": [
+      {
+        "property": "UV_BROWSE_INFORMATION",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Listing: C Preprocessor Listing",
+    "path": "TargetOption/TargetArmAds/ArmAdsMisc/GenPPlst",
+    "default": "0",
+    "modifiers": [
+      {
+        "property": "UV_PREPROCESSOR_LISTING",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Use MicroLIB",
+    "path": "TargetOption/TargetArmAds/ArmAdsMisc/useUlib",
+    "default": "0",
+    "modifiers": [
+      {
+        "property": "UV_USE_MICROLIB",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Use Simulator",
+    "path": "TargetOption/DebugOpt/uSim",
+    "options": [ "UvOpt" ],
+    "default": "0",
+    "modifiers": [
+      {
+        "property": "UV_DEBUG_SIMULATOR",
+        "value": "1",
+        "set": "1"
+      },
+      {
+        "property": "UV_DEBUG_TARGET",
+        "value": "1",
+        "set": "0"
+      }
+    ]
+  },
+  {
+    "comment": "Simulator: Initialization File",
+    "path": "TargetOption/DebugOpt/sIfile",
+    "options": [ "UvOpt", "ValueIsPath" ],
+    "modifiers": [
+      {
+        "property": "UV_DEBUG_SIMULATOR_INI",
+        "value": ".*",
+        "set": "$0",
+        "options": [ "RegexInValue" ]
+      }
+    ]
+  },
+  {
+    "comment": "Simulator: Load Application at Startup",
+    "path": "TargetOption/DebugOpt/sLdApp",
+    "options": [ "UvOpt" ],
+    "default": "1",
+    "modifiers": [
+      {
+        "property": "UV_DEBUG_SIMULATOR_INI",
+        "value": ".+",
+        "set": "0",
+        "options": [ "RegexInValue" ]
+      }
+    ]
+  },
+  {
+    "comment": "Use Target",
+    "path": "TargetOption/DebugOpt/uTrg",
+    "options": [ "UvOpt" ],
+    "default": "1",
+    "modifiers": [
+      {
+        "property": "UV_DEBUG_SIMULATOR",
+        "value": "1",
+        "set": "0"
+      },
+      {
+        "property": "UV_DEBUG_TARGET",
+        "value": "1",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Target: Driver",
+    "path": "TargetOption/DebugOpt/pMon",
+    "options": [ "UvOpt" ],
+    "default": "1",
+    "modifiers": [
+      {
+        "property": "UV_DEBUG_TARGET_DLL",
+        "value": ".*",
+        "set": "$0",
+        "options": [ "RegexInValue" ]
+      }
+    ]
+  },
+  {
+    "comment": "Target: Initialization File",
+    "path": "TargetOption/DebugOpt/tIfile",
+    "options": [ "UvOpt", "ValueIsPath" ],
+    "modifiers": [
+      {
+        "property": "UV_DEBUG_TARGET_INI",
+        "value": ".*",
+        "set": "$0",
+        "options": [ "RegexInValue" ]
+      }
+    ]
+  },
+  {
+    "comment": "Target: Load Application at Startup",
+    "path": "TargetOption/DebugOpt/tLdApp",
+    "options": [ "UvOpt" ],
+    "default": "1",
+    "modifiers": [
+      {
+        "property": "UV_DEBUG_TARGET_INI",
+        "value": ".+",
+        "set": "0",
+        "options": [ "RegexInValue" ]
+      }
+    ]
+  }
+]
