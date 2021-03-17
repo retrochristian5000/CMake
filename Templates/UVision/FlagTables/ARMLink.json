@@ -1,0 +1,158 @@
+[
+  {
+    "comment": "Report 'might fail' Conditions as Errors",
+    "path": "LDads/RepFail",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "--strict",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Scatter file",
+    "path": "LDads/ScatterFile",
+    "default": "",
+    "options": [ "ArmAds", "ValueIsPath" ],
+    "modifiers": [
+      {
+        "flag": "--scatter",
+        "value": "(.*)",
+        "set": "$1",
+        "options": ["RegexInValue"]
+      }
+    ]
+  },
+  {
+    "comment": "Use Memory Layout from Target Dialog",
+    "path": "LDads/umfTarg",
+    "default": "1",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "--scatter",
+        "set": "0"
+      }
+    ]
+  },
+  {
+    "comment": "Linker Listing",
+    "path": "TargetOption/TargetArmAds/ArmAdsMisc/AdsLLst",
+    "default": "0",
+    "modifiers": [
+      {
+        "flag": "--list",
+        "value": ".*",
+        "set": "1",
+        "options": [ "RegexInValue" ]
+      }
+    ]
+  },
+  {
+    "comment": "Listing Path",
+    "path": "TargetOption/TargetCommonOption/ListingPath",
+    "options": [ "ValueIsDirectory" ],
+    "modifiers": [
+      {
+        "flag": "--list",
+        "value": "(.*)[\\/][^.]*\\.[^.]+",
+        "set": "$1",
+        "options": [ "RegexInValue" ]
+      }
+    ]
+  },
+  {
+    "comment": "Memory Map",
+    "path": "TargetOption/TargetArmAds/ArmAdsMisc/AdsLmap",
+    "default": "0",
+    "modifiers": [
+      {
+        "flag": "--map",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Callgraph",
+    "path": "TargetOption/TargetArmAds/ArmAdsMisc/AdsLcgr",
+    "default": "0",
+    "modifiers": [
+      {
+        "flag": "--callgraph",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Symbols",
+    "path": "TargetOption/TargetArmAds/ArmAdsMisc/AdsLsym",
+    "default": "0",
+    "modifiers": [
+      {
+        "flag": "--symbols",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Cross Reference",
+    "path": "TargetOption/TargetArmAds/ArmAdsMisc/AdsLsxf",
+    "default": "0",
+    "modifiers": [
+      {
+        "flag": "--xref",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Size Info",
+    "path": "TargetOption/TargetArmAds/ArmAdsMisc/AdsLszi",
+    "default": "0",
+    "modifiers": [
+      {
+        "flag": "--info",
+        "value": "sizes",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Totals Info",
+    "path": "TargetOption/TargetArmAds/ArmAdsMisc/AdsLtoi",
+    "default": "0",
+    "modifiers": [
+      {
+        "flag": "--info",
+        "value": "totals",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Unused Sections Info",
+    "path": "TargetOption/TargetArmAds/ArmAdsMisc/AdsLsun",
+    "default": "0",
+    "modifiers": [
+      {
+        "flag": "--info",
+        "value": "unused",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Veneers",
+    "path": "TargetOption/TargetArmAds/ArmAdsMisc/AdsLven",
+    "default": "0",
+    "modifiers": [
+      {
+        "flag": "--info",
+        "value": "veneers",
+        "set": "1"
+      }
+    ]
+  }
+]

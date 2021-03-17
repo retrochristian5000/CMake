@@ -247,6 +247,13 @@ if(BUILD_TESTING)
   #---------------------------------------------------------------------------
   # Add tests below here.
 
+  if (WIN32)
+    find_package(UVision QUIET)
+    if (UVISION_FOUND)
+      add_subdirectory(UVision)
+    endif()
+  endif()
+
   if(NOT DEFINED CMake_TEST_Qt5)
     set(CMake_TEST_Qt5 1)
   endif()

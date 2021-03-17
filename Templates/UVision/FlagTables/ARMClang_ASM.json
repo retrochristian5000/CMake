@@ -1,0 +1,64 @@
+[
+  {
+    "comment": "Assemble by using ArmClang V6",
+    "path": "Aads/uClangAs",
+    "default": "1",
+    "options": [ "ArmAds", "OnlyIfPresent" ]
+  },
+  {
+    "comment": "Assembler Option",
+    "path": "Aads/ClangAsOpt",
+    "default": "1",
+    "options": [ "ArmAds", "OnlyIfPresent" ],
+    "modifiers": [
+      {
+        "flag": "--masm=auto",
+        "set": "1"
+      },
+      {
+        "flag": "--masm=gnu",
+        "set": "2"
+      },
+      {
+        "flag": "--masm=armasm",
+        "set": "3"
+      }
+    ]
+  },
+  {
+    "comment": "Assembler Listing",
+    "path": "TargetOption/TargetArmAds/ArmAdsMisc/AdsALst",
+    "default": "0",
+    "modifiers": [
+      {
+        "flag": "--list",
+        "value": ".*",
+        "set": "1",
+        "options": [ "RegexInValue" ]
+      }
+    ]
+  },
+  {
+    "comment": "Listing Path",
+    "path": "TargetOption/TargetCommonOption/ListingPath",
+    "options": [ "ValueIsDirectory" ],
+    "modifiers": [
+      {
+        "flag": "--list",
+        "value": "(.*)[\\/][^.]*\\.[^.]+",
+        "set": "$1",
+        "options": [ "RegexInValue" ]
+      }
+    ]
+  },
+  {
+    "comment": "Ignored flags",
+    "options": [ "Ignore" ],
+    "modifiers": [
+      {
+        "flag": "-mcpu=.*",
+        "options": [ "RegexInFlag" ]
+      }
+    ]
+  }
+]

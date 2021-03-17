@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Root>
+    <Element Name="Element1">
+        <SubElement Name="SubElement1" ObsoleteAttribute="Value">
+            Text Content
+        </SubElement>
+    </Element>
+    <Element Name="Element2"/>
+</Root>

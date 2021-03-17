@@ -475,6 +475,8 @@ set(SRCS
   cmWorkingDirectory.cxx
   cmWorkingDirectory.h
   ${XCOFF_SRCS}
+  cmXMLEditor.cxx
+  cmXMLEditor.h
   cmXMLParser.cxx
   cmXMLParser.h
   cmXMLSafe.cxx
@@ -773,6 +775,14 @@ if (WIN32)
       cmGlobalNMakeMakefileGenerator.h
       cmGlobalJOMMakefileGenerator.cxx
       cmGlobalJOMMakefileGenerator.h
+      cmGlobalUVisionGenerator.cxx
+      cmGlobalUVisionGenerator.h
+      cmLocalUVisionGenerator.cxx
+      cmLocalUVisionGenerator.h
+      cmUVisionTargetGenerator.cxx
+      cmUVisionTargetGenerator.h
+      cmUVisionGeneratorOptions.cxx
+      cmUVisionGeneratorOptions.h
       cmGlobalVisualStudio71Generator.cxx
       cmGlobalVisualStudio71Generator.h
       cmGlobalVisualStudio7Generator.cxx

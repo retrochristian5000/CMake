@@ -1,0 +1,8 @@
+#ifndef testXMLEditor_h
+#define testXMLEditor_h
+
+#include <string>
+
+#define SOURCE_DIR "@CMAKE_CURRENT_SOURCE_DIR@"
+
+#endif

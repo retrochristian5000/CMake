@@ -1,0 +1,306 @@
+[
+  {
+    "comment": "Big Endian",
+    "path": "TargetOption/TargetCommonOption/TargetArmAds/ArmAdsMisc/BigEnd",
+    "modifiers": [
+      {
+        "flag": "-mlittle-endian",
+        "set": "0"
+      },
+      {
+        "flag": "-mbig-endian",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Debug Information",
+    "path": "TargetOption/TargetCommonOption/DebugInformation",
+    "default": "0",
+    "modifiers": [
+      {
+        "flag": "-g",
+        "set": "1"
+      },
+      {
+        "flag": "-gdwarf-3",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Execute-only Code",
+    "path": "Cads/useXO",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "-mexecute-only",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Warnings",
+    "path": "Cads/wLevel",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "-w",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Optimization",
+    "path": "Cads/Optim",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "-O0",
+        "set": "1"
+      },
+      {
+        "flag": "-O1",
+        "set": "2"
+      },
+      {
+        "flag": "-O2",
+        "set": "3"
+      },
+      {
+        "flag": "-O3",
+        "set": "4"
+      },
+      {
+        "flag": "-Ofast",
+        "set": "5"
+      },
+      {
+        "flag": "-Os",
+        "set": "6"
+      },
+      {
+        "flag": "-Oz",
+        "set": "7"
+      }
+    ]
+  },
+  {
+    "comment": "Turn Warnings into Errors",
+    "path": "Cads/v6WtE",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "-Werror",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Plain Char is Signed",
+    "path": "Cads/PlainCh",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "-funsigned-char",
+        "set": "0"
+      },
+      {
+        "flag": "-fsigned-char",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Short enums",
+    "path": "Cads/vShortEn",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "-fshort-enums",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Short wchar",
+    "path": "Cads/vShortWch",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "-fshort-wchar",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Split Load and Store Multiple",
+    "path": "Cads/SplitLS",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "-fno-ldm-stm",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Read-Only Position Independent",
+    "path": "Cads/Ropi",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "-fropi",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Read-Write Position Independenet",
+    "path": "Cads/Rwpi",
+    "default": "0",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "-frwpi",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "use RTTI",
+    "path": "Cads/v6Rtti",
+    "default": "1",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "-fno-rtti",
+        "set": "0"
+      }
+    ]
+  },
+  {
+    "comment": "One ELF Section per Function",
+    "path": "Cads/OneElfS",
+    "default": "1",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "-fno-function-sections",
+        "set": "0"
+      },
+      {
+        "flag": "-ffunction-sections",
+        "set": "1"
+      }
+    ]
+  },
+  {
+    "comment": "Language C",
+    "path": "Cads/v6Lang",
+    "default": "5",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "-std=c90",
+        "set": "1"
+      },
+      {
+        "flag": "-std=gnu90",
+        "set": "2"
+      },
+      {
+        "flag": "-std=c99",
+        "set": "3"
+      },
+      {
+        "flag": "-std=gnu99",
+        "set": "4"
+      },
+      {
+        "flag": "-std=c11",
+        "set": "5"
+      },
+      {
+        "flag": "-std=gnu11",
+        "set": "6"
+      }
+    ]
+  },
+  {
+    "comment": "Language C++",
+    "path": "Cads/v6LangP",
+    "default": "6",
+    "options": [ "ArmAds" ],
+    "modifiers": [
+      {
+        "flag": "-std=c++98",
+        "set": "1"
+      },
+      {
+        "flag": "-std=gnu++98",
+        "set": "2"
+      },
+      {
+        "flag": "-std=c++11",
+        "set": "3"
+      },
+      {
+        "flag": "-std=gnu++11",
+        "set": "4"
+      },
+      {
+        "flag": "-std=c++03",
+        "set": "5"
+      },
+      {
+        "flag": "-std=c++14",
+        "set": "6"
+      }
+    ]
+  },
+  {
+    "comment": "C Compiler Listing",
+    "path": "TargetOption/TargetArmAds/ArmAdsMisc/RvctClst",
+    "modifiers": [
+      {
+        "flag": "--list",
+        "value": ".*",
+        "set": "1",
+        "options": [ "RegexInValue" ]
+      }
+    ]
+  },
+  {
+    "comment": "Listing Path",
+    "path": "TargetOption/TargetCommonOption/ListingPath",
+    "options": [ "ValueIsDirectory" ],
+    "modifiers": [
+      {
+        "flag": "--list",
+        "value": "(.*)[\\/][^.]*\\.[^.]+",
+        "set": "$1",
+        "options": [ "RegexInValue" ]
+      }
+    ]
+  },
+  {
+    "comment": "Ignored flags",
+    "options": [ "Ignore" ],
+    "modifiers": [
+      {
+        "flag": "-mcpu=.*",
+        "options": [ "RegexInFlag" ]
+      }
+    ]
+  }
+]
