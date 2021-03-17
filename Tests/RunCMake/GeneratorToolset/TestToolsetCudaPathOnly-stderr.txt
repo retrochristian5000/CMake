@@ -9,4 +9,4 @@ CMake Error at CMakeLists.txt:[0-9]+ \(project\):
 
   cannot detect Visual Studio integration files in path
 
-    C:/dummy/cuda/CUDAVisualStudioIntegration/extras/visual_studio_integration/MSBuildExtensions
+    C:/dummy/cuda/extras/visual_studio_integration/MSBuildExtensions
