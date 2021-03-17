@@ -7,7 +7,6 @@
 #include <functional>
 #include <iostream>
 #include <iterator>
-#include <type_traits>
 #include <utility>
 
 #include <cm/string_view>
