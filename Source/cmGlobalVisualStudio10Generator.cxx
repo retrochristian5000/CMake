@@ -249,6 +249,31 @@ bool cmGlobalVisualStudio10Generator::SetGeneratorToolset(
     }
   }
 
+  if (this->Version > cmGlobalVisualStudioGenerator::VS16) {
+    this->PlatformToolsetNeedsConformanceModeEnum = true;
+  } else if (this->Version == cmGlobalVisualStudioGenerator::VS16 &&
+             cmHasLiteralPrefix(this->GetPlatformToolsetString(), "v142")) {
+    // The ConformanceMode compiler setting for the v142 toolset was
+    // originally a BoolProperty, but VS 16.9 changed it to an EnumProperty.
+    // Custom VCTargetsPath settings may point to either form.
+    // Parse the "cl.xml" file to discover which one we need.
+    std::string const cl_xml = this->VCTargetsPath + "/1033/cl.xml";
+    cmsys::ifstream fin(cl_xml.c_str());
+    std::string line;
+    bool isEnum = false;
+    while (fin && cmSystemTools::GetLineFromStream(fin, line)) {
+      if (line.find("<EnumProperty") != std::string::npos) {
+        isEnum = true;
+      } else if (line.find("<BoolProperty") != std::string::npos) {
+        isEnum = false;
+      }
+      if (line.find(" Name=\"ConformanceMode\"") != std::string::npos) {
+        break;
+      }
+    }
+    this->PlatformToolsetNeedsConformanceModeEnum = isEnum;
+  }
+
   this->SupportsUnityBuilds =
     this->Version >= cmGlobalVisualStudioGenerator::VS16 ||
     (this->Version == cmGlobalVisualStudioGenerator::VS15 &&
@@ -385,6 +410,8 @@ bool cmGlobalVisualStudio10Generator::SetGeneratorToolset(
     mf->AddDefinition("CMAKE_VS_PLATFORM_TOOLSET_VCTARGETS_CUSTOM_DIR",
                       vcTargetsDir);
   }
+  mf->AddDefinitionBool("CMAKE_VS_PLATFORM_TOOLSET_CONFORMANCE_MODE_ENUM",
+                        this->PlatformToolsetNeedsConformanceModeEnum);
 
   return true;
 }
