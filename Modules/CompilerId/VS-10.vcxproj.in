@@ -50,6 +50,7 @@
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <DebugInformationFormat>
       </DebugInformationFormat>
+      @id_ConformanceMode@
     </ClCompile>
     @id_ItemDefinitionGroup_entry@
     <Link>

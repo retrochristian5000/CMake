@@ -2845,6 +2845,11 @@ bool cmVisualStudio10TargetGenerator::ComputeClOptions(
         clOptions.AddFlag("UseFullPaths", "false");
       }
       clOptions.AddFlag("AssemblerListingLocation", "$(IntDir)");
+      if (gg->GetPlatformToolsetNeedsConformanceModeEnum()) {
+        // Tell VS 16.9 and above not to pass any /permissive flag by default.
+        // If we encounter the flag below, this will be replaced.
+        clOptions.AddFlag("ConformanceMode", "Default");
+      }
     }
   }
 

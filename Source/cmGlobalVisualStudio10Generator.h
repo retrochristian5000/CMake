@@ -92,6 +92,12 @@ public:
     return this->PlatformToolsetNeedsDebugEnum;
   }
 
+  /** Return whether ConformanceMode is an Enum instead of a Bool.  */
+  bool GetPlatformToolsetNeedsConformanceModeEnum() const
+  {
+    return this->PlatformToolsetNeedsConformanceModeEnum;
+  }
+
   /** Return the CMAKE_SYSTEM_NAME.  */
   std::string const& GetSystemName() const { return this->SystemName; }
 
@@ -248,6 +254,7 @@ private:
   std::string GeneratorToolsetVersion;
 
   bool PlatformToolsetNeedsDebugEnum;
+  bool PlatformToolsetNeedsConformanceModeEnum = false;
 
   bool ParseGeneratorToolset(std::string const& ts, cmMakefile* mf);
 
