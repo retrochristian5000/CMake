@@ -14,3 +14,8 @@ The supported values for ``<type>`` are:
   See also :prop_tgt:`XCODE_EMBED_<type>_PATH`,
   :prop_tgt:`XCODE_EMBED_FRAMEWORKS_REMOVE_HEADERS_ON_COPY` and
   :prop_tgt:`XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY`.
+
+``APP_EXTENSIONS_PATH``
+  .. versionadded:: 3.21
+
+  TODO: add docs here

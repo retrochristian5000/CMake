@@ -3852,6 +3852,122 @@ void cmGlobalXCodeGenerator::AddEmbeddedFrameworks(cmXCodeObject* target)
                             copyFilesBuildPhase);
 }
 
+void cmGlobalXCodeGenerator::AddEmbeddedAppExtensions(cmXCodeObject* target)
+{
+  cmGeneratorTarget* gt = target->GetTarget();
+  if (!gt) {
+    cmSystemTools::Error("Error no target on xobject\n");
+    return;
+  }
+  if (!gt->IsInBuildSystem()) {
+    return;
+  }
+  bool isFrameworkTarget = gt->IsFrameworkOnApple();
+  bool isBundleTarget = gt->GetPropertyAsBool("MACOSX_BUNDLE");
+  bool isCFBundleTarget = gt->IsCFBundleOnApple();
+  if (!(isFrameworkTarget || isBundleTarget || isCFBundleTarget)) {
+    return;
+  }
+  cmProp files = gt->GetProperty("XCODE_EMBED_APP_EXTENSIONS");
+  if (!files) {
+    return;
+  }
+
+  // Create an "Embedded App Extensions" build phase
+  auto* copyFilesBuildPhase =
+    this->CreateObject(cmXCodeObject::PBXCopyFilesBuildPhase);
+  std::string copyFilesBuildPhaseName = "Embed App Extensions";
+  std::string destinationFrameworks = "13";
+  copyFilesBuildPhase->SetComment(copyFilesBuildPhaseName);
+  copyFilesBuildPhase->AddAttribute("buildActionMask",
+                                    this->CreateString("2147483647"));
+  copyFilesBuildPhase->AddAttribute("dstSubfolderSpec",
+                                    this->CreateString(destinationFrameworks));
+  copyFilesBuildPhase->AddAttribute(
+    "name", this->CreateString(copyFilesBuildPhaseName));
+  if (cmProp fwEmbedPath =
+        gt->GetProperty("XCODE_EMBED_APP_EXTENSIONS_PATH")) {
+    copyFilesBuildPhase->AddAttribute("dstPath",
+                                      this->CreateString(*fwEmbedPath));
+  } else {
+    copyFilesBuildPhase->AddAttribute("dstPath", this->CreateString(""));
+  }
+  copyFilesBuildPhase->AddAttribute("runOnlyForDeploymentPostprocessing",
+                                    this->CreateString("0"));
+  cmXCodeObject* buildFiles = this->CreateObject(cmXCodeObject::OBJECT_LIST);
+  // Collect all embedded app extensions and add them to build phase
+  std::vector<std::string> relFiles = cmExpandedList(*files);
+  for (std::string const& relFile : relFiles) {
+    cmXCodeObject* buildFile{ nullptr };
+    std::string filePath = relFile;
+    auto* genTarget = FindGeneratorTarget(relFile);
+    if (genTarget) {
+      // This is a target - get it's product path reference
+      auto* xcTarget = FindXCodeTarget(genTarget);
+      if (!xcTarget) {
+        cmSystemTools::Error("Can not find a target for " +
+                             genTarget->GetName());
+        continue;
+      }
+      // Add the target output file as a build reference for other targets
+      // to link against
+      auto* fileRefObject = xcTarget->GetAttribute("productReference");
+      if (!fileRefObject) {
+        cmSystemTools::Error("Target " + genTarget->GetName() +
+                             " is missing product reference");
+        continue;
+      }
+      auto it = FileRefToEmbedBuildFileMap.find(fileRefObject);
+      if (it == FileRefToEmbedBuildFileMap.end()) {
+        buildFile = this->CreateObject(cmXCodeObject::PBXBuildFile);
+        buildFile->AddAttribute("fileRef", fileRefObject);
+        FileRefToEmbedBuildFileMap[fileRefObject] = buildFile;
+      } else {
+        buildFile = it->second;
+      }
+    } else if (cmSystemTools::IsPathToFramework(relFile)) {
+      // This is a regular string path - create file reference
+      auto it = EmbeddedLibRefs.find(relFile);
+      if (it == EmbeddedLibRefs.end()) {
+        cmXCodeObject* fileRef =
+          this->CreateXCodeFileReferenceFromPath(relFile, gt, "", nullptr);
+        if (fileRef) {
+          buildFile = this->CreateObject(cmXCodeObject::PBXBuildFile);
+          buildFile->SetComment(fileRef->GetComment());
+          buildFile->AddAttribute("fileRef",
+                                  this->CreateObjectReference(fileRef));
+        }
+        if (!buildFile) {
+          cmSystemTools::Error("Can't create build file for " + relFile);
+          continue;
+        }
+        this->EmbeddedLibRefs.emplace(filePath, buildFile);
+      } else {
+        buildFile = it->second;
+      }
+    }
+    if (!buildFile) {
+      cmSystemTools::Error("Can't find a build file for " + relFile);
+      continue;
+    }
+    // Set build file configuration
+    cmXCodeObject* settings =
+      this->CreateObject(cmXCodeObject::ATTRIBUTE_GROUP);
+    cmXCodeObject* attrs = this->CreateObject(cmXCodeObject::OBJECT_LIST);
+    attrs->AddObject(this->CreateString("RemoveHeadersOnCopy"));
+    settings->AddAttributeIfNotEmpty("ATTRIBUTES", attrs);
+    buildFile->AddAttributeIfNotEmpty("settings", settings);
+    if (!buildFiles->HasObject(buildFile)) {
+      buildFiles->AddObject(buildFile);
+    }
+  }
+  copyFilesBuildPhase->AddAttribute("files", buildFiles);
+  auto* buildPhases = target->GetAttribute("buildPhases");
+  // Insert embed build phase right before the post-build command
+  buildPhases->InsertObject(buildPhases->GetObjectCount() - 1,
+                            copyFilesBuildPhase);
+}
+
 bool cmGlobalXCodeGenerator::CreateGroups(
   std::vector<cmLocalGenerator*>& generators)
 {
@@ -4231,6 +4347,7 @@ bool cmGlobalXCodeGenerator::CreateXCodeObjects(
   for (auto t : targets) {
     this->AddDependAndLinkInformation(t);
     this->AddEmbeddedFrameworks(t);
+    this->AddEmbeddedAppExtensions(t);
     // Inherit project-wide values for any target-specific search paths.
     this->InheritBuildSettingAttribute(t, "HEADER_SEARCH_PATHS");
     this->InheritBuildSettingAttribute(t, "SYSTEM_HEADER_SEARCH_PATHS");

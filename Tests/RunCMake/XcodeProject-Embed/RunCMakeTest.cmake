@@ -41,3 +41,9 @@ endfunction()
 
 TestFlagsOn(EmbedFrameworksFlagsOnNoSubdir)
 TestFlagsOn(EmbedFrameworksFlagsOnWithSubdir)
+
+
+# stickers are available only on iOS
+set(RunCMake_TEST_OPTIONS -DCMAKE_SYSTEM_NAME=iOS)
+
+run_cmake(EmbedAppExtensions)

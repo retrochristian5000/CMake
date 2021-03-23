@@ -197,6 +197,7 @@ private:
   cmXCodeObject* CreateUtilityTarget(cmGeneratorTarget* gtgt);
   void AddDependAndLinkInformation(cmXCodeObject* target);
   void AddEmbeddedFrameworks(cmXCodeObject* target);
+  void AddEmbeddedAppExtensions(cmXCodeObject* target);
   void AddPositionIndependentLinkAttribute(cmGeneratorTarget* target,
                                            cmXCodeObject* buildSettings,
                                            const std::string& configName);
