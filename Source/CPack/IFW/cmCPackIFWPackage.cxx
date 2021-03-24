@@ -30,32 +30,43 @@ cmCPackIFWPackage::DependenceStruct::DependenceStruct() = default;
 cmCPackIFWPackage::DependenceStruct::DependenceStruct(
   const std::string& dependence)
 {
-  // Search compare section
+  // Preferred format is name and version are separated by a colon (:).
+  // Backward compatibility allows a hyphen (-) as a separator instead, but
+  // names then cannot contain hyphen.
   size_t pos;
-  if ((pos = dependence.find("<=")) != std::string::npos) {
-    this->Compare.Type = cmCPackIFWPackage::CompareLessOrEqual;
-    this->Compare.Value = dependence.substr(pos + 2);
-  } else if ((pos = dependence.find(">=")) != std::string::npos) {
-    this->Compare.Type = cmCPackIFWPackage::CompareGreaterOrEqual;
-    this->Compare.Value = dependence.substr(pos + 2);
-  } else if ((pos = dependence.find('<')) != std::string::npos) {
-    this->Compare.Type = cmCPackIFWPackage::CompareLess;
-    this->Compare.Value = dependence.substr(pos + 1);
-  } else if ((pos = dependence.find('=')) != std::string::npos) {
-    this->Compare.Type = cmCPackIFWPackage::CompareEqual;
-    this->Compare.Value = dependence.substr(pos + 1);
-  } else if ((pos = dependence.find('>')) != std::string::npos) {
-    this->Compare.Type = cmCPackIFWPackage::CompareGreater;
-    this->Compare.Value = dependence.substr(pos + 1);
-  } else if ((pos = dependence.find('-')) != std::string::npos) {
-    this->Compare.Type = cmCPackIFWPackage::CompareNone;
-    this->Compare.Value = dependence.substr(pos + 1);
+  if ((pos = dependence.find(":")) == std::string::npos) {
+    pos = dependence.find("-");
   }
-  size_t dashPos = dependence.find('-');
-  if (dashPos != std::string::npos) {
-    pos = dashPos;
+
+  if (pos != std::string::npos) {
+    this->Name = dependence.substr(0, pos);
+    const auto versionPos = pos + 1;
+    if ((pos = dependence.find("<=", versionPos)) != std::string::npos) {
+      this->Compare.Type = cmCPackIFWPackage::CompareLessOrEqual;
+      this->Compare.Value = dependence.substr(pos + 2);
+    } else if ((pos = dependence.find(">=", versionPos)) != std::string::npos) {
+      this->Compare.Type = cmCPackIFWPackage::CompareGreaterOrEqual;
+      this->Compare.Value = dependence.substr(pos + 2);
+    } else if ((pos = dependence.find('<', versionPos)) != std::string::npos) {
+      this->Compare.Type = cmCPackIFWPackage::CompareLess;
+      this->Compare.Value = dependence.substr(pos + 1);
+    } else if ((pos = dependence.find('=', versionPos)) != std::string::npos) {
+      this->Compare.Type = cmCPackIFWPackage::CompareEqual;
+      this->Compare.Value = dependence.substr(pos + 1);
+    } else if ((pos = dependence.find('>', versionPos)) != std::string::npos) {
+      this->Compare.Type = cmCPackIFWPackage::CompareGreater;
+      this->Compare.Value = dependence.substr(pos + 1);
+    } else {
+      // We found no operator but a version specification is still expected to
+      // follow. The default behavior is to treat this the same as =. We
+      // explicitly record that as our type (it simplifies our logic a little
+      // and is also clearer).
+      this->Compare.Type = cmCPackIFWPackage::CompareEqual;
+      this->Compare.Value = dependence.substr(versionPos);
+    }
+  } else {
+    this->Name = dependence;
   }
-  this->Name = dependence.substr(0, pos);
 }
 
 std::string cmCPackIFWPackage::DependenceStruct::NameWithCompare() const
