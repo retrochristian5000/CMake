@@ -48,7 +48,9 @@ cmCPackIFWPackage::DependenceStruct::DependenceStruct(
     this->Compare.Type = cmCPackIFWPackage::CompareGreater;
     this->Compare.Value = dependence.substr(pos + 1);
   } else if ((pos = dependence.find('-')) != std::string::npos) {
-    this->Compare.Type = cmCPackIFWPackage::CompareNone;
+    // Version specification follows, but no operator was given. The QtIFW
+    // documentation specifies a default operator of = for this case.
+    this->Compare.Type = cmCPackIFWPackage::CompareEqual;
     this->Compare.Value = dependence.substr(pos + 1);
   }
   size_t dashPos = dependence.find('-');
