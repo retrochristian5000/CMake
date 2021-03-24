@@ -41,14 +41,16 @@ cmCPackIFWPackage::DependenceStruct::DependenceStruct(
   } else if ((pos = dependence.find('<')) != std::string::npos) {
     this->Compare.Type = cmCPackIFWPackage::CompareLess;
     this->Compare.Value = dependence.substr(pos + 1);
-  } else if ((pos = dependence.find('=')) != std::string::npos) {
-    this->Compare.Type = cmCPackIFWPackage::CompareEqual;
-    this->Compare.Value = dependence.substr(pos + 1);
   } else if ((pos = dependence.find('>')) != std::string::npos) {
     this->Compare.Type = cmCPackIFWPackage::CompareGreater;
     this->Compare.Value = dependence.substr(pos + 1);
-  } else if ((pos = dependence.find('-')) != std::string::npos) {
-    this->Compare.Type = cmCPackIFWPackage::CompareNone;
+  } else if ((pos = dependence.find('=')) != std::string::npos ||
+             (pos = dependence.find('-')) != std::string::npos) {
+    // In the case of "-", we found no operator but a version specification is
+    // still expected to follow. The QtIFW documentation specifies that a
+    // default operator of = will be used for that case. We explicitly record
+    // that as our type (it simplifies our logic a little and is also clearer).
+    this->Compare.Type = cmCPackIFWPackage::CompareEqual;
     this->Compare.Value = dependence.substr(pos + 1);
   }
   size_t dashPos = dependence.find('-');
