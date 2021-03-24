@@ -26,6 +26,8 @@ Also sets the variables
   :variable:`<PROJECT-NAME>_SOURCE_DIR`
 * :variable:`PROJECT_BINARY_DIR`,
   :variable:`<PROJECT-NAME>_BINARY_DIR`
+* :variable:`PROJECT_IS_TOP_LEVEL`,
+  :variable:`<PROJECT-NAME>_IS_TOP_LEVEL`
 
 Further variables are set by the optional arguments described in the following.
 If any of these arguments is not used, then the corresponding variables are
