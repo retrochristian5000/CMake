@@ -76,7 +76,7 @@ void InheritVector(std::vector<T>& child, const std::vector<T>& parent)
 template <class T>
 ReadFileResult VisitPreset(
   T& preset, std::map<std::string, cmCMakePresetsFile::PresetPair<T>>& presets,
-  std::map<std::string, CycleStatus> cycleStatus)
+  std::map<std::string, CycleStatus> cycleStatus, int version)
 {
   switch (cycleStatus[preset.Name]) {
     case CycleStatus::InProgress:
@@ -106,7 +106,7 @@ ReadFileResult VisitPreset(
       return ReadFileResult::USER_PRESET_INHERITANCE;
     }
 
-    auto result = VisitPreset(parentPreset, presets, cycleStatus);
+    auto result = VisitPreset(parentPreset, presets, cycleStatus, version);
     if (result != ReadFileResult::READ_OK) {
       return result;
     }
@@ -126,15 +126,33 @@ ReadFileResult VisitPreset(
     preset.ConditionEvaluator.reset();
   }
 
-  CHECK_OK(preset.VisitPresetAfterInherit())
+  CHECK_OK(preset.VisitPresetAfterInherit(version))
 
   cycleStatus[preset.Name] = CycleStatus::Verified;
   return ReadFileResult::READ_OK;
 }
 
+class VersionGetter
+{
+public:
+  explicit VersionGetter(cmCMakePresetsFile& file)
+    : File(file)
+  {
+  }
+
+  int operator()(const cmCMakePresetsFile::Preset& preset)
+  {
+    return File.GetVersion(preset);
+  }
+
+private:
+  cmCMakePresetsFile& File;
+};
+
 template <class T>
 ReadFileResult ComputePresetInheritance(
-  std::map<std::string, cmCMakePresetsFile::PresetPair<T>>& presets)
+  std::map<std::string, cmCMakePresetsFile::PresetPair<T>>& presets,
+  VersionGetter& versionGetter)
 {
   std::map<std::string, CycleStatus> cycleStatus;
   for (auto const& it : presets) {
@@ -142,7 +160,9 @@ ReadFileResult ComputePresetInheritance(
   }
 
   for (auto& it : presets) {
-    auto result = VisitPreset<T>(it.second.Unexpanded, presets, cycleStatus);
+    auto& preset = it.second.Unexpanded;
+    auto result =
+      VisitPreset<T>(preset, presets, cycleStatus, versionGetter(preset));
     if (result != ReadFileResult::READ_OK) {
       return result;
     }
@@ -647,7 +667,7 @@ cmCMakePresetsFile::ConfigurePreset::VisitPresetBeforeInherit()
 }
 
 cmCMakePresetsFile::ReadFileResult
-cmCMakePresetsFile::ConfigurePreset::VisitPresetAfterInherit()
+cmCMakePresetsFile::ConfigurePreset::VisitPresetAfterInherit(int version)
 {
   auto& preset = *this;
   if (!preset.Hidden) {
@@ -692,7 +712,7 @@ cmCMakePresetsFile::BuildPreset::VisitPresetInherit(
 }
 
 cmCMakePresetsFile::ReadFileResult
-cmCMakePresetsFile::BuildPreset::VisitPresetAfterInherit()
+cmCMakePresetsFile::BuildPreset::VisitPresetAfterInherit(int /* version */)
 {
   auto& preset = *this;
   if (!preset.Hidden && preset.ConfigurePreset.empty()) {
@@ -802,7 +822,7 @@ cmCMakePresetsFile::TestPreset::VisitPresetInherit(
 }
 
 cmCMakePresetsFile::ReadFileResult
-cmCMakePresetsFile::TestPreset::VisitPresetAfterInherit()
+cmCMakePresetsFile::TestPreset::VisitPresetAfterInherit(int /* version */)
 {
   auto& preset = *this;
   if (!preset.Hidden && preset.ConfigurePreset.empty()) {
@@ -863,9 +883,12 @@ cmCMakePresetsFile::ReadProjectPresetsInternal(bool allowNoFiles)
                         : ReadFileResult::FILE_NOT_FOUND;
   }
 
-  CHECK_OK(ComputePresetInheritance(this->ConfigurePresets))
-  CHECK_OK(ComputePresetInheritance(this->BuildPresets))
-  CHECK_OK(ComputePresetInheritance(this->TestPresets))
+  {
+    auto versionGetter = VersionGetter(*this);
+    CHECK_OK(ComputePresetInheritance(this->ConfigurePresets, versionGetter))
+    CHECK_OK(ComputePresetInheritance(this->BuildPresets, versionGetter))
+    CHECK_OK(ComputePresetInheritance(this->TestPresets, versionGetter))
+  }
 
   for (auto& it : this->ConfigurePresets) {
     if (!ExpandMacros(*this, it.second.Unexpanded, it.second.Expanded)) {
