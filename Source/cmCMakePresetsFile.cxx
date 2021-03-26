@@ -671,12 +671,15 @@ cmCMakePresetsFile::ConfigurePreset::VisitPresetAfterInherit(int version)
 {
   auto& preset = *this;
   if (!preset.Hidden) {
-    if (preset.Generator.empty()) {
-      return ReadFileResult::INVALID_PRESET;
+    if (version < 3) {
+      if (preset.Generator.empty()) {
+        return ReadFileResult::INVALID_PRESET;
+      }
+      if (preset.BinaryDir.empty()) {
+        return ReadFileResult::INVALID_PRESET;
+      }
     }
-    if (preset.BinaryDir.empty()) {
-      return ReadFileResult::INVALID_PRESET;
-    }
+
     if (preset.WarnDev == false && preset.ErrorDev == true) {
       return ReadFileResult::INVALID_PRESET;
     }
