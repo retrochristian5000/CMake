@@ -21,7 +21,8 @@ Inclusion of this module defines the following variables:
 
   Destination for files of a given type.  This value may be passed to
   the ``DESTINATION`` options of :command:`install` commands for the
-  corresponding file type.
+  corresponding file type.  It may be a path relative to the installation
+  prefix (see ``CMAKE_INSTALL_FULL_<dir>``), or it may be an absolute path.
 
 ``CMAKE_INSTALL_FULL_<dir>``
 
