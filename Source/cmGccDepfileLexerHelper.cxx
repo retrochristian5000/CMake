@@ -2,6 +2,7 @@
    file Copyright.txt or https://cmake.org/licensing for details.  */
 #include "cmGccDepfileLexerHelper.h"
 
+#include <cctype>
 #include <cstdio>
 #include <memory>
 #include <string>
@@ -123,11 +124,19 @@ void cmGccDepfileLexerHelper::sanitizeContent()
     if (it->rules.empty()) {
       it = this->Content.erase(it);
     } else {
-      // Remove empty paths
+      // Remove empty paths and fix wrong format, if any
       for (auto pit = it->paths.begin(); pit != it->paths.end();) {
         if (pit->empty()) {
           pit = it->paths.erase(pit);
         } else {
+#if defined(_WIN32)
+          // fix erroneous format from some croos-platform GNU tools:
+          // c\:\path must be transformed in c:\path
+          if (pit->size() >= 3 && std::isalpha((*pit)[0]) &&
+              (*pit)[1] == '\\' && (*pit)[2] == ':') {
+            pit->erase(1, 1);
+          }
+#endif
           ++pit;
         }
       }
