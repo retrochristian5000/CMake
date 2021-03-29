@@ -2248,6 +2248,11 @@ void cmQtAutoMocUicT::JobDepFilesMergeT::Process()
   std::for_each(this->MocEval().SourceMappings.begin(),
                 this->MocEval().SourceMappings.end(), processMappingEntry);
 
+  // Remove SKIP_AUTOMOC files
+  std::remove_if(
+    dependencies.begin(), dependencies.end(),
+    [this](const std::string& dep) { return this->MocConst().skipped(dep); });
+
   // Remove duplicates to make the depfile smaller
   std::sort(dependencies.begin(), dependencies.end());
   dependencies.erase(std::unique(dependencies.begin(), dependencies.end()),
