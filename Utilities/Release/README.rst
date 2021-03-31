@@ -122,7 +122,7 @@ The members are:
   ``architecture``
     A JSON array of strings naming the architecture(s) for which the
     package file is built, possibly using multiple alternative spellings,
-    e.g. ``["x86_64"]``.
+    e.g. ``["arm64","x86_64"]`` for a macOS universal binary.
     Source package files use the value ``[]``.
 
   ``class``
@@ -145,7 +145,7 @@ The members are:
   ``macOSmin``
     Optional member that is present on package files for macOS.
     The value is a JSON string specifying the minimum version of macOS
-    required to run the binary, e.g. ``"10.7"``.
+    required to run the binary, e.g. ``"10.10"``.
 
 ``hashFiles``
   A JSON array of entries corresponding to files containing cryptographic
@@ -193,10 +193,10 @@ For example, one may use ``jq`` queries:
                       (.architecture[] | . == "x86_64") and
                       (.class == "archive")) | .name
 
-* To select a macOS binary archive supporting ``x86_64`` hosts::
+* To select a macOS binary archive supporting ``arm64`` hosts::
 
     .files[] | select((.os[] | . == "macos") and
-                      (.architecture[] | . == "x86_64") and
+                      (.architecture[] | . == "arm64") and
                       (.class == "archive")) | .name
 
 * To select a SHA-256 hash file::
