@@ -75,6 +75,12 @@ Each ``<os>/<arch>/`` directory contains the following:
 
 .. _`kitware/cmake Docker Hub Repository`: https://hub.docker.com/r/kitware/cmake
 
+macOS
+-----
+
+The ``macos/`` directory contains scripts used to produce dependencies
+for building CMake binaries on macOS.
+
 File Table v1
 -------------
 
