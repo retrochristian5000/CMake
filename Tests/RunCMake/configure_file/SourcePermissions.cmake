@@ -6,7 +6,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/sourcefile.txt
         WORLD_READ
 )
 
-if (CMAKE_HOST_UNIX)
+if (CMAKE_HOST_UNIX AND NOT CMAKE_SYSTEM_NAME STREQUAL "MSYS")
   find_program(STAT_EXECUTABLE NAMES stat)
   if(NOT STAT_EXECUTABLE)
     return()
