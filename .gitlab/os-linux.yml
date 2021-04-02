@@ -354,17 +354,17 @@
         - .intelclassic_makefiles
         - .cmake_test_linux_release
         - .linux_builder_tags_qt
-        - .run_manually
         - .needs_centos6_x86_64
-    variables:
-        CMAKE_CI_JOB_NIGHTLY: "true"
+    rules:
+        # Require every job to specify its own rules.
+        - when: never
 
 .cmake_test_linux_inteloneapi_makefiles:
     extends:
         - .inteloneapi_makefiles
         - .cmake_test_linux_release
         - .linux_builder_tags_qt
-        - .run_manually
         - .needs_centos6_x86_64
-    variables:
-        CMAKE_CI_JOB_NIGHTLY: "true"
+    rules:
+        # Require every job to specify its own rules.
+        - when: never
