@@ -738,8 +738,7 @@ void cmInstallTargetGenerator::AddChrpathPatchRule(
         std::string runpath =
           mf->GetGlobalGenerator()->ExpandCFGIntDir(i, config);
 
-        if (runpaths.find(runpath) == runpaths.end()) {
-          runpaths.insert(runpath);
+        if (runpaths.insert(runpath).second) {
           os << indent << "execute_process(COMMAND " << installNameTool
              << "\n";
           os << indent << "  -delete_rpath \"" << runpath << "\"\n";
