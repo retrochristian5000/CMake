@@ -15,30 +15,44 @@ if(CMAKE_SYSTEM_NAME STREQUAL "iOS" OR CMAKE_SYSTEM_NAME STREQUAL "tvOS" OR CMAK
   if(NOT DEFINED CMAKE_FIND_ROOT_PATH_MODE_PACKAGE)
       set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
   endif()
-endif()
 
-# Darwin versions:
-#   6.x == Mac OSX 10.2 (Jaguar)
-#   7.x == Mac OSX 10.3 (Panther)
-#   8.x == Mac OSX 10.4 (Tiger)
-#   9.x == Mac OSX 10.5 (Leopard)
-#  10.x == Mac OSX 10.6 (Snow Leopard)
-#  11.x == Mac OSX 10.7 (Lion)
-#  12.x == Mac OSX 10.8 (Mountain Lion)
-string(REGEX REPLACE "^([0-9]+)\\.([0-9]+).*$" "\\1" DARWIN_MAJOR_VERSION "${CMAKE_SYSTEM_VERSION}")
-string(REGEX REPLACE "^([0-9]+)\\.([0-9]+).*$" "\\2" DARWIN_MINOR_VERSION "${CMAKE_SYSTEM_VERSION}")
+  if(NOT DEFINED HAVE_FLAG_SEARCH_PATHS_FIRST)
+    # TODO: We should be able to unilaterally set HAVE_FLAG_SEARCH_PATHS_FIRST
+    #       to 1 here, but we need this condition to preserve backward
+    #       compatibility. The old code used to assume CMAKE_SYSTEM_VERSION
+    #       was always set and therefore DARWIN_MAJOR_VERSION would always
+    #       be populated. For device platforms, it would end up as an empty
+    #       string, resulting in HAVE_FLAG_SEARCH_PATHS_FIRST being set to 0.
+    #       Some projects worked around another symptom of this by setting
+    #       CMAKE_SYSTEM_VERSION, which is wrong but gave the behavior they
+    #       wanted. We have to continue to honor that. We should remove all of
+    #       this logic with a policy and set it to 1 always if not already
+    #       defined.
+    set(HAVE_FLAG_SEARCH_PATHS_FIRST 0)
+    if("${CMAKE_SYSTEM_VERSION}" VERSION_GREATER_EQUAL 7)
+      set(HAVE_FLAG_SEARCH_PATHS_FIRST 1)
+    endif()
+  endif()
+else()
+  # Darwin versions:
+  #   6.x == Mac OSX 10.2 (Jaguar)
+  #   7.x == Mac OSX 10.3 (Panther)
+  #   8.x == Mac OSX 10.4 (Tiger)
+  #   9.x == Mac OSX 10.5 (Leopard)
+  #  10.x == Mac OSX 10.6 (Snow Leopard)
+  #  11.x == Mac OSX 10.7 (Lion)
+  #  12.x == Mac OSX 10.8 (Mountain Lion)
+  string(REGEX REPLACE "^([0-9]+)\\.([0-9]+).*$" "\\1" DARWIN_MAJOR_VERSION "${CMAKE_SYSTEM_VERSION}")
+  string(REGEX REPLACE "^([0-9]+)\\.([0-9]+).*$" "\\2" DARWIN_MINOR_VERSION "${CMAKE_SYSTEM_VERSION}")
 
-# Do not use the "-Wl,-search_paths_first" flag with the OSX 10.2 compiler.
-# Done this way because it is too early to do a TRY_COMPILE.
-if(NOT DEFINED HAVE_FLAG_SEARCH_PATHS_FIRST)
-  set(HAVE_FLAG_SEARCH_PATHS_FIRST 0)
-  if("${DARWIN_MAJOR_VERSION}" GREATER 6)
+  # Done this way because it is too early to do a TRY_COMPILE.
+  # More desirable, but does not work:
+  #   include(CheckCXXCompilerFlag)
+  #   CHECK_CXX_COMPILER_FLAG("-Wl,-search_paths_first" HAVE_FLAG_SEARCH_PATHS_FIRST)
+  if(NOT DEFINED HAVE_FLAG_SEARCH_PATHS_FIRST)
     set(HAVE_FLAG_SEARCH_PATHS_FIRST 1)
   endif()
 endif()
-# More desirable, but does not work:
-  #include(CheckCXXCompilerFlag)
-  #CHECK_CXX_COMPILER_FLAG("-Wl,-search_paths_first" HAVE_FLAG_SEARCH_PATHS_FIRST)
 
 set(CMAKE_SHARED_LIBRARY_PREFIX "lib")
 set(CMAKE_SHARED_LIBRARY_SUFFIX ".dylib")
@@ -48,10 +62,11 @@ set(CMAKE_SHARED_MODULE_SUFFIX ".so")
 set(CMAKE_MODULE_EXISTS 1)
 set(CMAKE_DL_LIBS "")
 
-# Enable rpath support for 10.5 and greater where it is known to work.
-if("${DARWIN_MAJOR_VERSION}" GREATER 8)
-  set(CMAKE_SHARED_LIBRARY_RUNTIME_C_FLAG "-Wl,-rpath,")
-endif()
+# Since CMake 3.19, we no longer support macOS SDKs older than 10.5, which
+# corresponds to Xcode 3. Supporting older Xcode versions for device platforms
+# is also not realistic. We therefore expect the -rpath linker option should
+# always be supported now.
+set(CMAKE_SHARED_LIBRARY_RUNTIME_C_FLAG "-Wl,-rpath,")
 
 foreach(lang C CXX OBJC OBJCXX)
   set(CMAKE_${lang}_OSX_COMPATIBILITY_VERSION_FLAG "-compatibility_version ")
