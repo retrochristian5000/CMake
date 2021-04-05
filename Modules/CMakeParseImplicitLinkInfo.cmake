@@ -10,7 +10,23 @@ cmake_policy(SET CMP0054 NEW)
 # code.
 
 function(CMAKE_PARSE_IMPLICIT_LINK_INFO text lib_var dir_var fwk_var log_var obj_regex)
+  set(implicit_libs "")
+  set(implicit_dirs "")
+  set(implicit_fwks "")
+  set(implicit_log )
+  set(implicit_objs "")
+
+  CMAKE_PARSE_IMPLICIT_LINK_INFO( ${text} implicit_libs implicit_dirs implicit_fwks implicit_objs implicit_log "${obj_regex}")
+
+  set(${lib_var} "${implicit_libs}" PARENT_SCOPE)
+  set(${dir_var} "${implicit_dirs}" PARENT_SCOPE)
+  set(${fwk_var} "${implicit_fwks}" PARENT_SCOPE)
+  set(${log_var} "${implicit_log}" PARENT_SCOPE)
+endfunction()
+
+function(CMAKE_PARSE_IMPLICIT_LINK_INFO text lib_var dir_var fwk_var log_var obj_regex obj_var)
   set(implicit_libs_tmp "")
+  set(implicit_objs_tmp "")
   set(implicit_dirs_tmp)
   set(implicit_fwks_tmp)
   set(log "")
@@ -103,11 +119,13 @@ function(CMAKE_PARSE_IMPLICIT_LINK_INFO text lib_var dir_var fwk_var log_var obj
           set(lib "${CMAKE_MATCH_2}")
           list(APPEND implicit_libs_tmp ${lib})
           string(APPEND log "    arg [${arg}] ==> lib [${lib}]\n")
-        elseif("${arg}" MATCHES "^(.:)?[/\\].*\\.o$"
-            AND obj_regex AND "${arg}" MATCHES "${obj_regex}")
-          # Object file full path.
-          list(APPEND implicit_libs_tmp ${arg})
+        elseif("${arg}" MATCHES "^(.:)?[/\\].*\\.o$")
+          list(APPEND implicit_objs_tmp ${arg})
           string(APPEND log "    arg [${arg}] ==> obj [${arg}]\n")
+          if(obj_regex AND "${arg}" MATCHES "${obj_regex}")
+            # Object file full path.
+            list(APPEND implicit_libs_tmp ${arg})
+          endif()
         elseif("${arg}" MATCHES "^-Y(P,)?[^0-9]")
           # Sun search path ([^0-9] avoids conflict with Mac -Y<num>).
           string(REGEX REPLACE "^-Y(P,)?" "" dirs "${arg}")
@@ -170,6 +188,19 @@ function(CMAKE_PARSE_IMPLICIT_LINK_INFO text lib_var dir_var fwk_var log_var obj
     endif()
   endforeach()
 
+  set(implicit_objs "")
+  foreach(obj IN LISTS implicit_objs_tmp)
+    if(IS_ABSOLUTE "${obj}")
+      get_filename_component(abs "${obj}" ABSOLUTE)
+      if(NOT "x${obj}" STREQUAL "x${abs}")
+        string(APPEND log "  collapse obj [${obj}] ==> [${abs}]\n")
+      endif()
+      list(APPEND implicit_objs "${abs}")
+    else()
+      list(APPEND implicit_objs "${obj}")
+    endif()
+  endforeach()
+
   # Cleanup list of library and framework directories.
   set(desc_dirs "library")
   set(desc_fwks "framework")
@@ -191,11 +222,13 @@ function(CMAKE_PARSE_IMPLICIT_LINK_INFO text lib_var dir_var fwk_var log_var obj
 
   # Log results.
   string(APPEND log "  implicit libs: [${implicit_libs}]\n")
+  string(APPEND log "  implicit objs: [${implicit_objs}]\n")
   string(APPEND log "  implicit dirs: [${implicit_dirs}]\n")
   string(APPEND log "  implicit fwks: [${implicit_fwks}]\n")
 
   # Return results.
   set(${lib_var} "${implicit_libs}" PARENT_SCOPE)
+  set(${obj_var} "${implicit_objs}" PARENT_SCOPE)
   set(${dir_var} "${implicit_dirs}" PARENT_SCOPE)
   set(${fwk_var} "${implicit_fwks}" PARENT_SCOPE)
   set(${log_var} "${log}" PARENT_SCOPE)
