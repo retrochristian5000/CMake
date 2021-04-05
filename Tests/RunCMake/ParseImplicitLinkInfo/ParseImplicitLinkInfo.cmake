@@ -104,10 +104,8 @@ endfunction()
 function(load_platform_info target)
   if(target MATCHES "linux-")
     set(CMAKE_LIBRARY_ARCHITECTURE_REGEX "[a-z0-9_]+(-[a-z0-9_]+)?-linux-gnu[a-z0-9_]*" PARENT_SCOPE)
-    set(CMAKE_LIBRARY_ARCHITECTURE_REGEX_VERSIONED "gcc/[a-z0-9_]+(-[a-z0-9_]+)?-linux(-gnu)?/[0-9]+(\\.[0-9]+\\.[0-9]+)*" PARENT_SCOPE)
   else()
     unset(CMAKE_LIBRARY_ARCHITECTURE_REGEX PARENT_SCOPE)
-    unset(CMAKE_LIBRARY_ARCHITECTURE_REGEX_VERSIONED PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -134,6 +132,7 @@ foreach(t ${targets})
   # Need to handle files with empty entries for both libs or dirs
   set(implicit_lib_output "")
   set(idirs_output "")
+  set(implicit_objs "")
   set(library_arch_output "")
   file(STRINGS ${outfile} outputs)
   foreach(line IN LISTS outputs)
@@ -149,10 +148,11 @@ foreach(t ${targets})
   endforeach()
 
   cmake_parse_implicit_link_info("${input}" implicit_libs idirs implicit_fwks log
-      "${CMAKE_${lang}_IMPLICIT_OBJECT_REGEX}")
+      "${CMAKE_${lang}_IMPLICIT_OBJECT_REGEX}"
+      implicit_objs)
 
   set(library_arch)
-  cmake_parse_library_architecture("${idirs}" library_arch)
+  cmake_parse_library_architecture(${lang} "${idirs}" "${implicit_objs}" library_arch)
 
   # File format
   # file(WRITE ${outfile} "libs=${implicit_libs}\ndirs=${idirs}\nlibrary_arch=${library_arch}")
@@ -165,7 +165,7 @@ foreach(t ${targets})
     message("${t} parse failed: state=${state}, '${idirs}' does not match '${idirs_output}'")
   elseif(NOT "${implicit_libs}" STREQUAL "${implicit_lib_output}")
     message("${t} parse failed: state=${state}, '${implicit_libs}' does not match '${implicit_lib_output}'")
-  elseif(library_arch AND NOT "${library_arch}" STREQUAL "${library_arch_output}")
+  elseif((library_arch OR library_arch_output) AND NOT "${library_arch}" STREQUAL "${library_arch_output}")
     message("${t} parse failed: state=${state}, '${library_arch}' does not match '${library_arch_output}'")
   endif()
 
