@@ -119,7 +119,7 @@ macro(_check_pthreads_flag)
         ${CMAKE_BINARY_DIR}
         ${_threads_src}
         CMAKE_FLAGS -DLINK_LIBRARIES:STRING=-pthread
-        OUTPUT_VARIABLE OUTPUT)
+        OUTPUT_VARIABLE _cmake_check_pthreads_output)
       unset(_threads_src)
 
       if(THREADS_HAVE_PTHREAD_ARG)
@@ -127,9 +127,6 @@ macro(_check_pthreads_flag)
         message(CHECK_PASS "yes")
       else()
         message(CHECK_FAIL "no")
-        file(APPEND
-          ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
-          "Determining if compiler accepts -pthread failed with the following output:\n${OUTPUT}\n\n")
       endif()
 
     endif()
@@ -249,4 +246,8 @@ if(THREADS_FOUND AND NOT TARGET Threads::Threads)
   if(CMAKE_THREAD_LIBS_INIT)
     set_property(TARGET Threads::Threads PROPERTY INTERFACE_LINK_LIBRARIES "${CMAKE_THREAD_LIBS_INIT}")
   endif()
+elseif(NOT THREADS_FOUND AND _cmake_check_pthreads_output)
+  file(APPEND
+    ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
+    "Determining if compiler accepts -pthread failed with the following output:\n${_cmake_check_pthreads_output}\n\n")
 endif()
