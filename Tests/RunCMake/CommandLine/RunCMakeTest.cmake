@@ -61,6 +61,9 @@ run_cmake_command(build-bad-dir
 run_cmake_command(build-bad-generator
   ${CMAKE_COMMAND} --build ${RunCMake_SOURCE_DIR}/cache-bad-generator)
 
+run_cmake_command(toolchain-no-arg ${CMAKE_COMMAND} -B DummyBuildDir --toolchain=)
+run_cmake_command(toolchain-not-abs-path ${CMAKE_COMMAND} -B DummyBuildDir --toolchain=file.txt)
+run_cmake_command(toolchain-valid-path ${CMAKE_COMMAND} -B DummyBuildDir --toolchain "${RunCMake_SOURCE_DIR}/valid-toolchain.cmake")
 
 run_cmake_command(install-prefix-no-arg ${CMAKE_COMMAND} -B DummyBuildDir --install-prefix)
 
