@@ -494,8 +494,8 @@ bool cmake::SetCacheArgs(const std::vector<std::string>& args)
     return true;
   };
 
-  auto PrefixLambda = [&](std::string const& path, cmake* state) -> bool {
-    const std::string var = "CMAKE_INSTALL_PREFIX";
+  auto CommandLineToCacheVar = [&](std::string const& path, cmake* state,
+    std::string&& var, std::string&& command) -> bool {
     cmStateEnums::CacheEntryType type = cmStateEnums::PATH;
     cmCMakePath absolutePath(path);
     if (absolutePath.IsAbsolute()) {
@@ -505,8 +505,15 @@ bool cmake::SetCacheArgs(const std::vector<std::string>& args)
       state->ProcessCacheArg(var, path, type);
       return true;
     }
-    cmSystemTools::Error("Absolute paths are required for --install-prefix");
+    cmSystemTools::Error( cmStrCat("Absolute paths are required for ", command));
     return false;
+  };
+
+  auto PrefixLambda = [&](std::string const& path, cmake* state) -> bool {
+    return CommandLineToCacheVar(path, state, "CMAKE_INSTALL_PREFIX", "--install-prefix");
+  };
+  auto ToolchainLambda = [&](std::string const& path, cmake* state) -> bool {
+    return CommandLineToCacheVar(path, state, "CMAKE_TOOLCHAIN_FILE", "--toolchain");
   };
 
   std::vector<CommandArgument> arguments = {
@@ -530,6 +537,9 @@ bool cmake::SetCacheArgs(const std::vector<std::string>& args)
 
     CommandArgument{ "-P", "-P must be followed by a file name.",
                      CommandArgument::Values::One, ScriptLambda },
+    CommandArgument{ "--toolchain",
+                     "No file specified for --toolchain",
+                     CommandArgument::Values::One, ToolchainLambda },
     CommandArgument{ "--install-prefix",
                      "No install directory specified for --install-prefix",
                      CommandArgument::Values::One, PrefixLambda },
@@ -835,6 +845,9 @@ void cmake::SetArgs(const std::vector<std::string>& args)
                      CommandArgument::Values::One, PlatformLambda },
     CommandArgument{ "-T", "No toolset specified for -T",
                      CommandArgument::Values::One, ToolsetLamda },
+    CommandArgument{ "--toolchain",
+                     "No file specified for --toolchain",
+                     CommandArgument::Values::One, IgnoreAndTrueLambda },
     CommandArgument{ "--install-prefix",
                      "No install directory specified for --install-prefix",
                      CommandArgument::Values::One, IgnoreAndTrueLambda },
