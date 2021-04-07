@@ -1,0 +1,2 @@
+^CMake Error.*binary_dir
+
