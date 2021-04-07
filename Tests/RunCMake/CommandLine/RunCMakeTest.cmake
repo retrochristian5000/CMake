@@ -153,20 +153,16 @@ endfunction()
 run_ExplicitDirs()
 
 function(run_Toolchain)
-  set(RunCMake_TEST_NO_CLEAN 1)
   set(RunCMake_TEST_NO_SOURCE_DIR 1)
-
   set(source_dir ${RunCMake_SOURCE_DIR}/Toolchain)
+
+  run_cmake_with_options(toolchain-no-arg -S ${source_dir} --toolchain=)
+  run_cmake_with_options(toolchain-valid-abs-path -S ${source_dir} --toolchain "${source_dir}/toolchain.cmake")
+  run_cmake_with_options(toolchain-valid-rel-src-path -S ${source_dir} --toolchain=toolchain.cmake)
+
+  set(RunCMake_TEST_NO_CLEAN 1)
   set(binary_dir ${RunCMake_BINARY_DIR}/Toolchain-build)
-
-  set(RunCMake_TEST_SOURCE_DIR "${source_dir}")
   set(RunCMake_TEST_BINARY_DIR "${binary_dir}")
-
-  run_cmake_command(toolchain-no-arg ${CMAKE_COMMAND} -S ${source_dir} -B ${binary_dir} --toolchain=)
-  run_cmake_command(toolchain-valid-abs-path ${CMAKE_COMMAND} -S ${source_dir} -B ${binary_dir} --toolchain "${source_dir}/toolchain.cmake")
-  file(REMOVE_RECURSE "${binary_dir}")
-
-  run_cmake_command(toolchain-valid-rel-src-path ${CMAKE_COMMAND} -S ${source_dir} -B ${binary_dir} --toolchain=toolchain.cmake)
   file(REMOVE_RECURSE "${binary_dir}")
 
   # Test that we both search the binary dir for toolchain files, and it takes
@@ -176,7 +172,6 @@ set(CMAKE_SYSTEM_NAME Linux)
 set(toolchain_file binary_dir)
 ]=])
   run_cmake_command(toolchain-valid-rel-build-path ${CMAKE_COMMAND} -S ${source_dir} -B ${binary_dir} --toolchain toolchain.cmake)
-  file(REMOVE_RECURSE "${binary_dir}")
 endfunction()
 run_Toolchain()
 

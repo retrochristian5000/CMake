@@ -78,7 +78,7 @@
 
 ``--toolchain <path-to-file>``
  Specify the cross compiling toolchain file, equivalant to setting
- :variable:`CMAKE_TOOLCHAIN_FILE` variable. Must be an absolute path.
+ :variable:`CMAKE_TOOLCHAIN_FILE` variable.
 
 ``--install-prefix <directory>``
  Specify the installation directory, used by the
