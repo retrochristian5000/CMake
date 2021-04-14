@@ -1074,6 +1074,8 @@ void cmake::SetArgs(const std::vector<std::string>& args)
     if (!parsedCorrectly) {
       cmSystemTools::Error("Run 'cmake --help' for all supported options.");
       exit(1);
+    } else if (!matched && arg == "--") {
+      continue;
     } else if (!matched && cmHasLiteralPrefix(arg, "-")) {
       possibleUnknownArg = arg;
     } else if (!matched) {
