@@ -2842,9 +2842,10 @@ int cmCTest::ExecuteTests()
       cmCTestLog(this, OUTPUT,
                  "Internal ctest changing into directory: " << workDir
                                                             << std::endl);
-      if (cmSystemTools::ChangeDirectory(workDir) != 0) {
+      cmsys::Status status = cmSystemTools::ChangeDirectory(workDir);
+      if (!status) {
         auto msg = "Failed to change working directory to \"" + workDir +
-          "\" : " + std::strerror(errno) + "\n";
+          "\" : " + status.GetString() + "\n";
         cmCTestLog(this, ERROR_MESSAGE, msg);
         return 1;
       }
