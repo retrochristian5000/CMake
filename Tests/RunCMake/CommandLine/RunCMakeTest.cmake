@@ -139,6 +139,12 @@ project(ExplicitDirsMissing LANGUAGES NONE)
   file(REMOVE_RECURSE "${binary_dir}")
   run_cmake_with_options(B-S -B${binary_dir} -S${source_dir})
 
+  # make sure we handle `--` properly
+  file(REMOVE_RECURSE "${binary_dir}")
+  run_cmake_with_options(trailing-double-hyphen -B${binary_dir} -S${source_dir} --)
+  file(REMOVE_RECURSE "${binary_dir}")
+  run_cmake_with_options(double-hyphen -B${binary_dir} -- ${source_dir})
+
   message("copied to ${RunCMake_TEST_BINARY_DIR}/initial-cache.txt")
   file(COPY ${RunCMake_SOURCE_DIR}/C_buildsrcdir/initial-cache.txt DESTINATION ${RunCMake_TEST_BINARY_DIR})
 
