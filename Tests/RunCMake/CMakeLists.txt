@@ -222,6 +222,7 @@ endif()
 
 add_RunCMake_test(BuildDepends
   -DMSVC_VERSION=${MSVC_VERSION}
+  -DXCODE_VERSION=${XCODE_VERSION}
   -DCMAKE_C_COMPILER_ID=${CMAKE_C_COMPILER_ID}
   -DCMake_TEST_BuildDepends_GNU_AS=${CMake_TEST_BuildDepends_GNU_AS}
   )
