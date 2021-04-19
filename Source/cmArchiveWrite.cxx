@@ -14,6 +14,7 @@
 #include "cmsys/Directory.hxx"
 #include "cmsys/Encoding.hxx"
 #include "cmsys/FStream.hxx"
+#include "cmsys/SystemInformation.hxx"
 
 #include "cm_get_date.h"
 
@@ -144,7 +145,19 @@ cmArchiveWrite::cmArchiveWrite(std::ostream& os, Compress c,
                                cm_archive_error_string(this->Archive));
         return;
       }
+
       {
+#if ARCHIVE_VERSION_NUMBER >= 3004000
+        // Upstream fixed an issue with their integer parsing in 3.4.0
+        // which would cause spurious errors to be raised from `strtoull`.
+
+        if(numThreads == 0) {
+          cmsys::SystemInformation info;
+          info.RunCPUCheck();
+          numThreads = info.GetNumberOfLogicalCPU() *
+                         info.GetNumberOfPhysicalCPU();
+        }
+
         char sNumThreads[8];
         snprintf(sNumThreads, sizeof(sNumThreads), "%d", numThreads);
         sNumThreads[7] = '\0'; // for safety
@@ -154,6 +167,7 @@ cmArchiveWrite::cmArchiveWrite(std::ostream& os, Compress c,
                                  cm_archive_error_string(this->Archive));
           return;
         }
+#endif
       }
 
       break;
@@ -423,18 +437,5 @@ bool cmArchiveWrite::AddData(const char* file, size_t size)
                            "\": ", cmSystemTools::GetLastSystemError());
     return false;
   }
-  return true;
-}
-
-bool cmArchiveWrite::SetFilterOption(const char* module, const char* key,
-                                     const char* value)
-{
-  if (archive_write_set_filter_option(this->Archive, module, key, value) !=
-      ARCHIVE_OK) {
-    this->Error = "archive_write_set_filter_option: ";
-    this->Error += cm_archive_error_string(this->Archive);
-    return false;
-  }
-
   return true;
 }

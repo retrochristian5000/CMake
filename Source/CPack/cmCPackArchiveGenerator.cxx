@@ -7,6 +7,7 @@
 #include <ostream>
 #include <utility>
 #include <vector>
+#include <algorithm>
 
 #include <cm3p/archive.h>
 
@@ -154,15 +155,12 @@ int cmCPackArchiveGenerator::addOneComponentToArchive(
                     << (filename) << ">." << std::endl);                      \
     return 0;                                                                 \
   }                                                                           \
-  cmArchiveWrite archive(gf, this->Compress, this->ArchiveFormat);            \
+  cmArchiveWrite archive(gf,                                                  \
+                         this->Compress,                                      \
+                         this->ArchiveFormat,                                 \
+                         0,                                                   \
+                         this->GetThreadCount());                             \
   do {                                                                        \
-    if (!this->SetArchiveOptions(&archive)) {                                 \
-      cmCPackLogger(cmCPackLog::LOG_ERROR,                                    \
-                    "Problem to set archive options <"                        \
-                      << (filename) << ">, ERROR = " << (archive).GetError()  \
-                      << std::endl);                                          \
-      return 0;                                                               \
-    }                                                                         \
     if (!archive.Open()) {                                                    \
       cmCPackLogger(cmCPackLog::LOG_ERROR,                                    \
                     "Problem to open archive <"                               \
@@ -346,26 +344,16 @@ bool cmCPackArchiveGenerator::SupportsComponentInstallation() const
   return this->IsOn("CPACK_ARCHIVE_COMPONENT_INSTALL");
 }
 
-bool cmCPackArchiveGenerator::SetArchiveOptions(cmArchiveWrite* archive)
+int cmCPackArchiveGenerator::GetThreadCount() const
 {
-#if ARCHIVE_VERSION_NUMBER >= 3004000
-  // Upstream fixed an issue with their integer parsing in 3.4.0 which would
-  // cause spurious errors to be raised from `strtoull`.
-  if (this->Compress == cmArchiveWrite::CompressXZ) {
-    const char* threads = "1";
+  int threads = 1;
 
-    // CPACK_ARCHIVE_THREADS overrides CPACK_THREADS
-    if (this->IsSet("CPACK_ARCHIVE_THREADS")) {
-      threads = this->GetOption("CPACK_ARCHIVE_THREADS");
-    } else if (this->IsSet("CPACK_THREADS")) {
-      threads = this->GetOption("CPACK_THREADS");
-    }
-
-    if (!archive->SetFilterOption("xz", "threads", threads)) {
-      return false;
-    }
+  // CPACK_ARCHIVE_THREADS overrides CPACK_THREADS
+  if (this->IsSet("CPACK_ARCHIVE_THREADS")) {
+    threads = std::atoi(this->GetOption("CPACK_ARCHIVE_THREADS"));
+  } else if (this->IsSet("CPACK_THREADS")) {
+    threads = std::atoi(this->GetOption("CPACK_THREADS"));
   }
-#endif
 
-  return true;
+  return std::max(threads, 0);
 }
