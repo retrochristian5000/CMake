@@ -2069,6 +2069,13 @@ bool cmCTest::HandleCommandLineArguments(size_t& i,
     }
     i++;
     this->Impl->TestDir = std::string(args[i]);
+  } else if (this->CheckArgument(arg, "--output-junit"_s)) {
+    if (i >= args.size() - 1) {
+      errormsg = "'--output-junit' requires an argument";
+      return false;
+    }
+    i++;
+    this->Impl->TestHandler.SetJUnitXMLFileName(std::string(args[i]));
   }
 
   cm::string_view noTestsPrefix = "--no-tests=";

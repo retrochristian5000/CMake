@@ -22,6 +22,8 @@
 #include <cmext/algorithm>
 #include <cmext/string_view>
 
+#include <cxxabi.h>
+
 #include "cmsys/FStream.hxx"
 #include <cmsys/Base64.h>
 #include <cmsys/Directory.hxx>
@@ -299,6 +301,10 @@ cmCTestTestHandler::cmCTestTestHandler()
 
   this->LogFile = nullptr;
 
+  // Support for JUnit XML output.
+  this->ShouldWriteJUnitXML = false;
+  this->JUnitXMLFileName = "";
+
   // regex to detect <DartMeasurement>...</DartMeasurement>
   this->DartStuff.compile("(<DartMeasurement.*/DartMeasurement[a-zA-Z]*>)");
   // regex to detect each individual <DartMeasurement>...</DartMeasurement>
@@ -453,6 +459,10 @@ int cmCTestTestHandler::ProcessHandler()
   }
 
   if (!this->GenerateXML()) {
+    return 1;
+  }
+
+  if (!this->WriteJUnitXML()) {
     return 1;
   }
 
@@ -2456,4 +2466,120 @@ bool cmCTestTestHandler::cmCTestTestResourceRequirement::operator!=(
   const cmCTestTestResourceRequirement& other) const
 {
   return !(*this == other);
+}
+
+void cmCTestTestHandler::SetJUnitXMLFileName(const std::string& filename)
+{
+  this->JUnitXMLFileName = filename;
+  this->ShouldWriteJUnitXML = true;
+}
+
+bool cmCTestTestHandler::WriteJUnitXML()
+{
+  if (!this->ShouldWriteJUnitXML) {
+    return true;
+  }
+
+  // Open new XML file for writing.
+  cmGeneratedFileStream xmlfile;
+  xmlfile.SetTempExt("tmp");
+  xmlfile.Open(this->JUnitXMLFileName);
+  if (!xmlfile) {
+    cmCTestLog(this->CTest, ERROR_MESSAGE,
+               "Problem opening file: " << this->JUnitXMLFileName
+                                        << std::endl);
+    return false;
+  }
+  cmXMLWriter xml(xmlfile);
+
+  // Iterate over the test results to get the number of tests that
+  // passed, failed, etc.
+  auto num_tests = 0;
+  auto num_passed = 0;
+  auto num_failed = 0;
+  auto num_notrun = 0;
+  auto num_disabled = 0;
+  SetOfTests resultsSet(this->TestResults.begin(), this->TestResults.end());
+  for (cmCTestTestResult const& result : resultsSet) {
+    num_tests++;
+    if (result.Status == cmCTestTestHandler::COMPLETED) {
+      num_passed++;
+    } else if (result.Status == cmCTestTestHandler::NOT_RUN) {
+      if (cmHasLiteralPrefix(result.CompletionStatus, "SKIP_") ||
+          result.CompletionStatus == "Disabled") {
+        num_disabled++;
+      } else {
+        num_notrun++;
+      }
+    } else {
+      num_failed++;
+    }
+  }
+
+  // Write <testsuite> element.
+  xml.StartDocument();
+  xml.StartElement("testsuite");
+
+  xml.Attribute("name",
+                cmCTest::SafeBuildIdField(
+                  this->CTest->GetCTestConfiguration("BuildName")));
+  xml.BreakAttributes();
+
+  xml.Attribute("tests", num_tests);
+  xml.Attribute("disabled", num_disabled);
+  xml.Attribute("failures", num_failed);
+  xml.Attribute("skipped", num_notrun);
+  xml.Attribute("hostname", this->CTest->GetCTestConfiguration("Site"));
+  xml.Attribute(
+    "time",
+    std::chrono::duration_cast<std::chrono::seconds>(this->ElapsedTestingTime)
+      .count());
+  const std::time_t start_test_time_t =
+    std::chrono::system_clock::to_time_t(this->StartTestTime);
+  xml.Attribute("timestamp",
+                std::put_time(std::localtime(&start_test_time_t), "%FT%T"));
+
+  // Write <testcase> elements.
+  for (cmCTestTestResult const& result : resultsSet) {
+    xml.StartElement("testcase");
+    xml.Attribute("name", result.Name);
+    xml.Attribute("classname", result.Name);
+    xml.Attribute("time", result.ExecutionTime.count());
+
+    std::string status = "";
+    if (result.Status == cmCTestTestHandler::COMPLETED) {
+      status = "run";
+    } else if (result.Status == cmCTestTestHandler::NOT_RUN) {
+      if (cmHasLiteralPrefix(result.CompletionStatus, "SKIP_") ||
+          result.CompletionStatus == "Disabled") {
+        status = "disabled";
+      } else {
+        status = "notrun";
+      }
+    } else {
+      status = "fail";
+    }
+    xml.Attribute("status", status);
+
+    if (status == "notrun") {
+      xml.StartElement("skipped");
+      xml.Attribute("message", result.CompletionStatus);
+      xml.EndElement(); // </skipped>
+    } else if (status == "fail") {
+      xml.StartElement("failure");
+      xml.Attribute("message", result.Reason);
+      xml.EndElement(); // </failure>
+    }
+
+    if (!result.CompressOutput) {
+      xml.Element("system-out", result.Output);
+    }
+
+    xml.EndElement(); // </testcase>
+  }
+
+  xml.EndElement(); // </testsuite>
+  xml.EndDocument();
+
+  return true;
 }
