@@ -59,5 +59,6 @@ protected:
   std::string StopTime;
   std::string TestLoad;
   std::string ResourceSpecFile;
+  std::string OutputJUnit;
   bool StopOnFailure = false;
 };

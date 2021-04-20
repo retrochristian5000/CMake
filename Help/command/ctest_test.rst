@@ -21,6 +21,7 @@ Perform the :ref:`CTest Test Step` as a :ref:`Dashboard Client`.
              [TEST_LOAD <threshold>]
              [SCHEDULE_RANDOM <ON|OFF>]
              [STOP_ON_FAILURE]
+             [OUTPUT_JUNIT <file>]
              [STOP_TIME <time-of-day>]
              [RETURN_VALUE <result-var>]
              [CAPTURE_CMAKE_ERROR <result-var>]
@@ -136,6 +137,14 @@ The options are:
   .. versionadded:: 3.18
 
   Stop the execution of the tests once one has failed.
+
+``OUTPUT_JUNIT``
+  .. versionadded:: 3.21
+
+  Write test results to ``<file>`` in JUnit XML format. If ``<file>`` is a
+  relative path it will be placed in the build directory. Note that the
+  resulting JUnit XML file is **not** uploaded to CDash because it would be
+  redundant with CTest's ``Test.xml`` file.
 
 ``STOP_TIME <time-of-day>``
   Specify a time of day at which the tests should all stop running.

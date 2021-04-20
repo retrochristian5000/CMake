@@ -36,6 +36,7 @@ void cmCTestTestCommand::BindArguments()
   this->Bind("TEST_LOAD"_s, this->TestLoad);
   this->Bind("RESOURCE_SPEC_FILE"_s, this->ResourceSpecFile);
   this->Bind("STOP_ON_FAILURE"_s, this->StopOnFailure);
+  this->Bind("OUTPUT_JUNIT"_s, this->OutputJUnit);
 }
 
 cmCTestGenericHandler* cmCTestTestCommand::InitializeHandler()
@@ -138,6 +139,11 @@ cmCTestGenericHandler* cmCTestTestCommand::InitializeHandler()
         this->Makefile->GetDefinition("CTEST_LABELS_FOR_SUBPROJECTS")) {
     this->CTest->SetCTestConfiguration("LabelsForSubprojects",
                                        *labelsForSubprojects, this->Quiet);
+  }
+
+  if (!this->OutputJUnit.empty()) {
+    static_cast<cmCTestTestHandler*>(handler)
+      ->SetJUnitXMLFileName(this->OutputJUnit);
   }
 
   handler->SetQuiet(this->Quiet);
