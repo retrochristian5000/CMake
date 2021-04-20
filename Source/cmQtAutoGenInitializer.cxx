@@ -1833,8 +1833,58 @@ void cmQtAutoGenInitializer::ConfigFileClean(ConfigString& configString)
   }
 }
 
+static cmQtAutoGen::IntegerVersion parseMocVersion(std::string str)
+{
+  cmQtAutoGen::IntegerVersion result;
+
+  static const std::string prelude = "moc ";
+  size_t pos = str.find(prelude);
+  if (pos == std::string::npos)
+    return result;
+
+  str.erase(0, prelude.size() + pos);
+  std::istringstream iss(str);
+  std::string major;
+  std::string minor;
+  if (!std::getline(iss, major, '.') || !std::getline(iss, minor, '.'))
+    return result;
+
+  result.Major = (unsigned int)std::stoi(major);
+  result.Minor = (unsigned int)std::stoi(minor);
+  return result;
+}
+
+static cmQtAutoGen::IntegerVersion GetMocVersion(
+  const std::string& mocExecutablePath)
+{
+  std::string capturedStdOut;
+  int exitCode;
+  if (!cmSystemTools::RunSingleCommand({ mocExecutablePath, "--version" },
+                                       &capturedStdOut, nullptr, &exitCode,
+                                       nullptr, cmSystemTools::OUTPUT_NONE))
+    return {};
+
+  if (exitCode != 0)
+    return {};
+
+  return parseMocVersion(capturedStdOut);
+}
+
+static std::string FindMocExecutableFromMocTarget(cmMakefile* makefile,
+                                                  unsigned int qtMajorVersion)
+{
+  std::string result;
+  const std::string mocTargetName =
+    "Qt" + std::to_string(qtMajorVersion) + "::moc";
+  cmTarget* mocTarget = makefile->FindTargetToUse(mocTargetName);
+  if (mocTarget)
+    result = mocTarget->GetSafeProperty("IMPORTED_LOCATION");
+  return result;
+}
+
 std::pair<cmQtAutoGen::IntegerVersion, unsigned int>
-cmQtAutoGenInitializer::GetQtVersion(cmGeneratorTarget const* target)
+cmQtAutoGenInitializer::GetQtVersion(cmGeneratorTarget const* target,
+                                     std::string mocExecutable)
 {
   // Converts a char ptr to an unsigned int value
   auto toUInt = [](const char* const input) -> unsigned int {
@@ -1909,6 +1959,19 @@ cmQtAutoGenInitializer::GetQtVersion(cmGeneratorTarget const* target)
       }
     }
   }
+
+  if (res.first.Major == 0) {
+    // We could not get the version number from variables or directory
+    // properties. This might happen if the find_package call for Qt is wrapped
+    // in a function. Try to find the moc executable path from the available
+    // targets and call "moc --version" to get the Qt version.
+    if (mocExecutable.empty())
+      mocExecutable =
+        FindMocExecutableFromMocTarget(target->Makefile, res.second);
+    if (!mocExecutable.empty())
+      res.first = GetMocVersion(mocExecutable);
+  }
+
   return res;
 }
 
