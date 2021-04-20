@@ -101,6 +101,11 @@ cmQtAutoGenGlobalInitializer::cmQtAutoGenGlobalInitializer(
         // Don't process target if it's a CSharp target
         continue;
       }
+      // cmGeneratorTarget::GetAllConfigCompileLanguages caches the target's
+      // sources. Clear it so that OBJECT library targets that are AUTOGEN
+      // initialized after this target get their added mocs_compilation.cpp
+      // source acknowledged by this target.
+      target->ClearSourcesCache();
 
       bool const moc = target->GetPropertyAsBool(this->kw().AUTOMOC);
       bool const uic = target->GetPropertyAsBool(this->kw().AUTOUIC);
