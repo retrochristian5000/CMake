@@ -134,6 +134,11 @@ Options
 
  This option tells CTest to write all its output to a ``<file>`` log file.
 
+``--output-junit <file>``
+ Write test results in JUnit format.
+
+ This option tells CTest to write test results to a ``<file>`` JUnit XML file.
+
 ``-N,--show-only[=<format>]``
  Disable actual execution of tests.
 
