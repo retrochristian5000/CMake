@@ -160,3 +160,37 @@ The options are:
 
 See also the :variable:`CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE`
 and :variable:`CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE` variables.
+
+.. _`Additional Test Measurements`:
+
+Additional Test Measurements
+============================
+
+CTest can parse the output of your tests for extra measurements to report to CDash.
+
+When run as a :ref:`Dashboard Client`, CTest will include these custom measurements in the ``Test.xml`` file
+that gets uploaded to CDash.
+
+The following example outputs a custom measurement named ``score`` with a value of ``28.3``
+from a given test.
+
+.. code-block:: c++
+
+   std::cout <<
+     "<DartMeasurement type=\"numeric/double\" name=\"score\">28.3</DartMeasurement>"
+     << std::endl;
+
+Use the following format to upload test images to CDash.
+
+.. code-block:: c++
+
+   std::cout <<
+     "<DartMeasurementFile type=\"image/png\" name=\"TestImage\">/dir/to/img.png</DartMeasurementFile>"
+     << std::endl;
+
+To associate other types of files with a test, use the
+:prop_test:`ATTACHED_FILES` or :prop_test:`ATTACHED_FILES_ON_FAIL` test properties.
+
+Check the `CDash test measurement documentation
+<https://github.com/Kitware/CDash/blob/master/docs/test_measurements.md>`_
+for more information on the types of test measurements that CDash recognizes.
