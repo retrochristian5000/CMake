@@ -146,3 +146,19 @@ set_property(TEST RunCMakeVersion PROPERTY ENVIRONMENT "ENV1=env1;ENV2=env2")
   run_ctest(TestEnvironment)
 endfunction()
 run_environment()
+
+# Verify that extra measurements get reported.
+function(run_measurements)
+  set(CASE_CMAKELISTS_SUFFIX_CODE [[
+add_test(
+  NAME double_measurement
+  COMMAND ${CMAKE_COMMAND} -E
+  echo <DartMeasurement type="numeric/double" name="my_custom_value">1.4847</DartMeasurement>)
+add_test(
+  NAME img_measurement
+  COMMAND ${CMAKE_COMMAND} -E
+  echo <DartMeasurementFile name="TestImage" type="image/png">]] ${IMAGE_DIR}/cmake-logo-16.png [[</DartMeasurementFile>)
+  ]])
+  run_ctest(TestMeasurements)
+endfunction()
+run_measurements()
