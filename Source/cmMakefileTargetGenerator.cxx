@@ -1974,7 +1974,8 @@ void cmMakefileTargetGenerator::CreateLinkScript(
   // Create the link script file.
   std::string linkScriptName =
     cmStrCat(this->TargetBuildDirectoryFull, '/', name);
-  cmGeneratedFileStream linkScriptStream(linkScriptName);
+  cmGeneratedFileStream linkScriptStream(
+    linkScriptName, false, this->GlobalGenerator->GetMakefileEncoding());
   linkScriptStream.SetCopyIfDifferent(true);
   for (std::string const& link_command : link_commands) {
     // Do not write out empty commands or commands beginning in the
@@ -2058,7 +2059,8 @@ std::string cmMakefileTargetGenerator::CreateResponseFile(
   // Create the response file.
   std::string responseFileNameFull =
     cmStrCat(this->TargetBuildDirectoryFull, '/', name);
-  cmGeneratedFileStream responseStream(responseFileNameFull);
+  cmGeneratedFileStream responseStream(
+    responseFileNameFull, false, this->GlobalGenerator->GetMakefileEncoding());
   responseStream.SetCopyIfDifferent(true);
   responseStream << options << "\n";
 
@@ -2249,7 +2251,8 @@ void cmMakefileTargetGenerator::GenDefFile(
   }
   real_link_commands.insert(real_link_commands.begin(), cmd);
   // create a list of obj files for the -E __create_def to read
-  cmGeneratedFileStream fout(objlist_file);
+  cmGeneratedFileStream fout(objlist_file, false,
+                             this->GlobalGenerator->GetMakefileEncoding());
 
   if (mdi->WindowsExportAllSymbols) {
     for (std::string const& obj : this->Objects) {
