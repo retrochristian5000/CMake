@@ -1,0 +1,20 @@
+CMP0123
+-------
+
+.. versionadded:: 3.21
+
+The loop variable created by :command:`foreach` command has now its scope
+restricted to the loop scope.
+
+Starting with CMake 3.21, the :command:`foreach` command ensures that the loop
+variable has its scope restricted to the loop scope.
+
+The ``OLD`` behavior for this policy let the loop variable to exist, with an
+empty value, in the outer scope of loop scope.
+
+This policy was introduced in CMake version 3.21. Use the
+:command:`cmake_policy` command to set it to ``OLD`` or ``NEW`` explicitly.
+Unlike many policies, CMake version |release| does *not* warn when the policy
+is not set and simply uses ``OLD`` behavior.
+
+.. include:: DEPRECATED.txt

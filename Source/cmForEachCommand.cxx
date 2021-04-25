@@ -17,6 +17,7 @@
 #include <utility>
 
 #include <cm/memory>
+#include <cm/optional>
 #include <cm/string_view>
 #include <cmext/string_view>
 
@@ -113,9 +114,11 @@ bool cmForEachFunctionBlocker::ReplayItems(
 
   // At end of for each execute recorded commands
   // store the old value
-  std::string oldDef;
-  if (cmProp d = mf.GetDefinition(this->Args.front())) {
-    oldDef = *d;
+  cm::optional<std::string> oldDef;
+  if (mf.GetPolicyStatus(cmPolicies::CMP0123) != cmPolicies::NEW) {
+    oldDef = mf.GetSafeDefinition(this->Args.front());
+  } else if (mf.IsNormalDefinitionSet(this->Args.front())) {
+    oldDef = *mf.GetDefinition(this->Args.front());
   }
 
   auto restore = false;
@@ -131,9 +134,14 @@ bool cmForEachFunctionBlocker::ReplayItems(
   }
 
   if (restore) {
-    // restore the variable to its prior value
-    mf.AddDefinition(this->Args.front(), oldDef);
+    if (oldDef) {
+      // restore the variable to its prior value
+      mf.AddDefinition(this->Args.front(), *oldDef);
+    } else {
+      mf.RemoveDefinition(this->Args.front());
+    }
   }
+
   return true;
 }
 
