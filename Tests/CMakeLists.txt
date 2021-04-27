@@ -1748,27 +1748,29 @@ if(BUILD_TESTING)
     --build-project TestDriverTest
     --test-command TestDriverTest test1
     )
+  list(APPEND TEST_BUILD_DIRS "${CMake_BINARY_DIR}/Tests/TestDriver")
 
   add_test(testdriver2 ${CMAKE_CTEST_COMMAND}
     --build-and-test
     "${CMake_SOURCE_DIR}/Tests/TestDriver"
-    "${CMake_BINARY_DIR}/Tests/TestDriver"
+    "${CMake_BINARY_DIR}/Tests/TestDriver2"
     ${build_generator_args}
     --build-exe-dir "${CMake_BINARY_DIR}/Tests/Wrapping/bin"
     --build-project TestDriverTest
     --test-command TestDriverTest test2
     )
+  list(APPEND TEST_BUILD_DIRS "${CMake_BINARY_DIR}/Tests/TestDriver2")
 
   add_test(testdriver3  ${CMAKE_CTEST_COMMAND}
     --build-and-test
     "${CMake_SOURCE_DIR}/Tests/TestDriver"
-    "${CMake_BINARY_DIR}/Tests/TestDriver"
+    "${CMake_BINARY_DIR}/Tests/TestDriver3"
     ${build_generator_args}
     --build-exe-dir "${CMake_BINARY_DIR}/Tests/Wrapping/bin"
     --build-project TestDriverTest
     --test-command TestDriverTest subdir/test3
     )
-  list(APPEND TEST_BUILD_DIRS "${CMake_BINARY_DIR}/Tests/TestDriver")
+  list(APPEND TEST_BUILD_DIRS "${CMake_BINARY_DIR}/Tests/TestDriver3")
 
   add_test(Dependency ${CMAKE_CTEST_COMMAND}
     --build-and-test
