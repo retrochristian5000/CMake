@@ -17,8 +17,13 @@ if ("$ENV{CMAKE_CONFIGURATION}" STREQUAL "")
 endif ()
 
 # Set the build metadata.
-set(CTEST_BUILD_NAME "$ENV{CI_PROJECT_NAME}-$ENV{CMAKE_CONFIGURATION}")
+if(NOT "$ENV{CMAKE_CI_BUILD_NAME}" STREQUAL "")
+  set(CTEST_BUILD_NAME "$ENV{CI_PROJECT_NAME}-$ENV{CMAKE_CI_BUILD_NAME}")
+else()
+  set(CTEST_BUILD_NAME "$ENV{CI_PROJECT_NAME}-$ENV{CMAKE_CONFIGURATION}")
+endif()
 set(CTEST_SITE "gitlab-ci")
+set(ctest_model "Experimental")
 
 # Default to Release builds.
 if (NOT "$ENV{CMAKE_BUILD_TYPE}" STREQUAL "")
@@ -45,9 +50,10 @@ if (NOT "$ENV{CMAKE_GENERATOR_TOOLSET}" STREQUAL "")
   set(CTEST_CMAKE_GENERATOR_TOOLSET "$ENV{CMAKE_GENERATOR_TOOLSET}")
 endif ()
 
-# Determine the track to submit to.
-set(ctest_track "Experimental")
+# Determine the group to submit to.
+set(ctest_group "Experimental")
 if (NOT "$ENV{CI_MERGE_REQUEST_ID}" STREQUAL "")
+<<<<<<< HEAD
   set(ctest_track "merge-requests")
 elseif (NOT "$ENV{CMAKE_CI_PROJECT_CONTINUOUS_BRANCH}" STREQUAL "" AND "$ENV{CMAKE_CI_PROJECT_CONTINUOUS_BRANCH}" STREQUAL "$ENV{CI_COMMIT_BRANCH}" AND NOT "$ENV{CMAKE_CI_JOB_CONTINUOUS}" STREQUAL "")
   if (NOT "$ENV{CMAKE_CI_JOB_HELP}" STREQUAL "")
@@ -55,10 +61,25 @@ elseif (NOT "$ENV{CMAKE_CI_PROJECT_CONTINUOUS_BRANCH}" STREQUAL "" AND "$ENV{CMA
   else()
     set(ctest_track "Continuous")
   endif()
+=======
+  set(ctest_group "merge-requests")
+elseif (NOT "$ENV{CMAKE_CI_PROJECT_CONTINUOUS_BRANCH}" STREQUAL "" AND "$ENV{CMAKE_CI_PROJECT_CONTINUOUS_BRANCH}" STREQUAL "$ENV{CI_COMMIT_BRANCH}" AND NOT "$ENV{CMAKE_CI_JOB_CONTINUOUS}" STREQUAL "")
+  set(ctest_model "Continuous")
+  if (NOT "$ENV{CMAKE_CI_JOB_HELP}" STREQUAL "")
+    set(ctest_group "Continuous Help")
+  else()
+    set(ctest_group "Continuous")
+  endif()
+  string(PREPEND CTEST_BUILD_NAME "continuous-")
+elseif (NOT "$ENV{CMAKE_CI_NIGHTLY}" STREQUAL "")
+  set(ctest_model "Nightly")
+  set(ctest_group "Nightly Expected")
+  string(PREPEND CTEST_BUILD_NAME "nightly-")
+>>>>>>> upstream/master
 elseif ("$ENV{CI_PROJECT_PATH}" STREQUAL "cmake/cmake")
   if ("$ENV{CI_COMMIT_REF_NAME}" STREQUAL "master")
-    set(ctest_track "master")
+    set(ctest_group "master")
   elseif ("$ENV{CI_COMMIT_REF_NAME}" STREQUAL "release")
-    set(ctest_track "release")
+    set(ctest_group "release")
   endif ()
 endif ()

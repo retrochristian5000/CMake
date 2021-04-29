@@ -31,7 +31,7 @@ cmFindLibraryCommand::cmFindLibraryCommand(cmExecutionStatus& status)
 // cmFindLibraryCommand
 bool cmFindLibraryCommand::InitialPass(std::vector<std::string> const& argsIn)
 {
-  this->DebugMode = ComputeIfDebugModeWanted();
+  this->DebugMode = this->ComputeIfDebugModeWanted();
   this->VariableDocumentation = "Path to a library.";
   this->CMakePathName = "LIBRARY";
   if (!this->ParseArguments(argsIn)) {
@@ -374,7 +374,7 @@ void cmFindLibraryHelper::AddName(std::string const& name)
     regex += "(\\.[0-9]+\\.[0-9]+)?";
   }
   regex += "$";
-  entry.Regex.compile(regex.c_str());
+  entry.Regex.compile(regex);
   this->Names.push_back(std::move(entry));
 }
 

@@ -30,7 +30,7 @@ class cmGlobalVisualStudio14Generator::Factory
 {
 public:
   std::unique_ptr<cmGlobalGenerator> CreateGlobalGenerator(
-    const std::string& name, cmake* cm) const override
+    const std::string& name, bool allowArch, cmake* cm) const override
   {
     std::string genName;
     const char* p = cmVS14GenName(name, genName);
@@ -41,7 +41,7 @@ public:
       return std::unique_ptr<cmGlobalGenerator>(
         new cmGlobalVisualStudio14Generator(cm, genName, ""));
     }
-    if (*p++ != ' ') {
+    if (!allowArch || *p++ != ' ') {
       return std::unique_ptr<cmGlobalGenerator>();
     }
     if (strcmp(p, "Win64") == 0) {
@@ -253,6 +253,12 @@ std::string cmGlobalVisualStudio14Generator::GetWindows10SDKMaxVersion(
     // If value is an invalid pointer, leave result unchanged.
   }
 
+  return this->GetWindows10SDKMaxVersionDefault(mf);
+}
+
+std::string cmGlobalVisualStudio14Generator::GetWindows10SDKMaxVersionDefault(
+  cmMakefile*) const
+{
   // The last Windows 10 SDK version that VS 2015 can target is 10.0.14393.0.
   //
   // "VS 2015 Users: The Windows 10 SDK (15063, 16299, 17134, 17763) is

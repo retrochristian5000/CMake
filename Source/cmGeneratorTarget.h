@@ -14,6 +14,8 @@
 #include <utility>
 #include <vector>
 
+#include <cm/optional>
+
 #include "cmLinkItem.h"
 #include "cmListFileCache.h"
 #include "cmPolicies.h"
@@ -49,6 +51,9 @@ public:
   bool IsImportedGloballyVisible() const;
   bool CanCompileSources() const;
   const std::string& GetLocation(const std::string& config) const;
+
+  /** Get the full path to the target's main artifact, if known.  */
+  cm::optional<std::string> MaybeGetLocation(std::string const& config) const;
 
   std::vector<cmCustomCommand> const& GetPreBuildCommands() const;
   std::vector<cmCustomCommand> const& GetPreLinkCommands() const;
@@ -417,6 +422,8 @@ public:
   // until we have per-target object file properties.
   void GetLanguages(std::set<std::string>& languages,
                     std::string const& config) const;
+  bool IsLanguageUsed(std::string const& language,
+                      std::string const& config) const;
 
   bool IsCSharpOnly() const;
 
@@ -428,8 +435,9 @@ public:
 
   /** Get source files common to all configurations and diagnose cases
       with per-config sources.  Excludes sources added by a TARGET_OBJECTS
-      generator expression.  */
-  bool GetConfigCommonSourceFiles(std::vector<cmSourceFile*>& files) const;
+      generator expression.  Do not use outside the Xcode generator.  */
+  bool GetConfigCommonSourceFilesForXcode(
+    std::vector<cmSourceFile*>& files) const;
 
   bool HaveBuildTreeRPATH(const std::string& config) const;
 
@@ -444,6 +452,9 @@ public:
 
   void GetAppleArchs(const std::string& config,
                      std::vector<std::string>& archVec) const;
+
+  void AddExplicitLanguageFlags(std::string& flags,
+                                cmSourceFile const& sf) const;
 
   void AddCUDAArchitectureFlags(std::string& flags) const;
   void AddCUDAToolkitFlags(std::string& flags) const;
@@ -579,7 +590,8 @@ public:
     std::string PdbDir;
     bool empty() const
     {
-      return OutDir.empty() && ImpDir.empty() && PdbDir.empty();
+      return this->OutDir.empty() && this->ImpDir.empty() &&
+        this->PdbDir.empty();
     }
   };
 

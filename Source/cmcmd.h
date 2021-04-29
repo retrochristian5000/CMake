@@ -4,10 +4,15 @@
 
 #include "cmConfigure.h" // IWYU pragma: keep
 
+#include <memory>
 #include <string>
 #include <vector>
 
+#include "cmsys/Status.hxx"
+
 #include "cmCryptoHash.h"
+
+class cmConsoleBuf;
 
 class cmcmd
 {
@@ -16,7 +21,8 @@ public:
    * Execute commands during the build process. Supports options such
    * as echo, remove file etc.
    */
-  static int ExecuteCMakeCommand(std::vector<std::string> const&);
+  static int ExecuteCMakeCommand(std::vector<std::string> const&,
+                                 std::unique_ptr<cmConsoleBuf> consoleBuf);
 
 protected:
   static int HandleCoCompileCommands(std::vector<std::string> const& args);
@@ -24,8 +30,8 @@ protected:
                          cmCryptoHash::Algo algo);
   static int SymlinkLibrary(std::vector<std::string> const& args);
   static int SymlinkExecutable(std::vector<std::string> const& args);
-  static bool SymlinkInternal(std::string const& file,
-                              std::string const& link);
+  static cmsys::Status SymlinkInternal(std::string const& file,
+                                       std::string const& link);
   static int ExecuteEchoColor(std::vector<std::string> const& args);
   static int ExecuteLinkScript(std::vector<std::string> const& args);
   static int WindowsCEEnvironment(const char* version,

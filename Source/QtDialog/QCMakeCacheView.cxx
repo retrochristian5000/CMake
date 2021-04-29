@@ -47,7 +47,11 @@ protected:
 
     // check all strings for a match
     foreach (QString const& str, strs) {
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
+      if (str.contains(this->filterRegularExpression())) {
+#else
       if (str.contains(this->filterRegExp())) {
+#endif
         return true;
       }
     }
@@ -166,7 +170,11 @@ bool QCMakeCacheView::showAdvanced() const
 
 void QCMakeCacheView::setSearchFilter(const QString& s)
 {
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
+  this->SearchFilter->setFilterRegularExpression(s);
+#else
   this->SearchFilter->setFilterFixedString(s);
+#endif
 }
 
 QCMakeCacheModel::QCMakeCacheModel(QObject* p)
@@ -640,6 +648,19 @@ bool QCMakeCacheModelDelegate::editorEvent(QEvent* e,
     this->recordChange(model, index);
   }
   return success;
+}
+
+bool QCMakeCacheModelDelegate::eventFilter(QObject* object, QEvent* evt)
+{
+  // FIXME: This filter avoids a crash when opening a file dialog
+  // with the '...' button on a cache entry line in the GUI.
+  // Previously this filter was commented as a workaround for Qt issue 205903,
+  // but that was fixed in Qt 4.5.0 and the crash still occurs as of Qt 5.14
+  // without this filter.  This needs further investigation.
+  if (evt->type() == QEvent::FocusOut && this->FileDialogFlag) {
+    return false;
+  }
+  return QItemDelegate::eventFilter(object, evt);
 }
 
 void QCMakeCacheModelDelegate::setModelData(QWidget* editor,

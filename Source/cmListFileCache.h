@@ -89,6 +89,18 @@ public:
   {
   }
 
+<<<<<<< HEAD
+=======
+#  if __cplusplus < 201703L &&
+    (!defined(_MSVC_LANG) || _MSVC_LANG < 201703L)
+      cmListFileContext(const cmListFileContext& /*other*/) = default;
+  cmListFileContext(cmListFileContext&& /*other*/) = default;
+
+  cmListFileContext& operator=(const cmListFileContext& /*other*/) = default;
+  cmListFileContext& operator=(cmListFileContext&& /*other*/) = delete;
+#endif
+
+>>>>>>> upstream/master
   static cmListFileContext FromCommandContext(
     cmCommandContext const& lfcc, std::string const& fileName,
     cm::optional<std::string> deferId = {})
@@ -241,7 +253,7 @@ public:
   BTs(T v = T(), cmListFileBacktrace bt = cmListFileBacktrace())
     : Value(std::move(v))
   {
-    Backtraces.emplace_back(std::move(bt));
+    this->Backtraces.emplace_back(std::move(bt));
   }
   T Value;
   std::vector<cmListFileBacktrace> Backtraces;

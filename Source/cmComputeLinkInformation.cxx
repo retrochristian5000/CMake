@@ -474,6 +474,12 @@ std::vector<std::string> const& cmComputeLinkInformation::GetFrameworkPaths()
   return this->FrameworkPaths;
 }
 
+std::set<std::string> const&
+cmComputeLinkInformation::GetFrameworkPathsEmitted() const
+{
+  return this->FrameworkPathsEmitted;
+}
+
 const std::set<const cmGeneratorTarget*>&
 cmComputeLinkInformation::GetSharedLibrariesLinked() const
 {
@@ -695,13 +701,21 @@ void cmComputeLinkInformation::AddItem(BT<std::string> const& item,
 
       this->AddTargetItem(lib, tgt);
       this->AddLibraryRuntimeInfo(lib.Value, tgt);
+      if (tgt && tgt->GetType() == cmStateEnums::SHARED_LIBRARY &&
+          this->Target->IsDLLPlatform()) {
+        this->AddRuntimeDLL(tgt);
+      }
     }
   } else {
     // This is not a CMake target.  Use the name given.
     if (cmSystemTools::FileIsFullPath(item.Value)) {
-      if (cmSystemTools::FileIsDirectory(item.Value)) {
+      if (cmSystemTools::IsPathToFramework(item.Value) &&
+          this->Makefile->IsOn("APPLE")) {
+        // This is a framework.
+        this->AddFrameworkItem(item.Value);
+      } else if (cmSystemTools::FileIsDirectory(item.Value)) {
         // This is a directory.
-        this->AddDirectoryItem(item.Value);
+        this->DropDirectoryItem(item.Value);
       } else {
         // Use the full path given to the library file.
         this->Depends.push_back(item.Value);
@@ -718,6 +732,13 @@ void cmComputeLinkInformation::AddItem(BT<std::string> const& item,
 void cmComputeLinkInformation::AddSharedDepItem(BT<std::string> const& item,
                                                 const cmGeneratorTarget* tgt)
 {
+  // Record dependencies on DLLs.
+  if (tgt && tgt->GetType() == cmStateEnums::SHARED_LIBRARY &&
+      this->Target->IsDLLPlatform() &&
+      this->SharedDependencyMode != SharedDepModeLink) {
+    this->AddRuntimeDLL(tgt);
+  }
+
   // If dropping shared library dependencies, ignore them.
   if (this->SharedDependencyMode == SharedDepModeNone) {
     return;
@@ -786,6 +807,14 @@ void cmComputeLinkInformation::AddSharedDepItem(BT<std::string> const& item,
     } else {
       order->AddRuntimeLibrary(lib);
     }
+  }
+}
+
+void cmComputeLinkInformation::AddRuntimeDLL(cmGeneratorTarget const* tgt)
+{
+  if (std::find(this->RuntimeDLLs.begin(), this->RuntimeDLLs.end(), tgt) ==
+      this->RuntimeDLLs.end()) {
+    this->RuntimeDLLs.emplace_back(tgt);
   }
 }
 
@@ -947,6 +976,9 @@ void cmComputeLinkInformation::AddLinkExtension(std::string const& e,
   }
 }
 
+// XXX(clang-tidy): This method's const-ness is platform dependent, so we
+// cannot make it `const` as `clang-tidy` wants us to.
+// NOLINTNEXTLINE(readability-make-member-function-const)
 std::string cmComputeLinkInformation::CreateExtensionRegex(
   std::vector<std::string> const& exts, LinkType type)
 {
@@ -1293,20 +1325,16 @@ void cmComputeLinkInformation::AddFrameworkItem(std::string const& item)
   // add runtime information
   this->AddLibraryRuntimeInfo(full_fw);
 
-  // Add the item using the -framework option.
-  this->Items.emplace_back(std::string("-framework"), false);
-  cmOutputConverter converter(this->Makefile->GetStateSnapshot());
-  fw = converter.EscapeForShell(fw);
-  this->Items.emplace_back(fw, false);
-}
-
-void cmComputeLinkInformation::AddDirectoryItem(std::string const& item)
-{
-  if (this->Makefile->IsOn("APPLE") &&
-      cmSystemTools::IsPathToFramework(item)) {
-    this->AddFrameworkItem(item);
+  if (this->GlobalGenerator->IsXcode()) {
+    // Add framework path - it will be handled by Xcode after it's added to
+    // "Link Binary With Libraries" build phase
+    this->Items.emplace_back(item, true);
   } else {
-    this->DropDirectoryItem(item);
+    // Add the item using the -framework option.
+    this->Items.emplace_back(std::string("-framework"), false);
+    cmOutputConverter converter(this->Makefile->GetStateSnapshot());
+    fw = converter.EscapeForShell(fw);
+    this->Items.emplace_back(fw, false);
   }
 }
 
@@ -1336,8 +1364,8 @@ void cmComputeLinkInformation::ComputeFrameworkInfo()
     "CMAKE_", this->LinkLanguage, "_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES");
   this->Makefile->GetDefExpandList(implicitDirVar, implicitDirVec);
 
-  this->FrameworkPathsEmmitted.insert(implicitDirVec.begin(),
-                                      implicitDirVec.end());
+  this->FrameworkPathsEmitted.insert(implicitDirVec.begin(),
+                                     implicitDirVec.end());
 
   // Regular expression to extract a framework path and name.
   this->SplitFramework.compile("(.*)/(.*)\\.framework$");
@@ -1345,7 +1373,7 @@ void cmComputeLinkInformation::ComputeFrameworkInfo()
 
 void cmComputeLinkInformation::AddFrameworkPath(std::string const& p)
 {
-  if (this->FrameworkPathsEmmitted.insert(p).second) {
+  if (this->FrameworkPathsEmitted.insert(p).second) {
     this->FrameworkPaths.push_back(p);
   }
 }

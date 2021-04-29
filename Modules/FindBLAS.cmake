@@ -53,17 +53,48 @@ The following variables may be set to influence this module's behavior:
   * ``Arm_mp``
   * ``Arm_ilp64``
   * ``Arm_ilp64_mp``
+  * ``EML``
+  * ``EML_mt``
+  * ``Fujitsu_SSL2`` (Fujitsu serial blas / lapack)
+  * ``Fujitsu_SSL2BLAMP`` (Fujitsu parallel blas / lapack)
   * ``Generic``
+
+  .. versionadded:: 3.6
+    ``OpenBLAS`` support.
+
+  .. versionadded:: 3.11
+    ``FLAME`` support.
+
+  .. versionadded:: 3.13
+    Added ILP64 MKL variants (``Intel10_64ilp``, ``Intel10_64ilp_seq``).
+
+  .. versionadded:: 3.17
+    Added single dynamic library MKL variant (``Intel10_64_dyn``).
+
+  .. versionadded:: 3.18
+    Arm Performance Libraries support (``Arm``, ``Arm_mp``, ``Arm_ilp64``,
+    ``Arm_ilp64_mp``).
+
+  .. versionadded:: 3.19
+    ``FlexiBLAS`` support.
+
+  .. versionadded:: 3.20
+    Elbrus Math Library support (``EML``, ``EML_mt``).
+    Fujitsu SSL2 Library support (``Fujitsu_SSL2``, ``Fujitsu_SSL2BLAMP``)
 
 ``BLA_F95``
   if ``ON`` tries to find the BLAS95 interfaces
 
 ``BLA_PREFER_PKGCONFIG``
+  .. versionadded:: 3.11
+
   if set ``pkg-config`` will be used to search for a BLAS library first
   and if one is found that is preferred
 
 Imported targets
 ^^^^^^^^^^^^^^^^
+
+.. versionadded:: 3.18
 
 This module defines the following :prop_tgt:`IMPORTED` target:
 
@@ -104,10 +135,13 @@ This module defines the following variables:
 Hints
 ^^^^^
 
-Set the ``MKLROOT`` environment variable to a directory that contains an MKL
-installation, or add the directory to the dynamic library loader environment
-variable for your platform (``LIB``, ``DYLD_LIBRARY_PATH`` or
-``LD_LIBRARY_PATH``).
+``MKLROOT``
+  .. versionadded:: 3.15
+
+  Set this environment variable to a directory that contains an MKL
+  installation, or add the directory to the dynamic library loader environment
+  variable for your platform (``LIB``, ``DYLD_LIBRARY_PATH`` or
+  ``LD_LIBRARY_PATH``).
 
 #]=======================================================================]
 
@@ -122,11 +156,16 @@ if(NOT (CMAKE_C_COMPILER_LOADED OR CMAKE_CXX_COMPILER_LOADED OR CMAKE_Fortran_CO
 endif()
 
 function(_add_blas_target)
-  if(NOT TARGET BLAS::BLAS)
+  if(BLAS_FOUND AND NOT TARGET BLAS::BLAS)
     add_library(BLAS::BLAS INTERFACE IMPORTED)
     if(BLAS_LIBRARIES)
       set_target_properties(BLAS::BLAS PROPERTIES
         INTERFACE_LINK_LIBRARIES "${BLAS_LIBRARIES}"
+      )
+    endif()
+    if(BLAS_LINKER_FLAGS)
+      set_target_properties(BLAS::BLAS PROPERTIES
+        INTERFACE_LINK_OPTIONS "${BLAS_LINKER_FLAGS}"
       )
     endif()
   endif()
@@ -137,10 +176,7 @@ if(CMAKE_Fortran_COMPILER_LOADED)
 else()
   include(${CMAKE_CURRENT_LIST_DIR}/CheckFunctionExists.cmake)
 endif()
-include(${CMAKE_CURRENT_LIST_DIR}/CMakePushCheckState.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/FindPackageHandleStandardArgs.cmake)
-cmake_push_check_state()
-set(CMAKE_REQUIRED_QUIET ${BLAS_FIND_QUIETLY})
 
 if(BLA_PREFER_PKGCONFIG)
   find_package(PkgConfig)
@@ -153,39 +189,32 @@ if(BLA_PREFER_PKGCONFIG)
   endif()
 endif()
 
-set(_blas_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES})
-if(BLA_STATIC)
-  if(WIN32)
-    set(CMAKE_FIND_LIBRARY_SUFFIXES .lib ${CMAKE_FIND_LIBRARY_SUFFIXES})
-  else()
-    set(CMAKE_FIND_LIBRARY_SUFFIXES .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
-  endif()
-else()
-  if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    # for ubuntu's libblas3gf and liblapack3gf packages
-    set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES} .so.3gf)
-  endif()
-endif()
-
 # TODO: move this stuff to a separate module
 
-macro(CHECK_BLAS_LIBRARIES LIBRARIES _prefix _name _flags _list _threadlibs _addlibdir _subdirs)
-  # This macro checks for the existence of the combination of fortran libraries
-  # given by _list.  If the combination is found, this macro checks (using the
-  # Check_Fortran_Function_Exists macro) whether can link against that library
-  # combination using the name of a routine given by _name using the linker
-  # flags given by _flags.  If the combination of libraries is found and passes
-  # the link test, LIBRARIES is set to the list of complete library paths that
-  # have been found.  Otherwise, LIBRARIES is set to FALSE.
-
-  # N.B. _prefix is the prefix applied to the names of all cached variables that
-  # are generated internally and marked advanced by this macro.
-  # _addlibdir is a list of additional search paths. _subdirs is a list of path
-  # suffixes to be used by find_library().
+function(CHECK_BLAS_LIBRARIES LIBRARIES _prefix _name _flags _list _deps _addlibdir _subdirs)
+  # This function checks for the existence of the combination of libraries
+  # given by _list.  If the combination is found, this checks whether can link
+  # against that library combination using the name of a routine given by _name
+  # using the linker flags given by _flags.  If the combination of libraries is
+  # found and passes the link test, ${LIBRARIES} is set to the list of complete
+  # library paths that have been found.  Otherwise, ${LIBRARIES} is set to FALSE.
 
   set(_libraries_work TRUE)
-  set(${LIBRARIES})
+  set(_libraries)
   set(_combined_name)
+
+  if(BLA_STATIC)
+    if(WIN32)
+      set(CMAKE_FIND_LIBRARY_SUFFIXES .lib ${CMAKE_FIND_LIBRARY_SUFFIXES})
+    else()
+      set(CMAKE_FIND_LIBRARY_SUFFIXES .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
+    endif()
+  else()
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+      # for ubuntu's libblas3gf and liblapack3gf packages
+      set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES} .so.3gf)
+    endif()
+  endif()
 
   set(_extaddlibdir "${_addlibdir}")
   if(WIN32)
@@ -198,33 +227,37 @@ macro(CHECK_BLAS_LIBRARIES LIBRARIES _prefix _name _flags _list _threadlibs _add
   list(APPEND _extaddlibdir "${CMAKE_C_IMPLICIT_LINK_DIRECTORIES}")
 
   foreach(_library ${_list})
-    if(_library MATCHES "^-Wl,--(start|end)-group$")
-      # Respect linker flags like --start/end-group (required by MKL)
-      set(${LIBRARIES} ${${LIBRARIES}} "${_library}")
+    if(_library MATCHES "^-")
+      # Respect linker flags as-is (required by MKL)
+      list(APPEND _libraries "${_library}")
     else()
-      set(_combined_name ${_combined_name}_${_library})
-      if(NOT "${_threadlibs}" STREQUAL "")
-        set(_combined_name ${_combined_name}_threadlibs)
+      string(REGEX REPLACE "[^A-Za-z0-9]" "_" _lib_var "${_library}")
+      set(_combined_name ${_combined_name}_${_lib_var})
+      if(NOT "${_deps}" STREQUAL "")
+        set(_combined_name ${_combined_name}_deps)
       endif()
       if(_libraries_work)
-        find_library(${_prefix}_${_library}_LIBRARY
+        find_library(${_prefix}_${_lib_var}_LIBRARY
           NAMES ${_library}
           NAMES_PER_DIR
           PATHS ${_extaddlibdir}
           PATH_SUFFIXES ${_subdirs}
         )
-        #message("DEBUG: find_library(${_library}) got ${${_prefix}_${_library}_LIBRARY}")
-        mark_as_advanced(${_prefix}_${_library}_LIBRARY)
-        set(${LIBRARIES} ${${LIBRARIES}} ${${_prefix}_${_library}_LIBRARY})
-        set(_libraries_work ${${_prefix}_${_library}_LIBRARY})
+        mark_as_advanced(${_prefix}_${_lib_var}_LIBRARY)
+        list(APPEND _libraries ${${_prefix}_${_lib_var}_LIBRARY})
+        set(_libraries_work ${${_prefix}_${_lib_var}_LIBRARY})
       endif()
     endif()
   endforeach()
 
+  foreach(_flag ${_flags})
+    string(REGEX REPLACE "[^A-Za-z0-9]" "_" _flag_var "${_flag}")
+    set(_combined_name ${_combined_name}_${_flag_var})
+  endforeach()
   if(_libraries_work)
     # Test this combination of libraries.
-    set(CMAKE_REQUIRED_LIBRARIES ${_flags} ${${LIBRARIES}} ${_threadlibs})
-    #message("DEBUG: CMAKE_REQUIRED_LIBRARIES = ${CMAKE_REQUIRED_LIBRARIES}")
+    set(CMAKE_REQUIRED_LIBRARIES ${_flags} ${_libraries} ${_deps})
+    set(CMAKE_REQUIRED_QUIET ${BLAS_FIND_QUIETLY})
     if(CMAKE_Fortran_COMPILER_LOADED)
       check_fortran_function_exists("${_name}" ${_prefix}${_combined_name}_WORKS)
     else()
@@ -236,19 +269,20 @@ macro(CHECK_BLAS_LIBRARIES LIBRARIES _prefix _name _flags _list _threadlibs _add
 
   if(_libraries_work)
     if("${_list}" STREQUAL "")
-      set(${LIBRARIES} "${LIBRARIES}-PLACEHOLDER-FOR-EMPTY-LIBRARIES")
+      set(_libraries "${LIBRARIES}-PLACEHOLDER-FOR-EMPTY-LIBRARIES")
     else()
-      set(${LIBRARIES} ${${LIBRARIES}} ${_threadlibs})
+      list(APPEND _libraries ${_deps})
     endif()
   else()
-    set(${LIBRARIES} FALSE)
+    set(_libraries FALSE)
   endif()
-  #message("DEBUG: ${LIBRARIES} = ${${LIBRARIES}}")
-endmacro()
+  set(${LIBRARIES} "${_libraries}" PARENT_SCOPE)
+endfunction()
 
 set(BLAS_LINKER_FLAGS)
 set(BLAS_LIBRARIES)
 set(BLAS95_LIBRARIES)
+set(_blas_fphsa_req_var BLAS_LIBRARIES)
 if(NOT $ENV{BLA_VENDOR} STREQUAL "")
   set(BLA_VENDOR $ENV{BLA_VENDOR})
 else()
@@ -270,6 +304,9 @@ if(BLA_VENDOR STREQUAL "All")
       ""
       ""
       )
+  endif()
+  if(BLAS_WORKS)
+    set(_blas_fphsa_req_var BLAS_WORKS)
   endif()
 endif()
 
@@ -586,16 +623,27 @@ if(BLA_VENDOR STREQUAL "OpenBLAS" OR BLA_VENDOR STREQUAL "All")
     else()
       find_package(Threads REQUIRED)
     endif()
+    set(_threadlibs "${CMAKE_THREAD_LIBS_INIT}")
+    if(BLA_STATIC)
+      if (CMAKE_C_COMPILER_LOADED)
+        find_package(OpenMP COMPONENTS C)
+        list(PREPEND _threadlibs "${OpenMP_C_LIBRARIES}")
+      elseif(CMAKE_CXX_COMPILER_LOADED)
+        find_package(OpenMP COMPONENTS CXX)
+        list(PREPEND _threadlibs "${OpenMP_CXX_LIBRARIES}")
+      endif()
+    endif()
     check_blas_libraries(
       BLAS_LIBRARIES
       BLAS
       sgemm
       ""
       "openblas"
-      "${CMAKE_THREAD_LIBS_INIT}"
+      "${_threadlibs}"
       ""
       ""
       )
+    unset(_threadlibs)
   endif()
 endif()
 
@@ -805,6 +853,9 @@ if(BLA_VENDOR MATCHES "ACML" OR BLA_VENDOR STREQUAL "All")
     if(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
       set(_ACML_COMPILER32 "ifort32")
       set(_ACML_COMPILER64 "ifort64")
+    elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM")
+      # 32-bit not supported
+      set(_ACML_COMPILER64 "ifx")
     elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "SunPro")
       set(_ACML_COMPILER32 "sun32")
       set(_ACML_COMPILER64 "sun64")
@@ -951,6 +1002,56 @@ if(BLA_VENDOR STREQUAL "NAS" OR BLA_VENDOR STREQUAL "All")
   endif()
 endif()
 
+# Elbrus Math Library?
+if(BLA_VENDOR MATCHES "EML" OR BLA_VENDOR STREQUAL "All")
+
+   set(BLAS_EML_LIB "eml")
+
+   # Check for OpenMP support, VIA BLA_VENDOR of eml_mt
+   if(BLA_VENDOR MATCHES "_mt")
+     set(BLAS_EML_LIB "${BLAS_EML_LIB}_mt")
+   endif()
+
+   if(NOT BLAS_LIBRARIES)
+    check_blas_libraries(
+      BLAS_LIBRARIES
+      BLAS
+      sgemm
+      ""
+      "${BLAS_EML_LIB}"
+      ""
+      ""
+      ""
+      )
+  endif()
+
+endif()
+
+# Fujitsu SSL2 Library?
+if(NOT BLAS_LIBRARIES AND
+    BLA_VENDOR MATCHES "Fujitsu_SSL2" OR BLA_VENDOR STREQUAL "All")
+  if(BLA_VENDOR STREQUAL "Fujitsu_SSL2BLAMP")
+    set(_ssl2_suffix BLAMP)
+  else()
+    set(_ssl2_suffix)
+  endif()
+  check_blas_libraries(
+    BLAS_LIBRARIES
+    BLAS
+    sgemm
+    "-SSL2${_ssl2_suffix}"
+    ""
+    ""
+    ""
+    ""
+    )
+  if(BLAS_LIBRARIES)
+    set(BLAS_LINKER_FLAGS "-SSL2${_ssl2_suffix}")
+    set(_blas_fphsa_req_var BLAS_LINKER_FLAGS)
+  endif()
+  unset(_ssl2_suffix)
+endif()
+
 # Generic BLAS library?
 if(BLA_VENDOR STREQUAL "Generic" OR BLA_VENDOR STREQUAL "All")
   if(NOT BLAS_LIBRARIES)
@@ -967,17 +1068,14 @@ if(BLA_VENDOR STREQUAL "Generic" OR BLA_VENDOR STREQUAL "All")
   endif()
 endif()
 
-if(NOT BLA_F95)
-  find_package_handle_standard_args(BLAS REQUIRED_VARS BLAS_LIBRARIES)
-endif()
-
-
-# On compilers that implicitly link BLAS (such as ftn, cc, and CC on Cray HPC machines)
-# we used a placeholder for empty BLAS_LIBRARIES to get through our logic above.
+# On compilers that implicitly link BLAS (i.e. CrayPrgEnv) we used a
+# placeholder for empty BLAS_LIBRARIES to get through our logic above.
 if(BLAS_LIBRARIES STREQUAL "BLAS_LIBRARIES-PLACEHOLDER-FOR-EMPTY-LIBRARIES")
   set(BLAS_LIBRARIES "")
 endif()
 
+if(NOT BLA_F95)
+  find_package_handle_standard_args(BLAS REQUIRED_VARS ${_blas_fphsa_req_var})
+endif()
+
 _add_blas_target()
-cmake_pop_check_state()
-set(CMAKE_FIND_LIBRARY_SUFFIXES ${_blas_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES})

@@ -105,6 +105,7 @@ Generator
   is already configured in the shell.  When using one of the
   :ref:`IDE Build Tool Generators`, no particular environment is needed.
 
+.. _`Generate a Project Buildsystem`:
 
 Generate a Project Buildsystem
 ==============================
@@ -377,6 +378,26 @@ Options
  about:tracing tab of Google Chrome or using a plugin for a tool like Trace
  Compass.
 
+``--preset <preset>``, ``--preset=<preset>``
+ Reads a :manual:`preset <cmake-presets(7)>` from
+ ``<path-to-source>/CMakePresets.json`` and
+ ``<path-to-source>/CMakeUserPresets.json``. The preset may specify the
+ generator and the build directory, and a list of variables and other
+ arguments to pass to CMake. The current working directory must contain
+ CMake preset files. The :manual:`CMake GUI <cmake-gui(1)>` can
+ also recognize ``CMakePresets.json`` and ``CMakeUserPresets.json`` files. For
+ full details on these files, see :manual:`cmake-presets(7)`.
+
+ The presets are read before all other command line options. The options
+ specified by the preset (variables, generator, etc.) can all be overridden by
+ manually specifying them on the command line. For example, if the preset sets
+ a variable called ``MYVAR`` to ``1``, but the user sets it to ``2`` with a
+ ``-D`` argument, the value ``2`` is preferred.
+
+``--list-presets, --list-presets=<[configure | build | test | all]>``
+ Lists the available presets. If no option is specified only configure presets
+ will be listed. The current working directory must contain CMake preset files.
+
 .. _`Build Tool Mode`:
 
 Build a Project
@@ -387,13 +408,24 @@ project binary tree:
 
 .. code-block:: shell
 
-  cmake --build <dir> [<options>] [-- <build-tool-options>]
+  cmake --build [<dir> | --preset <preset>] [<options>] [-- <build-tool-options>]
 
 This abstracts a native build tool's command-line interface with the
 following options:
 
 ``--build <dir>``
-  Project binary directory to be built.  This is required and must be first.
+  Project binary directory to be built.  This is required (unless a preset
+  is specified) and must be first.
+
+``--preset <preset>``, ``--preset=<preset>``
+  Use a build preset to specify build options. The project binary directory
+  is inferred from the ``configurePreset`` key. The current working directory
+  must contain CMake preset files.
+  See :manual:`preset <cmake-presets(7)>` for more details.
+
+``--list-presets``
+  Lists the available build presets. The current working directory must
+  contain CMake preset files.
 
 ``--parallel [<jobs>], -j [<jobs>]``
   The maximum number of concurrent processes to use when building.
@@ -565,6 +597,7 @@ Available commands are:
 
   ``serverMode``
     ``true`` if cmake supports server-mode and ``false`` otherwise.
+    Always false since CMake 3.20.
 
 ``cat <files>...``
   Concatenate files and print on the standard output.
@@ -813,6 +846,11 @@ with one of the following options:
 
 .. include:: OPTIONS_HELP.txt
 
+To view the presets available for a project, use
+
+.. code-block:: shell
+
+  cmake <source-dir> --list-presets
 
 See Also
 ========

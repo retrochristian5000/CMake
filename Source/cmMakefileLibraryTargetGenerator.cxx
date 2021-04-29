@@ -21,6 +21,7 @@
 #include "cmMakefile.h"
 #include "cmOSXBundleGenerator.h"
 #include "cmOutputConverter.h"
+#include "cmProperty.h"
 #include "cmRulePlaceholderExpander.h"
 #include "cmState.h"
 #include "cmStateDirectory.h"
@@ -366,10 +367,10 @@ void cmMakefileLibraryTargetGenerator::WriteNvidiaDeviceLibraryRules(
     vars.TargetCompilePDB = targetOutPathCompilePDB.c_str();
 
     std::string launcher;
-    const char* val = this->LocalGenerator->GetRuleLauncher(
-      this->GeneratorTarget, "RULE_LAUNCH_LINK");
+    cmProp val = this->LocalGenerator->GetRuleLauncher(this->GeneratorTarget,
+                                                       "RULE_LAUNCH_LINK");
     if (cmNonempty(val)) {
-      launcher = cmStrCat(val, ' ');
+      launcher = cmStrCat(*val, ' ');
     }
 
     std::unique_ptr<cmRulePlaceholderExpander> rulePlaceholderExpander(
@@ -779,9 +780,12 @@ void cmMakefileLibraryTargetGenerator::WriteLibraryRules(
     vars.Target = target.c_str();
     vars.LinkLibraries = linkLibs.c_str();
     vars.ObjectsQuoted = buildObjs.c_str();
+    std::string targetOutSOName;
     if (this->GeneratorTarget->HasSOName(this->GetConfigName())) {
       vars.SONameFlag = this->Makefile->GetSONameFlag(linkLanguage);
-      vars.TargetSOName = this->TargetNames.SharedObject.c_str();
+      targetOutSOName = this->LocalGenerator->ConvertToOutputFormat(
+        this->TargetNames.SharedObject.c_str(), cmOutputConverter::SHELL);
+      vars.TargetSOName = targetOutSOName.c_str();
     }
     vars.LinkFlags = linkFlags.c_str();
 
@@ -816,10 +820,10 @@ void cmMakefileLibraryTargetGenerator::WriteLibraryRules(
     vars.LanguageCompileFlags = langFlags.c_str();
 
     std::string launcher;
-    const char* val = this->LocalGenerator->GetRuleLauncher(
-      this->GeneratorTarget, "RULE_LAUNCH_LINK");
+    cmProp val = this->LocalGenerator->GetRuleLauncher(this->GeneratorTarget,
+                                                       "RULE_LAUNCH_LINK");
     if (cmNonempty(val)) {
-      launcher = cmStrCat(val, ' ');
+      launcher = cmStrCat(*val, ' ');
     }
 
     std::unique_ptr<cmRulePlaceholderExpander> rulePlaceholderExpander(

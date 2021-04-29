@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.1)
 
+<<<<<<< HEAD
 project(TestPyPy2 LANGUAGES NONE)
+=======
+project(TestPyPy2 LANGUAGES C)
+>>>>>>> upstream/master
 
 set (Python2_FIND_IMPLEMENTATIONS "PyPy")
 

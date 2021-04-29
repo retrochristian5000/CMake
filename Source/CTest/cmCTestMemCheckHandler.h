@@ -29,7 +29,7 @@ public:
 
   void Initialize() override;
 
-  int GetDefectCount();
+  int GetDefectCount() const;
 
 protected:
   int PreProcessHandler() override;
@@ -45,7 +45,7 @@ private:
     DRMEMORY,
     BOUNDS_CHECKER,
     // checkers after here do not use the standard error list
-    CUDA_MEMCHECK,
+    CUDA_SANITIZER,
     ADDRESS_SANITIZER,
     LEAK_SANITIZER,
     THREAD_SANITIZER,

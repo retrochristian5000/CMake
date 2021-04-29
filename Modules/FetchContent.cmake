@@ -34,7 +34,7 @@ The following shows a typical example of declaring content details:
   FetchContent_Declare(
     googletest
     GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG        release-1.8.0
+    GIT_TAG        703bd9caab50b139428cea1aaff9974ebee5742e # release-1.10.0
   )
 
 For most typical cases, populating the content can then be done with a single
@@ -77,6 +77,9 @@ operation and would not normally be the way the module is used, but it is
 sometimes useful as part of implementing some higher level feature or to
 populate some content in CMake's script mode.
 
+.. versionchanged:: 3.14
+  ``FetchContent`` commands can access the terminal. This is necessary
+  for password prompts and real-time progress displays to work.
 
 Commands
 ^^^^^^^^
@@ -123,13 +126,13 @@ Declaring Content Details
     FetchContent_Declare(
       googletest
       GIT_REPOSITORY https://github.com/google/googletest.git
-      GIT_TAG        release-1.8.0
+      GIT_TAG        703bd9caab50b139428cea1aaff9974ebee5742e # release-1.10.0
     )
 
     FetchContent_Declare(
       myCompanyIcons
       URL      https://intranet.mycompany.com/assets/iconset_1.12.tar.gz
-      URL_HASH 5588a7b18261c20068beabfb4f530b87
+      URL_HASH MD5=5588a7b18261c20068beabfb4f530b87
     )
 
     FetchContent_Declare(
@@ -137,6 +140,11 @@ Declaring Content Details
       SVN_REPOSITORY svn+ssh://svn.mycompany.com/srv/svn/trunk/certs
       SVN_REVISION   -r12345
     )
+
+  Where contents are being fetched from a remote location and you do not
+  control that server, it is advisable to use a hash for ``GIT_TAG`` rather
+  than a branch or tag name.  A commit hash is more secure and helps to
+  confirm that the downloaded contents are what you expected.
 
 Populating The Content
 """"""""""""""""""""""
@@ -371,6 +379,8 @@ is simpler and provides additional features over the pattern above.
   :variable:`CMAKE_MAKE_PROGRAM` variables will need to be set appropriately
   on the command line invoking the script.
 
+  .. versionadded:: 3.18
+    Added support for ``DOWNLOAD_NO_EXTRACT`` and ``SOURCE_SUBDIR`` options.
 
 .. command:: FetchContent_GetProperties
 
@@ -416,6 +426,8 @@ is simpler and provides additional features over the pattern above.
 
     FetchContent_MakeAvailable( <name1> [<name2>...] )
 
+  .. versionadded:: 3.14
+
   This command implements the common pattern typically needed for most
   dependencies.  It iterates over each of the named dependencies in turn
   and for each one it loosely follows the
@@ -449,12 +461,12 @@ frameworks are available to the main build:
   FetchContent_Declare(
     googletest
     GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG        release-1.8.0
+    GIT_TAG        703bd9caab50b139428cea1aaff9974ebee5742e # release-1.10.0
   )
   FetchContent_Declare(
     Catch2
     GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-    GIT_TAG        v2.5.0
+    GIT_TAG        de6fe184a9ac1a06895cdd1c9b437f0a0bdf14ad # v2.13.4
   )
 
   # After the following call, the CMake targets defined by googletest and
@@ -473,7 +485,7 @@ it into the main build:
   FetchContent_Declare(
     protobuf
     GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
-    GIT_TAG        v3.12.0
+    GIT_TAG        ae50d9b9902526efd6c7a1907d09739f959c6297 # v3.15.0
     SOURCE_SUBDIR  cmake
   )
   set(protobuf_BUILD_TESTS OFF)
@@ -510,7 +522,7 @@ that all five projects are available on a company git server.  The
   FetchContent_Declare(
     projE
     GIT_REPOSITORY git@mycompany.com:git/projE.git
-    GIT_TAG        origin/release/2.3-rc1
+    GIT_TAG        v2.3-rc1
   )
 
   # Order is important, see notes in the discussion further below
@@ -957,6 +969,22 @@ ExternalProject_Add_Step(${contentName}-populate copyfile
       "-DCMAKE_EP_GIT_REMOTE_UPDATE_STRATEGY=${CMAKE_EP_GIT_REMOTE_UPDATE_STRATEGY}")
   endif()
 
+  # Avoid using if(... IN_LIST ...) so we don't have to alter policy settings
+  set(__FETCHCONTENT_CACHED_INFO "")
+  list(FIND ARG_UNPARSED_ARGUMENTS GIT_REPOSITORY indexResult)
+  if(indexResult GREATER_EQUAL 0)
+    find_package(Git QUIET)
+    set(__FETCHCONTENT_CACHED_INFO
+"# Pass through things we've already detected in the main project to avoid
+# paying the cost of redetecting them again in ExternalProject_Add()
+set(GIT_EXECUTABLE [==[${GIT_EXECUTABLE}]==])
+set(GIT_VERSION_STRING [==[${GIT_VERSION_STRING}]==])
+set_property(GLOBAL PROPERTY _CMAKE_FindGit_GIT_EXECUTABLE_VERSION
+  [==[${GIT_EXECUTABLE};${GIT_VERSION_STRING}]==]
+)
+")
+  endif()
+
   # Create and build a separate CMake project to carry out the population.
   # If we've already previously done these steps, they will not cause
   # anything to be updated, so extra rebuilds of the project won't occur.
@@ -1052,6 +1080,19 @@ function(FetchContent_Populate contentName)
     # The source directory has been explicitly provided in the cache,
     # so no population is required. The build directory may still be specified
     # by the declared details though.
+
+    if(NOT IS_ABSOLUTE "${FETCHCONTENT_SOURCE_DIR_${contentNameUpper}}")
+      # Don't check this directory because we don't know what location it is
+      # expected to be relative to. We can't make this a hard error for backward
+      # compatibility reasons.
+      message(WARNING "Relative source directory specified. This is not safe, "
+        "as it depends on the calling directory scope.\n"
+        "  FETCHCONTENT_SOURCE_DIR_${contentNameUpper} --> ${FETCHCONTENT_SOURCE_DIR_${contentNameUpper}}")
+    elseif(NOT EXISTS "${FETCHCONTENT_SOURCE_DIR_${contentNameUpper}}")
+      message(FATAL_ERROR "Manually specified source directory is missing:\n"
+        "  FETCHCONTENT_SOURCE_DIR_${contentNameUpper} --> ${FETCHCONTENT_SOURCE_DIR_${contentNameUpper}}")
+    endif()
+
     set(${contentNameLower}_SOURCE_DIR "${FETCHCONTENT_SOURCE_DIR_${contentNameUpper}}")
 
     cmake_parse_arguments(savedDetails "" "BINARY_DIR" "" ${contentDetails})

@@ -36,6 +36,8 @@ function(cm_check_cxx_feature name)
     set(check_output "${OUTPUT}")
     # Filter out MSBuild output that looks like a warning.
     string(REGEX REPLACE " +0 Warning\\(s\\)" "" check_output "${check_output}")
+    # Filter out MSBuild output that looks like a warning.
+    string(REGEX REPLACE "[^\n]*warning MSB[0-9][0-9][0-9][0-9][^\n]*" "" check_output "${check_output}")
     # Filter out warnings caused by user flags.
     string(REGEX REPLACE "[^\n]*warning:[^\n]*-Winvalid-command-line-argument[^\n]*" "" check_output "${check_output}")
     # Filter out warnings caused by local configuration.
@@ -78,8 +80,16 @@ if(CMake_HAVE_CXX_MAKE_UNIQUE)
   set(CMake_HAVE_CXX_UNIQUE_PTR 1)
 endif()
 cm_check_cxx_feature(unique_ptr)
-if (NOT CMAKE_CXX_STANDARD LESS "17")
-  cm_check_cxx_feature(filesystem TRY_RUN)
+if (NOT CMAKE_CXX_STANDARD LESS "17"
+    AND NOT MSYS # FIXME: RunCMake.cmake_path cases crash with MSYS std::filesystem
+    )
+  if (NOT CMAKE_CROSSCOMPILING OR CMAKE_CROSSCOMPILING_EMULATOR)
+    cm_check_cxx_feature(filesystem TRY_RUN)
+  else()
+    # In cross-compiling mode, it is not possible to check implementation bugs
+    # so rely only on conformance done by compilation
+    cm_check_cxx_feature(filesystem)
+  endif()
 else()
   set(CMake_HAVE_CXX_FILESYSTEM FALSE)
 endif()

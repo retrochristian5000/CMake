@@ -121,7 +121,7 @@ void cmLocalVisualStudio7Generator::FixGlobalTargets()
       }
       if (cmSourceFile* file = this->AddCustomCommandToOutput(
             force, no_depends, no_main_dependency, force_commands, " ",
-            nullptr, true)) {
+            nullptr, cmPolicies::NEW, true)) {
         l->AddSource(file->ResolveFullPath());
       }
     }
@@ -245,9 +245,10 @@ cmSourceFile* cmLocalVisualStudio7Generator::CreateVCProjBuildRule()
                               "--check-stamp-file", stampName });
   std::string comment = cmStrCat("Building Custom Rule ", makefileIn);
   const char* no_working_directory = nullptr;
-  this->AddCustomCommandToOutput(
-    stampName, listFiles, makefileIn, commandLines, comment.c_str(),
-    no_working_directory, true, false, false, false, "", "", stdPipesUTF8);
+  this->AddCustomCommandToOutput(stampName, listFiles, makefileIn,
+                                 commandLines, comment.c_str(),
+                                 no_working_directory, cmPolicies::NEW, true,
+                                 false, false, false, "", "", stdPipesUTF8);
   if (cmSourceFile* file = this->Makefile->GetSource(makefileIn)) {
     // Finalize the source file path now since we're adding this after
     // the generator validated all project-named sources.
@@ -275,10 +276,9 @@ cmVS7FlagTable cmLocalVisualStudio7GeneratorFortranFlagTable[] = {
   { "SuppressStartupBanner", "nologo", "SuppressStartupBanner", "true", 0 },
   { "SourceFileFormat", "fixed", "Use Fixed Format", "fileFormatFixed", 0 },
   { "SourceFileFormat", "free", "Use Free Format", "fileFormatFree", 0 },
-  { "DebugInformationFormat", "Zi", "full debug", "debugEnabled", 0 },
   { "DebugInformationFormat", "debug:full", "full debug", "debugEnabled", 0 },
-  { "DebugInformationFormat", "Z7", "c7 compat", "debugOldStyleInfo", 0 },
-  { "DebugInformationFormat", "Zd", "line numbers", "debugLineInfoOnly", 0 },
+  { "DebugInformationFormat", "debug:minimal", "line numbers",
+    "debugLineInfoOnly", 0 },
   { "Optimization", "Od", "disable optimization", "optimizeDisabled", 0 },
   { "Optimization", "O1", "min space", "optimizeMinSpace", 0 },
   { "Optimization", "O3", "full optimize", "optimizeFull", 0 },
@@ -1011,7 +1011,8 @@ void cmLocalVisualStudio7Generator::OutputBuildTool(
       this->GetStaticLibraryFlags(
         libflags, configName, target->GetLinkerLanguage(configName), target);
       if (!libflags.empty()) {
-        fout << "\t\t\t\tAdditionalOptions=\"" << libflags << "\"\n";
+        fout << "\t\t\t\tAdditionalOptions=\"" << this->EscapeForXML(libflags)
+             << "\"\n";
       }
       fout << "\t\t\t\tOutputFile=\""
            << this->ConvertToXMLOutputPathSingle(libpath) << "\"/>\n";

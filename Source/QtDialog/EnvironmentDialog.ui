@@ -46,11 +46,16 @@
       </spacer>
      </item>
      <item>
+<<<<<<< HEAD
       <widget class="QToolButton" name="AddEntry">
+=======
+      <widget class="QPushButton" name="AddEntry">
+>>>>>>> upstream/master
        <property name="text">
         <string>&amp;Add Entry</string>
        </property>
        <property name="icon">
+<<<<<<< HEAD
         <iconset resource="CMakeSetup.qrc">
          <normaloff>:/Icons/Plus16.png</normaloff>:/Icons/Plus16.png</iconset>
        </property>
@@ -61,16 +66,31 @@
      </item>
      <item>
       <widget class="QToolButton" name="RemoveEntry">
+=======
+        <iconset theme="list-add" resource="CMakeSetup.qrc">
+         <normaloff>:/Icons/Plus16.png</normaloff>:/Icons/Plus16.png</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="RemoveEntry">
+>>>>>>> upstream/master
        <property name="text">
         <string>&amp;Remove Entry</string>
        </property>
        <property name="icon">
+<<<<<<< HEAD
         <iconset resource="CMakeSetup.qrc">
          <normaloff>:/Icons/Delete16.png</normaloff>:/Icons/Delete16.png</iconset>
        </property>
        <property name="toolButtonStyle">
         <enum>Qt::ToolButtonTextBesideIcon</enum>
        </property>
+=======
+        <iconset theme="list-remove" resource="CMakeSetup.qrc">
+         <normaloff>:/Icons/Delete16.png</normaloff>:/Icons/Delete16.png</iconset>
+       </property>
+>>>>>>> upstream/master
       </widget>
      </item>
     </layout>

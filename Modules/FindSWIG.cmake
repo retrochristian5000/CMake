@@ -7,6 +7,7 @@ FindSWIG
 
 Find the Simplified Wrapper and Interface Generator (SWIG_) executable.
 
+<<<<<<< HEAD
 This module finds an installed SWIG and determines its version. If a
 ``COMPONENTS`` or ``OPTIONAL_COMPONENTS`` argument is given to the
 :command:`find_package` command, it will also determine supported target
@@ -15,6 +16,19 @@ languages.
 When a version is requested, it can be specified as a simple value or as a
 range. For a detailed description of version range usage and capabilities,
 refer to the :command:`find_package` command.
+=======
+This module finds an installed SWIG and determines its version.
+
+.. versionadded:: 3.18
+  If a ``COMPONENTS`` or ``OPTIONAL_COMPONENTS`` argument is given to the
+  :command:`find_package` command, it will also determine supported target
+  languages.
+
+.. versionadded:: 3.19
+  When a version is requested, it can be specified as a simple value or as a
+  range. For a detailed description of version range usage and capabilities,
+  refer to the :command:`find_package` command.
+>>>>>>> upstream/master
 
 The module defines the following variables:
 
@@ -56,8 +70,13 @@ optional Fortran support:
 #]=======================================================================]
 
 # compute list of possible names
+<<<<<<< HEAD
 if (SWIG_FIND_VERSION_RANGE)
   set (_SWIG_NAMES)
+=======
+unset (_SWIG_NAMES)
+if (SWIG_FIND_VERSION_RANGE)
+>>>>>>> upstream/master
   foreach (_SWIG_MAJOR IN ITEMS 4 3 2)
     if (_SWIG_MAJOR VERSION_GREATER_EQUAL SWIG_FIND_VERSION_MIN_MAJOR
         AND ((SWIG_FIND_VERSION_RANGE_MAX STREQUAL "INCLUDE" AND _SWIG_MAJOR VERSION_LESS_EQUAL SWIG_FIND_VERSION_MAX)
@@ -73,10 +92,21 @@ elseif(SWIG_FIND_VERSION)
       if (_SWIG_MAJOR VERSION_GREATER_EQUAL SWIG_FIND_VERSION_MAJOR)
         list (APPEND _SWIG_NAMES swig${_SWIG_MAJOR}.0)
       endif()
+<<<<<<< HEAD
+=======
+    endforeach()
+>>>>>>> upstream/master
   endif()
 else()
   set (_SWIG_NAMES swig4.0 swig3.0 swig2.0)
 endif()
+<<<<<<< HEAD
+=======
+if (NOT _SWIG_NAMES)
+  # try to find any version
+  set (_SWIG_NAMES swig4.0 swig3.0 swig2.0)
+endif()
+>>>>>>> upstream/master
 
 find_program(SWIG_EXECUTABLE NAMES ${_SWIG_NAMES} swig)
 

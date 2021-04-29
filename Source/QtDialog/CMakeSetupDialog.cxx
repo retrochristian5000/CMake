@@ -21,8 +21,9 @@
 #include <QSettings>
 #include <QShortcut>
 #include <QStatusBar>
-#include <QToolButton>
+#include <QString>
 #include <QUrl>
+#include <QVector>
 
 #ifdef QT_WINEXTRAS
 #  include <QWinTaskbarButton>
@@ -40,6 +41,27 @@
 #include "FirstConfigure.h"
 #include "RegexExplorer.h"
 #include "WarningMessagesDialog.h"
+
+void OpenReferenceManual()
+{
+  QString urlFormat("https://cmake.org/cmake/help/v%1.%2/");
+  QUrl url(urlFormat.arg(QString::number(cmVersion::GetMajorVersion()),
+                         QString::number(cmVersion::GetMinorVersion())));
+
+  if (!cmSystemTools::GetHTMLDoc().empty()) {
+    url = QUrl::fromLocalFile(
+      QDir(QString::fromLocal8Bit(cmSystemTools::GetHTMLDoc().data()))
+        .filePath("index.html"));
+  }
+
+  QDesktopServices::openUrl(url);
+}
+
+namespace {
+const QString PRESETS_DISABLED_TOOLTIP =
+  "This option is disabled because there are no available presets in "
+  "CMakePresets.json or CMakeUserPresets.json.";
+}
 
 QCMakeThread::QCMakeThread(QObject* p)
   : QThread(p)
@@ -90,6 +112,7 @@ CMakeSetupDialog::CMakeSetupDialog()
   this->ProgressBar->reset();
   this->RemoveEntry->setEnabled(false);
   this->AddEntry->setEnabled(false);
+  this->Preset->setStatusTip(PRESETS_DISABLED_TOOLTIP);
 
   QByteArray p = settings.value("SplitterSizes").toByteArray();
   this->Splitter->restoreState(p);
@@ -185,6 +208,7 @@ CMakeSetupDialog::CMakeSetupDialog()
   QObject::connect(a, &QAction::triggered, this, &CMakeSetupDialog::doHelp);
   a->setShortcut(QKeySequence::HelpContents);
   a = HelpMenu->addAction(tr("CMake Reference Manual"));
+<<<<<<< HEAD
   QObject::connect(a, &QAction::triggered, this, []() {
     QString urlFormat("https://cmake.org/cmake/help/v%1.%2/");
     QUrl url(urlFormat.arg(QString::number(cmVersion::GetMajorVersion()),
@@ -198,6 +222,9 @@ CMakeSetupDialog::CMakeSetupDialog()
 
     QDesktopServices::openUrl(url);
   });
+=======
+  QObject::connect(a, &QAction::triggered, this, OpenReferenceManual);
+>>>>>>> upstream/master
   a = HelpMenu->addAction(tr("About"));
   QObject::connect(a, &QAction::triggered, this, &CMakeSetupDialog::doAbout);
 
@@ -241,7 +268,7 @@ void CMakeSetupDialog::initialize()
                    &QCMake::propertiesChanged, this->CacheValues->cacheModel(),
                    &QCMakeCacheModel::setProperties);
 
-  QObject::connect(this->ConfigureButton, &QPushButton::clicked, this,
+  QObject::connect(this->ConfigureButton, &QAbstractButton::clicked, this,
                    &CMakeSetupDialog::doConfigure);
 
   QObject::connect(this->CMakeThread->cmakeInstance(), &QCMake::configureDone,
@@ -249,20 +276,24 @@ void CMakeSetupDialog::initialize()
   QObject::connect(this->CMakeThread->cmakeInstance(), &QCMake::generateDone,
                    this, &CMakeSetupDialog::exitLoop);
 
-  QObject::connect(this->GenerateButton, &QPushButton::clicked, this,
+  QObject::connect(this->GenerateButton, &QAbstractButton::clicked, this,
                    &CMakeSetupDialog::doGenerate);
-  QObject::connect(this->OpenProjectButton, &QPushButton::clicked, this,
+  QObject::connect(this->OpenProjectButton, &QAbstractButton::clicked, this,
                    &CMakeSetupDialog::doOpenProject);
 
-  QObject::connect(this->BrowseSourceDirectoryButton, &QPushButton::clicked,
-                   this, &CMakeSetupDialog::doSourceBrowse);
-  QObject::connect(this->BrowseBinaryDirectoryButton, &QPushButton::clicked,
-                   this, &CMakeSetupDialog::doBinaryBrowse);
+  QObject::connect(this->BrowseSourceDirectoryButton,
+                   &QAbstractButton::clicked, this,
+                   &CMakeSetupDialog::doSourceBrowse);
+  QObject::connect(this->BrowseBinaryDirectoryButton,
+                   &QAbstractButton::clicked, this,
+                   &CMakeSetupDialog::doBinaryBrowse);
 
   QObject::connect(this->BinaryDirectory, &QComboBox::editTextChanged, this,
                    &CMakeSetupDialog::onBinaryDirectoryChanged);
   QObject::connect(this->SourceDirectory, &QLineEdit::textChanged, this,
                    &CMakeSetupDialog::onSourceDirectoryChanged);
+  QObject::connect(this->Preset, &QCMakePresetComboBox::presetChanged, this,
+                   &CMakeSetupDialog::onBuildPresetChanged);
 
   QObject::connect(this->CMakeThread->cmakeInstance(),
                    &QCMake::sourceDirChanged, this,
@@ -270,6 +301,13 @@ void CMakeSetupDialog::initialize()
   QObject::connect(this->CMakeThread->cmakeInstance(),
                    &QCMake::binaryDirChanged, this,
                    &CMakeSetupDialog::updateBinaryDirectory);
+  QObject::connect(this->CMakeThread->cmakeInstance(), &QCMake::presetsChanged,
+                   this, &CMakeSetupDialog::updatePresets);
+  QObject::connect(this->CMakeThread->cmakeInstance(), &QCMake::presetChanged,
+                   this, &CMakeSetupDialog::updatePreset);
+  QObject::connect(this->CMakeThread->cmakeInstance(),
+                   &QCMake::presetLoadError, this,
+                   &CMakeSetupDialog::showPresetLoadError);
 
   QObject::connect(this->CMakeThread->cmakeInstance(),
                    &QCMake::progressChanged, this,
@@ -303,20 +341,30 @@ void CMakeSetupDialog::initialize()
   QObject::connect(this->CacheValues->selectionModel(),
                    &QItemSelectionModel::selectionChanged, this,
                    &CMakeSetupDialog::selectionChanged);
-  QObject::connect(this->RemoveEntry, &QToolButton::clicked, this,
+  QObject::connect(this->RemoveEntry, &QAbstractButton::clicked, this,
                    &CMakeSetupDialog::removeSelectedCacheEntries);
-  QObject::connect(this->AddEntry, &QToolButton::clicked, this,
+  QObject::connect(this->AddEntry, &QAbstractButton::clicked, this,
                    &CMakeSetupDialog::addCacheEntry);
 
+<<<<<<< HEAD
   QObject::connect(this->Environment, &QToolButton::clicked, this,
+=======
+  QObject::connect(this->Environment, &QAbstractButton::clicked, this,
+>>>>>>> upstream/master
                    &CMakeSetupDialog::editEnvironment);
 
   QObject::connect(this->WarnUninitializedAction, &QAction::triggered,
                    this->CMakeThread->cmakeInstance(),
                    &QCMake::setWarnUninitializedMode);
+  QObject::connect(this->CMakeThread->cmakeInstance(),
+                   &QCMake::warnUninitializedModeChanged,
+                   this->WarnUninitializedAction, &QAction::setChecked);
 
-  if (!this->SourceDirectory->text().isEmpty() ||
-      !this->BinaryDirectory->lineEdit()->text().isEmpty()) {
+  if (!this->SourceDirectory->text().isEmpty() &&
+      !this->DeferredPreset.isNull()) {
+    this->onSourceDirectoryChanged(this->SourceDirectory->text());
+  } else if (!this->SourceDirectory->text().isEmpty() ||
+             !this->BinaryDirectory->lineEdit()->text().isEmpty()) {
     this->onSourceDirectoryChanged(this->SourceDirectory->text());
     this->onBinaryDirectoryChanged(this->BinaryDirectory->lineEdit()->text());
   } else {
@@ -671,6 +719,41 @@ void CMakeSetupDialog::updateBinaryDirectory(const QString& dir)
   }
 }
 
+void CMakeSetupDialog::updatePresets(const QVector<QCMakePreset>& presets)
+{
+  if (this->Preset->presets() != presets) {
+    this->Preset->blockSignals(true);
+    this->Preset->setPresets(presets);
+    this->Preset->blockSignals(false);
+  }
+
+  this->Preset->setDisabled(presets.isEmpty());
+  this->Preset->setToolTip(presets.isEmpty() ? PRESETS_DISABLED_TOOLTIP : "");
+
+  if (!this->DeferredPreset.isNull()) {
+    this->Preset->setPresetName(this->DeferredPreset);
+    this->DeferredPreset = QString{};
+  }
+}
+
+void CMakeSetupDialog::updatePreset(const QString& name)
+{
+  if (this->Preset->presetName() != name) {
+    this->Preset->blockSignals(true);
+    this->Preset->setPresetName(name);
+    this->Preset->blockSignals(false);
+  }
+}
+
+void CMakeSetupDialog::showPresetLoadError(
+  const QString& dir, cmCMakePresetsFile::ReadFileResult result)
+{
+  QMessageBox::warning(
+    this, "Error Reading CMake Presets",
+    QString::fromLocal8Bit("Could not read presets from %1: %2")
+      .arg(dir, cmCMakePresetsFile::ResultToString(result)));
+}
+
 void CMakeSetupDialog::doBinaryBrowse()
 {
   QString dir = QFileDialog::getExistingDirectory(
@@ -684,6 +767,11 @@ void CMakeSetupDialog::doBinaryBrowse()
 void CMakeSetupDialog::setBinaryDirectory(const QString& dir)
 {
   this->BinaryDirectory->setEditText(dir);
+}
+
+void CMakeSetupDialog::setStartupBinaryDirectory(bool startup)
+{
+  this->StartupBinaryDirectory = startup;
 }
 
 void CMakeSetupDialog::onSourceDirectoryChanged(const QString& dir)
@@ -711,9 +799,22 @@ void CMakeSetupDialog::onBinaryDirectoryChanged(const QString& dir)
                             Q_ARG(QString, dir));
 }
 
+void CMakeSetupDialog::onBuildPresetChanged(const QString& name)
+{
+  QMetaObject::invokeMethod(this->CMakeThread->cmakeInstance(), "setPreset",
+                            Qt::QueuedConnection, Q_ARG(QString, name),
+                            Q_ARG(bool, !this->StartupBinaryDirectory));
+  this->StartupBinaryDirectory = false;
+}
+
 void CMakeSetupDialog::setSourceDirectory(const QString& dir)
 {
   this->SourceDirectory->setText(dir);
+}
+
+void CMakeSetupDialog::setDeferredPreset(const QString& preset)
+{
+  this->DeferredPreset = preset;
 }
 
 void CMakeSetupDialog::showProgress(const QString& /*msg*/, float percent)
@@ -753,6 +854,7 @@ void CMakeSetupDialog::setEnabledState(bool enabled)
   this->CacheValues->cacheModel()->setEditEnabled(enabled);
   this->SourceDirectory->setEnabled(enabled);
   this->BrowseSourceDirectoryButton->setEnabled(enabled);
+  this->Preset->setEnabled(enabled && !this->Preset->presets().isEmpty());
   this->BinaryDirectory->setEnabled(enabled);
   this->BrowseBinaryDirectoryButton->setEnabled(enabled);
   this->ReloadCacheAction->setEnabled(enabled);
@@ -776,6 +878,19 @@ bool CMakeSetupDialog::setupFirstConfigure()
 
   // restore from settings
   dialog.loadFromSettings();
+
+  auto presetData = this->Preset->currentData();
+  if (presetData.isValid()) {
+    auto preset = presetData.value<QCMakePreset>();
+    dialog.setCurrentGenerator(preset.generator);
+    if (preset.setArchitecture) {
+      dialog.setPlatform(preset.architecture);
+    }
+    if (preset.setToolset) {
+      dialog.setToolset(preset.toolset);
+    }
+    dialog.setCompilerOption(CompilerOption::DefaultNative);
+  }
 
   if (dialog.exec() == QDialog::Accepted) {
     dialog.saveToSettings();

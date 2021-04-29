@@ -5,6 +5,13 @@
 #include "QCMake.h"
 #include <QApplication>
 #include <QEventLoop>
+<<<<<<< HEAD
+=======
+#include <QFile>
+#  include <QJsonArray>
+#  include <QJsonDocument>
+#  include <QJsonObject>
+>>>>>>> upstream/master
 #include <QMessageBox>
 #include <QSettings>
 #include <QString>
@@ -18,13 +25,20 @@
 #include "CatchShow.h"
 #include "FirstConfigure.h"
 
-namespace {
-void loopSleep(int msecs = 100)
+<<<<<<< HEAD
+=======
+using WindowSetupHelper = std::function<void(CMakeSetupDialog*)>;
+Q_DECLARE_METATYPE(WindowSetupHelper)
+
+>>>>>>> upstream/master
+namespace
 {
-  QEventLoop loop;
-  QTimer::singleShot(msecs, &loop, &QEventLoop::quit);
-  loop.exec();
-}
+  void loopSleep(int msecs = 500)
+  {
+    QEventLoop loop;
+    QTimer::singleShot(msecs, &loop, &QEventLoop::quit);
+    loop.exec();
+  }
 }
 
 CMakeGUITest::CMakeGUITest(CMakeSetupDialog* window, QObject* parent)
@@ -172,6 +186,258 @@ void CMakeGUITest::environment()
   QCOMPARE(penv.value("REMOVED_VARIABLE"), "Removed variable");
 }
 
+<<<<<<< HEAD
+=======
+void CMakeGUITest::presetArg()
+{
+  QFETCH(WindowSetupHelper, setupFunction);
+  QFETCH(QString, presetName);
+  QFETCH(QString, sourceDir);
+  QFETCH(QString, binaryDir);
+  QFETCH(QCMakePropertyList, properties);
+
+  if (setupFunction) {
+    setupFunction(this->m_window);
+  }
+
+  // Wait a bit for everything to update
+  loopSleep();
+
+  QCOMPARE(this->m_window->Preset->presetName(), presetName);
+  QCOMPARE(this->m_window->SourceDirectory->text(), sourceDir);
+  QCOMPARE(this->m_window->BinaryDirectory->currentText(), binaryDir);
+
+  auto actualProperties =
+    this->m_window->CacheValues->cacheModel()->properties();
+  QCOMPARE(actualProperties.size(), properties.size());
+  for (int i = 0; i < actualProperties.size(); ++i) {
+    // operator==() only compares Key, we need to compare Value and Type too
+    QCOMPARE(actualProperties[i].Key, properties[i].Key);
+    QCOMPARE(actualProperties[i].Value, properties[i].Value);
+    QCOMPARE(actualProperties[i].Type, properties[i].Type);
+  }
+}
+
+namespace {
+QCMakePropertyList makePresetProperties(const QString& name)
+{
+  return QCMakePropertyList{
+    QCMakeProperty{
+      /*Key=*/"FALSE_VARIABLE",
+      /*Value=*/false,
+      /*Strings=*/{},
+      /*Help=*/"",
+      /*Type=*/QCMakeProperty::BOOL,
+      /*Advanced=*/false,
+    },
+    QCMakeProperty{
+      /*Key=*/"FILEPATH_VARIABLE",
+      /*Value=*/
+      QString::fromLocal8Bit(CMakeGUITest_BINARY_DIR "/%1/src/CMakeLists.txt")
+        .arg(name),
+      /*Strings=*/{},
+      /*Help=*/"",
+      /*Type=*/QCMakeProperty::FILEPATH,
+      /*Advanced=*/false,
+    },
+    QCMakeProperty{
+      /*Key=*/"ON_VARIABLE",
+      /*Value=*/true,
+      /*Strings=*/{},
+      /*Help=*/"",
+      /*Type=*/QCMakeProperty::BOOL,
+      /*Advanced=*/false,
+    },
+    QCMakeProperty{
+      /*Key=*/"PATH_VARIABLE",
+      /*Value=*/
+      QString::fromLocal8Bit(CMakeGUITest_BINARY_DIR "/%1/src").arg(name),
+      /*Strings=*/{},
+      /*Help=*/"",
+      /*Type=*/QCMakeProperty::PATH,
+      /*Advanced=*/false,
+    },
+    QCMakeProperty{
+      /*Key=*/"STRING_VARIABLE",
+      /*Value=*/"String value",
+      /*Strings=*/{},
+      /*Help=*/"",
+      /*Type=*/QCMakeProperty::STRING,
+      /*Advanced=*/false,
+    },
+    QCMakeProperty{
+      /*Key=*/"UNINITIALIZED_VARIABLE",
+      /*Value=*/"Uninitialized value",
+      /*Strings=*/{},
+      /*Help=*/"",
+      /*Type=*/QCMakeProperty::STRING,
+      /*Advanced=*/false,
+    },
+  };
+}
+}
+
+void CMakeGUITest::presetArg_data()
+{
+  QTest::addColumn<WindowSetupHelper>("setupFunction");
+  QTest::addColumn<QString>("presetName");
+  QTest::addColumn<QString>("sourceDir");
+  QTest::addColumn<QString>("binaryDir");
+  QTest::addColumn<QCMakePropertyList>("properties");
+
+  QTest::newRow("preset") << WindowSetupHelper{} << "ninja"
+                          << CMakeGUITest_BINARY_DIR "/presetArg-preset/src"
+                          << CMakeGUITest_BINARY_DIR
+    "/presetArg-preset/src/build"
+                          << makePresetProperties("presetArg-preset");
+  QTest::newRow("presetBinary")
+    << WindowSetupHelper{} << "ninja"
+    << CMakeGUITest_BINARY_DIR "/presetArg-presetBinary/src"
+    << CMakeGUITest_BINARY_DIR "/presetArg-presetBinary/build"
+    << makePresetProperties("presetArg-presetBinary");
+  QTest::newRow("presetBinaryChange")
+    << WindowSetupHelper{ [](CMakeSetupDialog* window) {
+         loopSleep();
+         window->Preset->setPresetName("ninja2");
+       } }
+    << "ninja2" << CMakeGUITest_BINARY_DIR "/presetArg-presetBinaryChange/src"
+    << CMakeGUITest_BINARY_DIR "/presetArg-presetBinaryChange/src/build"
+    << makePresetProperties("presetArg-presetBinaryChange");
+  QTest::newRow("noPresetBinaryChange")
+    << WindowSetupHelper{ [](CMakeSetupDialog* window) {
+         loopSleep();
+         window->Preset->setPresetName("ninja");
+       } }
+    << "ninja" << CMakeGUITest_BINARY_DIR "/presetArg-noPresetBinaryChange/src"
+    << CMakeGUITest_BINARY_DIR "/presetArg-noPresetBinaryChange/src/build"
+    << makePresetProperties("presetArg-noPresetBinaryChange");
+  QTest::newRow("presetConfigExists")
+    << WindowSetupHelper{} << "ninja"
+    << CMakeGUITest_BINARY_DIR "/presetArg-presetConfigExists/src"
+    << CMakeGUITest_BINARY_DIR "/presetArg-presetConfigExists/src/build"
+    << makePresetProperties("presetArg-presetConfigExists");
+  QTest::newRow("noExist") << WindowSetupHelper{} << QString{}
+                           << CMakeGUITest_BINARY_DIR "/presetArg-noExist/src"
+                           << "" << QCMakePropertyList{};
+}
+
+namespace {
+void writePresets(const QString& buildDir, const QStringList& names)
+{
+  QJsonArray presets{
+    QJsonObject{
+      { "name", "base" },
+      { "generator", "Ninja" },
+      { "binaryDir",
+        QString::fromLocal8Bit("${sourceDir}/%1/${presetName}")
+          .arg(buildDir) },
+      { "hidden", true },
+    },
+  };
+
+  for (auto const& name : names) {
+    presets.append(QJsonObject{
+      { "name", name },
+      { "inherits", QJsonArray{ "base" } },
+    });
+  }
+
+  QJsonDocument doc{ QJsonObject{
+    { "version", 1 },
+    { "configurePresets", presets },
+  } };
+
+  QFile presetsFile(CMakeGUITest_BINARY_DIR
+                    "/changingPresets/src/CMakePresets.json");
+  bool open = presetsFile.open(QIODevice::WriteOnly);
+  Q_ASSERT(open);
+  presetsFile.write(doc.toJson());
+}
+}
+
+void CMakeGUITest::changingPresets()
+{
+  QDir::root().mkpath(CMakeGUITest_BINARY_DIR "/changingPresets/src");
+
+  this->m_window->SourceDirectory->setText(CMakeGUITest_BINARY_DIR
+                                           "/changingPresets/src");
+  loopSleep();
+  QCOMPARE(this->m_window->Preset->presetName(), QString{});
+  QCOMPARE(this->m_window->Preset->presets().size(), 0);
+  QCOMPARE(this->m_window->BinaryDirectory->currentText(), "");
+  QCOMPARE(this->m_window->Preset->isEnabled(), false);
+
+  writePresets("build1", { "preset" });
+  loopSleep(1500);
+  QCOMPARE(this->m_window->Preset->presetName(), QString{});
+  QCOMPARE(this->m_window->Preset->presets().size(), 1);
+  QCOMPARE(this->m_window->BinaryDirectory->currentText(), "");
+  QCOMPARE(this->m_window->Preset->isEnabled(), true);
+
+  this->m_window->Preset->setPresetName("preset");
+  loopSleep();
+  QCOMPARE(this->m_window->Preset->presetName(), "preset");
+  QCOMPARE(this->m_window->Preset->presets().size(), 1);
+  QCOMPARE(this->m_window->BinaryDirectory->currentText(),
+           CMakeGUITest_BINARY_DIR "/changingPresets/src/build1/preset");
+  QCOMPARE(this->m_window->Preset->isEnabled(), true);
+
+  writePresets("build2", { "preset2", "preset" });
+  loopSleep(1500);
+  QCOMPARE(this->m_window->Preset->presetName(), "preset");
+  QCOMPARE(this->m_window->Preset->presets().size(), 2);
+  QCOMPARE(this->m_window->BinaryDirectory->currentText(),
+           CMakeGUITest_BINARY_DIR "/changingPresets/src/build1/preset");
+  QCOMPARE(this->m_window->Preset->isEnabled(), true);
+
+  writePresets("build3", { "preset2" });
+  loopSleep(1500);
+  QCOMPARE(this->m_window->Preset->presetName(), QString{});
+  QCOMPARE(this->m_window->Preset->presets().size(), 1);
+  QCOMPARE(this->m_window->BinaryDirectory->currentText(),
+           CMakeGUITest_BINARY_DIR "/changingPresets/src/build1/preset");
+  QCOMPARE(this->m_window->Preset->isEnabled(), true);
+
+  this->m_window->Preset->setPresetName("preset2");
+  loopSleep();
+  QCOMPARE(this->m_window->Preset->presetName(), "preset2");
+  QCOMPARE(this->m_window->Preset->presets().size(), 1);
+  QCOMPARE(this->m_window->BinaryDirectory->currentText(),
+           CMakeGUITest_BINARY_DIR "/changingPresets/src/build3/preset2");
+  QCOMPARE(this->m_window->Preset->isEnabled(), true);
+
+  QDir::root().mkpath(CMakeGUITest_BINARY_DIR "/changingPresets/src2");
+  QFile::copy(CMakeGUITest_BINARY_DIR "/changingPresets/src/CMakePresets.json",
+              CMakeGUITest_BINARY_DIR
+              "/changingPresets/src2/CMakePresets.json");
+  this->m_window->SourceDirectory->setText(CMakeGUITest_BINARY_DIR
+                                           "/changingPresets/src2");
+  loopSleep();
+  QCOMPARE(this->m_window->Preset->presetName(), QString{});
+  QCOMPARE(this->m_window->Preset->presets().size(), 1);
+  QCOMPARE(this->m_window->BinaryDirectory->currentText(),
+           CMakeGUITest_BINARY_DIR "/changingPresets/src/build3/preset2");
+  QCOMPARE(this->m_window->Preset->isEnabled(), true);
+
+  this->m_window->Preset->setPresetName("preset2");
+  loopSleep();
+  QCOMPARE(this->m_window->Preset->presetName(), "preset2");
+  QCOMPARE(this->m_window->Preset->presets().size(), 1);
+  QCOMPARE(this->m_window->BinaryDirectory->currentText(),
+           CMakeGUITest_BINARY_DIR "/changingPresets/src2/build3/preset2");
+  QCOMPARE(this->m_window->Preset->isEnabled(), true);
+
+  QFile(CMakeGUITest_BINARY_DIR "/changingPresets/src2/CMakePresets.json")
+    .remove();
+  loopSleep(1500);
+  QCOMPARE(this->m_window->Preset->presetName(), QString{});
+  QCOMPARE(this->m_window->Preset->presets().size(), 0);
+  QCOMPARE(this->m_window->BinaryDirectory->currentText(),
+           CMakeGUITest_BINARY_DIR "/changingPresets/src2/build3/preset2");
+  QCOMPARE(this->m_window->Preset->isEnabled(), false);
+}
+
+>>>>>>> upstream/master
 void SetupDefaultQSettings()
 {
   QSettings::setDefaultFormat(QSettings::IniFormat);

@@ -25,14 +25,14 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/CheckFortran.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/CheckSwift.cmake)
 
 # Fake a user home directory to avoid polluting the real one.
-if(DEFINED ENV{HOME} AND NOT CTEST_NO_TEST_HOME)
+if(NOT CTEST_NO_TEST_HOME AND (NOT WIN32 OR DEFINED ENV{HOME}))
   set(TEST_HOME "${CMake_BINARY_DIR}/Tests/CMakeFiles/TestHome")
   file(MAKE_DIRECTORY "${TEST_HOME}")
   file(WRITE "${TEST_HOME}/.cvspass" ":pserver:anoncvs@www.cmake.org:/cvsroot/KWSys A\n")
   set(TEST_HOME_ENV_CODE "# Fake a user home directory to avoid polluting the real one.
 # But provide original ENV{HOME} value in ENV{CTEST_REAL_HOME} for tests that
 # need access to the real HOME directory.
-if(NOT DEFINED ENV{CTEST_REAL_HOME})
+if(DEFINED ENV{HOME} AND NOT DEFINED ENV{CTEST_REAL_HOME})
   set(ENV{CTEST_REAL_HOME} \"\$ENV{HOME}\")
 endif()
 set(ENV{HOME} \"${TEST_HOME}\")
@@ -96,7 +96,7 @@ if(BUILD_TESTING)
   # some old versions of make simply cannot handle spaces in paths
   if (MAKE_IS_GNU OR
       CMAKE_MAKE_PROGRAM MATCHES "nmake|gmake|wmake" OR
-      CMAKE_GENERATOR MATCHES "Visual Studio|Xcode|Borland")
+      CMAKE_GENERATOR MATCHES "Visual Studio|Xcode|Borland|Ninja")
     set(MAKE_SUPPORTS_SPACES 1)
   else()
     set(MAKE_SUPPORTS_SPACES 0)
@@ -206,7 +206,7 @@ if(BUILD_TESTING)
         set(${reg} 0)
       endif()
     endforeach()
-    if(COMMAND cmake_host_system_information)
+    if(CMAKE_HOST_WIN32 AND COMMAND cmake_host_system_information)
       set(info_vs15 "VS_15_DIR")
       set(info_vs16 "VS_16_DIR")
       set(vs_versions)
@@ -228,6 +228,22 @@ if(BUILD_TESTING)
     endif()
   endif()
 
+  if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND NOT DEFINED CMake_TEST_APPLE_SILICON)
+    execute_process(COMMAND sysctl -q hw.optional.arm64
+      OUTPUT_VARIABLE _sysctl_stdout
+      ERROR_VARIABLE  _sysctl_stderr
+      RESULT_VARIABLE _sysctl_result
+      )
+    if(_sysctl_result EQUAL 0 AND _sysctl_stdout MATCHES "hw.optional.arm64: 1")
+      set(CMake_TEST_APPLE_SILICON 1)
+    else()
+      set(CMake_TEST_APPLE_SILICON 0)
+    endif()
+    unset(_sysctl_result)
+    unset(_sysctl_stderr)
+    unset(_sysctl_stdout)
+  endif()
+
   #---------------------------------------------------------------------------
   # Add tests below here.
 
@@ -240,8 +256,6 @@ if(BUILD_TESTING)
 
   if(NOT CMake_TEST_EXTERNAL_CMAKE)
     add_subdirectory(CMakeLib)
-
-    add_subdirectory(CMakeServerLib)
   endif()
   add_subdirectory(CMakeOnly)
   add_subdirectory(RunCMake)
@@ -301,18 +315,7 @@ if(BUILD_TESTING)
   set(CTEST_TEST_OSX_ARCH 0)
   set(CMake_TEST_XCODE_VERSION 0)
   if(APPLE)
-    execute_process(
-      COMMAND sw_vers -productVersion
-      OUTPUT_VARIABLE OSX_VERSION
-      OUTPUT_STRIP_TRAILING_WHITESPACE
-      )
-    if(OSX_VERSION VERSION_LESS 10.4)
-      message(STATUS "Forcing CTEST_TEST_CPACK=OFF on OSX < 10.4")
-      message(STATUS "OSX_VERSION='${OSX_VERSION}'")
-      set(CTEST_TEST_CPACK OFF)
-    else()
-      set(CTEST_TEST_OSX_ARCH 1)
-    endif()
+    set(CTEST_TEST_OSX_ARCH 1)
     if(XCODE_VERSION)
       set(CMake_TEST_XCODE_VERSION "${XCODE_VERSION}")
     else()
@@ -426,6 +429,10 @@ if(BUILD_TESTING)
         set(CMAKE_SKIP_VSGNUFortran TRUE)
       endif()
     endif()
+    if(CMAKE_Fortran_COMPILER_ID STREQUAL IntelLLVM)
+      message(STATUS "Skip VSGNUFortran for ifx until DLLEXPORT support is implemented")
+      set(CMAKE_SKIP_VSGNUFortran TRUE)
+    endif()
     if((CMAKE_C_COMPILER MATCHES lsb)
         AND (CMAKE_Fortran_COMPILER MATCHES ifort))
       message(STATUS "Skip VSGNUFortran for ifort and lsb compilers")
@@ -453,7 +460,7 @@ if(BUILD_TESTING)
   ADD_TEST_MACRO(OutName exe.OutName.exe)
   ADD_TEST_MACRO(ObjectLibrary UseCshared)
   ADD_TEST_MACRO(NewlineArgs NewlineArgs)
-  ADD_TEST_MACRO(SetLang SetLang)
+  ADD_TEST_MACRO(SetLang SetLangX)
   ADD_TEST_MACRO(EmptyProperty EmptyProperty)
   ADD_TEST_MACRO(ExternalOBJ ExternalOBJ)
   if(NOT CMake_TEST_EXTERNAL_CMAKE)
@@ -797,6 +804,7 @@ if(BUILD_TESTING)
     ${build_generator_args}
     --build-project Framework
     --build-options
+      -DMAKE_SUPPORTS_SPACES=${MAKE_SUPPORTS_SPACES}
     "-DCMAKE_INSTALL_PREFIX:PATH=${CMake_BINARY_DIR}/Tests/Framework/Install"
     --test-command bar)
   list(APPEND TEST_BUILD_DIRS "${CMake_BINARY_DIR}/Tests/Framework")
@@ -821,6 +829,8 @@ if(BUILD_TESTING)
     ${build_generator_args}
     --build-project LibName
     --build-exe-dir "${CMake_BINARY_DIR}/Tests/LibName/lib"
+    --build-options
+      -DMAKE_SUPPORTS_SPACES=${MAKE_SUPPORTS_SPACES}
     --test-command foobar
     )
   list(APPEND TEST_BUILD_DIRS "${CMake_BINARY_DIR}/Tests/LibName")
@@ -1150,6 +1160,26 @@ if(BUILD_TESTING)
                                      "components-depend1"
                                      "components-depend2"
                                      "compression")
+      # Run additional tests if dpkg-shlibdeps is available (and is new enough version)
+      find_program(SHLIBDEPS_EXECUTABLE NAMES dpkg-shlibdeps)
+      if(SHLIBDEPS_EXECUTABLE)
+        # Check version of the dpkg-shlibdeps tool
+        execute_process(COMMAND ${CMAKE_COMMAND} -E env LC_ALL=C ${SHLIBDEPS_EXECUTABLE} --version
+          OUTPUT_VARIABLE _TMP_VERSION
+          ERROR_QUIET
+          OUTPUT_STRIP_TRAILING_WHITESPACE)
+        if(_TMP_VERSION MATCHES "dpkg-shlibdeps version ([0-9]+\\.[0-9]+\\.[0-9]+)")
+          set(SHLIBDEPS_EXECUTABLE_VERSION "${CMAKE_MATCH_1}")
+        else()
+          unset(SHLIBDEPS_EXECUTABLE_VERSION)
+        endif()
+        if(NOT SHLIBDEPS_EXECUTABLE_VERSION VERSION_LESS 1.19 OR
+          (NOT SHLIBDEPS_EXECUTABLE_VERSION VERSION_LESS 1.17 AND NOT CMAKE_BINARY_DIR MATCHES ".*[ ].*"))
+            list(APPEND DEB_CONFIGURATIONS_TO_TEST "shlibdeps-with-private-lib-failure"
+                                                   "shlibdeps-with-private-lib-success")
+        endif()
+      endif()
+
       set(CPackGen "DEB")
       set(CPackRun_CPackGen "-DCPackGen=${CPackGen}")
 
@@ -1276,21 +1306,6 @@ if(BUILD_TESTING)
     set_property(TEST CMakeTestAllGenerators PROPERTY RUN_SERIAL 1)
   endif()
 
-  if(NOT DEFINED CTEST_RUN_CMakeTestMultipleConfigures)
-    set(CTEST_RUN_CMakeTestMultipleConfigures ON)
-  endif()
-
-  if(CTEST_RUN_CMakeTestMultipleConfigures)
-    add_test(CMakeTestMultipleConfigures ${CMAKE_CMAKE_COMMAND}
-        -D dir=${CMake_BINARY_DIR}/Tests/CMakeTestMultipleConfigures
-        -D gen=${CMAKE_GENERATOR}
-        -D CMake_SOURCE_DIR=${CMake_SOURCE_DIR}
-        -P ${CMake_SOURCE_DIR}/Tests/CMakeTestMultipleConfigures/RunCMake.cmake
-      )
-    list(APPEND TEST_BUILD_DIRS
-      "${CMake_BINARY_DIR}/Tests/CMakeTestMultipleConfigures")
-  endif()
-
   if(NOT CMake_TEST_EXTERNAL_CMAKE)
     add_test(LoadedCommandOneConfig  ${CMAKE_CTEST_COMMAND}
       --build-and-test
@@ -1409,6 +1424,7 @@ if(BUILD_TESTING)
             CURL
             Cups
             Doxygen
+            DevIL
             EnvModules
             EXPAT
             Fontconfig
@@ -1422,6 +1438,7 @@ if(BUILD_TESTING)
             GTK2
             Iconv
             ICU
+            Intl
             JPEG
             JsonCpp
             LAPACK
@@ -1680,7 +1697,7 @@ if(BUILD_TESTING)
       ${build_generator_args}
       --build-project ${import_name}
       --build-options
-      "-DCMAKE_PREFIX_PATH:PATH=${install_dir}/lib/cmake")
+      "-DCMAKE_PREFIX_PATH:PATH=${install_dir}")
     set_tests_properties(${import_test_name} PROPERTIES DEPENDS ${export_test_name})
     list(APPEND TEST_BUILD_DIRS "${import_build_dir}")
   endfunction()
@@ -1833,11 +1850,22 @@ if(BUILD_TESTING)
       )
   endif()
 
-  if(CMake_TEST_XCODE_VERSION AND NOT CMake_TEST_XCODE_VERSION VERSION_LESS 5
-     AND OSX_VERSION MATCHES "^([0-9]+\\.[0-9]+)")
-    set(XCTest_CTEST_OPTIONS --build-config $<CONFIGURATION>)
-    set(XCTest_BUILD_OPTIONS -DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_MATCH_1} -DCMAKE_OSX_SYSROOT=macosx)
-    ADD_TEST_MACRO(XCTest ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION> -V)
+  if(CMake_TEST_XCODE_VERSION AND NOT CMake_TEST_XCODE_VERSION VERSION_LESS 5)
+    if(NOT CMake_TEST_XCTest_DEPLOYMENT_TARGET)
+      execute_process(
+        COMMAND sw_vers -productVersion
+        OUTPUT_VARIABLE OSX_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+      if(OSX_VERSION MATCHES "^([0-9]+\\.[0-9]+)")
+        set(CMake_TEST_XCTest_DEPLOYMENT_TARGET "${CMAKE_MATCH_1}")
+      endif()
+    endif()
+    if(CMake_TEST_XCTest_DEPLOYMENT_TARGET)
+      set(XCTest_CTEST_OPTIONS --build-config $<CONFIGURATION>)
+      set(XCTest_BUILD_OPTIONS -DCMAKE_OSX_DEPLOYMENT_TARGET=${CMake_TEST_XCTest_DEPLOYMENT_TARGET} -DCMAKE_OSX_SYSROOT=macosx)
+      ADD_TEST_MACRO(XCTest ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION> -V)
+    endif()
   endif()
 
   add_test(linkorder1 ${CMAKE_CTEST_COMMAND}
@@ -1928,7 +1956,7 @@ if(BUILD_TESTING)
     if(NOT CMAKE_C_COMPILER_ID STREQUAL "Clang" OR NOT "x${CMAKE_C_COMPILER_FRONTEND_VARIANT}" STREQUAL "xGNU")
       ADD_TEST_MACRO(ForceInclude foo)
     endif()
-    if(NOT CMAKE_C_COMPILER_ID STREQUAL "Clang")
+    if(NOT CMAKE_C_COMPILER_ID STREQUAL "Clang" AND NOT CMAKE_C_COMPILER_ID STREQUAL "IntelLLVM")
       ADD_TEST_MACRO(PrecompiledHeader foo)
     endif()
     set(MSVCRuntimeLibrary_BUILD_OPTIONS -DCMake_TEST_CUDA=${CMake_TEST_CUDA})
@@ -1994,11 +2022,18 @@ if(BUILD_TESTING)
         endif()
       endif()
 
-      # For the Watcom WMake generator, avoid the MFC test by default.
       if(CTEST_RUN_MFC)
+        # For the Watcom WMake generator, avoid the MFC test by default.
         if("${CMAKE_GENERATOR}" MATCHES "WMake")
           message(STATUS
             "using the Watcom WMake generator, avoiding MFC test")
+          set(CTEST_RUN_MFC OFF)
+        elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM")
+          # clang-cl cannot deal with implicit dependencies in UTF16 files
+          # (see #18311).  IntelLLVM inherits this behavior from Clang.
+          # TODO: maybe clang should also skip the MFC test
+          message(STATUS
+            "using generator other than Visual Studio with clang-cl, avoiding MFC test")
           set(CTEST_RUN_MFC OFF)
         endif()
       endif()
@@ -2910,13 +2945,6 @@ if(BUILD_TESTING)
   ADD_TEST_MACRO(CMakeCommands.link_directories)
   ADD_TEST_MACRO(CMakeCommands.target_link_directories)
 
-  # The cmake server-mode test requires python for a simple client.
-  find_package(PythonInterp QUIET)
-  if(PYTHON_EXECUTABLE)
-    set(Server_BUILD_OPTIONS -DPYTHON_EXECUTABLE:FILEPATH=${PYTHON_EXECUTABLE})
-    ADD_TEST_MACRO(Server Server)
-  endif()
-
   configure_file(
     "${CMake_SOURCE_DIR}/Tests/CTestTestCrash/test.cmake.in"
     "${CMake_BINARY_DIR}/Tests/CTestTestCrash/test.cmake"
@@ -2931,7 +2959,7 @@ if(BUILD_TESTING)
       PASS_REGULAR_EXPRESSION "Failed")
   else()
     set_tests_properties(CTestTestCrash PROPERTIES
-      PASS_REGULAR_EXPRESSION "(Illegal|SegFault|Subprocess aborted)")
+      PASS_REGULAR_EXPRESSION "(Illegal|SegFault|Subprocess aborted|SIGTRAP)")
   endif()
 
   configure_file(
@@ -3326,9 +3354,17 @@ if(BUILD_TESTING)
     endif()
   endif()
 
-  find_package(Java COMPONENTS Development QUIET)
-  if(Java_JAVA_EXECUTABLE AND Java_JAVAC_EXECUTABLE AND Java_JAR_EXECUTABLE AND NOT MINGW
-      AND NOT "${CMAKE_GENERATOR}" MATCHES "Xcode")
+  if(NOT DEFINED CMake_TEST_Java)
+    if(APPLE OR MINGW)
+      set(CMake_TEST_Java 0)
+    else()
+      set(CMake_TEST_Java 1)
+    endif()
+  endif()
+  if(CMake_TEST_Java)
+    find_package(Java COMPONENTS Development QUIET)
+  endif()
+  if(Java_JAVA_EXECUTABLE AND Java_JAVAC_EXECUTABLE AND Java_JAR_EXECUTABLE)
 
     set(JavaExportImport_BUILD_OPTIONS -DCMake_TEST_NESTED_MAKE_PROGRAM:FILEPATH=${CMake_TEST_EXPLICIT_MAKE_PROGRAM})
     ADD_TEST_MACRO(JavaExportImport JavaExportImport)
@@ -3378,6 +3414,9 @@ if(BUILD_TESTING)
               ${build_generator_args}
               --build-project helloJavaNativeHeaders
               --build-run-dir "${CMake_BINARY_DIR}/Tests/JavaNativeHeaders/"
+              --build-target install
+              --build-options
+              "-DCMAKE_INSTALL_PREFIX:PATH=${CMake_BINARY_DIR}/Tests/JavaNativeHeaders/Install"
               --test-command ${CMAKE_CTEST_COMMAND} -V -C $<CONFIG>)
             list(APPEND TEST_BUILD_DIRS "${CMake_BINARY_DIR}/Tests/JavaNativeHeaders")
           endif()

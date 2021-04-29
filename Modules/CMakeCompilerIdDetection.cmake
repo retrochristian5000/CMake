@@ -49,6 +49,7 @@ function(compiler_id_detection outvar lang)
     endif()
     list(APPEND ordered_compilers
       Intel
+      IntelLLVM
       PathScale
       Embarcadero
       Borland
@@ -61,9 +62,11 @@ function(compiler_id_detection outvar lang)
       XLClang
       XL
       VisualAge
+      NVHPC
       PGI
       Cray
       TI
+      FujitsuClang
       Fujitsu
       GHS
     )
@@ -78,8 +81,11 @@ function(compiler_id_detection outvar lang)
       ARMCC
       AppleClang
       ARMClang
+<<<<<<< HEAD
       IntelDPCPP
       IntelClang
+=======
+>>>>>>> upstream/master
       Clang
       GNU
       MSVC

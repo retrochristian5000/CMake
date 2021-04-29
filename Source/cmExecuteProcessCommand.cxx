@@ -6,8 +6,13 @@
 #include <cctype> /* isspace */
 #include <cstdio>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <sstream>
+<<<<<<< HEAD
+=======
+#include <utility>
+>>>>>>> upstream/master
 #include <vector>
 
 #include <cm/string_view>
@@ -24,16 +29,17 @@
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
 
-namespace {
-bool cmExecuteProcessCommandIsWhitespace(char c)
+namespace
 {
-  return (isspace(static_cast<int>(c)) || c == '\n' || c == '\r');
-}
+  bool cmExecuteProcessCommandIsWhitespace(char c)
+  {
+    return (isspace(static_cast<int>(c)) || c == '\n' || c == '\r');
+  }
 
-void cmExecuteProcessCommandFixText(std::vector<char>& output,
-                                    bool strip_trailing_whitespace);
-void cmExecuteProcessCommandAppend(std::vector<char>& output, const char* data,
-                                   int length);
+  void cmExecuteProcessCommandFixText(std::vector<char> & output,
+                                      bool strip_trailing_whitespace);
+  void cmExecuteProcessCommandAppend(std::vector<char> & output,
+                                     const char* data, int length);
 }
 
 // cmExecuteProcessCommand
@@ -229,7 +235,7 @@ bool cmExecuteProcessCommand(std::vector<std::string> const& args,
   }
   if (echo_stdout || echo_stderr) {
     std::string command;
-    for (auto& cmd : arguments.Commands) {
+    for (const auto& cmd : arguments.Commands) {
       command += "'";
       command += cmJoin(cmd, "' '");
       command += "'";
@@ -375,6 +381,7 @@ bool cmExecuteProcessCommand(std::vector<std::string> const& args,
     }
   }
 
+<<<<<<< HEAD
   if (arguments.CommandErrorIsFatal == "ANY"_s) {
     if (cmsysProcess_GetState(cp) == cmsysProcess_State_Exited) {
       std::vector<int> failedIndexes;
@@ -401,10 +408,76 @@ bool cmExecuteProcessCommand(std::vector<std::string> const& args,
         cmSystemTools::SetFatalErrorOccured();
         return false;
       }
+=======
+  auto queryProcessStatusByIndex = [&cp](int index) -> std::string {
+    std::string processStatus;
+    switch (cmsysProcess_GetStateByIndex(cp, static_cast<int>(index))) {
+      case kwsysProcess_StateByIndex_Exited: {
+        int exitCode = cmsysProcess_GetExitValueByIndex(cp, index);
+        if (exitCode) {
+          processStatus = "Child return code: " + std::to_string(exitCode);
+        }
+      } break;
+      case kwsysProcess_StateByIndex_Exception: {
+        processStatus = cmStrCat(
+          "Abnormal exit with child return code: ",
+          cmsysProcess_GetExceptionStringByIndex(cp, static_cast<int>(index)));
+        break;
+      }
+      case kwsysProcess_StateByIndex_Error:
+      default:
+        processStatus = "Error getting the child return code";
+        break;
+    }
+    return processStatus;
+  };
+
+  if (arguments.CommandErrorIsFatal == "ANY"_s) {
+    bool ret = true;
+    switch (cmsysProcess_GetState(cp)) {
+      case cmsysProcess_State_Exited: {
+        std::map<int, std::string> failureIndices;
+        for (int i = 0; i < static_cast<int>(arguments.Commands.size()); ++i) {
+          std::string processStatus = queryProcessStatusByIndex(i);
+          if (!processStatus.empty()) {
+            failureIndices[i] = processStatus;
+          }
+          if (!failureIndices.empty()) {
+            std::ostringstream oss;
+            oss << "failed command indexes:\n";
+            for (auto const& e : failureIndices) {
+              oss << "  " << e.first + 1 << ": \"" << e.second << "\"\n";
+            }
+            status.SetError(oss.str());
+            ret = false;
+          }
+        }
+      } break;
+      case cmsysProcess_State_Exception:
+        status.SetError(
+          cmStrCat("abnormal exit: ", cmsysProcess_GetExceptionString(cp)));
+        ret = false;
+        break;
+      case cmsysProcess_State_Error:
+        status.SetError(cmStrCat("error getting child return code: ",
+                                 cmsysProcess_GetErrorString(cp)));
+        ret = false;
+        break;
+      case cmsysProcess_State_Expired:
+        status.SetError("Process terminated due to timeout");
+        ret = false;
+        break;
+    }
+
+    if (!ret) {
+      cmSystemTools::SetFatalErrorOccured();
+      return false;
+>>>>>>> upstream/master
     }
   }
 
   if (arguments.CommandErrorIsFatal == "LAST"_s) {
+<<<<<<< HEAD
     if (cmsysProcess_GetState(cp) == cmsysProcess_State_Exited) {
       int lastIndex = static_cast<int>(arguments.Commands.size() - 1);
       if (cmsysProcess_GetStateByIndex(cp, lastIndex) ==
@@ -416,6 +489,36 @@ bool cmExecuteProcessCommand(std::vector<std::string> const& args,
           return false;
         }
       }
+=======
+    bool ret = true;
+    switch (cmsysProcess_GetState(cp)) {
+      case cmsysProcess_State_Exited: {
+        int lastIndex = static_cast<int>(arguments.Commands.size() - 1);
+        const std::string processStatus = queryProcessStatusByIndex(lastIndex);
+        if (!processStatus.empty()) {
+          status.SetError("last command failed");
+          ret = false;
+        }
+      } break;
+      case cmsysProcess_State_Exception:
+        status.SetError(
+          cmStrCat("Abnormal exit: ", cmsysProcess_GetExceptionString(cp)));
+        ret = false;
+        break;
+      case cmsysProcess_State_Error:
+        status.SetError(cmStrCat("Error getting child return code: ",
+                                 cmsysProcess_GetErrorString(cp)));
+        ret = false;
+        break;
+      case cmsysProcess_State_Expired:
+        status.SetError("Process terminated due to timeout");
+        ret = false;
+        break;
+    }
+    if (!ret) {
+      cmSystemTools::SetFatalErrorOccured();
+      return false;
+>>>>>>> upstream/master
     }
   }
 

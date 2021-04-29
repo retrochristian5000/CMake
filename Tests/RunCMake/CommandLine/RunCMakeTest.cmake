@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.1)
 include(RunCMake)
 
 run_cmake_command(NoArgs ${CMAKE_COMMAND})
+run_cmake_command(InvalidArg1 ${CMAKE_COMMAND} -invalid)
+run_cmake_command(InvalidArg2 ${CMAKE_COMMAND} --invalid)
 run_cmake_command(Wizard ${CMAKE_COMMAND} -i)
 run_cmake_command(C-no-arg ${CMAKE_COMMAND} -B DummyBuildDir -C)
 run_cmake_command(C-no-file ${CMAKE_COMMAND} -B DummyBuildDir -C nosuchcachefile.txt)
@@ -25,8 +27,7 @@ run_cmake_command(E_compare_files-ignore-eol-nonexistent ${CMAKE_COMMAND} -E com
 run_cmake_command(E_compare_files-invalid-arguments ${CMAKE_COMMAND} -E compare_files file1.txt file2.txt file3.txt)
 run_cmake_command(E_echo_append ${CMAKE_COMMAND} -E echo_append)
 run_cmake_command(E_rename-no-arg ${CMAKE_COMMAND} -E rename)
-run_cmake_command(E_server-arg ${CMAKE_COMMAND} -E server --extra-arg)
-run_cmake_command(E_server-pipe ${CMAKE_COMMAND} -E server --pipe=)
+run_cmake_command(E_server ${CMAKE_COMMAND} -E server)
 run_cmake_command(E_true ${CMAKE_COMMAND} -E true)
 run_cmake_command(E_true-extraargs ${CMAKE_COMMAND} -E true ignored)
 run_cmake_command(E_false ${CMAKE_COMMAND} -E false)
@@ -59,6 +60,8 @@ run_cmake_command(build-bad-dir
   ${CMAKE_COMMAND} --build dir-does-not-exist)
 run_cmake_command(build-bad-generator
   ${CMAKE_COMMAND} --build ${RunCMake_SOURCE_DIR}/cache-bad-generator)
+
+run_cmake_command(install-prefix-no-arg ${CMAKE_COMMAND} -B DummyBuildDir --install-prefix)
 
 run_cmake_command(install-no-dir
   ${CMAKE_COMMAND} --install)
@@ -149,6 +152,29 @@ project(ExplicitDirsMissing LANGUAGES NONE)
 endfunction()
 run_ExplicitDirs()
 
+function(run_Toolchain)
+  set(RunCMake_TEST_NO_SOURCE_DIR 1)
+  set(source_dir ${RunCMake_SOURCE_DIR}/Toolchain)
+
+  run_cmake_with_options(toolchain-no-arg -S ${source_dir} --toolchain=)
+  run_cmake_with_options(toolchain-valid-abs-path -S ${source_dir} --toolchain "${source_dir}/toolchain.cmake")
+  run_cmake_with_options(toolchain-valid-rel-src-path -S ${source_dir} --toolchain=toolchain.cmake)
+
+  set(RunCMake_TEST_NO_CLEAN 1)
+  set(binary_dir ${RunCMake_BINARY_DIR}/Toolchain-build)
+  set(RunCMake_TEST_BINARY_DIR "${binary_dir}")
+  file(REMOVE_RECURSE "${binary_dir}")
+
+  # Test that we both search the binary dir for toolchain files, and it takes
+  # precedence over source dir
+  file(WRITE ${binary_dir}/toolchain.cmake [=[
+set(CMAKE_SYSTEM_NAME Linux)
+set(toolchain_file binary_dir)
+]=])
+  run_cmake_with_options(toolchain-valid-rel-build-path ${CMAKE_COMMAND} -S ${source_dir} -B ${binary_dir} --toolchain toolchain.cmake)
+endfunction()
+run_Toolchain()
+
 function(run_BuildDir)
   # Use a single build tree for a few tests without cleaning.
   set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/BuildDir-build)
@@ -202,12 +228,16 @@ function(run_BuildDir)
   run_cmake_command(BuildDir--build--parallel-large ${CMAKE_COMMAND} -E chdir ..
     ${CMAKE_COMMAND} --build BuildDir-build --parallel 4294967293)
 
-  # No default jobs for Xcode and FreeBSD build command
-  if(NOT RunCMake_GENERATOR MATCHES "Xcode" AND NOT CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
+  # No default jobs for FreeBSD build command
+  if(NOT CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
     run_cmake_command(BuildDir--build-jobs-no-number ${CMAKE_COMMAND} -E chdir ..
       ${CMAKE_COMMAND} --build BuildDir-build -j)
     run_cmake_command(BuildDir--build-jobs-no-number-trailing--target ${CMAKE_COMMAND} -E chdir ..
       ${CMAKE_COMMAND} --build BuildDir-build -j --target CustomTarget)
+    if(RunCMake_GENERATOR MATCHES "Unix Makefiles" OR RunCMake_GENERATOR MATCHES "Ninja")
+      run_cmake_command(BuildDir--build-jobs-no-number-trailing--invalid-target ${CMAKE_COMMAND} -E chdir ..
+        ${CMAKE_COMMAND} --build BuildDir-build -j --target invalid-target)
+    endif()
     run_cmake_command(BuildDir--build--parallel-no-number ${CMAKE_COMMAND} -E chdir ..
       ${CMAKE_COMMAND} --build BuildDir-build --parallel)
     run_cmake_command(BuildDir--build--parallel-no-number-trailing--target ${CMAKE_COMMAND} -E chdir ..
@@ -532,7 +562,7 @@ file(MAKE_DIRECTORY ${out})
 run_cmake_command(E_cat_non_existing_file
   ${CMAKE_COMMAND} -E cat ${out}/non-existing-file.txt)
 
-if(UNIX)
+if(UNIX AND NOT MSYS)
   # test non readable file only if not root
   execute_process(
     COMMAND id -u $ENV{USER}
@@ -562,6 +592,9 @@ file(WRITE "${out}/unicode_file.txt" "àéùç - 한국어") # Korean in Korean
 run_cmake_command(E_cat_good_cat
   ${CMAKE_COMMAND} -E cat "${out}/first_file.txt" "${out}/second_file.txt" "${out}/unicode_file.txt")
 unset(out)
+
+run_cmake_command(E_cat_good_binary_cat
+  ${CMAKE_COMMAND} -E cat "${RunCMake_SOURCE_DIR}/E_cat_binary_files/binary.obj" "${RunCMake_SOURCE_DIR}/E_cat_binary_files/binary.obj")
 
 run_cmake_command(E_env-no-command0 ${CMAKE_COMMAND} -E env)
 run_cmake_command(E_env-no-command1 ${CMAKE_COMMAND} -E env TEST_ENV=1)
@@ -669,6 +702,10 @@ set(RunCMake_TEST_OPTIONS -Wno-error=deprecated)
 run_cmake(Wno-error_deprecated)
 unset(RunCMake_TEST_OPTIONS)
 
+set(RunCMake_TEST_OPTIONS -Werror=deprecated -Wno-error=deprecated)
+run_cmake(Wno-error_deprecated)
+unset(RunCMake_TEST_OPTIONS)
+
 # Dev warnings should be on by default
 run_cmake(Wdev)
 
@@ -764,7 +801,7 @@ function(reject_fifo)
     run_cmake_command(reject_fifo ${BASH_EXECUTABLE} -c ${BASH_COMMAND_ARGUMENT})
   endif()
 endfunction()
-if(CMAKE_HOST_UNIX AND NOT CMAKE_SYSTEM_NAME STREQUAL "CYGWIN")
+if(CMAKE_HOST_UNIX AND NOT CMAKE_SYSTEM_NAME STREQUAL "CYGWIN" AND NOT CMAKE_SYSTEM_NAME STREQUAL "MSYS")
   reject_fifo()
   run_cmake_command(closed_stdin  sh -c "\"${CMAKE_COMMAND}\" --version <&-")
   run_cmake_command(closed_stdout sh -c "\"${CMAKE_COMMAND}\" --version >&-")
@@ -787,7 +824,7 @@ function(run_llvm_rc)
         "test.tmp was not deleted")
   endif()
   file(MAKE_DIRECTORY "${RunCMake_TEST_BINARY_DIR}/ExpandSourceDir")
-  run_cmake_command(llvm_rc_full_run ${CMAKE_COMMAND} -E cmake_llvm_rc ${RunCMake_TEST_BINARY_DIR}/ExpandSourceDir/source_file test.tmp ${CMAKE_COMMAND} -E echo "This is a test" ++ ${CMAKE_COMMAND} -E copy test.tmp SOURCE_DIR/llvmrc.result )
+  run_cmake_command(llvm_rc_full_run ${CMAKE_COMMAND} -E cmake_llvm_rc ${RunCMake_TEST_BINARY_DIR}/ExpandSourceDir/source_file test.tmp ${CMAKE_COMMAND} -E echo "This is a test" ++ ${LLVM_RC} -bad /FO SOURCE_DIR/llvmrc.result test.tmp )
   if(EXISTS ${RunCMake_TEST_BINARY_DIR}/ExpandSourceDir/test.tmp)
       message(SEND_ERROR "${test} - FAILED:\n"
         "test.tmp was not deleted")

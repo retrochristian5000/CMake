@@ -1,7 +1,7 @@
 # Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
 # file Copyright.txt or https://cmake.org/licensing for details.
 
-cmake_minimum_required(VERSION 3.1...3.15 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.1...3.19 FATAL_ERROR)
 set(CMAKE_USER_MAKE_RULES_OVERRIDE_C ${CMAKE_CURRENT_SOURCE_DIR}/Source/Modules/OverrideC.cmake)
 set(CMAKE_USER_MAKE_RULES_OVERRIDE_CXX ${CMAKE_CURRENT_SOURCE_DIR}/Source/Modules/OverrideCXX.cmake)
 project(CMake)
@@ -579,6 +579,7 @@ macro (CMAKE_BUILD_UTILITIES)
       set(LIBLZMA_INCLUDE_DIR
         "${CMAKE_CURRENT_SOURCE_DIR}/Utilities/cmliblzma/liblzma/api")
       set(LIBLZMA_LIBRARY cmliblzma)
+      set(HAVE_LZMA_STREAM_ENCODER_MT 1)
     endif()
   endif()
 

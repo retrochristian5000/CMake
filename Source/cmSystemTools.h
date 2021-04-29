@@ -12,6 +12,7 @@
 #include <cm/string_view>
 
 #include "cmsys/Process.h"
+#include "cmsys/Status.hxx"      // IWYU pragma: export
 #include "cmsys/SystemTools.hxx" // IWYU pragma: export
 
 #include "cmCryptoHash.h"
@@ -128,10 +129,43 @@ public:
   static bool SimpleGlob(const std::string& glob,
                          std::vector<std::string>& files, int type = 0);
 
+  enum class CopyWhen
+  {
+    Always,
+    OnlyIfDifferent,
+  };
+  enum class CopyResult
+  {
+    Success,
+    Failure,
+  };
+
+  /** Copy a file. */
+  static bool CopySingleFile(const std::string& oldname,
+                             const std::string& newname);
+  static CopyResult CopySingleFile(std::string const& oldname,
+                                   std::string const& newname, CopyWhen when,
+                                   std::string* err = nullptr);
+
+  enum class Replace
+  {
+    Yes,
+    No,
+  };
+  enum class RenameResult
+  {
+    Success,
+    NoReplace,
+    Failure,
+  };
+
   /** Rename a file or directory within a single disk volume (atomic
       if possible).  */
   static bool RenameFile(const std::string& oldname,
                          const std::string& newname);
+  static RenameResult RenameFile(std::string const& oldname,
+                                 std::string const& newname, Replace replace,
+                                 std::string* err = nullptr);
 
   //! Rename a file if contents are different, delete the source otherwise
   static void MoveFileIfDifferent(const std::string& source,
@@ -286,6 +320,12 @@ public:
   // be used when RunCommand is called from cmake, because the
   // running cmake needs paths to be in its format
   static std::string ConvertToRunCommandPath(const std::string& path);
+
+  /**
+   * For windows computes the long path for the given path,
+   * For Unix, it is a noop
+   */
+  static void ConvertToLongPath(std::string& path);
 
   /** compute the relative path from local to remote.  local must
       be a directory.  remote can be a file or a directory.
@@ -449,15 +489,18 @@ public:
 
   /** Create a symbolic link if the platform supports it.  Returns whether
       creation succeeded. */
-  static bool CreateSymlink(const std::string& origName,
-                            const std::string& newName,
-                            std::string* errorMessage = nullptr);
+  static cmsys::Status CreateSymlink(std::string const& origName,
+                                     std::string const& newName,
+                                     std::string* errorMessage = nullptr);
 
   /** Create a hard link if the platform supports it.  Returns whether
       creation succeeded. */
-  static bool CreateLink(const std::string& origName,
-                         const std::string& newName,
-                         std::string* errorMessage = nullptr);
+  static cmsys::Status CreateLink(std::string const& origName,
+                                  std::string const& newName,
+                                  std::string* errorMessage = nullptr);
+
+  /** Get the system name. */
+  static cm::string_view GetSystemName();
 
 private:
   static bool s_ForceUnixPaths;

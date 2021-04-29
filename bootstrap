@@ -84,6 +84,7 @@ cmake_sphinx_info=""
 cmake_sphinx_man=""
 cmake_sphinx_html=""
 cmake_sphinx_qthelp=""
+cmake_sphinx_latexpdf=""
 cmake_sphinx_build=""
 cmake_sphinx_flags=""
 
@@ -96,8 +97,17 @@ else
   cmake_system_cygwin=false
 fi
 
+# Determine whether this is a MSYS environment.
+if echo "${cmake_system}" | grep MSYS >/dev/null 2>&1; then
+  cmake_system_msys=true
+  cmake_doc_dir_keyword="MSYS"
+  cmake_man_dir_keyword="MSYS"
+else
+  cmake_system_msys=false
+fi
+
 # Determine whether this is a MinGW environment.
-if echo "${cmake_system}" | grep 'MINGW\|MSYS' >/dev/null 2>&1; then
+if echo "${cmake_system}" | grep 'MINGW' >/dev/null 2>&1; then
   cmake_system_mingw=true
 else
   cmake_system_mingw=false
@@ -235,8 +245,8 @@ cmake_xdgdata_dir_default="`cmake_install_dest_default XDGDATA ${cmake_xdgdata_d
 
 CMAKE_KNOWN_C_COMPILERS="cc gcc clang xlc icc tcc"
 CMAKE_KNOWN_CXX_COMPILERS="aCC xlC CC g++ clang++ c++ icc como "
-CMAKE_KNOWN_MAKE_PROCESSORS="gmake make"
-CMAKE_KNOWN_NINJA_PROCESSORS="ninja-build ninja"
+CMAKE_KNOWN_MAKE_PROCESSORS="gmake make smake"
+CMAKE_KNOWN_NINJA_PROCESSORS="ninja-build ninja samu"
 
 CMAKE_PROBLEMATIC_FILES="\
   CMakeCache.txt \
@@ -293,7 +303,6 @@ CMAKE_CXX_SOURCES="\
   cmCMakePolicyCommand \
   cmCPackPropertiesGenerator \
   cmCacheManager \
-  cmCheckCustomOutputs \
   cmCommand \
   cmCommandArgumentParserHelper \
   cmCommands \
@@ -302,11 +311,13 @@ CMAKE_CXX_SOURCES="\
   cmComputeLinkDepends \
   cmComputeLinkInformation \
   cmComputeTargetDepends \
+  cmConsoleBuf \
   cmConditionEvaluator \
   cmConfigureFileCommand \
   cmContinueCommand \
   cmCoreTryCompile \
   cmCreateTestSourceList \
+  cmCryptoHash \
   cmCustomCommand \
   cmCustomCommandGenerator \
   cmCustomCommandLines \
@@ -412,6 +423,8 @@ CMAKE_CXX_SOURCES="\
   cmProjectCommand \
   cmPropertyDefinition \
   cmPropertyMap \
+  cmGccDepfileLexerHelper \
+  cmGccDepfileReader \
   cmReturnCommand \
   cmRulePlaceholderExpander \
   cmRuntimeDependencyArchive \
@@ -452,6 +465,7 @@ CMAKE_CXX_SOURCES="\
   cmTest \
   cmTestGenerator \
   cmTimestamp \
+  cmTransformDepfile \
   cmTryCompileCommand \
   cmTryRunCommand \
   cmUnsetCommand \
@@ -491,6 +505,7 @@ LexerParser_CXX_SOURCES="\
   cmCommandArgumentParser \
   cmExprLexer \
   cmExprParser \
+  cmGccDepfileLexer \
 "
 
 LexerParser_C_SOURCES="\
@@ -519,6 +534,7 @@ KWSYS_CXX_SOURCES="\
   FStream \
   Glob \
   RegularExpression \
+  Status \
   SystemTools"
 
 KWSYS_FILES="\
@@ -529,11 +545,24 @@ KWSYS_FILES="\
   Glob.hxx \
   Process.h \
   RegularExpression.hxx \
+  Status.hxx \
   String.h \
   String.hxx \
   System.h \
   SystemTools.hxx \
   Terminal.h"
+
+LIBRHASH_C_SOURCES="\
+  librhash/algorithms.c \
+  librhash/byte_order.c \
+  librhash/hex.c \
+  librhash/md5.c \
+  librhash/rhash.c \
+  librhash/sha1.c \
+  librhash/sha256.c \
+  librhash/sha3.c \
+  librhash/sha512.c \
+  "
 
 if ${cmake_system_mingw}; then
   LIBUV_C_SOURCES="\
@@ -645,6 +674,7 @@ Configuration:
   --sphinx-man            build man pages with Sphinx
   --sphinx-html           build html help with Sphinx
   --sphinx-qthelp         build qch help with Sphinx
+  --sphinx-latexpdf       build PDF with Sphinx using LaTeX
   --sphinx-build=<sb>     use <sb> as the sphinx-build executable
   --sphinx-flags=<flags>  pass <flags> to sphinx-build executable
 
@@ -909,6 +939,7 @@ while test $# != 0; do
   --sphinx-man) cmake_sphinx_man="1" ;;
   --sphinx-html) cmake_sphinx_html="1" ;;
   --sphinx-qthelp) cmake_sphinx_qthelp="1" ;;
+  --sphinx-latexpdf) cmake_sphinx_latexpdf="1" ;;
   --sphinx-build=*) cmake_sphinx_build=`cmake_arg "$1"` ;;
   --sphinx-flags=*) cmake_sphinx_flags=`cmake_arg "$1"` ;;
   --help) cmake_usage ;;
@@ -927,11 +958,10 @@ while test $# != 0; do
 done
 
 # Make sure the generator is valid
-if test "${cmake_bootstrap_generator}" != "MSYS Makefiles" -a \
-    "${cmake_bootstrap_generator}" != "Unix Makefiles" -a \
-    "${cmake_bootstrap_generator}" != "Ninja"; then
-  cmake_error 10 "Invalid generator: ${cmake_bootstrap_generator}"
-fi
+case "${cmake_bootstrap_generator}" in
+  'MSYS Makefiles'|'Unix Makefiles'|'Ninja') ;;
+  *) cmake_error 10 "Invalid generator: ${cmake_bootstrap_generator}"
+esac
 
 # If verbose, display some information about bootstrap
 if test -n "${cmake_verbose}"; then
@@ -1012,7 +1042,6 @@ cmake_ld_flags=${LDFLAGS}
 # Add generator-specific files
 if test "${cmake_bootstrap_generator}" = "Ninja"; then
   CMAKE_CXX_SOURCES="${CMAKE_CXX_SOURCES} \
-    cmCryptoHash \
     cmFortranParserImpl \
     cmGlobalNinjaGenerator \
     cmLocalNinjaGenerator \
@@ -1033,36 +1062,25 @@ if test "${cmake_bootstrap_generator}" = "Ninja"; then
     src/lib_json/json_value.cpp \
     src/lib_json/json_writer.cpp \
     "
-
-  LIBRHASH_C_SOURCES="\
-    librhash/algorithms.c \
-    librhash/byte_order.c \
-    librhash/hex.c \
-    librhash/md5.c \
-    librhash/rhash.c \
-    librhash/sha1.c \
-    librhash/sha256.c \
-    librhash/sha3.c \
-    librhash/sha512.c \
-    "
 else
   CMAKE_CXX_SOURCES="${CMAKE_CXX_SOURCES} \
     cmDepends \
     cmDependsC \
+    cmDependsCompiler \
     cmGlobalUnixMakefileGenerator3 \
     cmLocalUnixMakefileGenerator3 \
     cmMakefileExecutableTargetGenerator \
     cmMakefileLibraryTargetGenerator \
     cmMakefileTargetGenerator \
     cmMakefileUtilityTargetGenerator \
+    cmProcessTools \
     "
 
   JSONCPP_CXX_SOURCES=
-  LIBRHASH_C_SOURCES=
 fi
 
 # Add Cygwin-specific flags
-if ${cmake_system_cygwin}; then
+if ${cmake_system_cygwin} || ${cmake_system_msys}; then
   cmake_ld_flags="${LDFLAGS} -Wl,--enable-auto-import"
 fi
 
@@ -1087,6 +1105,7 @@ cmake_toolchains=''
 case "${cmake_system}" in
   *AIX*)   cmake_toolchains='XL GNU' ;;
   *CYGWIN*) cmake_toolchains='GNU' ;;
+  *MSYS*) cmake_toolchains='GNU' ;;
   *Darwin*) cmake_toolchains='Clang GNU' ;;
   *Linux*) cmake_toolchains='GNU Clang XL PGI PathScale' ;;
   *MINGW*) cmake_toolchains='GNU' ;;
@@ -1191,8 +1210,8 @@ for std in 11 99 90; do
   for compiler in ${cmake_c_compilers}; do
     for std_flag in '' $std_flags; do
       for thread_flag in '' $thread_flags; do
-        echo "Checking whether '${compiler} ${cmake_c_flags} ${std_flag} ${thread_flag}' works." >> cmake_bootstrap.log 2>&1
-        if cmake_try_run "${compiler}" "${cmake_c_flags} ${std_flag} ${thread_flag}" \
+        echo "Checking whether '${compiler} ${cmake_c_flags} ${cmake_ld_flags} ${std_flag} ${thread_flag}' works." >> cmake_bootstrap.log 2>&1
+        if cmake_try_run "${compiler}" "${cmake_c_flags} ${cmake_ld_flags} ${std_flag} ${thread_flag}" \
           "${TMPFILE}.c" >> cmake_bootstrap.log 2>&1; then
           cmake_c_compiler="${compiler}"
           cmake_c_flags="${cmake_c_flags} ${std_flag} ${thread_flag}"
@@ -1312,8 +1331,8 @@ for std in 17 14 11; do
   for compiler in ${cmake_cxx_compilers}; do
     for std_flag in '' $std_flags; do
       for thread_flag in '' $thread_flags; do
-        echo "Checking whether '${compiler} ${cmake_cxx_flags} ${std_flag} ${thread_flag}' works." >> cmake_bootstrap.log 2>&1
-        if cmake_try_run "${compiler}" "${cmake_cxx_flags} ${std_flag} ${thread_flag}" \
+        echo "Checking whether '${compiler} ${cmake_cxx_flags} ${cmake_ld_flags} ${std_flag} ${thread_flag}' works." >> cmake_bootstrap.log 2>&1
+        if cmake_try_run "${compiler}" "${cmake_cxx_flags} ${cmake_ld_flags} ${std_flag} ${thread_flag}" \
           "${TMPFILE}.cxx" >> cmake_bootstrap.log 2>&1; then
           cmake_cxx_compiler="${compiler}"
           cmake_cxx_flags="${cmake_cxx_flags} ${std_flag} ${thread_flag} "
@@ -1341,8 +1360,8 @@ cmake_cxx_features="make_unique filesystem"
 
 for feature in ${cmake_cxx_features}; do
   eval "cmake_have_cxx_${feature}=0"
-  echo "Checking whether '${cmake_cxx_compiler} ${cmake_cxx_flags}' supports '${feature}'." >> cmake_bootstrap.log 2>&1
-  if cmake_try_run "${cmake_cxx_compiler}" "${cmake_cxx_flags}" \
+  echo "Checking whether '${cmake_cxx_compiler} ${cmake_cxx_flags} ${cmake_ld_flags}' supports '${feature}'." >> cmake_bootstrap.log 2>&1
+  if cmake_try_run "${cmake_cxx_compiler}" "${cmake_cxx_flags} ${cmake_ld_flags}" \
                    "${cmake_source_dir}/Source/Checks/cm_cxx_${feature}.cxx" >> cmake_bootstrap.log 2>&1; then
     eval "cmake_have_cxx_${feature}=1"
   fi
@@ -1449,7 +1468,7 @@ KWSYS_CXX_HAS_UTIMES=0
 KWSYS_SYSTEMTOOLS_USE_TRANSLATION_MAP=1
 
 if cmake_try_run "${cmake_cxx_compiler}" \
-  "${cmake_cxx_flags} -DTEST_KWSYS_CXX_HAS_SETENV" \
+  "${cmake_cxx_flags} ${cmake_ld_flags} -DTEST_KWSYS_CXX_HAS_SETENV" \
   "${cmake_source_dir}/Source/kwsys/kwsysPlatformTestsCXX.cxx" >> cmake_bootstrap.log 2>&1; then
   KWSYS_CXX_HAS_SETENV=1
   echo "${cmake_cxx_compiler} has setenv"
@@ -1458,7 +1477,7 @@ else
 fi
 
 if cmake_try_run "${cmake_cxx_compiler}" \
-  "${cmake_cxx_flags} -DTEST_KWSYS_CXX_HAS_UNSETENV" \
+  "${cmake_cxx_flags} ${cmake_ld_flags} -DTEST_KWSYS_CXX_HAS_UNSETENV" \
   "${cmake_source_dir}/Source/kwsys/kwsysPlatformTestsCXX.cxx" >> cmake_bootstrap.log 2>&1; then
   KWSYS_CXX_HAS_UNSETENV=1
   echo "${cmake_cxx_compiler} has unsetenv"
@@ -1467,7 +1486,7 @@ else
 fi
 
 if cmake_try_run "${cmake_cxx_compiler}" \
-  "${cmake_cxx_flags} -DTEST_KWSYS_CXX_HAS_ENVIRON_IN_STDLIB_H" \
+  "${cmake_cxx_flags} ${cmake_ld_flags} -DTEST_KWSYS_CXX_HAS_ENVIRON_IN_STDLIB_H" \
   "${cmake_source_dir}/Source/kwsys/kwsysPlatformTestsCXX.cxx" >> cmake_bootstrap.log 2>&1; then
   KWSYS_CXX_HAS_ENVIRON_IN_STDLIB_H=1
   echo "${cmake_cxx_compiler} has environ in stdlib.h"
@@ -1476,7 +1495,7 @@ else
 fi
 
 if cmake_try_run "${cmake_cxx_compiler}" \
-  "${cmake_cxx_flags} -DTEST_KWSYS_STL_HAS_WSTRING" \
+  "${cmake_cxx_flags} ${cmake_ld_flags} -DTEST_KWSYS_STL_HAS_WSTRING" \
   "${cmake_source_dir}/Source/kwsys/kwsysPlatformTestsCXX.cxx" >> cmake_bootstrap.log 2>&1; then
   KWSYS_STL_HAS_WSTRING=1
   echo "${cmake_cxx_compiler} has stl wstring"
@@ -1485,7 +1504,7 @@ else
 fi
 
 if cmake_try_run "${cmake_cxx_compiler}" \
-  "${cmake_cxx_flags} -DTEST_KWSYS_CXX_HAS_EXT_STDIO_FILEBUF_H" \
+  "${cmake_cxx_flags} ${cmake_ld_flags} -DTEST_KWSYS_CXX_HAS_EXT_STDIO_FILEBUF_H" \
   "${cmake_source_dir}/Source/kwsys/kwsysPlatformTestsCXX.cxx" >> cmake_bootstrap.log 2>&1; then
   KWSYS_CXX_HAS_EXT_STDIO_FILEBUF_H=1
   echo "${cmake_cxx_compiler} has <ext/stdio_filebuf.h>"
@@ -1628,15 +1647,15 @@ if test "x${bootstrap_system_libuv}" = "x"; then
     objs="${objs} uv-`cmake_obj ${a}`"
   done
 fi
+if test "x${bootstrap_system_librhash}" = "x"; then
+  for a in ${LIBRHASH_C_SOURCES}; do
+    objs="${objs} rhash-`cmake_obj ${a}`"
+  done
+fi
 if test "${cmake_bootstrap_generator}" = "Ninja"; then
   if test "x${bootstrap_system_jsoncpp}" = "x"; then
     for a in ${JSONCPP_CXX_SOURCES}; do
       objs="${objs} jsoncpp-`cmake_obj ${a}`"
-    done
-  fi
-  if test "x${bootstrap_system_librhash}" = "x"; then
-    for a in ${LIBRHASH_C_SOURCES}; do
-      objs="${objs} rhash-`cmake_obj ${a}`"
     done
   fi
 fi
@@ -1698,6 +1717,15 @@ else
   libs="${libs} -luv"
 fi
 
+if test "x${bootstrap_system_librhash}" != "x"; then
+  if test `which pkg-config`; then
+    use_librhash_flags="`pkg-config --cflags librhash`"
+    cmake_c_flags="${cmake_c_flags} ${use_librhash_flags}"
+    cmake_cxx_flags="${cmake_cxx_flags} ${use_librhash_flags}"
+  fi
+  libs="${libs} -lrhash"
+fi
+
 if test "${cmake_bootstrap_generator}" = "Ninja"; then
   jsoncpp_cxx_flags=
   if test "x${bootstrap_system_jsoncpp}" = "x"; then
@@ -1708,15 +1736,6 @@ if test "${cmake_bootstrap_generator}" = "Ninja"; then
       cmake_cxx_flags="${cmake_cxx_flags} ${use_jsoncpp_flags}"
     fi
     libs="${libs} -ljsoncpp"
-  fi
-
-  if test "x${bootstrap_system_librhash}" != "x"; then
-    if test `which pkg-config`; then
-      use_librhash_flags="`pkg-config --cflags librhash`"
-      cmake_c_flags="${cmake_c_flags} ${use_librhash_flags}"
-      cmake_cxx_flags="${cmake_cxx_flags} ${use_librhash_flags}"
-    fi
-    libs="${libs} -lrhash"
   fi
 fi
 
@@ -1841,17 +1860,17 @@ if test "x${bootstrap_system_libuv}" = "x"; then
     write_source_rule "c" "uv-`cmake_obj ${a}`" "${src}" "${uv_c_flags}"
   done
 fi
+if test "x${bootstrap_system_librhash}" = "x"; then
+  for a in ${LIBRHASH_C_SOURCES}; do
+    src=`cmake_escape_artifact "${cmake_source_dir}/Utilities/cmlibrhash/${a}"`
+    write_source_rule "c" "rhash-`cmake_obj ${a}`" "${src}" ""
+  done
+fi
 if test "${cmake_bootstrap_generator}" = "Ninja"; then
   if test "x${bootstrap_system_jsoncpp}" = "x"; then
     for a in ${JSONCPP_CXX_SOURCES}; do
       src=`cmake_escape_artifact "${cmake_source_dir}/Utilities/cmjsoncpp/${a}"`
       write_source_rule "cxx" "jsoncpp-`cmake_obj ${a}`" "${src}" "${jsoncpp_cxx_flags}"
-    done
-  fi
-  if test "x${bootstrap_system_librhash}" = "x"; then
-    for a in ${LIBRHASH_C_SOURCES}; do
-      src=`cmake_escape_artifact "${cmake_source_dir}/Utilities/cmlibrhash/${a}"`
-      write_source_rule "c" "rhash-`cmake_obj ${a}`" "${src}" ""
     done
   fi
 fi
@@ -1911,6 +1930,11 @@ fi
 if test "x${cmake_sphinx_qthelp}" != "x"; then
   echo '
 set (SPHINX_QTHELP "'"${cmake_sphinx_qthelp}"'" CACHE BOOL "Build qch help with Sphinx" FORCE)
+' >> "${cmake_bootstrap_dir}/InitialCacheFlags.cmake"
+fi
+if test "x${cmake_sphinx_latexpdf}" != "x"; then
+  echo '
+set (SPHINX_LATEXPDF "'"${cmake_sphinx_latexpdf}"'" CACHE BOOL "Build PDF help with Sphinx using LaTeX" FORCE)
 ' >> "${cmake_bootstrap_dir}/InitialCacheFlags.cmake"
 fi
 if test "x${cmake_sphinx_build}" != "x"; then
