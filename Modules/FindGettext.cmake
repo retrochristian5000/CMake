@@ -58,9 +58,23 @@ PO_FILES <po1> <po2> ...  )
   If you wish to use the Gettext library (libintl), use :module:`FindIntl`.
 #]=======================================================================]
 
-find_program(GETTEXT_MSGMERGE_EXECUTABLE msgmerge)
+set(_Gettext_HINTS)
 
-find_program(GETTEXT_MSGFMT_EXECUTABLE msgfmt)
+if(_VCPKG_INSTALLED_DIR)
+  list(APPEND _Gettext_HINTS "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/gettext/bin")
+endif()
+
+find_program(GETTEXT_MSGMERGE_EXECUTABLE
+  NAMES msgmerge
+  HINTS ${_Gettext_HINTS}
+  )
+
+find_program(GETTEXT_MSGFMT_EXECUTABLE
+  NAMES msgfmt
+  HINTS ${_Gettext_HINTS}
+  )
+
+unset(_Gettext_HINTS)
 
 if(GETTEXT_MSGMERGE_EXECUTABLE)
   execute_process(COMMAND ${GETTEXT_MSGMERGE_EXECUTABLE} --version
