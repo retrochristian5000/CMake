@@ -16,7 +16,16 @@ set(RESOURCE_FILES
 )
 
 
+
 add_library(VsCsharpSourceGroup SHARED ${SRC_FILES} ${IMAGE_FILES} ${RESOURCE_FILES})
 source_group("CSharpSourceGroup" FILES ${CMAKE_CURRENT_SOURCE_DIR}/CSharpSourceGroup/foo.cs)
 source_group("CSharpSourceGroup/nested" FILES ${CMAKE_CURRENT_SOURCE_DIR}/CSharpSourceGroup/nested/baz.cs)
 source_group("Images" FILES ${IMAGE_FILES})
+
+#this additional check if because of https://gitlab.kitware.com/cmake/cmake/-/issues/22104
+#basically there should not be any link tags for files in the binary directory
+include(CSharpUtilities)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/CSharpSourceGroup/cmake/AssemblyInfo.cs.in" "Properties/AssemblyInfo.cs")
+
+target_sources(VsCsharpSourceGroup PRIVATE "Properties/AssemblyInfo.cs")
+csharp_set_designer_cs_properties("Properties/AssemblyInfo.cs")
