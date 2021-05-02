@@ -2215,6 +2215,11 @@ bool cmCTest::ColoredOutputSupportedByConsole()
       !clicolor_force.empty() && clicolor_force != "0") {
     return true;
   }
+  std::string clicolor;
+  if (cmSystemTools::GetEnv("CLICOLOR", clicolor) && !clicolor.empty() &&
+      clicolor == "0") {
+    return false;
+  }
   return ConsoleIsNotDumb();
 #endif
 }
