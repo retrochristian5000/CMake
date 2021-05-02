@@ -5,9 +5,10 @@
 class cmExecutionStatus;
 
 cmFindFileCommand::cmFindFileCommand(cmExecutionStatus& status)
-  : cmFindPathCommand(status)
+  : cmFindPathCommand("find_file", status)
 {
   this->IncludeFileInPath = true;
+  this->VariableType = cmStateEnums::FILEPATH;
 }
 
 bool cmFindFile(std::vector<std::string> const& args,
