@@ -15,6 +15,13 @@ cmake_initialize_per_config_variable(CMAKE_SHARED_LINKER_FLAGS "Flags used by th
 cmake_initialize_per_config_variable(CMAKE_MODULE_LINKER_FLAGS "Flags used by the linker during the creation of modules")
 cmake_initialize_per_config_variable(CMAKE_STATIC_LINKER_FLAGS "Flags used by the linker during the creation of static libraries")
 
+foreach(type EXE MODULE SHARED STATIC)
+  if(NOT CMAKE_${type}_LINKER_LAUNCHER AND DEFINED ENV{CMAKE_${type}_LINKER_LAUNCHER})
+    set(CMAKE_${type}_LINKER_LAUNCHER "$ENV{CMAKE_${type}_LINKER_LAUNCHER}"
+      CACHE STRING "Linker launcher for ${type} targets.")
+  endif()
+endforeach()
+
 # Alias the build tool variable for backward compatibility.
 set(CMAKE_BUILD_TOOL ${CMAKE_MAKE_PROGRAM})
 

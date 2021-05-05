@@ -1012,6 +1012,7 @@ syn keyword cmakeVariable contained
             \ CMAKE_EXECUTE_PROCESS_COMMAND_ECHO
             \ CMAKE_EXE_LINKER_FLAGS
             \ CMAKE_EXE_LINKER_FLAGS_INIT
+            \ CMAKE_EXE_LINKER_LAUNCHER
             \ CMAKE_EXPORT_COMPILE_COMMANDS
             \ CMAKE_EXPORT_NO_PACKAGE_REGISTRY
             \ CMAKE_EXPORT_PACKAGE_REGISTRY
@@ -1252,6 +1253,7 @@ syn keyword cmakeVariable contained
             \ CMAKE_MINOR_VERSION
             \ CMAKE_MODULE_LINKER_FLAGS
             \ CMAKE_MODULE_LINKER_FLAGS_INIT
+            \ CMAKE_MODULE_LINKER_LAUNCHER
             \ CMAKE_MODULE_PATH
             \ CMAKE_MSVCIDE_RUN_PATH
             \ CMAKE_MSVC_RUNTIME_LIBRARY
@@ -1363,6 +1365,7 @@ syn keyword cmakeVariable contained
             \ CMAKE_SHARED_LIBRARY_SUFFIX
             \ CMAKE_SHARED_LINKER_FLAGS
             \ CMAKE_SHARED_LINKER_FLAGS_INIT
+            \ CMAKE_SHARED_LINKER_LAUNCHER
             \ CMAKE_SHARED_MODULE_PREFIX
             \ CMAKE_SHARED_MODULE_SUFFIX
             \ CMAKE_SIZEOF_VOID_P
@@ -1377,6 +1380,7 @@ syn keyword cmakeVariable contained
             \ CMAKE_STATIC_LIBRARY_SUFFIX
             \ CMAKE_STATIC_LINKER_FLAGS
             \ CMAKE_STATIC_LINKER_FLAGS_INIT
+            \ CMAKE_STATIC_LINKER_LAUNCHER
             \ CMAKE_SUBLIME_TEXT_2_ENV_SETTINGS
             \ CMAKE_SUBLIME_TEXT_2_EXCLUDE_BUILD_TREE
             \ CMAKE_SUPPRESS_REGENERATION

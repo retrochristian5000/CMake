@@ -733,6 +733,7 @@ if("${CMAKE_GENERATOR}" MATCHES "Make|Ninja")
     PROPERTY LABELS "CUDA;ISPC")
   add_RunCMake_test(ctest_labels_for_subprojects)
   add_RunCMake_test(CompilerArgs)
+  add_RunCMake_test(LinkerLauncher)
 endif()
 
 set(cpack_tests

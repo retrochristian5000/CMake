@@ -819,6 +819,38 @@ void cmMakefileLibraryTargetGenerator::WriteLibraryRules(
 
     vars.LanguageCompileFlags = langFlags.c_str();
 
+    std::string launcherCmd;
+    cmProp launcherProp;
+    switch (this->GetGeneratorTarget()->GetType()) {
+      case cmStateEnums::STATIC_LIBRARY:
+        launcherProp =
+          this->GetGeneratorTarget()->GetProperty("STATIC_LINKER_LAUNCHER");
+        break;
+      case cmStateEnums::SHARED_LIBRARY:
+        launcherProp =
+          this->GetGeneratorTarget()->GetProperty("SHARED_LINKER_LAUNCHER");
+        break;
+      case cmStateEnums::MODULE_LIBRARY:
+        launcherProp =
+          this->GetGeneratorTarget()->GetProperty("MODULE_LINKER_LAUNCHER");
+        break;
+      default:
+        break;
+    }
+    if (cmNonempty(launcherProp)) {
+      // Convert ";"-delimited list to single string
+      std::vector<std::string> args = cmExpandedList(*launcherProp, true);
+      if (!args.empty()) {
+        args[0] = this->LocalGenerator->ConvertToOutputFormat(
+          args[0], cmOutputConverter::SHELL);
+        for (std::string& i : cmMakeRange(args.begin() + 1, args.end())) {
+          i = this->LocalGenerator->EscapeForShell(i);
+        }
+        launcherCmd = cmJoin(args, " ");
+        vars.Launcher = launcherCmd.c_str();
+      }
+    }
+
     std::string launcher;
     cmProp val = this->LocalGenerator->GetRuleLauncher(this->GeneratorTarget,
                                                        "RULE_LAUNCH_LINK");

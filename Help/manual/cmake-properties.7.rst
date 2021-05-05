@@ -351,6 +351,7 @@ Properties on Targets
    /prop_tgt/Swift_MODULE_DIRECTORY
    /prop_tgt/Swift_MODULE_NAME
    /prop_tgt/TYPE
+   /prop_tgt/TYPE_LINKER_LAUNCHER
    /prop_tgt/UNITY_BUILD
    /prop_tgt/UNITY_BUILD_BATCH_SIZE
    /prop_tgt/UNITY_BUILD_CODE_AFTER_INCLUDE

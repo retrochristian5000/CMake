@@ -1,0 +1,2 @@
+set(CMAKE_MODULE_LINKER_LAUNCHER "${CMAKE_COMMAND};-E;env;USED_LAUNCHER=1")
+include(MODULE-common.cmake)

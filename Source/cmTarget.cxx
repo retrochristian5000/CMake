@@ -503,6 +503,16 @@ cmTarget::cmTarget(std::string const& name, cmStateEnums::TargetType type,
     initProp("ANDROID_GUI");
     initProp("CROSSCOMPILING_EMULATOR");
     initProp("ENABLE_EXPORTS");
+    initProp("EXE_LINKER_LAUNCHER");
+  }
+  if (this->impl->TargetType == cmStateEnums::MODULE_LIBRARY) {
+    initProp("MODULE_LINKER_LAUNCHER");
+  }
+  if (this->impl->TargetType == cmStateEnums::SHARED_LIBRARY) {
+    initProp("SHARED_LINKER_LAUNCHER");
+  }
+  if (this->impl->TargetType == cmStateEnums::STATIC_LIBRARY) {
+    initProp("STATIC_LINKER_LAUNCHER");
   }
   if (this->impl->TargetType == cmStateEnums::SHARED_LIBRARY ||
       this->impl->TargetType == cmStateEnums::MODULE_LIBRARY) {

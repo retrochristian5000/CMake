@@ -1,0 +1,1 @@
+include(STATIC-common.cmake)

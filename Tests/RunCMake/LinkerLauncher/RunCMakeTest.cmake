@@ -1,0 +1,32 @@
+include(RunCMake)
+
+function(run_linker_launcher link_type)
+  # Preserve build tree so we can reuse it for the ${link_type}-Build subtest below
+  set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/${link_type}-build)
+  set(RunCMake_TEST_NO_CLEAN 1)
+  file(REMOVE_RECURSE "${RunCMake_TEST_BINARY_DIR}")
+  file(MAKE_DIRECTORY "${RunCMake_TEST_BINARY_DIR}")
+  run_cmake(${link_type})
+
+  set(RunCMake_TEST_OUTPUT_MERGE 1)
+  if("${RunCMake_GENERATOR}" MATCHES "Ninja")
+    set(verbose_args -- -v)
+  endif()
+  run_cmake_command(${link_type}-Build ${CMAKE_COMMAND} --build . ${verbose_args})
+endfunction()
+
+function(run_linker_launcher_env link_type)
+  string(REGEX REPLACE "-.*" "" core_link_type "${link_type}")
+  set(ENV{CMAKE_${core_link_type}_LINKER_LAUNCHER} "${CMAKE_COMMAND};-E;env;USED_LAUNCHER=1")
+  run_linker_launcher(${link_type})
+  unset(ENV{CMAKE_${core_link_type}_LINKER_LAUNCHER})
+endfunction()
+
+foreach(link_type EXE MODULE SHARED STATIC)
+  run_linker_launcher(${link_type})
+  run_linker_launcher_env(${link_type}-env)
+  if(NOT RunCMake_GENERATOR STREQUAL "Watcom WMake")
+    run_linker_launcher(${link_type}-launch)
+    run_linker_launcher_env(${link_type}-launch-env)
+  endif()
+endforeach()

@@ -585,6 +585,22 @@ void cmMakefileExecutableTargetGenerator::WriteExecutableRule(bool relink)
     vars.LinkFlags = linkFlags.c_str();
     vars.Manifests = manifests.c_str();
 
+    cmProp launcherProp =
+      this->GeneratorTarget->GetProperty("EXE_LINKER_LAUNCHER");
+    std::string launcherCmd;
+    if (cmNonempty(launcherProp)) {
+      std::vector<std::string> args = cmExpandedList(*launcherProp, true);
+      if (!args.empty()) {
+        args[0] = this->LocalGenerator->ConvertToOutputFormat(
+          args[0], cmOutputConverter::SHELL);
+        for (std::string& i : cmMakeRange(args.begin() + 1, args.end())) {
+          i = this->LocalGenerator->EscapeForShell(i);
+        }
+        launcherCmd = cmJoin(args, " ");
+        vars.Launcher = launcherCmd.c_str();
+      }
+    }
+
     if (this->GeneratorTarget->GetPropertyAsBool("LINK_WHAT_YOU_USE")) {
       std::string cmakeCommand =
         cmStrCat(this->LocalGenerator->ConvertToOutputFormat(
