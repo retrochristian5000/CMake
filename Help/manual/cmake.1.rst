@@ -558,6 +558,8 @@ Available commands are:
       ``true`` if the generator supports toolsets and ``false`` otherwise.
     ``platformSupport``
       ``true`` if the generator supports platforms and ``false`` otherwise.
+    ``supportedPlatforms``
+      A list of supported platform which can be used with the -A option.
     ``extraGenerators``
       A list of strings with all the extra generators compatible with
       the generator.
