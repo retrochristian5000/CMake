@@ -259,6 +259,16 @@ Json::Value cmake::ReportCapabilitiesJson() const
       gen["name"] = gi.name;
       gen["toolsetSupport"] = gi.supportsToolset;
       gen["platformSupport"] = gi.supportsPlatform;
+      if (!gi.supportedPlatforms.empty()) {
+        Json::Value plat = Json::arrayValue;
+        plat.resize(gi.supportedPlatforms.size());
+        unsigned int idx = 0;
+        for (const std::string& platform : gi.supportedPlatforms) {
+          plat[idx] = platform;
+          ++idx;
+        }
+        gen["supportedPlatforms"] = plat;
+      }
       gen["extraGenerators"] = Json::arrayValue;
       generatorMap[gi.name] = gen;
     } else {
