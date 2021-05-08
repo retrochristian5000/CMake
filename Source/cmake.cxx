@@ -2388,6 +2388,10 @@ void cmake::AddCacheEntry(const std::string& key, const char* value,
   } else if (key == "CMAKE_SUPPRESS_DEVELOPER_ERRORS"_s) {
     this->Messenger->SetDevWarningsAsErrors(value && cmIsOff(value));
   }
+
+  if (isatty(fileno(stderr))) {
+    this->Messenger->setColoredMessages(true);
+  }
 }
 
 bool cmake::DoWriteGlobVerifyTarget() const

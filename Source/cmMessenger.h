@@ -47,6 +47,8 @@ public:
     return this->DeprecatedWarningsAsErrors;
   }
 
+  void setColoredMessages(bool color) { this->ColoredMessages = color; }
+
 private:
   bool IsMessageTypeVisible(MessageType t) const;
   MessageType ConvertMessageType(MessageType t) const;
@@ -55,4 +57,5 @@ private:
   bool SuppressDeprecatedWarnings = false;
   bool DevWarningsAsErrors = false;
   bool DeprecatedWarningsAsErrors = false;
+  bool ColoredMessages = false;
 };

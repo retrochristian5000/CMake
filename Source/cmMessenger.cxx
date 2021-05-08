@@ -61,25 +61,30 @@ bool cmMessenger::IsMessageTypeVisible(MessageType t) const
   return isVisible;
 }
 
-static bool printMessagePreamble(MessageType t, std::ostream& msg)
+static bool printMessagePreamble(MessageType t, std::ostream& msg, bool color)
 {
+  const std::string color_yellow = color ? "\033[33m\033[1m" : "";
+  const std::string color_red = color ? "\033[31m\033[1m" : "";
+  const std::string color_reset = color ? "\033[0m\033[39m" : "";
+
   // Construct the message header.
   if (t == MessageType::FATAL_ERROR) {
-    msg << "CMake Error";
+    msg << color_red << "CMake Error" << color_reset;
   } else if (t == MessageType::INTERNAL_ERROR) {
-    msg << "CMake Internal Error (please report a bug)";
+    msg << color_red << "CMake Internal Error (please report a bug)"
+        << color_reset;
   } else if (t == MessageType::LOG) {
     msg << "CMake Debug Log";
   } else if (t == MessageType::DEPRECATION_ERROR) {
-    msg << "CMake Deprecation Error";
+    msg << color_red << "CMake Deprecation Error" << color_reset;
   } else if (t == MessageType::DEPRECATION_WARNING) {
-    msg << "CMake Deprecation Warning";
+    msg << color_yellow << "CMake Deprecation Warning" << color_reset;
   } else if (t == MessageType::AUTHOR_WARNING) {
     msg << "CMake Warning (dev)";
   } else if (t == MessageType::AUTHOR_ERROR) {
     msg << "CMake Error (dev)";
   } else {
-    msg << "CMake Warning";
+    msg << color_yellow << "CMake Warning" << color_reset;
   }
   return true;
 }
@@ -152,12 +157,17 @@ void cmMessenger::DisplayMessage(MessageType t, const std::string& text,
                                  const cmListFileBacktrace& backtrace) const
 {
   std::ostringstream msg;
-  if (!printMessagePreamble(t, msg)) {
+  if (!printMessagePreamble(t, msg, ColoredMessages)) {
     return;
   }
 
   // Add the immediate context.
+  const std::string color_bold = ColoredMessages ? "\033[1m" : "";
+  const std::string color_reset = ColoredMessages ? "\033[0m" : "";
+
+  msg << color_bold;
   backtrace.PrintTitle(msg);
+  msg << color_reset;
 
   printMessageText(msg, text);
 
