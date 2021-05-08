@@ -66,30 +66,32 @@ bool cmMessenger::IsMessageTypeVisible(MessageType t) const
 static bool printMessagePreamble(MessageType t, std::ostream& msg, bool color)
 {
   // Construct the message header.
+  std::string start_warn = color ? std::string(terminal_colors::yellow) +
+      std::string(terminal_effects::bold)
+                                 : "";
+  std::string start_error = color
+    ? std::string(terminal_colors::red) + std::string(terminal_effects::bold)
+    : "";
+  std::string end = color ? std::string(terminal_effects::reset) +
+      std::string(terminal_colors::reset)
+                          : "";
+
   if (t == MessageType::FATAL_ERROR) {
-    msg << terminal_colors::red << terminal_effects::bold << "CMake Error"
-        << terminal_effects::reset << terminal_colors::reset;
+    msg << start_error << "CMake Error" << end;
   } else if (t == MessageType::INTERNAL_ERROR) {
-    msg << terminal_colors::red << terminal_effects::bold
-        << "CMake Internal Error (please report a bug)"
-        << terminal_effects::reset << terminal_colors::reset;
+    msg << start_error << "CMake Internal Error (please report a bug)" << end;
   } else if (t == MessageType::LOG) {
     msg << "CMake Debug Log";
   } else if (t == MessageType::DEPRECATION_ERROR) {
-    msg << terminal_colors::red << terminal_effects::bold
-        << "CMake Deprecation Error" << terminal_effects::reset
-        << terminal_colors::reset;
+    msg << start_error << "CMake Deprecation Error" << end
   } else if (t == MessageType::DEPRECATION_WARNING) {
-    msg << terminal_colors::yellow << terminal_effects::bold
-        << "CMake Deprecation Warning" << terminal_effects::reset
-        << terminal_colors::reset;
+    msg << start_warn << "CMake Deprecation Warning" << end;
   } else if (t == MessageType::AUTHOR_WARNING) {
     msg << "CMake Warning (dev)";
   } else if (t == MessageType::AUTHOR_ERROR) {
     msg << "CMake Error (dev)";
   } else {
-    msg << terminal_colors::yellow << terminal_effects::bold << "CMake Warning"
-        << terminal_effects::reset << terminal_colors::reset;
+    msg << start_warn << "CMake Warning" << end;
   }
   return true;
 }
