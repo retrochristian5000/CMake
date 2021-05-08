@@ -83,7 +83,7 @@ static bool printMessagePreamble(MessageType t, std::ostream& msg, bool color)
   } else if (t == MessageType::LOG) {
     msg << "CMake Debug Log";
   } else if (t == MessageType::DEPRECATION_ERROR) {
-    msg << start_error << "CMake Deprecation Error" << end
+    msg << start_error << "CMake Deprecation Error" << end;
   } else if (t == MessageType::DEPRECATION_WARNING) {
     msg << start_warn << "CMake Deprecation Warning" << end;
   } else if (t == MessageType::AUTHOR_WARNING) {
