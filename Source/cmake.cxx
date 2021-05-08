@@ -128,6 +128,10 @@
 #  include <sys/time.h>
 #endif
 
+#ifdef __unix__
+#  include <unistd.h>
+#endif
+
 namespace {
 
 #if !defined(CMAKE_BOOTSTRAP)
@@ -2579,7 +2583,6 @@ void cmake::UpdateProgress(const std::string& msg, float prog)
     this->ProgressCallback(msg, prog);
   }
 }
-
 bool cmake::GetIsInTryCompile() const
 {
   return this->State->GetIsInTryCompile();
