@@ -5,9 +5,11 @@
 #include "cmDocumentationFormatter.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
+#include "cmTerminalHighlighting.h"
 
 #if !defined(CMAKE_BOOTSTRAP)
 #  include "cmsys/SystemInformation.hxx"
+
 #endif
 
 #include <sstream>
@@ -63,28 +65,31 @@ bool cmMessenger::IsMessageTypeVisible(MessageType t) const
 
 static bool printMessagePreamble(MessageType t, std::ostream& msg, bool color)
 {
-  const std::string color_yellow = color ? "\033[33m\033[1m" : "";
-  const std::string color_red = color ? "\033[31m\033[1m" : "";
-  const std::string color_reset = color ? "\033[0m\033[39m" : "";
-
   // Construct the message header.
   if (t == MessageType::FATAL_ERROR) {
-    msg << color_red << "CMake Error" << color_reset;
+    msg << terminal_colors::red << terminal_effects::bold << "CMake Error"
+        << terminal_effects::reset << terminal_colors::reset;
   } else if (t == MessageType::INTERNAL_ERROR) {
-    msg << color_red << "CMake Internal Error (please report a bug)"
-        << color_reset;
+    msg << terminal_colors::red << terminal_effects::bold
+        << "CMake Internal Error (please report a bug)"
+        << terminal_effects::reset << terminal_colors::reset;
   } else if (t == MessageType::LOG) {
     msg << "CMake Debug Log";
   } else if (t == MessageType::DEPRECATION_ERROR) {
-    msg << color_red << "CMake Deprecation Error" << color_reset;
+    msg << terminal_colors::red << terminal_effects::bold
+        << "CMake Deprecation Error" << terminal_effects::reset
+        << terminal_colors::reset;
   } else if (t == MessageType::DEPRECATION_WARNING) {
-    msg << color_yellow << "CMake Deprecation Warning" << color_reset;
+    msg << terminal_colors::yellow << terminal_effects::bold
+        << "CMake Deprecation Warning" << terminal_effects::reset
+        << terminal_colors::reset;
   } else if (t == MessageType::AUTHOR_WARNING) {
     msg << "CMake Warning (dev)";
   } else if (t == MessageType::AUTHOR_ERROR) {
     msg << "CMake Error (dev)";
   } else {
-    msg << color_yellow << "CMake Warning" << color_reset;
+    msg << terminal_colors::yellow << terminal_effects::bold << "CMake Warning"
+        << terminal_effects::reset << terminal_colors::reset;
   }
   return true;
 }
@@ -161,13 +166,9 @@ void cmMessenger::DisplayMessage(MessageType t, const std::string& text,
     return;
   }
 
-  // Add the immediate context.
-  const std::string color_bold = ColoredMessages ? "\033[1m" : "";
-  const std::string color_reset = ColoredMessages ? "\033[0m" : "";
-
-  msg << color_bold;
+  msg << terminal_effects::bold;
   backtrace.PrintTitle(msg);
-  msg << color_reset;
+  msg << terminal_effects::reset;
 
   printMessageText(msg, text);
 

@@ -741,7 +741,7 @@ set(SRCS
   cmDuration.cxx
 
   bindexplib.cxx
-  )
+  cmTerminalHighlighting.h)
 
 SET_PROPERTY(SOURCE cmProcessOutput.cxx APPEND PROPERTY COMPILE_DEFINITIONS
   KWSYS_ENCODING_DEFAULT_CODEPAGE=${KWSYS_ENCODING_DEFAULT_CODEPAGE})
