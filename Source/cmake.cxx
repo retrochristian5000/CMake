@@ -2389,9 +2389,13 @@ void cmake::AddCacheEntry(const std::string& key, const char* value,
     this->Messenger->SetDevWarningsAsErrors(value && cmIsOff(value));
   }
 
-  if (isatty(fileno(stderr))) {
+#ifdef __unix__
+  if (isatty(fileno(stderr)) && isatty(fileno(stdout))) {
     this->Messenger->setColoredMessages(true);
   }
+#else
+  this->Messenger->setColoredMessages(false);
+#endif
 }
 
 bool cmake::DoWriteGlobVerifyTarget() const
