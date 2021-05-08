@@ -120,12 +120,15 @@ void displayMessage(MessageType t, std::ostringstream& msg)
 #endif
 
   // Output the message.
+  cmMessageMetadata md;
   if (t == MessageType::FATAL_ERROR || t == MessageType::INTERNAL_ERROR ||
       t == MessageType::DEPRECATION_ERROR || t == MessageType::AUTHOR_ERROR) {
     cmSystemTools::SetErrorOccured();
-    cmSystemTools::Message(msg.str(), "Error");
+    md.title = "Error";
+    cmSystemTools::Message(msg.str(), md);
   } else {
-    cmSystemTools::Message(msg.str(), "Warning");
+    md.title = "Warning";
+    cmSystemTools::Message(msg.str(), md);
   }
 }
 
@@ -156,7 +159,7 @@ void cmMessenger::DisplayMessage(MessageType t, const std::string& text,
     return;
   }
 
-  // Add the immediate context.
+  // Add the immediate context
   backtrace.PrintTitle(msg);
 
   printMessageText(msg, text);
