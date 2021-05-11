@@ -9,6 +9,7 @@
 
 #include <cm/iterator>
 #include <cm/memory>
+#include <cm/optional>
 #include <cm/string_view>
 #include <cmext/algorithm>
 #include <cmext/memory>
@@ -2255,7 +2256,7 @@ struct cmSourceInfo
   std::vector<std::string> Includes;
 };
 
-std::unique_ptr<cmSourceInfo> cmcmd_cmake_ninja_depends_fortran(
+cm::optional<cmSourceInfo> cmcmd_cmake_ninja_depends_fortran(
   std::string const& arg_tdi, std::string const& arg_pp);
 }
 
@@ -2312,7 +2313,7 @@ int cmcmd_cmake_ninja_depends(std::vector<std::string>::const_iterator argBeg,
     return 1;
   }
 
-  std::unique_ptr<cmSourceInfo> info;
+  cm::optional<cmSourceInfo> info;
   if (arg_lang == "Fortran") {
     info = cmcmd_cmake_ninja_depends_fortran(arg_tdi, arg_pp);
   } else {
@@ -2348,7 +2349,7 @@ int cmcmd_cmake_ninja_depends(std::vector<std::string>::const_iterator argBeg,
 
 namespace {
 
-std::unique_ptr<cmSourceInfo> cmcmd_cmake_ninja_depends_fortran(
+cm::optional<cmSourceInfo> cmcmd_cmake_ninja_depends_fortran(
   std::string const& arg_tdi, std::string const& arg_pp)
 {
   cmFortranCompiler fc;
@@ -2363,7 +2364,7 @@ std::unique_ptr<cmSourceInfo> cmcmd_cmake_ninja_depends_fortran(
         cmSystemTools::Error(
           cmStrCat("-E cmake_ninja_depends failed to parse ", arg_tdi,
                    reader.getFormattedErrorMessages()));
-        return nullptr;
+        return {};
       }
     }
 
@@ -2390,19 +2391,19 @@ std::unique_ptr<cmSourceInfo> cmcmd_cmake_ninja_depends_fortran(
   if (!cmFortranParser_FilePush(&parser, arg_pp.c_str())) {
     cmSystemTools::Error(
       cmStrCat("-E cmake_ninja_depends failed to open ", arg_pp));
-    return nullptr;
+    return {};
   }
   if (cmFortran_yyparse(parser.Scanner) != 0) {
     // Failed to parse the file.
-    return nullptr;
+    return {};
   }
 
-  auto info = cm::make_unique<cmSourceInfo>();
+  cmSourceInfo info;
   for (std::string const& provide : finfo.Provides) {
     cmSourceReqInfo src_info;
     src_info.LogicalName = provide;
     src_info.CompiledModulePath = provide;
-    info->ScanDep.Provides.emplace_back(src_info);
+    info.ScanDep.Provides.emplace_back(src_info);
   }
   for (std::string const& require : finfo.Requires) {
     // Require modules not provided in the same source.
@@ -2412,10 +2413,10 @@ std::unique_ptr<cmSourceInfo> cmcmd_cmake_ninja_depends_fortran(
     cmSourceReqInfo src_info;
     src_info.LogicalName = require;
     src_info.CompiledModulePath = require;
-    info->ScanDep.Requires.emplace_back(src_info);
+    info.ScanDep.Requires.emplace_back(src_info);
   }
   for (std::string const& include : finfo.Includes) {
-    info->Includes.push_back(include);
+    info.Includes.push_back(include);
   }
   return info;
 }
