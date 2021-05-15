@@ -85,36 +85,24 @@ function(__ep_test_with_build_with_server testName)
   file(REMOVE_RECURSE "${RunCMake_TEST_BINARY_DIR}")
   file(MAKE_DIRECTORY "${RunCMake_TEST_BINARY_DIR}")
   set(URL_FILE ${RunCMake_BINARY_DIR}/${testName}.url)
-  if(EXISTS "${URL_FILE}")
-    file(REMOVE "${URL_FILE}")
-  endif()
-  execute_process(
-    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/DownloadServer.py --file "${URL_FILE}" ${ARGN}
-    OUTPUT_FILE ${RunCMake_BINARY_DIR}/${testName}-python.txt
-    ERROR_FILE ${RunCMake_BINARY_DIR}/${testName}-python.txt
-    RESULT_VARIABLE result
-    TIMEOUT 30
-    )
-  if(NOT result EQUAL 0)
-    message(FATAL_ERROR "Failed to start download server:\n  ${result}")
-  endif()
 
-  foreach(i RANGE 1 8)
-    if(EXISTS ${URL_FILE})
-      break()
-    endif()
-    execute_process(COMMAND ${CMAKE_COMMAND} -E sleep ${i})
-  endforeach()
+  set(SERVER_ARGS ${ARGN})
+  set(serverScript ${CMAKE_CURRENT_LIST_DIR}/DownloadServer.py)
+  set(outFile ${RunCMake_BINARY_DIR}/${testName}-python.txt)
+  configure_file(
+    ${CMAKE_CURRENT_LIST_DIR}/StartDownloadServer.cmake.in
+    ${RunCMake_TEST_BINARY_DIR}/StartDownloadServer.cmake
+    @ONLY
+  )
 
-  if(NOT EXISTS ${URL_FILE})
-    message(FATAL_ERROR "Failed to load download server URL from:\n  ${URL_FILE}")
-  endif()
-
-  file(READ ${URL_FILE} SERVER_URL)
-  message(STATUS "URL : ${URL_FILE} - ${SERVER_URL}")
-  run_cmake_with_options(${testName} ${CMAKE_COMMAND} -DSERVER_URL=${SERVER_URL} )
+  run_cmake_command(${testName}-setup ${CMAKE_COMMAND}
+    -P ${RunCMake_TEST_BINARY_DIR}/StartDownloadServer.cmake
+  )
+  run_cmake_with_options(${testName} ${CMAKE_COMMAND} -DURL_FILE=${URL_FILE})
   run_cmake_command(${testName}-clean ${CMAKE_COMMAND} --build . --target clean)
   run_cmake_command(${testName}-build ${CMAKE_COMMAND} --build .)
+
+  #set_tests_properties(${testName}-setup FIXTURES_SETUP ${testName})
 endfunction()
 
 __ep_test_with_build(MultiCommand)
