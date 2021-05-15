@@ -1,0 +1,36 @@
+cmake_minimum_required(VERSION 3.18)
+
+set(URL_FILE "@URL_FILE@")
+set(SERVER_ARGS @SERVER_ARGS@)
+set(Python3_EXECUTABLE "@Python3_EXECUTABLE@")
+set(serverScript "@serverScript@")
+set(outFile "@outFile@")
+
+if(EXISTS "${URL_FILE}")
+  file(REMOVE "${URL_FILE}")
+endif()
+
+execute_process(
+  COMMAND ${Python3_EXECUTABLE} ${serverScript} --file "${URL_FILE}" ${SERVER_ARGS}
+  OUTPUT_FILE ${outFile}
+  ERROR_FILE ${outFile}
+  RESULT_VARIABLE result
+  TIMEOUT 30
+)
+if(NOT result EQUAL 0)
+  message(FATAL_ERROR "Failed to start download server:\n  ${result}")
+endif()
+
+foreach(i RANGE 1 8)
+  if(EXISTS ${URL_FILE})
+    break()
+  endif()
+  execute_process(COMMAND ${CMAKE_COMMAND} -E sleep ${i})
+endforeach()
+
+if(NOT EXISTS ${URL_FILE})
+  message(FATAL_ERROR "Failed to load download server URL from:\n  ${URL_FILE}")
+endif()
+
+file(READ ${URL_FILE} SERVER_URL)
+message(STATUS "URL : ${URL_FILE} - ${SERVER_URL}")
