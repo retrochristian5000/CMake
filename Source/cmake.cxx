@@ -2392,14 +2392,6 @@ void cmake::AddCacheEntry(const std::string& key, const char* value,
   } else if (key == "CMAKE_SUPPRESS_DEVELOPER_ERRORS"_s) {
     this->Messenger->SetDevWarningsAsErrors(value && cmIsOff(value));
   }
-
-#ifdef __unix__
-  if (isatty(fileno(stderr)) && isatty(fileno(stdout))) {
-    this->Messenger->setColoredMessages(true);
-  }
-#else
-  this->Messenger->setColoredMessages(false);
-#endif
 }
 
 bool cmake::DoWriteGlobVerifyTarget() const
@@ -2591,7 +2583,6 @@ void cmake::UpdateProgress(const std::string& msg, float prog)
     this->ProgressCallback(msg, prog);
   }
 }
-
 bool cmake::GetIsInTryCompile() const
 {
   return this->State->GetIsInTryCompile();

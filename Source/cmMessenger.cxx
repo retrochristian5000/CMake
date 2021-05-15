@@ -5,7 +5,6 @@
 #include "cmDocumentationFormatter.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
-#include "cmTerminalHighlighting.h"
 
 #if !defined(CMAKE_BOOTSTRAP)
 #  include "cmsys/SystemInformation.hxx"
@@ -63,37 +62,43 @@ bool cmMessenger::IsMessageTypeVisible(MessageType t) const
   return isVisible;
 }
 
-static bool printMessagePreamble(MessageType t, std::ostream& msg, bool color)
+static bool printMessagePreamble(MessageType t, std::ostream& msg)
 {
   // Construct the message header.
-  std::string start_warn = color ? std::string(terminal_colors::yellow) +
-      std::string(terminal_effects::bold)
-                                 : "";
-  std::string start_error = color
-    ? std::string(terminal_colors::red) + std::string(terminal_effects::bold)
-    : "";
-  std::string end = color ? std::string(terminal_effects::reset) +
-      std::string(terminal_colors::reset)
-                          : "";
 
   if (t == MessageType::FATAL_ERROR) {
-    msg << start_error << "CMake Error" << end;
+    msg << "CMake Error";
   } else if (t == MessageType::INTERNAL_ERROR) {
-    msg << start_error << "CMake Internal Error (please report a bug)" << end;
+    msg << "CMake Internal Error (please report a bug)";
   } else if (t == MessageType::LOG) {
     msg << "CMake Debug Log";
   } else if (t == MessageType::DEPRECATION_ERROR) {
-    msg << start_error << "CMake Deprecation Error" << end;
+    msg << "CMake Deprecation Error";
   } else if (t == MessageType::DEPRECATION_WARNING) {
-    msg << start_warn << "CMake Deprecation Warning" << end;
+    msg << "CMake Deprecation Warning";
   } else if (t == MessageType::AUTHOR_WARNING) {
     msg << "CMake Warning (dev)";
   } else if (t == MessageType::AUTHOR_ERROR) {
     msg << "CMake Error (dev)";
   } else {
-    msg << start_warn << "CMake Warning" << end;
+    msg << "CMake Warning";
   }
   return true;
+}
+
+static int getMessageColor(MessageType t)
+{
+  switch (t) {
+    case MessageType::INTERNAL_ERROR:
+    case MessageType::FATAL_ERROR:
+    case MessageType::AUTHOR_ERROR:
+      return cmsysTerminal_Color_ForegroundRed;
+    case MessageType::AUTHOR_WARNING:
+    case MessageType::WARNING:
+      return cmsysTerminal_Color_ForegroundYellow;
+    default:
+      return cmsysTerminal_Color_Normal;
+  }
 }
 
 void printMessageText(std::ostream& msg, std::string const& text)
@@ -132,12 +137,16 @@ void displayMessage(MessageType t, std::ostringstream& msg)
 #endif
 
   // Output the message.
+  cmMessageMetadata md;
+  md.desiredColor = getMessageColor(t);
   if (t == MessageType::FATAL_ERROR || t == MessageType::INTERNAL_ERROR ||
       t == MessageType::DEPRECATION_ERROR || t == MessageType::AUTHOR_ERROR) {
     cmSystemTools::SetErrorOccured();
-    cmSystemTools::Message(msg.str(), "Error");
+    md.title = "Error";
+    cmSystemTools::Message(msg.str(), md);
   } else {
-    cmSystemTools::Message(msg.str(), "Warning");
+    md.title = "Warning";
+    cmSystemTools::Message(msg.str(), md);
   }
 }
 
@@ -164,13 +173,11 @@ void cmMessenger::DisplayMessage(MessageType t, const std::string& text,
                                  const cmListFileBacktrace& backtrace) const
 {
   std::ostringstream msg;
-  if (!printMessagePreamble(t, msg, ColoredMessages)) {
+  if (!printMessagePreamble(t, msg)) {
     return;
   }
 
-  msg << terminal_effects::bold;
   backtrace.PrintTitle(msg);
-  msg << terminal_effects::reset;
 
   printMessageText(msg, text);
 
