@@ -226,6 +226,9 @@ void cmGlobalNinjaGenerator::WriteBuild(std::ostream& os,
       buildStr += " |";
       for (std::string const& implicitOut : build.ImplicitOuts) {
         buildStr += cmStrCat(' ', this->EncodePath(implicitOut));
+        if (this->ComputingUnknownDependencies) {
+          this->CombinedBuildOutputs.insert(implicitOut);
+        }
       }
     }
     buildStr += ':';
@@ -307,21 +310,49 @@ void cmGlobalNinjaGenerator::AddCustomCommandRule()
   this->AddRule(rule);
 }
 
+void cmGlobalNinjaGenerator::CCOutputs::Add(
+  std::vector<std::string> const& paths)
+{
+  for (std::string const& path : paths) {
+    std::string out = this->GG->ConvertToNinjaPath(path);
+    if (this->GG->SupportsImplicitOuts() &&
+        !cmSystemTools::FileIsFullPath(out)) {
+      // The output is a relative path.  Add an implicit output with
+      // the absolute path so that Ninja can hook up depfile dependencies
+      // that mention the absolute path, e.g. during unity builds.
+      // FIXME: Unfortunately this means Ninja will 'stat' each output twice.
+      // If Ninja Issue 1251 were fixed, this would not be needed.
+      this->ImplicitOuts.emplace_back(this->GG->ConvertToNinjaAbsPath(path));
+    }
+    this->GG->SeenCustomCommandOutput(out);
+    this->ExplicitOuts.emplace_back(std::move(out));
+  }
+}
+
 void cmGlobalNinjaGenerator::WriteCustomCommandBuild(
-  const std::string& command, const std::string& description,
-  const std::string& comment, const std::string& depfile,
-  const std::string& job_pool, bool uses_terminal, bool restat,
-  const cmNinjaDeps& outputs, const std::string& config,
-  const cmNinjaDeps& explicitDeps, const cmNinjaDeps& orderOnlyDeps)
+  std::string const& command, std::string const& description,
+  std::string const& comment, std::string const& depfile,
+  std::string const& job_pool, bool uses_terminal, bool restat,
+  std::string const& config, CCOutputs outputs, cmNinjaDeps explicitDeps,
+  cmNinjaDeps orderOnlyDeps)
 {
   this->AddCustomCommandRule();
+
+  if (this->ComputingUnknownDependencies) {
+    // we need to track every dependency that comes in, since we are trying
+    // to find dependencies that are side effects of build commands
+    for (std::string const& dep : explicitDeps) {
+      this->CombinedCustomCommandExplicitDependencies.insert(dep);
+    }
+  }
 
   {
     cmNinjaBuild build("CUSTOM_COMMAND");
     build.Comment = comment;
-    build.Outputs = outputs;
-    build.ExplicitDeps = explicitDeps;
-    build.OrderOnlyDeps = orderOnlyDeps;
+    build.Outputs = std::move(outputs.ExplicitOuts);
+    build.ImplicitOuts = std::move(outputs.ImplicitOuts);
+    build.ExplicitDeps = std::move(explicitDeps);
+    build.OrderOnlyDeps = std::move(orderOnlyDeps);
 
     cmNinjaVars& vars = build.Variables;
     {
@@ -349,14 +380,6 @@ void cmGlobalNinjaGenerator::WriteCustomCommandBuild(
       this->WriteBuild(*this->GetCommonFileStream(), build);
     } else {
       this->WriteBuild(*this->GetImplFileStream(config), build);
-    }
-  }
-
-  if (this->ComputingUnknownDependencies) {
-    // we need to track every dependency that comes in, since we are trying
-    // to find dependencies that are side effects of build commands
-    for (std::string const& dep : explicitDeps) {
-      this->CombinedCustomCommandExplicitDependencies.insert(dep);
     }
   }
 }
@@ -1133,6 +1156,15 @@ std::string const& cmGlobalNinjaGenerator::ConvertToNinjaPath(
     .first->second;
 }
 
+std::string cmGlobalNinjaGenerator::ConvertToNinjaAbsPath(
+  std::string path) const
+{
+#ifdef _WIN32
+  std::replace(path.begin(), path.end(), '/', '\\');
+#endif
+  return path;
+}
+
 void cmGlobalNinjaGenerator::AddAdditionalCleanFile(std::string fileName,
                                                     const std::string& config)
 {
@@ -1198,6 +1230,8 @@ void cmGlobalNinjaGenerator::WriteDisclaimer(std::ostream& os) const
 void cmGlobalNinjaGenerator::WriteAssumedSourceDependencies()
 {
   for (auto const& asd : this->AssumedSourceDependencies) {
+    CCOutputs outputs(this);
+    outputs.ExplicitOuts.emplace_back(asd.first);
     cmNinjaDeps orderOnlyDeps;
     std::copy(asd.second.begin(), asd.second.end(),
               std::back_inserter(orderOnlyDeps));
@@ -1206,8 +1240,8 @@ void cmGlobalNinjaGenerator::WriteAssumedSourceDependencies()
       "Assume dependencies for generated source file.",
       /*depfile*/ "", /*job_pool*/ "",
       /*uses_terminal*/ false,
-      /*restat*/ true, cmNinjaDeps(1, asd.first), "", cmNinjaDeps(),
-      orderOnlyDeps);
+      /*restat*/ true, std::string(), outputs, cmNinjaDeps(),
+      std::move(orderOnlyDeps));
   }
 }
 
