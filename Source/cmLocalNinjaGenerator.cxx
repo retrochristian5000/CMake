@@ -654,6 +654,7 @@ void cmLocalNinjaGenerator::WriteCustomCommandBuildStatement(
       cmNinjaBuild build("phony");
       build.Comment = cmStrCat("Phony custom command for ", mainOutput);
       build.Outputs = std::move(ccOutputs.ExplicitOuts);
+      build.ImplicitOuts = std::move(ccOutputs.ImplicitOuts);
       build.ExplicitDeps = std::move(ninjaDeps);
       build.OrderOnlyDeps = orderOnlyDeps;
       gg->WriteBuild(this->GetImplFileStream(fileConfig), build);
