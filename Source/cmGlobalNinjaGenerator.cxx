@@ -315,6 +315,16 @@ void cmGlobalNinjaGenerator::CCOutputs::Add(
 {
   for (std::string const& path : paths) {
     std::string out = this->GG->ConvertToNinjaPath(path);
+    if (this->GG->SupportsImplicitOuts() &&
+        !cmSystemTools::FileIsFullPath(out)) {
+      // The output is a relative path.  Add an implicit output with
+      // the absolute path so that Ninja can hook up depfile dependencies
+      // that mention the absolute path, e.g. during unity builds.
+      // FIXME: Unfortunately this means Ninja will 'stat' each output twice.
+      // If Ninja Issue 1251 were fixed, this would not be needed.
+      this->ImplicitOuts.emplace_back(
+        this->GG->ConvertToNinjaAbsPath(std::move(path)));
+    }
     this->GG->SeenCustomCommandOutput(out);
     this->ExplicitOuts.emplace_back(std::move(out));
   }
@@ -341,6 +351,7 @@ void cmGlobalNinjaGenerator::WriteCustomCommandBuild(
     cmNinjaBuild build("CUSTOM_COMMAND");
     build.Comment = comment;
     build.Outputs = std::move(outputs.ExplicitOuts);
+    build.ImplicitOuts = std::move(outputs.ImplicitOuts);
     build.ExplicitDeps = std::move(explicitDeps);
     build.OrderOnlyDeps = std::move(orderOnlyDeps);
 
@@ -1144,6 +1155,15 @@ std::string const& cmGlobalNinjaGenerator::ConvertToNinjaPath(
 #endif
   return this->ConvertToNinjaPathCache.emplace(path, std::move(convPath))
     .first->second;
+}
+
+std::string cmGlobalNinjaGenerator::ConvertToNinjaAbsPath(
+  std::string path) const
+{
+#ifdef _WIN32
+  std::replace(path.begin(), path.end(), '/', '\\');
+#endif
+  return path;
 }
 
 void cmGlobalNinjaGenerator::AddAdditionalCleanFile(std::string fileName,

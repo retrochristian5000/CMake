@@ -121,6 +121,7 @@ public:
     }
     void Add(std::vector<std::string> const& outputs);
     cmNinjaDeps ExplicitOuts;
+    cmNinjaDeps ImplicitOuts;
   };
 
   void WriteCustomCommandBuild(std::string const& command,
@@ -260,6 +261,7 @@ public:
   }
 
   std::string const& ConvertToNinjaPath(const std::string& path) const;
+  std::string ConvertToNinjaAbsPath(std::string path) const;
 
   struct MapToNinjaPathImpl
   {
