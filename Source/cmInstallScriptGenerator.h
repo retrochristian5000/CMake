@@ -22,6 +22,7 @@ public:
   cmInstallScriptGenerator(
     std::string script, bool code, std::string const& component,
     bool exclude_from_all,
+    bool all_components,
     cmListFileBacktrace backtrace = cmListFileBacktrace());
   ~cmInstallScriptGenerator() override;
 
