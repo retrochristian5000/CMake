@@ -23,6 +23,14 @@ struct cmCommandLineArgument
     No
   };
 
+  enum class ParseMode
+  {
+    Valid,
+    Invalid,
+    SyntaxError,
+    ValueError
+  };
+
   std::string InvalidSyntaxMessage;
   std::string InvalidValueMessage;
   std::string Name;
@@ -99,13 +107,6 @@ struct cmCommandLineArgument
              std::vector<std::string> const& allArgs,
              CallState&&... state) const
   {
-    enum class ParseMode
-    {
-      Valid,
-      Invalid,
-      SyntaxError,
-      ValueError
-    };
     ParseMode parseState = ParseMode::Valid;
 
     if (this->Type == Values::Zero) {
@@ -139,23 +140,10 @@ struct cmCommandLineArgument
           index = nextValueIndex;
         }
       } else {
-        // parse the string to get the value
-        auto possible_value = cm::string_view(input).substr(this->Name.size());
-        if (possible_value.empty()) {
-          parseState = ParseMode::ValueError;
-        } else if (possible_value[0] == '=') {
-          possible_value.remove_prefix(1);
-          if (possible_value.empty()) {
-            parseState = ParseMode::ValueError;
-          }
-        }
+        auto value = this->extract_single_value(input, parseState);
         if (parseState == ParseMode::Valid) {
-          if (possible_value[0] == ' ') {
-            possible_value.remove_prefix(1);
-          }
-
-          parseState = this->StoreCall(std::string(possible_value),
-                                       std::forward<CallState>(state)...)
+          parseState =
+            this->StoreCall(value, std::forward<CallState>(state)...)
             ? ParseMode::Valid
             : ParseMode::Invalid;
         }
@@ -193,7 +181,13 @@ struct cmCommandLineArgument
           index = (nextValueIndex - 1);
         }
       } else {
-        parseState = ParseMode::SyntaxError;
+        auto value = this->extract_single_value(input, parseState);
+        if (parseState == ParseMode::Valid) {
+          parseState =
+            this->StoreCall(value, std::forward<CallState>(state)...)
+            ? ParseMode::Valid
+            : ParseMode::Invalid;
+        }
       }
     }
 
@@ -204,5 +198,25 @@ struct cmCommandLineArgument
       cmSystemTools::Error(this->InvalidValueMessage);
     }
     return (parseState == ParseMode::Valid);
+  }
+
+private:
+  std::string extract_single_value(std::string const& input,
+                                   ParseMode& parseState) const
+  {
+    // parse the string to get the value
+    auto possible_value = cm::string_view(input).substr(this->Name.size());
+    if (possible_value.empty()) {
+      parseState = ParseMode::ValueError;
+    } else if (possible_value[0] == '=') {
+      possible_value.remove_prefix(1);
+      if (possible_value.empty()) {
+        parseState = ParseMode::ValueError;
+      }
+    }
+    if (parseState == ParseMode::Valid && possible_value[0] == ' ') {
+      possible_value.remove_prefix(1);
+    }
+    return std::string(possible_value);
   }
 };
