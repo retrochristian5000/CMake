@@ -222,7 +222,7 @@ void cmGlobalNinjaGenerator::WriteBuild(std::ostream& os,
       }
     }
     // Write implicit outputs
-    if (!build.ImplicitOuts.empty()) {
+    if (this->SupportsImplicitOuts() && !build.ImplicitOuts.empty()) {
       buildStr += " |";
       for (std::string const& implicitOut : build.ImplicitOuts) {
         buildStr += cmStrCat(' ', this->EncodePath(implicitOut));
