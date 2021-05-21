@@ -327,6 +327,7 @@ void cmGlobalNinjaGenerator::CCOutputs::Add(
       // This output is expressed as a relative path.  Repeat it,
       // but expressed as an absolute path for Ninja Issue 1251.
       this->WorkDirOuts.emplace_back(out);
+      this->GG->SeenCustomCommandOutput(this->GG->ConvertToNinjaAbsPath(path));
     }
     this->GG->SeenCustomCommandOutput(out);
     this->ExplicitOuts.emplace_back(std::move(out));
@@ -1158,6 +1159,15 @@ std::string const& cmGlobalNinjaGenerator::ConvertToNinjaPath(
 #endif
   return this->ConvertToNinjaPathCache.emplace(path, std::move(convPath))
     .first->second;
+}
+
+std::string cmGlobalNinjaGenerator::ConvertToNinjaAbsPath(
+  std::string path) const
+{
+#ifdef _WIN32
+  std::replace(path.begin(), path.end(), '/', '\\');
+#endif
+  return path;
 }
 
 void cmGlobalNinjaGenerator::AddAdditionalCleanFile(std::string fileName,
