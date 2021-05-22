@@ -20,6 +20,17 @@ Vulkan has been found.
   This module defines :prop_tgt:`IMPORTED` target ``Vulkan::glslc``, if
   Vulkan and the GLSLC SPIR-V compiler has been found.
 
+.. versionadded:: 3.21
+  This module defines :prop_tgt:`IMPORTED` target ``Vulkan::Headers``, if
+  Vulkan_INCLUDE_DIR has been found. It provides just Vulkan headers
+  include paths, while no dynamic library is included in the target.
+  This can be useful for applications that load Vulkan library dynamically.
+
+.. versionadded:: 3.21
+  This module defines :prop_tgt:`IMPORTED` target ``Vulkan::glslangValidator``, if
+  Vulkan and glslangValidator tool has been found. glslangValidator is
+  the tool used to compile GLSL and HLSL shaders into SPIR-V.
+
 Result Variables
 ^^^^^^^^^^^^^^^^
 
@@ -34,6 +45,7 @@ The module will also define three cache variables::
   Vulkan_INCLUDE_DIR        - the Vulkan include directory
   Vulkan_LIBRARY            - the path to the Vulkan library
   Vulkan_GLSLC_EXECUTABLE   - the path to the GLSL SPIR-V compiler
+  Vulkan_GLSLANG_VALIDATOR_EXECUTABLE - the path to the glslangValidator tool
 
 Hints
 ^^^^^
@@ -67,6 +79,11 @@ if(WIN32)
       HINTS
         "$ENV{VULKAN_SDK}/Bin"
       )
+    find_program(Vulkan_GLSLANG_VALIDATOR_EXECUTABLE
+      NAMES glslangValidator
+      HINTS
+        "$ENV{VULKAN_SDK}/Bin"
+      )
   elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
     find_library(Vulkan_LIBRARY
       NAMES vulkan-1
@@ -76,6 +93,11 @@ if(WIN32)
       )
     find_program(Vulkan_GLSLC_EXECUTABLE
       NAMES glslc
+      HINTS
+        "$ENV{VULKAN_SDK}/Bin32"
+      )
+    find_program(Vulkan_GLSLANG_VALIDATOR_EXECUTABLE
+      NAMES glslangValidator
       HINTS
         "$ENV{VULKAN_SDK}/Bin32"
       )
@@ -90,6 +112,9 @@ else()
   find_program(Vulkan_GLSLC_EXECUTABLE
     NAMES glslc
     HINTS "$ENV{VULKAN_SDK}/bin")
+  find_program(Vulkan_GLSLANG_VALIDATOR_EXECUTABLE
+    NAMES glslangValidator
+    HINTS "$ENV{VULKAN_SDK}/bin")
 endif()
 
 set(Vulkan_LIBRARIES ${Vulkan_LIBRARY})
@@ -100,7 +125,8 @@ find_package_handle_standard_args(Vulkan
   DEFAULT_MSG
   Vulkan_LIBRARY Vulkan_INCLUDE_DIR)
 
-mark_as_advanced(Vulkan_INCLUDE_DIR Vulkan_LIBRARY Vulkan_GLSLC_EXECUTABLE)
+mark_as_advanced(Vulkan_INCLUDE_DIR Vulkan_LIBRARY Vulkan_GLSLC_EXECUTABLE
+                 Vulkan_GLSLANG_VALIDATOR_EXECUTABLE)
 
 if(Vulkan_FOUND AND NOT TARGET Vulkan::Vulkan)
   add_library(Vulkan::Vulkan UNKNOWN IMPORTED)
@@ -109,7 +135,18 @@ if(Vulkan_FOUND AND NOT TARGET Vulkan::Vulkan)
     INTERFACE_INCLUDE_DIRECTORIES "${Vulkan_INCLUDE_DIRS}")
 endif()
 
+if(Vulkan_INCLUDE_DIR AND NOT TARGET Vulkan::Headers)
+  add_library(Vulkan::Headers INTERFACE IMPORTED)
+  set_target_properties(Vulkan::Headers PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${Vulkan_INCLUDE_DIRS}")
+endif()
+
 if(Vulkan_FOUND AND Vulkan_GLSLC_EXECUTABLE AND NOT TARGET Vulkan::glslc)
   add_executable(Vulkan::glslc IMPORTED)
   set_property(TARGET Vulkan::glslc PROPERTY IMPORTED_LOCATION "${Vulkan_GLSLC_EXECUTABLE}")
+endif()
+
+if(Vulkan_FOUND AND Vulkan_GLSLANG_VALIDATOR_EXECUTABLE AND NOT TARGET Vulkan::glslangValidator)
+  add_executable(Vulkan::glslangValidator IMPORTED)
+  set_property(TARGET Vulkan::glslangValidator PROPERTY IMPORTED_LOCATION "${Vulkan_GLSLANG_VALIDATOR_EXECUTABLE}")
 endif()
