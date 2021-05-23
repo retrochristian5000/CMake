@@ -22,7 +22,7 @@ Vulkan has been found.
 
 .. versionadded:: 3.21
   This module defines :prop_tgt:`IMPORTED` target ``Vulkan::Headers``, if
-  Vulkan_INCLUDE_DIR has been found. It provides just Vulkan headers
+  ``Vulkan_INCLUDE_DIR`` has been found. It provides just Vulkan headers
   include paths, while no dynamic library is included in the target.
   This can be useful for applications that load Vulkan library dynamically.
 
