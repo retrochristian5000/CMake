@@ -135,7 +135,7 @@ if(Vulkan_FOUND AND NOT TARGET Vulkan::Vulkan)
     INTERFACE_INCLUDE_DIRECTORIES "${Vulkan_INCLUDE_DIRS}")
 endif()
 
-if(Vulkan_INCLUDE_DIR AND NOT TARGET Vulkan::Headers)
+if(Vulkan_FOUND AND NOT TARGET Vulkan::Headers)
   add_library(Vulkan::Headers INTERFACE IMPORTED)
   set_target_properties(Vulkan::Headers PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${Vulkan_INCLUDE_DIRS}")
