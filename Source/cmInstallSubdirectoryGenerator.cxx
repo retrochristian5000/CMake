@@ -14,10 +14,10 @@
 #include "cmSystemTools.h"
 
 cmInstallSubdirectoryGenerator::cmInstallSubdirectoryGenerator(
-  cmMakefile* makefile, std::string binaryDirectory, bool excludeFromAll,
+  cmMakefile* makefile, std::string binaryDirectory,
   cmListFileBacktrace backtrace)
   : cmInstallGenerator("", std::vector<std::string>(), "", MessageDefault,
-                       excludeFromAll, std::move(backtrace))
+                       false, std::move(backtrace))
   , Makefile(makefile)
   , BinaryDirectory(std::move(binaryDirectory))
 {
@@ -63,17 +63,19 @@ void cmInstallSubdirectoryGenerator::GenerateScript(std::ostream& os)
 
       case cmPolicies::NEW:
       case cmPolicies::REQUIRED_IF_USED:
-      case cmPolicies::REQUIRED_ALWAYS: {
-        Indent indent;
-        std::string odir = this->BinaryDirectory;
-        cmSystemTools::ConvertToUnixSlashes(odir);
-        os << indent << "if(NOT CMAKE_INSTALL_LOCAL_ONLY)\n"
-           << indent.Next()
-           << "# Include the install script for the subdirectory.\n"
-           << indent.Next() << "include(\"" << odir
-           << "/cmake_install.cmake\")\n"
-           << indent << "endif()\n\n";
-      } break;
+      case cmPolicies::REQUIRED_ALWAYS:
+        if (!this->Makefile->GetPropertyAsBool("EXCLUDE_FROM_ALL")) {
+          Indent indent;
+          std::string odir = this->BinaryDirectory;
+          cmSystemTools::ConvertToUnixSlashes(odir);
+          os << indent << "if(NOT CMAKE_INSTALL_LOCAL_ONLY)\n"
+             << indent.Next()
+             << "# Include the install script for the subdirectory.\n"
+             << indent.Next() << "include(\"" << odir
+             << "/cmake_install.cmake\")\n"
+             << indent << "endif()\n\n";
+        }
+        break;
     }
   }
 }
