@@ -46,7 +46,7 @@ if(NOT CMAKE_HIP_COMPILER_ID_RUN)
   file(READ ${CMAKE_ROOT}/Modules/CMakePlatformId.h.in
     CMAKE_HIP_COMPILER_ID_PLATFORM_CONTENT)
 
-  list(APPEND CMAKE_HIP_COMPILER_ID_TEST_FLAGS_FIRST "--cuda-host-only")
+  list(APPEND CMAKE_HIP_COMPILER_ID_TEST_FLAGS_FIRST "-v")
 
   include(${CMAKE_ROOT}/Modules/CMakeDetermineCompilerId.cmake)
   CMAKE_DETERMINE_COMPILER_ID(HIP HIPFLAGS CMakeHIPCompilerId.hip)
@@ -85,7 +85,9 @@ if(MSVC_HIP_ARCHITECTURE_ID)
 endif()
 
 if(NOT DEFINED CMAKE_HIP_ARCHITECTURES)
-  set(CMAKE_HIP_ARCHITECTURES "OFF" CACHE STRING "HIP architectures")
+  # Analyze output from hipcc to get the current GPU architecture.
+  string(REGEX MATCH " -target-cpu ([a-z0-9]+ )" dont_care "${CMAKE_HIP_COMPILER_PRODUCED_OUTPUT}")
+  set(CMAKE_HIP_ARCHITECTURES "${CMAKE_MATCH_1}" CACHE STRING "HIP architectures")
 endif()
 
 # configure variables set in this file for fast reload later on

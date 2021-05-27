@@ -5,4 +5,4 @@ project(HIPArchitecture HIP)
 string(APPEND CMAKE_HIP_FLAGS " --offload-arch=gfx908")
 
 add_executable(HIPOnlyArchitectureOff main.hip)
-set_property(TARGET HIPOnlyArchitectureOff PROPERTY CUDA_ARCHITECTURES OFF)
+set_property(TARGET HIPOnlyArchitectureOff PROPERTY HIP_ARCHITECTURES OFF)
