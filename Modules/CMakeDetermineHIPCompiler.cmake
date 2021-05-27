@@ -85,7 +85,17 @@ if(MSVC_HIP_ARCHITECTURE_ID)
 endif()
 
 if(NOT DEFINED CMAKE_HIP_ARCHITECTURES)
-  set(CMAKE_HIP_ARCHITECTURES "OFF" CACHE STRING "HIP architectures")
+  # Try to use 'mygpu' to get the current GPU architecture.
+  get_filename_component(_hipcc_dir "${CMAKE_HIP_COMPILER}" DIRECTORY)
+  execute_process(
+    COMMAND "${_hipcc_dir}/mygpu"
+      OUTPUT_VARIABLE output
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      RESULT_VARIABLE result
+    )
+  if(result EQUAL 0 AND output)
+    set(CMAKE_HIP_ARCHITECTURES "${output}" CACHE STRING "HIP architectures")
+  endif()
 endif()
 
 # configure variables set in this file for fast reload later on

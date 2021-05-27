@@ -5,7 +5,7 @@ CMAKE_HIP_ARCHITECTURES
 
 Default value for :prop_tgt:`HIP_ARCHITECTURES` property of targets.
 
-This is initialized to ``OFF``.
+This is initialized to the output of HIP's `mygpu` script if present.
 
 This variable is used to initialize the :prop_tgt:`HIP_ARCHITECTURES` property
 on all targets. See the target property for additional information.
