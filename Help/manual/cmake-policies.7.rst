@@ -57,6 +57,7 @@ Policies Introduced by CMake 3.22
 .. toctree::
    :maxdepth: 1
 
+   CMP0128: LANG_EXTENSIONS is initialized to CMAKE_LANG_EXTENSIONS_DEFAULT, compiler extensions are correctly disabled or enabled when standard level is unset, standard-affecting flags are not added unless necessary. </policy/CMP0128>
    CMP0127: cmake_dependent_option() supports full Condition Syntax. </policy/CMP0127>
 
 Policies Introduced by CMake 3.21
