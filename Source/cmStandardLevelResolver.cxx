@@ -104,6 +104,12 @@ struct StanardLevelComputer
       return std::string{};
     }
 
+    // If the request matches the compiler's defaults we don't need to add
+    // anything.
+    if (*standardProp == *defaultStd && ext == defaultExt) {
+      return std::string{};
+    }
+
     if (target->GetLanguageStandardRequired(this->Language)) {
       std::string option_flag = cmStrCat(
         "CMAKE_", this->Language, *standardProp, "_", type, "_COMPILE_OPTION");
@@ -157,9 +163,9 @@ struct StanardLevelComputer
                       "_COMPILE_OPTION");
     }
 
-    // The standard requested is at least as new as the compiler's default,
-    // and the standard request is not required.  Decay to the newest standard
-    // for which a flag is defined.
+    // The compiler's default is at least as new as the requested standard,
+    // and the requested standard is not required.  Decay to the newest
+    // standard for which a flag is defined.
     for (; defaultStdIt < stdIt; --stdIt) {
       auto offset = std::distance(cm::cbegin(stds), stdIt);
       std::string option_flag =
