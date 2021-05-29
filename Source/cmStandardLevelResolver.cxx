@@ -123,6 +123,12 @@ struct StanardLevelComputer
       return option_flag;
     }
 
+    // If the request matches the compiler's defaults we don't need to add
+    // anything.
+    if (*standardProp == *defaultStd && ext == defaultExt) {
+      return std::string{};
+    }
+
     std::string standardStr(*standardProp);
     if (this->Language == "CUDA" && standardStr == "98") {
       standardStr = "03";
@@ -151,15 +157,15 @@ struct StanardLevelComputer
 
     // If the standard requested is older than the compiler's default or the
     // extension mode doesn't match then we need to use a flag.
-    if (stdIt <= defaultStdIt || ext != defaultExt) {
+    if (stdIt < defaultStdIt || ext != defaultExt) {
       auto offset = std::distance(cm::cbegin(stds), stdIt);
       return cmStrCat("CMAKE_", this->Language, stdsStrings[offset], "_", type,
                       "_COMPILE_OPTION");
     }
 
-    // The standard requested is at least as new as the compiler's default,
-    // and the standard request is not required.  Decay to the newest standard
-    // for which a flag is defined.
+    // The compiler's default is at least as new as the requested standard,
+    // and the requested standard is not required.  Decay to the newest
+    // standard for which a flag is defined.
     for (; defaultStdIt < stdIt; --stdIt) {
       auto offset = std::distance(cm::cbegin(stds), stdIt);
       std::string option_flag =
