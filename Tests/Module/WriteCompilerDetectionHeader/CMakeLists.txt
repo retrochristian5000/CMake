@@ -144,11 +144,17 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC"
 endif()
 
 add_executable(WriteCompilerDetectionHeader main.cpp)
-set_property(TARGET WriteCompilerDetectionHeader PROPERTY CXX_STANDARD 98)
+set_target_properties(WriteCompilerDetectionHeader PROPERTIES
+  CXX_STANDARD 98
+  CXX_STANDARD_REQUIRED ON
+)
 set_defines(WriteCompilerDetectionHeader "${true_defs}" "${false_defs}")
 
 add_executable(multi_files multi_files.cpp)
-set_property(TARGET multi_files PROPERTY CXX_STANDARD 98)
+set_target_properties(multi_files PROPERTIES
+  CXX_STANDARD 98
+  CXX_STANDARD_REQUIRED ON
+)
 target_include_directories(multi_files PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/compiler_multi_files)
 set_defines(multi_files "${true_defs}" "${false_defs}")
 
