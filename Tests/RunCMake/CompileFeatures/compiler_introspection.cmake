@@ -4,7 +4,8 @@ function(info lang)
   set(info "\
 set(${lang}_STANDARD_DEFAULT ${CMAKE_${lang}_STANDARD_DEFAULT})
 set(${lang}_EXTENSIONS_DEFAULT ${CMAKE_${lang}_EXTENSIONS_DEFAULT})
-set(${lang}_FEATURES ${CMAKE_${lang}_COMPILE_FEATURES})\n")
+set(${lang}_FEATURES ${CMAKE_${lang}_COMPILE_FEATURES})
+set(${lang}_EXT_FLAG ${CMAKE_${lang}_EXTENSION_COMPILE_OPTION})\n")
 
   foreach(standard ${ARGN})
     string(APPEND info "\
