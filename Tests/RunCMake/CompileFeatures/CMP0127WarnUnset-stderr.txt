@@ -1,0 +1,11 @@
+CMake Warning \(dev\) in CMakeLists\.txt:
+  Policy CMP0127 is not set: <LANG>_EXTENSIONS is initialized to
+  CMAKE_<LANG>_EXTENSIONS_DEFAULT, compiler extensions are correctly disabled
+  or enabled when standard level is unset, standard-affecting flags are not
+  added unless necessary\.  Run "cmake --help-policy CMP0127" for policy
+  details\.  Use the cmake_policy command to set the policy and suppress this
+  warning\.
+
+  For compatibility with older versions of CMake, compiler extensions won't
+  be @opposite@\.
+This warning is for project developers\.  Use -Wno-dev to suppress it\.
