@@ -80,24 +80,25 @@ struct StanardLevelComputer
       return std::string{};
     }
 
-    bool ext = true;
-    if (cmProp extPropValue = target->GetLanguageExtensions(this->Language)) {
-      if (cmIsOff(*extPropValue)) {
-        ext = false;
-      }
+    bool ext{ true };
+
+    if (cmProp const extPropValue{ target->GetLanguageExtensions(this->Language) }) {
+      ext = cmIsOff(*extPropValue);
     }
+
+    bool const defaultExt{ cmIsOn(*makefile->GetDefinition(
+      cmStrCat("CMAKE_", this->Language, "_EXTENSIONS_DEFAULT"))) };
+    std::string const type{ ext ? "EXTENSION" : "STANDARD" };
 
     cmProp standardProp = target->GetLanguageStandard(this->Language, config);
     if (!standardProp) {
-      if (ext) {
-        // No language standard is specified and extensions are not disabled.
-        // Check if this compiler needs a flag to enable extensions.
-        return cmStrCat("CMAKE_", this->Language, "_EXTENSION_COMPILE_OPTION");
+      // Add extension flag if compiler's default doesn't match.
+      if (ext != defaultExt) {
+        return cmStrCat("CMAKE_", this->Language, *defaultStd, "_", type,
+                        "_COMPILE_OPTION");
       }
       return std::string{};
     }
-
-    std::string const type = ext ? "EXTENSION" : "STANDARD";
 
     if (target->GetLanguageStandardRequired(this->Language)) {
       std::string option_flag = cmStrCat(
@@ -144,9 +145,9 @@ struct StanardLevelComputer
       return std::string{};
     }
 
-    // If the standard requested is older than the compiler's default
-    // then we need to use a flag to change it.
-    if (stdIt <= defaultStdIt) {
+    // If the standard requested is older than the compiler's default or the
+    // extension mode doesn't match then we need to use a flag.
+    if (stdIt <= defaultStdIt || ext != defaultExt) {
       auto offset = std::distance(cm::cbegin(stds), stdIt);
       return cmStrCat("CMAKE_", this->Language, stdsStrings[offset], "_", type,
                       "_COMPILE_OPTION");
