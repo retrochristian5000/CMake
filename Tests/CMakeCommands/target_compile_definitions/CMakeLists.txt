@@ -29,6 +29,7 @@ target_compile_definitions(consumer
 target_sources(consumer PRIVATE
   "${CMAKE_CURRENT_SOURCE_DIR}/consumer.c"
 )
+#set_property(TARGET consumer PROPERTY C_STANDARD 98)
 target_compile_definitions(consumer
   PRIVATE
     CONSUMER_LANG_$<COMPILE_LANGUAGE>
