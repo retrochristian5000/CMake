@@ -382,7 +382,13 @@ class cmMakefile;
          21, 0, cmPolicies::WARN)                                             \
   SELECT(POLICY, CMP0127,                                                     \
          "cmake_dependent_option() supports full Condition Syntax.", 3, 22,   \
-         0, cmPolicies::WARN)
+         0, cmPolicies::WARN)                                                 \
+  SELECT(POLICY, CMP0128,                                                     \
+         "<LANG>_EXTENSIONS is initialized to "                               \
+         "CMAKE_<LANG>_EXTENSIONS_DEFAULT, compiler extensions are "          \
+         "correctly disabled or enabled when standard level is unset, "       \
+         "standard-affecting flags are not added unless necessary.",          \
+         3, 22, 0, cmPolicies::WARN)
 
 #define CM_SELECT_ID(F, A1, A2, A3, A4, A5, A6) F(A1)
 #define CM_FOR_EACH_POLICY_ID(POLICY)                                         \
