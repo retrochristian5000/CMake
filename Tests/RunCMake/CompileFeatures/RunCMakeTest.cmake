@@ -35,6 +35,65 @@ elseif (cxx_std_98 IN_LIST CXX_FEATURES AND cxx_std_11 IN_LIST CXX_FEATURES)
   unset(RunCMake_TEST_OPTIONS)
 endif()
 
+configure_file("${RunCMake_SOURCE_DIR}/CMakeLists.txt" "${RunCMake_BINARY_DIR}/CMakeLists.txt" COPYONLY)
+
+macro(test_build_verbose)
+  set(RunCMake_SOURCE_DIR "${RunCMake_BINARY_DIR}")
+  set(RunCMake_TEST_BINARY_DIR "${RunCMake_BINARY_DIR}/${test}-build")
+  run_cmake(${test})
+  set(RunCMake_TEST_NO_CLEAN 1)
+  run_cmake_command(${test}-build ${CMAKE_COMMAND} --build . --verbose)
+endmacro()
+
+function(test_unset_extensions lang ext)
+  if(CMake_NO_${lang}_STANDARD)
+    return()
+  endif()
+
+  set(extensions_default "${${lang}_EXTENSIONS_DEFAULT}")
+
+  if(extensions_default)
+    set(extensions OFF)
+  else()
+    set(extensions ON)
+    set(flag_ext "_EXT")
+  endif()
+
+  set(flag "${${lang}${${lang}_STANDARD_DEFAULT}${flag_ext}_FLAG}")
+
+  set(name UnsetExtensions)
+  set(test ${name}-${lang})
+  configure_file("${RunCMake_SOURCE_DIR}/${name}.cmake" "${RunCMake_BINARY_DIR}/${test}.cmake" @ONLY)
+  configure_file("${RunCMake_SOURCE_DIR}/${name}-build-check.cmake" "${RunCMake_BINARY_DIR}/${test}-build-check.cmake" @ONLY)
+  test_build_verbose()
+endfunction()
+
+function(test_no_unnecessary_flag lang ext)
+  if(CMake_NO_${lang}_STANDARD)
+    return()
+  endif()
+
+  set(standard_flag "${${lang}${${lang}_STANDARD_DEFAULT}_FLAG}")
+  set(extension_flag "${${lang}${${lang}_STANDARD_DEFAULT}_EXT_FLAG}")
+
+  if(NOT standard_flag AND NOT extension_flag)
+    return()
+  endif()
+
+  set(name NoUnnecessaryFlag)
+  set(test ${name}-${lang})
+  set(standard_default "${${lang}_STANDARD_DEFAULT}")
+  set(extensions_default "${${lang}_EXTENSIONS_DEFAULT}")
+  configure_file("${RunCMake_SOURCE_DIR}/${name}.cmake" "${RunCMake_BINARY_DIR}/${test}.cmake" @ONLY)
+  configure_file("${RunCMake_SOURCE_DIR}/${name}-build-check.cmake" "${RunCMake_BINARY_DIR}/${test}-build-check.cmake" @ONLY)
+  test_build_verbose()
+endfunction()
+
+if(C_STANDARD_DEFAULT)
+  test_unset_extensions(C c)
+  test_no_unnecessary_flag(C c)
+endif()
+
 if(CXX_STANDARD_DEFAULT)
   run_cmake(NotAStandard)
 
@@ -48,4 +107,7 @@ if(CXX_STANDARD_DEFAULT)
       run_cmake(RequireCXX${standard}ExtVariable)
     endif()
   endforeach()
+
+  test_unset_extensions(CXX cpp)
+  test_no_unnecessary_flag(CXX cpp)
 endif()
