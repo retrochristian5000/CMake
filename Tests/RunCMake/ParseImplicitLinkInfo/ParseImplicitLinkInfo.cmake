@@ -23,6 +23,9 @@ set(targets
   hand-C-empty hand-CXX-empty
   hand-C-relative hand-CXX-relative
   linux-C-GNU-7.3.0 linux-CXX-GNU-7.3.0 linux-Fortran-GNU-7.3.0
+  linux-C-GNU-10.2.1-static-libgcc
+    linux-CXX-GNU-10.2.1-static-libstdc++
+    linux-Fortran-GNU-10.2.1-static-libgfortran
   linux-C-Intel-18.0.0.20170811 linux-CXX-Intel-18.0.0.20170811
   linux-C-PGI-18.10.1 linux-CXX-PGI-18.10.1
     linux-Fortran-PGI-18.10.1 linux_pgf77-Fortran-PGI-18.10.1
@@ -67,7 +70,7 @@ function(load_compiler_info infile lang_var outcmvars_var outstr_var)
   string(REGEX REPLACE "\r?\n" ";" in_lines "${in}")
   foreach(line IN LISTS in_lines)
     # check for special CMAKE variable lines and parse them if found
-    if("${line}" MATCHES "^CMAKE_([_A-Za-z0-9]+)=(.*)$")
+    if("${line}" MATCHES "^CMAKE_([_A-Za-z0-9+]+)=(.*)$")
       if("${CMAKE_MATCH_1}" STREQUAL "LANG")   # handle CMAKE_LANG here
         set(lang "${CMAKE_MATCH_2}")
       else()
