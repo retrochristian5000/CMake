@@ -77,21 +77,25 @@ set_property(
   PROPERTY SYMBOLIC 1
   )
 
-# Install the imported targets.
-add_custom_command(
-  OUTPUT ${ExportImport_BINARY_DIR}/ImportInstall
-  COMMAND ${CMAKE_COMMAND} -E rm -rf ${ExportImport_BINARY_DIR}/Import/install
-  COMMAND ${CMAKE_COMMAND}
-    --install ${ExportImport_BINARY_DIR}/Import
-    --prefix ${ExportImport_BINARY_DIR}/Import/install
-    ${NESTED_CONFIG_INSTALL_TYPE}
-  )
-add_custom_target(ImportInstallTarget ALL DEPENDS ${ExportImport_BINARY_DIR}/ImportInstall)
+# Run the install tests.
+set(install_deps)
+foreach(name IMPORTED_RUNTIME_ARTIFACTS RUNTIME_DEPENDENCIES RUNTIME_DEPENDENCY_SET)
+  add_custom_command(
+    OUTPUT ${ExportImport_BINARY_DIR}/ImportInstall-${name}
+    COMMAND ${CMAKE_COMMAND} -E rm -rf ${ExportImport_BINARY_DIR}/Import/install-${name}/install
+    COMMAND ${CMAKE_COMMAND}
+      --install ${ExportImport_BINARY_DIR}/Import/install-${name}
+      --prefix ${ExportImport_BINARY_DIR}/Import/install-${name}/install
+      ${NESTED_CONFIG_INSTALL_TYPE}
+    )
+  list(APPEND install_deps ${ExportImport_BINARY_DIR}/ImportInstall-${name})
+  set_property(
+    SOURCE ${ExportImport_BINARY_DIR}/ImportInstall-${name}
+    PROPERTY SYMBOLIC 1
+    )
+endforeach()
+add_custom_target(ImportInstallTarget ALL DEPENDS ${install_deps})
 add_dependencies(ImportInstallTarget ImportTarget)
-set_property(
-  SOURCE ${ExportImport_BINARY_DIR}/ImportInstall
-  PROPERTY SYMBOLIC 1
-  )
 
 add_executable(ExportImport main.c)
 add_dependencies(ExportImport ImportTarget)
