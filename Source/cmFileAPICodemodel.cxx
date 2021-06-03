@@ -878,6 +878,7 @@ Json::Value DirectoryObject::DumpInstallers()
 
 Json::Value DirectoryObject::DumpInstaller(cmInstallGenerator* gen)
 {
+  assert(gen);
   Json::Value installer = Json::objectValue;
 
   // Exclude subdirectory installers and file(GET_RUNTIME_DEPENDENCIES)
