@@ -3521,8 +3521,6 @@ void cmVisualStudio10TargetGenerator::WriteNasmOptions(
   }
   Elem e2(e1, "NASM");
 
-  std::vector<std::string> includes =
-    this->GetIncludes(configName, "ASM_NASM");
   OptionsHelper nasmOptions(*(this->NasmOptions[configName]), e2);
   nasmOptions.OutputAdditionalIncludeDirectories("ASM_NASM");
   nasmOptions.OutputFlagMap();
