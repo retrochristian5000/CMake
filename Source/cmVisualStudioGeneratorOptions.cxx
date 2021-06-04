@@ -474,6 +474,27 @@ void cmVisualStudioGeneratorOptions::OutputPreprocessorDefinitions(
   this->OutputFlag(fout, indent, tag, oss.str());
 }
 
+std::string cmVisualStudioGeneratorOptions::PrepareIncludeDirectory(std::string include, const std::string& lang)
+{
+  // first convert all of the slashes
+  std::string::size_type pos = 0;
+  while ((pos = include.find('/', pos)) != std::string::npos) {
+    include[pos] = '\\';
+    pos++;
+  }
+
+  if (lang == "ASM_NASM") {
+    include += "\\";
+  }
+
+  // Escape this include for the MSBuild.
+  if (this->Version >= cmGlobalVisualStudioGenerator::VS10) {
+    cmVS10EscapeForMSBuild(include);
+  }
+
+  return include;
+}
+
 void cmVisualStudioGeneratorOptions::OutputAdditionalIncludeDirectories(
   std::ostream& fout, int indent, const std::string& lang)
 {
@@ -491,21 +512,8 @@ void cmVisualStudioGeneratorOptions::OutputAdditionalIncludeDirectories(
   std::ostringstream oss;
   const char* sep = "";
   for (std::string include : this->Includes) {
-    // first convert all of the slashes
-    std::string::size_type pos = 0;
-    while ((pos = include.find('/', pos)) != std::string::npos) {
-      include[pos] = '\\';
-      pos++;
-    }
+    include = this->PrepareIncludeDirectory(include, lang);
 
-    if (lang == "ASM_NASM") {
-      include += "\\";
-    }
-
-    // Escape this include for the MSBuild.
-    if (this->Version >= cmGlobalVisualStudioGenerator::VS10) {
-      cmVS10EscapeForMSBuild(include);
-    }
     oss << sep << include;
     sep = ";";
 
@@ -547,21 +555,8 @@ void cmVisualStudioGeneratorOptions::HandleSystemIncludeDirectories(
   std::ostringstream oss;
   const char* sep = "";
   for (std::string include : this->SystemIncludes) {
-    // first convert all of the slashes
-    std::string::size_type pos = 0;
-    while ((pos = include.find('/', pos)) != std::string::npos) {
-      include[pos] = '\\';
-      pos++;
-    }
+    include = this->PrepareIncludeDirectory(include, lang);
 
-    if (lang == "ASM_NASM") {
-      include += "\\";
-    }
-
-    // Escape this include for the MSBuild.
-    if (this->Version >= cmGlobalVisualStudioGenerator::VS10) {
-      cmVS10EscapeForMSBuild(include);
-    }
     oss << sep << *sysIncludeFlagWarning << include;
     sep = " ";
 

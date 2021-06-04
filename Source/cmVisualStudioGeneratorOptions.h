@@ -105,6 +105,8 @@ private:
 
   std::string UnknownFlagField;
 
+  std::string PrepareIncludeDirectory(std::string include, const std::string& lang);
+
   void StoreUnknownFlag(std::string const& flag) override;
 
   FlagValue TakeFlag(std::string const& key);
