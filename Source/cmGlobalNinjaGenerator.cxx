@@ -2205,7 +2205,6 @@ int cmcmd_cmake_ninja_depends(std::vector<std::string>::const_iterator argBeg,
                               std::vector<std::string>::const_iterator argEnd)
 {
   std::string arg_tdi;
-  std::string arg_src;
   std::string arg_pp;
   std::string arg_dep;
   std::string arg_obj;
@@ -2214,8 +2213,6 @@ int cmcmd_cmake_ninja_depends(std::vector<std::string>::const_iterator argBeg,
   for (std::string const& arg : cmMakeRange(argBeg, argEnd)) {
     if (cmHasLiteralPrefix(arg, "--tdi=")) {
       arg_tdi = arg.substr(6);
-    } else if (cmHasLiteralPrefix(arg, "--src=")) {
-      arg_src = arg.substr(6);
     } else if (cmHasLiteralPrefix(arg, "--pp=")) {
       arg_pp = arg.substr(5);
     } else if (cmHasLiteralPrefix(arg, "--dep=")) {
@@ -2256,9 +2253,6 @@ int cmcmd_cmake_ninja_depends(std::vector<std::string>::const_iterator argBeg,
     cmSystemTools::Error("-E cmake_ninja_depends requires value for --lang=");
     return 1;
   }
-  if (arg_src.empty()) {
-    arg_src = cmStrCat("<", arg_obj, " input file>");
-  }
 
   std::unique_ptr<cmSourceInfo> info;
   if (arg_lang == "Fortran") {
@@ -2277,16 +2271,7 @@ int cmcmd_cmake_ninja_depends(std::vector<std::string>::const_iterator argBeg,
 
   info->PrimaryOutput = arg_obj;
 
-  {
-    cmGeneratedFileStream depfile(arg_dep);
-    depfile << cmSystemTools::ConvertToUnixOutputPath(arg_pp) << ":";
-    for (std::string const& include : info->Includes) {
-      depfile << " \\\n " << cmSystemTools::ConvertToUnixOutputPath(include);
-    }
-    depfile << "\n";
-  }
-
-  if (!cmScanDepFormat_P1689_Write(arg_ddi, arg_src, *info)) {
+  if (!cmScanDepFormat_P1689_Write(arg_ddi, *info)) {
     cmSystemTools::Error(
       cmStrCat("-E cmake_ninja_depends failed to write ", arg_ddi));
     return 1;
@@ -2360,9 +2345,7 @@ std::unique_ptr<cmSourceInfo> cmcmd_cmake_ninja_depends_fortran(
     src_info.CompiledModulePath = require;
     info->Requires.emplace_back(src_info);
   }
-  for (std::string const& include : finfo.Includes) {
-    info->Includes.push_back(include);
-  }
+  // TODO: Write out the depfile for this scan
   return info;
 }
 
