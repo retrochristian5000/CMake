@@ -78,6 +78,27 @@ void WriteDepfile(cmDepfileFormat format, cmsys::ofstream& fout,
     }
   }
 }
+
+void WriteMSBuildAdditionalInputs(cmsys::ofstream& fout,
+                                  cmLocalGenerator const& lg,
+                                  cmGccDepfileContent const& content)
+{
+  if (content.empty()) {
+    return;
+  }
+  static const char utf8bom[] = { char(0xEF), char(0xBB), char(0xBF) };
+  fout.write(utf8bom, sizeof(utf8bom));
+  const char* sep = "";
+  for (std::string path : content.front().paths) {
+    if (!cmSystemTools::FileIsFullPath(path)) {
+      path =
+        cmSystemTools::CollapseFullPath(path, lg.GetCurrentBinaryDirectory());
+    }
+    std::replace(path.begin(), path.end(), '/', '\\');
+    fout << sep << path;
+    sep = ";";
+  }
+}
 }
 
 bool cmTransformDepfile(cmDepfileFormat format, const cmLocalGenerator& lg,
@@ -102,6 +123,9 @@ bool cmTransformDepfile(cmDepfileFormat format, const cmLocalGenerator& lg,
     case cmDepfileFormat::GccDepfile:
     case cmDepfileFormat::MakeDepfile:
       WriteDepfile(format, fout, lg, content);
+      break;
+    case cmDepfileFormat::MSBuildAdditionalInputs:
+      WriteMSBuildAdditionalInputs(fout, lg, content);
       break;
   }
   return true;
