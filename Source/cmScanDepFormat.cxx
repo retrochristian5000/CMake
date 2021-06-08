@@ -3,8 +3,12 @@
 
 #include "cmScanDepFormat.h"
 
+#include <cassert>
 #include <cctype>
 #include <cstdio>
+
+#include <cm/optional>
+#include <cmext/string_view>
 
 #include <cm3p/json/reader.h>
 #include <cm3p/json/value.h>
@@ -69,8 +73,9 @@ static Json::Value EncodeFilename(std::string const& path)
       return false;                                                           \
     }                                                                         \
                                                                               \
-    if (!work_directory.empty() && !cmSystemTools::FileIsFullPath(res)) {     \
-      res = cmStrCat(work_directory, '/', res);                               \
+    if (work_directory && !work_directory->empty() &&                         \
+        !cmSystemTools::FileIsFullPath(res)) {                                \
+      res = cmStrCat(*work_directory, '/', res);                              \
     }                                                                         \
   } while (0)
 
@@ -105,10 +110,10 @@ bool cmScanDepFormat_P1689_Parse(std::string const& arg_pp, cmSourceInfo* info)
     }
 
     for (auto const& rule : rules) {
-      std::string work_directory;
+      cm::optional<std::string> work_directory;
       Json::Value const& workdir = rule["work-directory"];
       if (workdir.isString()) {
-        PARSE_BLOB(workdir, work_directory);
+        PARSE_BLOB(workdir, *work_directory);
       } else if (!workdir.isNull()) {
         cmSystemTools::Error(cmStrCat("-E cmake_ninja_dyndep failed to parse ",
                                       arg_pp,
@@ -116,75 +121,153 @@ bool cmScanDepFormat_P1689_Parse(std::string const& arg_pp, cmSourceInfo* info)
         return false;
       }
 
-      Json::Value const& depends = rule["depends"];
-      if (depends.isArray()) {
-        std::string depend_filename;
-        for (auto const& depend : depends) {
-          PARSE_FILENAME(depend, depend_filename);
-          info->Includes.push_back(depend_filename);
+      if (rule.isMember("primary-output")) {
+        Json::Value const& primary_output = rule["primary-output"];
+        PARSE_FILENAME(primary_output, info->PrimaryOutput);
+      }
+
+      if (rule.isMember("outputs")) {
+        Json::Value const& outputs = rule["outputs"];
+        if (outputs.isArray()) {
+          for (auto const& output : outputs) {
+            std::string extra_output;
+            PARSE_FILENAME(output, extra_output);
+
+            info->ExtraOutputs.emplace_back(extra_output);
+          }
         }
       }
 
-      if (rule.isMember("future-compile")) {
-        Json::Value const& future_compile = rule["future-compile"];
+      if (rule.isMember("provides")) {
+        Json::Value const& provides = rule["provides"];
+        if (!provides.isArray()) {
+          cmSystemTools::Error(cmStrCat("-E cmake_ninja_dyndep failed to parse ",
+                                        arg_pp,
+                                        ": provides is not an array"));
+          return false;
+        }
 
-        if (future_compile.isMember("outputs")) {
-          Json::Value const& outputs = future_compile["outputs"];
-          if (outputs.isArray()) {
-            if (outputs.empty()) {
-              cmSystemTools::Error(
-                cmStrCat("-E cmake_ninja_dyndep failed to parse ", arg_pp,
-                         ": expected at least one 1 output"));
+        for (auto const& provide : provides) {
+          cmSourceReqInfo provide_info;
+
+          Json::Value const& logical_name = provide["logical-name"];
+          PARSE_BLOB(logical_name, provide_info.LogicalName);
+
+          if (provide.isMember("compiled-module-path")) {
+            Json::Value const& compiled_module_path =
+              provide["compiled-module-path"];
+            PARSE_FILENAME(compiled_module_path,
+                            provide_info.CompiledModulePath);
+          } else {
+            provide_info.CompiledModulePath =
+              cmStrCat(provide_info.LogicalName, ".mod");
+          }
+
+          if (provide.isMember("unique-on-source-path")) {
+            Json::Value const& unique_on_source_path =
+              provide["unique-on-source-path"];
+            if (!unique_on_source_path.isBool()) {
+              cmSystemTools::Error(cmStrCat("-E cmake_ninja_dyndep failed to parse ",
+                                            arg_pp,
+                                            ": unique-on-source-path is not a boolean"));
+              return false;
+            }
+            provide_info.UseSourcePath = unique_on_source_path.asBool();
+          } else {
+            provide_info.UseSourcePath = false;
+          }
+
+          if (provide.isMember("source-path")) {
+            Json::Value const& source_path =
+              provide["source-path"];
+            PARSE_FILENAME(source_path, provide_info.SourcePath);
+          } else if (provide_info.UseSourcePath) {
+            cmSystemTools::Error(cmStrCat("-E cmake_ninja_dyndep failed to parse ",
+                                          arg_pp,
+                                          ": source-path is missing"));
+            return false;
+          }
+
+          info->Provides.push_back(provide_info);
+        }
+      }
+
+      if (rule.isMember("requires")) {
+        Json::Value const& reqs = rule["requires"];
+        if (!reqs.isArray()) {
+          cmSystemTools::Error(cmStrCat("-E cmake_ninja_dyndep failed to parse ",
+                                        arg_pp,
+                                        ": requires is not an array"));
+          return false;
+        }
+
+        for (auto const& require : reqs) {
+          cmSourceReqInfo require_info;
+
+          Json::Value const& logical_name = require["logical-name"];
+          PARSE_BLOB(logical_name, require_info.LogicalName);
+
+          if (require.isMember("compiled-module-path")) {
+            Json::Value const& compiled_module_path =
+              require["compiled-module-path"];
+            PARSE_FILENAME(compiled_module_path,
+                            require_info.CompiledModulePath);
+          }
+
+          if (require.isMember("unique-on-source-path")) {
+            Json::Value const& unique_on_source_path =
+              require["unique-on-source-path"];
+            if (!unique_on_source_path.isBool()) {
+              cmSystemTools::Error(cmStrCat("-E cmake_ninja_dyndep failed to parse ",
+                                            arg_pp,
+                                            ": unique-on-source-path is not a boolean"));
+              return false;
+            }
+            require_info.UseSourcePath = unique_on_source_path.asBool();
+          } else {
+            require_info.UseSourcePath = false;
+          }
+
+          if (require.isMember("source-path")) {
+            Json::Value const& source_path =
+              require["source-path"];
+            PARSE_FILENAME(source_path, require_info.SourcePath);
+          } else if (require_info.UseSourcePath) {
+            cmSystemTools::Error(cmStrCat("-E cmake_ninja_dyndep failed to parse ",
+                                          arg_pp,
+                                          ": source-path is missing"));
+            return false;
+          }
+
+          if (require.isMember("lookup-method")) {
+            Json::Value const& lookup_method =
+              require["lookup-method"];
+            if (!lookup_method.isString()) {
+              cmSystemTools::Error(cmStrCat("-E cmake_ninja_dyndep failed to parse ",
+                                            arg_pp,
+                                            ": lookup-method is not a string"));
               return false;
             }
 
-            PARSE_FILENAME(outputs[0], info->PrimaryOutput);
-          }
-        }
-
-        if (future_compile.isMember("provides")) {
-          Json::Value const& provides = future_compile["provides"];
-          if (provides.isArray()) {
-            for (auto const& provide : provides) {
-              cmSourceReqInfo provide_info;
-
-              Json::Value const& logical_name = provide["logical-name"];
-              PARSE_BLOB(logical_name, provide_info.LogicalName);
-
-              if (provide.isMember("compiled-module-path")) {
-                Json::Value const& compiled_module_path =
-                  provide["compiled-module-path"];
-                PARSE_FILENAME(compiled_module_path,
-                               provide_info.CompiledModulePath);
-              } else {
-                provide_info.CompiledModulePath =
-                  cmStrCat(provide_info.LogicalName, ".mod");
-              }
-
-              info->Provides.push_back(provide_info);
+            std::string lookup_method_str = lookup_method.asString();
+            if (lookup_method_str == "by-name"_s) {
+              require_info.Method = LookupMethod::ByName;
+            } else if (lookup_method_str == "include-angle"_s) {
+              require_info.Method = LookupMethod::IncludeAngle;
+            } else if (lookup_method_str == "include-quote"_s) {
+              require_info.Method = LookupMethod::IncludeQuote;
+            } else {
+              cmSystemTools::Error(cmStrCat("-E cmake_ninja_dyndep failed to parse ",
+                                            arg_pp,
+                                            ": lookup-method is not a valid: ",
+                                            lookup_method_str));
+              return false;
             }
+          } else if (require_info.UseSourcePath) {
+            require_info.Method = LookupMethod::ByName;
           }
-        }
 
-        if (future_compile.isMember("requires")) {
-          Json::Value const& reqs = future_compile["requires"];
-          if (reqs.isArray()) {
-            for (auto const& require : reqs) {
-              cmSourceReqInfo require_info;
-
-              Json::Value const& logical_name = require["logical-name"];
-              PARSE_BLOB(logical_name, require_info.LogicalName);
-
-              if (require.isMember("compiled-module-path")) {
-                Json::Value const& compiled_module_path =
-                  require["compiled-module-path"];
-                PARSE_FILENAME(compiled_module_path,
-                               require_info.CompiledModulePath);
-              }
-
-              info->Requires.push_back(require_info);
-            }
-          }
+          info->Requires.push_back(require_info);
         }
       }
     }
@@ -194,7 +277,6 @@ bool cmScanDepFormat_P1689_Parse(std::string const& arg_pp, cmSourceInfo* info)
 }
 
 bool cmScanDepFormat_P1689_Write(std::string const& path,
-                                 std::string const& input,
                                  cmSourceInfo const& info)
 {
   Json::Value ddi(Json::objectValue);
@@ -204,23 +286,15 @@ bool cmScanDepFormat_P1689_Write(std::string const& path,
   Json::Value& rules = ddi["rules"] = Json::arrayValue;
 
   Json::Value rule(Json::objectValue);
-  Json::Value& inputs = rule["inputs"] = Json::arrayValue;
-  inputs.append(EncodeFilename(input));
+
+  rule["primary-output"] = EncodeFilename(info.PrimaryOutput);
 
   Json::Value& rule_outputs = rule["outputs"] = Json::arrayValue;
-  rule_outputs.append(EncodeFilename(path));
-
-  Json::Value& depends = rule["depends"] = Json::arrayValue;
-  for (auto const& include : info.Includes) {
-    depends.append(EncodeFilename(include));
+  for (auto const& output : info.ExtraOutputs) {
+    rule_outputs.append(EncodeFilename(output));
   }
 
-  Json::Value& future_compile = rule["future-compile"] = Json::objectValue;
-
-  Json::Value& outputs = future_compile["outputs"] = Json::arrayValue;
-  outputs.append(info.PrimaryOutput);
-
-  Json::Value& provides = future_compile["provides"] = Json::arrayValue;
+  Json::Value& provides = rule["provides"] = Json::arrayValue;
   for (auto const& provide : info.Provides) {
     Json::Value provide_obj(Json::objectValue);
     auto const encoded = EncodeFilename(provide.LogicalName);
@@ -232,12 +306,17 @@ bool cmScanDepFormat_P1689_Write(std::string const& path,
         EncodeFilename(provide.CompiledModulePath);
     }
 
-    // TODO: Source file tracking. See below.
+    if (provide.UseSourcePath) {
+      provide_obj["unique-on-source-path"] = true;
+      provide_obj["source-path"] = EncodeFilename(provide.SourcePath);
+    } else if (!provide.SourcePath.empty()) {
+      provide_obj["source-path"] = EncodeFilename(provide.SourcePath);
+    }
 
     provides.append(provide_obj);
   }
 
-  Json::Value& reqs = future_compile["requires"] = Json::arrayValue;
+  Json::Value& reqs = rule["requires"] = Json::arrayValue;
   for (auto const& require : info.Requires) {
     Json::Value require_obj(Json::objectValue);
     auto const encoded = EncodeFilename(require.LogicalName);
@@ -249,8 +328,27 @@ bool cmScanDepFormat_P1689_Write(std::string const& path,
         EncodeFilename(require.CompiledModulePath);
     }
 
-    // TODO: Source filename inclusion. Requires collating with the provides
-    // filenames (as a sanity check if available on both sides).
+    if (require.UseSourcePath) {
+      require_obj["unique-on-source-path"] = true;
+      require_obj["source-path"] = EncodeFilename(require.SourcePath);
+    } else if (!require.SourcePath.empty()) {
+      require_obj["source-path"] = EncodeFilename(require.SourcePath);
+    }
+
+    const char* lookup_method = nullptr;
+    switch (require.Method) {
+      case LookupMethod::ByName:
+        lookup_method = "by-name";
+        break;
+      case LookupMethod::IncludeAngle:
+        lookup_method = "include-angle";
+        break;
+      case LookupMethod::IncludeQuote:
+        lookup_method = "include-quote";
+        break;
+    }
+    assert(lookup_method);
+    require_obj["lookup-method"] = lookup_method;
 
     reqs.append(require_obj);
   }
