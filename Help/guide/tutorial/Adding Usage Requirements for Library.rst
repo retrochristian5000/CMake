@@ -11,7 +11,7 @@ requirements are:
   - :command:`target_include_directories`
   - :command:`target_link_libraries`
 
-Let's refactor our code from `Adding a Library (Step 2)`_ to use the modern
+Let's refactor our code from :guide:`Adding a Library (Step 2)` to use the modern
 CMake approach of usage requirements. We first state that anybody linking to
 MathFunctions needs to include the current source directory, while
 MathFunctions itself doesn't. So this can become an ``INTERFACE`` usage
