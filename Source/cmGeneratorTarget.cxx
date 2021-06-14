@@ -4822,9 +4822,15 @@ bool cmGeneratorTarget::ComputeCompileFeatures(
         generatorTargetLanguageStandard = &this->LanguageStandardMap[key];
       } else {
         cmProp defaultStandard = this->Makefile->GetDefinition(
+          cmStrCat("CMAKE_", language.first, "_STANDARD_DEFAULT"));
+        cmProp defaultPairedStandard = this->Makefile->GetDefinition(
           cmStrCat("CMAKE_", language.second, "_STANDARD_DEFAULT"));
         if (defaultStandard) {
           this->LanguageStandardMap[key] = BTs<std::string>(*defaultStandard);
+          generatorTargetLanguageStandard = &this->LanguageStandardMap[key];
+        } else if (defaultPairedStandard) {
+          this->LanguageStandardMap[key] =
+            BTs<std::string>(*defaultPairedStandard);
           generatorTargetLanguageStandard = &this->LanguageStandardMap[key];
         }
       }
