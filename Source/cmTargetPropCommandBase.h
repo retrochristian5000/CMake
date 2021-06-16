@@ -37,7 +37,7 @@ protected:
   cmTarget* Target = nullptr;
   cmMakefile* Makefile;
 
-  virtual void HandleInterfaceContent(cmTarget* tgt,
+  virtual bool HandleInterfaceContent(cmTarget* tgt,
                                       const std::vector<std::string>& content,
                                       bool prepend, bool system);
 
@@ -52,9 +52,9 @@ private:
 
   bool ProcessContentArgs(std::vector<std::string> const& args,
                           unsigned int& argIndex, bool prepend, bool system);
-  bool PopulateTargetProperies(const std::string& scope,
-                               const std::vector<std::string>& content,
-                               bool prepend, bool system);
+  virtual bool PopulateTargetProperies(const std::string& scope,
+                                       const std::vector<std::string>& content,
+                                       bool prepend, bool system);
 
   cmExecutionStatus& Status;
 };

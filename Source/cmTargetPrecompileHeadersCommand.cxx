@@ -52,12 +52,12 @@ private:
     return true;
   }
 
-  void HandleInterfaceContent(cmTarget* tgt,
+  bool HandleInterfaceContent(cmTarget* tgt,
                               const std::vector<std::string>& content,
                               bool prepend, bool system) override
   {
     std::string const& base = this->Makefile->GetCurrentSourceDirectory();
-    this->cmTargetPropCommandBase::HandleInterfaceContent(
+    return this->cmTargetPropCommandBase::HandleInterfaceContent(
       tgt, ConvertToAbsoluteContent(content, base), prepend, system);
   }
 

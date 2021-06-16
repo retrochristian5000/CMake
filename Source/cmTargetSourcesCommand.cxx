@@ -21,11 +21,11 @@ public:
   using cmTargetPropCommandBase::cmTargetPropCommandBase;
 
 protected:
-  void HandleInterfaceContent(cmTarget* tgt,
+  bool HandleInterfaceContent(cmTarget* tgt,
                               const std::vector<std::string>& content,
                               bool prepend, bool system) override
   {
-    this->cmTargetPropCommandBase::HandleInterfaceContent(
+    return this->cmTargetPropCommandBase::HandleInterfaceContent(
       tgt, this->ConvertToAbsoluteContent(tgt, content, true), prepend,
       system);
   }
