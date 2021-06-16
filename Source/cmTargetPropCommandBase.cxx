@@ -171,12 +171,15 @@ bool cmTargetPropCommandBase::PopulateTargetProperies(
     }
   }
   if (scope == "INTERFACE" || scope == "PUBLIC") {
-    this->HandleInterfaceContent(this->Target, content, prepend, system);
+    if (!this->HandleInterfaceContent(this->Target, content, prepend,
+                                      system)) {
+      return false;
+    }
   }
   return true;
 }
 
-void cmTargetPropCommandBase::HandleInterfaceContent(
+bool cmTargetPropCommandBase::HandleInterfaceContent(
   cmTarget* tgt, const std::vector<std::string>& content, bool prepend, bool)
 {
   if (prepend) {
@@ -188,4 +191,5 @@ void cmTargetPropCommandBase::HandleInterfaceContent(
   } else {
     tgt->AppendProperty("INTERFACE_" + this->Property, this->Join(content));
   }
+  return true;
 }

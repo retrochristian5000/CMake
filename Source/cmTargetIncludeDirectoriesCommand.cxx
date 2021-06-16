@@ -33,7 +33,7 @@ private:
                            const std::vector<std::string>& content,
                            bool prepend, bool system) override;
 
-  void HandleInterfaceContent(cmTarget* tgt,
+  bool HandleInterfaceContent(cmTarget* tgt,
                               const std::vector<std::string>& content,
                               bool prepend, bool system) override;
 
@@ -80,7 +80,7 @@ bool TargetIncludeDirectoriesImpl::HandleDirectContent(
   return true; // Successfully handled.
 }
 
-void TargetIncludeDirectoriesImpl::HandleInterfaceContent(
+bool TargetIncludeDirectoriesImpl::HandleInterfaceContent(
   cmTarget* tgt, const std::vector<std::string>& content, bool prepend,
   bool system)
 {
@@ -90,6 +90,7 @@ void TargetIncludeDirectoriesImpl::HandleInterfaceContent(
     std::string joined = this->Join(content);
     tgt->AppendProperty("INTERFACE_SYSTEM_INCLUDE_DIRECTORIES", joined);
   }
+  return true;
 }
 
 } // namespace

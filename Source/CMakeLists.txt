@@ -674,6 +674,8 @@ set(SRCS
   cmTargetCompileFeaturesCommand.h
   cmTargetCompileOptionsCommand.cxx
   cmTargetCompileOptionsCommand.h
+  cmTargetHeadersCommand.cxx
+  cmTargetHeadersCommand.h
   cmTargetIncludeDirectoriesCommand.cxx
   cmTargetIncludeDirectoriesCommand.h
   cmTargetLinkOptionsCommand.cxx

@@ -77,6 +77,7 @@
 #include "cmTargetCompileDefinitionsCommand.h"
 #include "cmTargetCompileFeaturesCommand.h"
 #include "cmTargetCompileOptionsCommand.h"
+#include "cmTargetHeadersCommand.h"
 #include "cmTargetIncludeDirectoriesCommand.h"
 #include "cmTargetLinkLibrariesCommand.h"
 #include "cmTargetLinkOptionsCommand.h"
@@ -258,6 +259,7 @@ void GetProjectCommands(cmState* state)
                            cmTargetCompileFeaturesCommand);
   state->AddBuiltinCommand("target_compile_options",
                            cmTargetCompileOptionsCommand);
+  state->AddBuiltinCommand("target_headers", cmTargetHeadersCommand);
   state->AddBuiltinCommand("target_include_directories",
                            cmTargetIncludeDirectoriesCommand);
   state->AddBuiltinCommand("target_link_libraries",
@@ -355,6 +357,7 @@ void GetProjectCommandsInScriptMode(cmState* state)
   CM_UNEXPECTED_PROJECT_COMMAND("target_compile_definitions");
   CM_UNEXPECTED_PROJECT_COMMAND("target_compile_features");
   CM_UNEXPECTED_PROJECT_COMMAND("target_compile_options");
+  CM_UNEXPECTED_PROJECT_COMMAND("target_headers");
   CM_UNEXPECTED_PROJECT_COMMAND("target_include_directories");
   CM_UNEXPECTED_PROJECT_COMMAND("target_link_libraries");
   CM_UNEXPECTED_PROJECT_COMMAND("target_sources");
