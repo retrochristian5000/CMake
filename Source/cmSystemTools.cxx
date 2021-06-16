@@ -1592,7 +1592,8 @@ void cmSystemTools::EnableVSConsoleOutput()
 bool cmSystemTools::IsPathToFramework(const std::string& path)
 {
   return (cmSystemTools::FileIsFullPath(path) &&
-          cmHasLiteralSuffix(path, ".framework"));
+          (cmHasLiteralSuffix(path, ".framework") ||
+           cmHasLiteralSuffix(path, ".xcframework")));
 }
 
 bool cmSystemTools::CreateTar(const std::string& outFileName,

@@ -1329,7 +1329,8 @@ void cmComputeLinkInformation::AddFrameworkItem(std::string const& item)
 
   std::string fw_path = this->SplitFramework.match(1);
   std::string fw = this->SplitFramework.match(2);
-  std::string full_fw = cmStrCat(fw_path, '/', fw, ".framework/", fw);
+  std::string fw_ext = this->SplitFramework.match(3);
+  std::string full_fw = cmStrCat(fw_path, '/', fw, '.', fw_ext, '/', fw);
 
   // Add the directory portion to the framework search path.
   this->AddFrameworkPath(fw_path);
@@ -1380,7 +1381,7 @@ void cmComputeLinkInformation::ComputeFrameworkInfo()
                                      implicitDirVec.end());
 
   // Regular expression to extract a framework path and name.
-  this->SplitFramework.compile("(.*)/(.*)\\.framework$");
+  this->SplitFramework.compile("(.*)/(.*)\\.(xcframework|framework)$");
 }
 
 void cmComputeLinkInformation::AddFrameworkPath(std::string const& p)

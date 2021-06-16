@@ -1051,12 +1051,14 @@ bool IsLinkPhaseLibraryExtension(const std::string& fileExt)
 {
   // Empty file extension is a special case for paths to framework's
   // internal binary which could be MyFw.framework/Versions/*/MyFw
-  return (fileExt == ".framework" || fileExt == ".a" || fileExt == ".o" ||
-          fileExt == ".dylib" || fileExt == ".tbd" || fileExt.empty());
+  return (fileExt == ".framework" || fileExt == ".xcframework" ||
+          fileExt == ".a" || fileExt == ".o" || fileExt == ".dylib" ||
+          fileExt == ".tbd" || fileExt.empty());
 }
 bool IsLibraryType(const std::string& fileType)
 {
-  return (fileType == "wrapper.framework" || fileType == "archive.ar" ||
+  return (fileType == "wrapper.framework" ||
+          fileType == "wrapper.xcframework" || fileType == "archive.ar" ||
           fileType == "compiled.mach-o.objfile" ||
           fileType == "compiled.mach-o.dylib" ||
           fileType == "compiled.mach-o.executable" ||
@@ -1068,6 +1070,9 @@ std::string GetDirectoryValueFromFileExtension(const std::string& dirExt)
   std::string ext = cmSystemTools::LowerCase(dirExt);
   if (ext == "framework") {
     return "wrapper.framework";
+  }
+  if (ext == "xcframework") {
+    return "wrapper.xcframework";
   }
   if (ext == "xcassets") {
     return "folder.assetcatalog";
@@ -1138,6 +1143,9 @@ std::string GetSourcecodeValueFromFileExtension(
   } else if (ext == "framework") {
     keepLastKnownFileType = true;
     sourcecode = "wrapper.framework";
+  } else if (ext == "xcframework") {
+    keepLastKnownFileType = true;
+    sourcecode = "wrapper.xcframework";
   } else if (ext == "xcassets") {
     keepLastKnownFileType = true;
     sourcecode = "folder.assetcatalog";
@@ -1169,7 +1177,7 @@ std::string GetLibraryOrFrameworkPath(const std::string& path)
     auto parentDir = cmSystemTools::GetParentDirectory(path);
     auto parentName = cmSystemTools::GetFilenameWithoutExtension(parentDir);
     ext = cmSystemTools::GetFilenameLastExtension(parentDir);
-    if (ext == ".framework" && name == parentName) {
+    if ((ext == ".framework" || ext == ".xcframework") && name == parentName) {
       return parentDir;
     }
     // Check for macOS framework structure:
