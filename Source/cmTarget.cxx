@@ -13,7 +13,9 @@
 #include <unordered_set>
 
 #include <cm/memory>
+#include <cm/optional>
 #include <cmext/algorithm>
+#include <cmext/string_view>
 
 #include "cmsys/RegularExpression.hxx"
 
@@ -22,6 +24,7 @@
 #include "cmGeneratorExpression.h"
 #include "cmGeneratorTarget.h"
 #include "cmGlobalGenerator.h"
+#include "cmHeaderSet.h"
 #include "cmListFileCache.h"
 #include "cmMakefile.h"
 #include "cmMessageType.h"
@@ -205,8 +208,13 @@ public:
   std::vector<cmListFileBacktrace> LinkDirectoriesBacktraces;
   std::vector<std::string> LinkImplementationPropertyEntries;
   std::vector<cmListFileBacktrace> LinkImplementationPropertyBacktraces;
+  std::vector<BT<std::string>> HeaderSetsEntries;
+  std::vector<BT<std::string>> InterfaceHeaderSetsEntries;
   std::vector<std::pair<cmTarget::TLLSignature, cmListFileContext>>
     TLLCommands;
+  cm::optional<cmHeaderSet> AnonymousHeaderSet;
+  bool AnonymousHeaderSetIsInterface = false;
+  std::map<std::string, cmHeaderSet> HeaderSets;
   cmListFileBacktrace Backtrace;
 
   bool CheckImportedLibName(std::string const& prop,
@@ -1165,6 +1173,18 @@ cmBacktraceRange cmTarget::GetLinkImplementationBacktraces() const
   return cmMakeRange(this->impl->LinkImplementationPropertyBacktraces);
 }
 
+cmRange<std::vector<BT<std::string>>::const_iterator>
+cmTarget::GetHeaderSetsEntries() const
+{
+  return cmMakeRange(this->impl->HeaderSetsEntries);
+}
+
+cmRange<std::vector<BT<std::string>>::const_iterator>
+cmTarget::GetInterfaceHeaderSetsEntries() const
+{
+  return cmMakeRange(this->impl->InterfaceHeaderSetsEntries);
+}
+
 void cmTarget::SetProperty(const std::string& prop, const char* value)
 {
 #define MAKE_STATIC_PROP(PROP) static const std::string prop##PROP = #PROP
@@ -1190,6 +1210,10 @@ void cmTarget::SetProperty(const std::string& prop, const char* value)
   MAKE_STATIC_PROP(NAME);
   MAKE_STATIC_PROP(SOURCES);
   MAKE_STATIC_PROP(TYPE);
+  MAKE_STATIC_PROP(HEADER_DIR);
+  MAKE_STATIC_PROP(HEADER_SET);
+  MAKE_STATIC_PROP(HEADER_SETS);
+  MAKE_STATIC_PROP(INTERFACE_HEADER_SETS);
 #undef MAKE_STATIC_PROP
   if (prop == propMANUALLY_ADDED_DEPENDENCIES) {
     this->impl->Makefile->IssueMessage(
@@ -1366,6 +1390,94 @@ void cmTarget::SetProperty(const std::string& prop, const char* value)
     } else {
       this->impl->LanguageStandardProperties.erase(prop);
     }
+  } else if (prop == propHEADER_DIR) {
+    auto* headerSet = this->GetHeaderSet("");
+    if (!headerSet) {
+      this->impl->Makefile->IssueMessage(
+        MessageType::FATAL_ERROR,
+        "Anonymous header set has not yet been created.");
+      return;
+    }
+    headerSet->SetDirectory(
+      BT<std::string>(value, this->impl->Makefile->GetBacktrace()));
+  } else if (prop == propHEADER_SET) {
+    auto* headerSet = this->GetHeaderSet("");
+    if (!headerSet) {
+      this->impl->Makefile->IssueMessage(
+        MessageType::FATAL_ERROR,
+        "Anonymous header set has not yet been created.");
+      return;
+    }
+    headerSet->ClearHeaderEntries();
+    headerSet->AddHeaderEntry(
+      BT<std::string>(value, this->impl->Makefile->GetBacktrace()));
+  } else if (cmHasLiteralPrefix(prop, "HEADER_DIR_")) {
+    auto headerSetName = prop.substr(cmStrLen("HEADER_DIR_"));
+    if (headerSetName.empty()) {
+      this->impl->Makefile->IssueMessage(MessageType::FATAL_ERROR,
+                                         "Header set name cannot be empty.");
+      return;
+    }
+    auto* headerSet = this->GetHeaderSet(headerSetName);
+    if (!headerSet) {
+      this->impl->Makefile->IssueMessage(
+        MessageType::FATAL_ERROR,
+        cmStrCat("Header set \"", headerSetName,
+                 "\" has not yet been created."));
+      return;
+    }
+    headerSet->SetDirectory(
+      BT<std::string>(value, this->impl->Makefile->GetBacktrace()));
+  } else if (cmHasLiteralPrefix(prop, "HEADER_SET_")) {
+    auto headerSetName = prop.substr(cmStrLen("HEADER_SET_"));
+    if (headerSetName.empty()) {
+      this->impl->Makefile->IssueMessage(MessageType::FATAL_ERROR,
+                                         "Header set name cannot be empty.");
+      return;
+    }
+    auto* headerSet = this->GetHeaderSet(headerSetName);
+    if (!headerSet) {
+      this->impl->Makefile->IssueMessage(
+        MessageType::FATAL_ERROR,
+        cmStrCat("Header set \"", headerSetName,
+                 "\" has not yet been created."));
+      return;
+    }
+    headerSet->ClearHeaderEntries();
+    headerSet->AddHeaderEntry(
+      BT<std::string>(value, this->impl->Makefile->GetBacktrace()));
+  } else if (prop == propHEADER_SETS) {
+    if (value) {
+      for (auto const& name : cmExpandedList(value)) {
+        if (!this->GetHeaderSet(name)) {
+          this->impl->Makefile->IssueMessage(
+            MessageType::FATAL_ERROR,
+            cmStrCat("Header set \"", name, "\" has not yet been created."));
+          return;
+        }
+      }
+    }
+    this->impl->HeaderSetsEntries.clear();
+    if (value) {
+      this->impl->HeaderSetsEntries.emplace_back(
+        value, this->impl->Makefile->GetBacktrace());
+    }
+  } else if (prop == propINTERFACE_HEADER_SETS) {
+    if (value) {
+      for (auto const& name : cmExpandedList(value)) {
+        if (!this->GetHeaderSet(name)) {
+          this->impl->Makefile->IssueMessage(
+            MessageType::FATAL_ERROR,
+            cmStrCat("Header set \"", name, "\" has not yet been created."));
+          return;
+        }
+      }
+    }
+    this->impl->InterfaceHeaderSetsEntries.clear();
+    if (value) {
+      this->impl->InterfaceHeaderSetsEntries.emplace_back(
+        value, this->impl->Makefile->GetBacktrace());
+    }
   } else {
     this->impl->Properties.SetProperty(prop, value);
   }
@@ -1466,9 +1578,59 @@ void cmTarget::AppendProperty(const std::string& prop,
       MessageType::FATAL_ERROR, prop + " property may not be APPENDed.");
   } else if (prop == "C_STANDARD" || prop == "CXX_STANDARD" ||
              prop == "CUDA_STANDARD" || prop == "HIP_STANDARD" ||
-             prop == "OBJC_STANDARD" || prop == "OBJCXX_STANDARD") {
+             prop == "OBJC_STANDARD" || prop == "OBJCXX_STANDARD" ||
+             prop == "HEADER_DIR" || cmHasLiteralPrefix(prop, "HEADER_DIR_")) {
     this->impl->Makefile->IssueMessage(
       MessageType::FATAL_ERROR, prop + " property may not be appended.");
+  } else if (prop == "HEADER_SET") {
+    auto* headerSet = this->GetHeaderSet("");
+    if (!headerSet) {
+      this->impl->Makefile->IssueMessage(
+        MessageType::FATAL_ERROR,
+        "Anonymous header set has not yet been created.");
+      return;
+    }
+    headerSet->AddHeaderEntry(
+      BT<std::string>(value, this->impl->Makefile->GetBacktrace()));
+  } else if (cmHasLiteralPrefix(prop, "HEADER_SET_")) {
+    auto headerSetName = prop.substr(cmStrLen("HEADER_SET_"));
+    if (headerSetName.empty()) {
+      this->impl->Makefile->IssueMessage(MessageType::FATAL_ERROR,
+                                         "Header set name cannot be empty.");
+      return;
+    }
+    auto* headerSet = this->GetHeaderSet(headerSetName);
+    if (!headerSet) {
+      this->impl->Makefile->IssueMessage(
+        MessageType::FATAL_ERROR,
+        cmStrCat("Header set \"", headerSetName,
+                 "\" has not yet been created."));
+      return;
+    }
+    headerSet->AddHeaderEntry(
+      BT<std::string>(value, this->impl->Makefile->GetBacktrace()));
+  } else if (prop == "HEADER_SETS") {
+    for (auto const& name : cmExpandedList(value)) {
+      if (!this->GetHeaderSet(name)) {
+        this->impl->Makefile->IssueMessage(
+          MessageType::FATAL_ERROR,
+          cmStrCat("Header set \"", name, "\" has not yet been created."));
+        return;
+      }
+    }
+    this->impl->HeaderSetsEntries.emplace_back(
+      value, this->impl->Makefile->GetBacktrace());
+  } else if (prop == "INTERFACE_HEADER_SETS") {
+    for (auto const& name : cmExpandedList(value)) {
+      if (!this->GetHeaderSet(name)) {
+        this->impl->Makefile->IssueMessage(
+          MessageType::FATAL_ERROR,
+          cmStrCat("Header set \"", name, "\" has not yet been created."));
+        return;
+      }
+    }
+    this->impl->InterfaceHeaderSetsEntries.emplace_back(
+      value, this->impl->Makefile->GetBacktrace());
   } else {
     this->impl->Properties.AppendProperty(prop, value, asString);
   }
@@ -1705,6 +1867,10 @@ cmProp cmTarget::GetProperty(const std::string& prop) const
   MAKE_STATIC_PROP(SOURCES);
   MAKE_STATIC_PROP(FALSE);
   MAKE_STATIC_PROP(TRUE);
+  MAKE_STATIC_PROP(HEADER_DIR);
+  MAKE_STATIC_PROP(HEADER_SET);
+  MAKE_STATIC_PROP(HEADER_SETS);
+  MAKE_STATIC_PROP(INTERFACE_HEADER_SETS);
 #undef MAKE_STATIC_PROP
   static std::unordered_set<std::string> const specialProps{
     propC_STANDARD,
@@ -1727,7 +1893,11 @@ cmProp cmTarget::GetProperty(const std::string& prop) const
     propNAME,
     propBINARY_DIR,
     propSOURCE_DIR,
-    propSOURCES
+    propSOURCES,
+    propHEADER_DIR,
+    propHEADER_SET,
+    propHEADER_SETS,
+    propINTERFACE_HEADER_SETS,
   };
   if (specialProps.count(prop)) {
     if (prop == propC_STANDARD || prop == propCXX_STANDARD ||
@@ -1852,6 +2022,56 @@ cmProp cmTarget::GetProperty(const std::string& prop) const
                 .GetDirectory()
                 .GetCurrentSource();
     }
+    if (prop == propHEADER_DIR) {
+      auto* headerSet = this->GetHeaderSet("");
+      if (!headerSet) {
+        return nullptr;
+      }
+      return &headerSet->GetDirectory().Value;
+    }
+    if (prop == propHEADER_SET) {
+      auto* headerSet = this->GetHeaderSet("");
+      if (!headerSet) {
+        return nullptr;
+      }
+      static std::string output;
+      output = cmJoin(headerSet->GetHeaderEntries(), ";"_s);
+      return &output;
+    }
+    if (prop == propHEADER_SETS) {
+      static std::string output;
+      output = cmJoin(this->impl->HeaderSetsEntries, ";"_s);
+      return &output;
+    }
+    if (prop == propINTERFACE_HEADER_SETS) {
+      static std::string output;
+      output = cmJoin(this->impl->InterfaceHeaderSetsEntries, ";"_s);
+      return &output;
+    }
+  }
+  if (cmHasLiteralPrefix(prop, "HEADER_DIR_")) {
+    std::string headerSetName = prop.substr(cmStrLen("HEADER_DIR_"));
+    if (headerSetName.empty()) {
+      return nullptr;
+    }
+    auto* headerSet = this->GetHeaderSet(headerSetName);
+    if (!headerSet) {
+      return nullptr;
+    }
+    return &headerSet->GetDirectory().Value;
+  }
+  if (cmHasLiteralPrefix(prop, "HEADER_SET_")) {
+    std::string headerSetName = prop.substr(cmStrLen("HEADER_DIR_"));
+    if (headerSetName.empty()) {
+      return nullptr;
+    }
+    auto* headerSet = this->GetHeaderSet(headerSetName);
+    if (!headerSet) {
+      return nullptr;
+    }
+    static std::string output;
+    output = cmJoin(headerSet->GetHeaderEntries(), ";"_s);
+    return &output;
   }
 
   cmProp retVal = this->impl->Properties.GetPropertyValue(prop);
@@ -2106,6 +2326,44 @@ std::string cmTarget::ImportedGetFullPath(
     result = cmStrCat(this->GetName(), "-NOTFOUND");
   }
   return result;
+}
+
+cmHeaderSet* cmTarget::GetHeaderSet(const std::string& name) const
+{
+  if (name.empty()) {
+    return this->impl->AnonymousHeaderSet
+      ? &this->impl->AnonymousHeaderSet.value()
+      : nullptr;
+  }
+
+  auto it = this->impl->HeaderSets.find(name);
+  return it == this->impl->HeaderSets.end() ? nullptr : &it->second;
+}
+
+std::pair<cmHeaderSet*, bool> cmTarget::GetOrCreateHeaderSet(
+  const std::string& name)
+{
+  if (name.empty()) {
+    const bool insert = !this->impl->AnonymousHeaderSet.has_value();
+    if (insert) {
+      this->impl->AnonymousHeaderSet.emplace("");
+    }
+    return std::make_pair(&this->impl->AnonymousHeaderSet.value(), insert);
+  }
+
+  auto result =
+    this->impl->HeaderSets.emplace(std::make_pair(name, cmHeaderSet(name)));
+  return std::make_pair(&result.first->second, result.second);
+}
+
+bool cmTarget::GetAnonymousHeaderSetIsInterface() const
+{
+  return this->impl->AnonymousHeaderSetIsInterface;
+}
+
+void cmTarget::SetAnonymousHeaderSetIsInterface(bool interface)
+{
+  this->impl->AnonymousHeaderSetIsInterface = interface;
 }
 
 bool cmTargetInternals::CheckImportedLibName(std::string const& prop,

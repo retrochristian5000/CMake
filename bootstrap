@@ -375,6 +375,7 @@ CMAKE_CXX_SOURCES="\
   cmGlobalCommonGenerator \
   cmGlobalGenerator \
   cmGlobVerificationManager \
+  cmHeaderSet \
   cmHexFileConverter \
   cmIfCommand \
   cmIncludeCommand \

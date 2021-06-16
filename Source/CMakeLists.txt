@@ -309,6 +309,8 @@ set(SRCS
   cmGraphAdjacencyList.h
   cmGraphVizWriter.cxx
   cmGraphVizWriter.h
+  cmHeaderSet.cxx
+  cmHeaderSet.h
   cmInstallGenerator.h
   cmInstallGenerator.cxx
   cmInstallGetRuntimeDependenciesGenerator.h
