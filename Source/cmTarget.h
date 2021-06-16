@@ -15,12 +15,14 @@
 #include "cmListFileCache.h"
 #include "cmPolicies.h"
 #include "cmProperty.h"
+#include "cmRange.h"
 #include "cmStateTypes.h"
 #include "cmStringAlgorithms.h"
 #include "cmTargetLinkLibraryType.h"
 
 class cmCustomCommand;
 class cmGlobalGenerator;
+class cmHeaderSet;
 class cmInstallTargetGenerator;
 class cmMakefile;
 class cmMessenger;
@@ -274,6 +276,11 @@ public:
   cmStringRange GetLinkImplementationEntries() const;
   cmBacktraceRange GetLinkImplementationBacktraces() const;
 
+  cmRange<std::vector<BT<std::string>>::const_iterator> GetHeaderSetsEntries()
+    const;
+  cmRange<std::vector<BT<std::string>>::const_iterator>
+  GetInterfaceHeaderSetsEntries() const;
+
   std::string ImportedGetFullPath(const std::string& config,
                                   cmStateEnums::ArtifactType artifact) const;
 
@@ -281,6 +288,11 @@ public:
   {
     bool operator()(cmTarget const* t1, cmTarget const* t2) const;
   };
+
+  cmHeaderSet* GetHeaderSet(const std::string& name) const;
+  std::pair<cmHeaderSet*, bool> GetOrCreateHeaderSet(const std::string& name);
+  bool GetAnonymousHeaderSetIsInterface() const;
+  void SetAnonymousHeaderSetIsInterface(bool interface);
 
 private:
   // Internal representation details.
