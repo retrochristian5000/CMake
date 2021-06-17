@@ -390,6 +390,7 @@ CMAKE_CXX_SOURCES="\
   cmInstallFilesGenerator \
   cmInstallGenerator \
   cmInstallGetRuntimeDependenciesGenerator \
+  cmInstallHeaderSetGenerator \
   cmInstallImportedRuntimeArtifactsGenerator \
   cmInstallRuntimeDependencySet \
   cmInstallRuntimeDependencySetGenerator \

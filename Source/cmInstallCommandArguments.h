@@ -34,6 +34,8 @@ public:
   bool HasNamelinkComponent() const;
   const std::string& GetType() const;
 
+  const std::string& GetDefaultComponent() const;
+
   static bool CheckPermissions(const std::string& onePerm, std::string& perm);
 
 private:
@@ -70,4 +72,18 @@ public:
 
 private:
   std::vector<std::string> IncludeDirs;
+};
+
+class cmInstallCommandHeaderSetArguments : public cmInstallCommandArguments
+{
+public:
+  cmInstallCommandHeaderSetArguments(std::string defaultComponent);
+
+  void Parse(std::vector<std::string> args,
+             std::vector<std::string>* unconsumedArgs);
+
+  const std::string& GetHeaderSet() const { return this->HeaderSet; }
+
+private:
+  std::string HeaderSet;
 };
