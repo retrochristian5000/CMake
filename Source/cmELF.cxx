@@ -75,6 +75,15 @@ enum
   ET_HIPROC = 0xffff  // Processor-specific
 };
 
+// Machine architectures
+// See current registered ELF machine architectures at:
+//    http://www.uxsglobal.com/developers/gabi/latest/ch4.eheader.html
+enum
+{
+  EM_NONE = 0, // No machine
+  EM_MIPS = 8, // MIPS R3000
+};
+
 // Section types.
 enum
 {
@@ -289,6 +298,7 @@ public:
   virtual std::vector<char> EncodeDynamicEntries(
     const cmELF::DynamicEntryList&) = 0;
   virtual StringEntry const* GetDynamicSectionString(unsigned int tag) = 0;
+  virtual bool IsMips() const = 0;
   virtual void PrintInfo(std::ostream& os) const = 0;
 
   // Lookup the SONAME in the DYNAMIC section.
@@ -399,6 +409,8 @@ public:
 
   // Lookup a string from the dynamic section with the given tag.
   StringEntry const* GetDynamicSectionString(unsigned int tag) override;
+
+  bool IsMips() const override { return this->ELFHeader.e_machine == EM_MIPS; }
 
   // Print information about the ELF file.
   void PrintInfo(std::ostream& os) const override
@@ -955,6 +967,14 @@ cmELF::StringEntry const* cmELF::GetRunPath()
     return this->Internal->GetRunPath();
   }
   return nullptr;
+}
+
+bool cmELF::IsMIPS() const
+{
+  if (this->Valid()) {
+    return this->Internal->IsMips();
+  }
+  return false;
 }
 
 void cmELF::PrintInfo(std::ostream& os) const

@@ -3054,8 +3054,7 @@ bool cmSystemTools::RemoveRPath(std::string const& file, std::string* emsg,
         entriesErased++;
         continue;
       }
-      if (cmELF::TagMipsRldMapRel != 0 &&
-          it->first == cmELF::TagMipsRldMapRel) {
+      if (it->first == cmELF::TagMipsRldMapRel && elf.isMIPS()) {
         // Background: debuggers need to know the "linker map" which contains
         // the addresses each dynamic object is loaded at. Most arches use
         // the DT_DEBUG tag which the dynamic linker writes to (directly) and
