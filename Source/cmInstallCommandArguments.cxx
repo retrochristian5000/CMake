@@ -152,6 +152,11 @@ const std::string& cmInstallCommandArguments::GetType() const
   return this->Type;
 }
 
+const std::string& cmInstallCommandArguments::GetDefaultComponent() const
+{
+  return this->DefaultComponentName;
+}
+
 const std::vector<std::string>& cmInstallCommandArguments::GetConfigurations()
   const
 {
@@ -219,4 +224,18 @@ void cmInstallCommandIncludesArgument::Parse(
     cmSystemTools::ConvertToUnixSlashes(dir);
     this->IncludeDirs.push_back(std::move(dir));
   }
+}
+
+cmInstallCommandHeaderSetArguments::cmInstallCommandHeaderSetArguments(
+  std::string defaultComponent)
+  : cmInstallCommandArguments(std::move(defaultComponent))
+{
+  this->Bind("HEADER_SET"_s, this->HeaderSet);
+}
+
+void cmInstallCommandHeaderSetArguments::Parse(
+  std::vector<std::string> args, std::vector<std::string>* unconsumedArgs)
+{
+  args.insert(args.begin(), "HEADER_SET");
+  this->cmInstallCommandArguments::Parse(args, unconsumedArgs);
 }

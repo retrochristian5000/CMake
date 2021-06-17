@@ -320,6 +320,8 @@ set(SRCS
   cmInstalledFile.cxx
   cmInstallFilesGenerator.h
   cmInstallFilesGenerator.cxx
+  cmInstallHeaderSetGenerator.h
+  cmInstallHeaderSetGenerator.cxx
   cmInstallImportedRuntimeArtifactsGenerator.h
   cmInstallImportedRuntimeArtifactsGenerator.cxx
   cmInstallRuntimeDependencySet.h

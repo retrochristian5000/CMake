@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cstddef>
 #include <iterator>
+#include <map>
 #include <set>
 #include <sstream>
 #include <utility>
@@ -26,6 +27,7 @@
 #include "cmInstallFilesGenerator.h"
 #include "cmInstallGenerator.h"
 #include "cmInstallGetRuntimeDependenciesGenerator.h"
+#include "cmInstallHeaderSetGenerator.h"
 #include "cmInstallImportedRuntimeArtifactsGenerator.h"
 #include "cmInstallRuntimeDependencySet.h"
 #include "cmInstallRuntimeDependencySetGenerator.h"
@@ -43,6 +45,8 @@
 #include "cmSystemTools.h"
 #include "cmTarget.h"
 #include "cmTargetExport.h"
+
+class cmHeaderSet;
 
 namespace {
 
@@ -86,6 +90,9 @@ public:
   void SetError(std::string const& err) { this->Status.SetError(err); }
 
   bool MakeFilesFullPath(const char* modeName,
+                         const std::vector<std::string>& relFiles,
+                         std::vector<std::string>& absFiles);
+  bool MakeFilesFullPath(const char* modeName, const std::string& basePath,
                          const std::vector<std::string>& relFiles,
                          std::vector<std::string>& absFiles);
   bool CheckCMP0006(bool& failure) const;
@@ -174,6 +181,19 @@ std::unique_ptr<cmInstallFilesGenerator> CreateInstallFilesGenerator(
 {
   return CreateInstallFilesGenerator(mf, absFiles, args, programs,
                                      args.GetDestination());
+}
+
+std::unique_ptr<cmInstallHeaderSetGenerator> CreateInstallHeaderSetGenerator(
+  Helper& helper, cmTarget& target, cmHeaderSet* headerSet,
+  const cmInstallCommandArguments& args)
+{
+  cmInstallGenerator::MessageLevel message =
+    cmInstallGenerator::SelectMessageLevel(helper.Makefile);
+  return cm::make_unique<cmInstallHeaderSetGenerator>(
+    target.GetName(), headerSet, helper.GetIncludeDestination(&args),
+    args.GetPermissions(), args.GetConfigurations(), args.GetComponent(),
+    message, args.GetExcludeFromAll(), args.GetOptional(),
+    helper.Makefile->GetBacktrace());
 }
 
 void AddInstallRuntimeDependenciesGenerator(
@@ -389,6 +409,8 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
     std::vector<std::string> PrivateHeader;
     std::vector<std::string> PublicHeader;
     std::vector<std::string> Resource;
+    std::vector<std::string> Headers;
+    std::vector<std::vector<std::string>> HeaderSets;
   };
 
   static auto const argHelper =
@@ -402,7 +424,9 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
       .Bind("INCLUDES"_s, &ArgVectors::Includes)
       .Bind("PRIVATE_HEADER"_s, &ArgVectors::PrivateHeader)
       .Bind("PUBLIC_HEADER"_s, &ArgVectors::PublicHeader)
-      .Bind("RESOURCE"_s, &ArgVectors::Resource);
+      .Bind("RESOURCE"_s, &ArgVectors::Resource)
+      .Bind("HEADERS"_s, &ArgVectors::Headers)
+      .Bind("HEADER_SET"_s, &ArgVectors::HeaderSets);
 
   std::vector<std::string> genericArgVector;
   ArgVectors const argVectors = argHelper.Parse(args, &genericArgVector);
@@ -441,6 +465,9 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
   cmInstallCommandArguments publicHeaderArgs(helper.DefaultComponentName);
   cmInstallCommandArguments resourceArgs(helper.DefaultComponentName);
   cmInstallCommandIncludesArgument includesArgs;
+  cmInstallCommandArguments headersArgs(helper.DefaultComponentName);
+  std::vector<cmInstallCommandHeaderSetArguments> headerSetArgs(
+    argVectors.HeaderSets.size(), { helper.DefaultComponentName });
 
   // now parse the args for specific parts of the target (e.g. LIBRARY,
   // RUNTIME, ARCHIVE etc.
@@ -454,6 +481,17 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
   publicHeaderArgs.Parse(argVectors.PublicHeader, &unknownArgs);
   resourceArgs.Parse(argVectors.Resource, &unknownArgs);
   includesArgs.Parse(&argVectors.Includes, &unknownArgs);
+  headersArgs.Parse(argVectors.Headers, &unknownArgs);
+  for (std::size_t i = 0; i < argVectors.HeaderSets.size(); i++) {
+    // We have to create a separate object for the parsing because
+    // cmArgumentParser<void>::Bind() binds to a specific address, but the
+    // objects in the vector can move around. So we parse in an object with a
+    // fixed address and then copy the data into the vector.
+    cmInstallCommandHeaderSetArguments headerSetArg(
+      helper.DefaultComponentName);
+    headerSetArg.Parse(argVectors.HeaderSets[i], &unknownArgs);
+    headerSetArgs[i] = std::move(headerSetArg);
+  }
 
   if (!unknownArgs.empty()) {
     // Unknown argument.
@@ -472,6 +510,10 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
   privateHeaderArgs.SetGenericArguments(&genericArgs);
   publicHeaderArgs.SetGenericArguments(&genericArgs);
   resourceArgs.SetGenericArguments(&genericArgs);
+  headersArgs.SetGenericArguments(&genericArgs);
+  for (auto& headerSetArg : headerSetArgs) {
+    headerSetArg.SetGenericArguments(&genericArgs);
+  }
 
   success = success && archiveArgs.Finalize();
   success = success && libraryArgs.Finalize();
@@ -482,6 +524,10 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
   success = success && privateHeaderArgs.Finalize();
   success = success && publicHeaderArgs.Finalize();
   success = success && resourceArgs.Finalize();
+  success = success && headersArgs.Finalize();
+  for (auto& headerSetArg : headerSetArgs) {
+    success = success && headerSetArg.Finalize();
+  }
 
   if (!success) {
     return false;
@@ -492,7 +538,11 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
   if (archiveArgs.GetNamelinkOnly() || runtimeArgs.GetNamelinkOnly() ||
       objectArgs.GetNamelinkOnly() || frameworkArgs.GetNamelinkOnly() ||
       bundleArgs.GetNamelinkOnly() || privateHeaderArgs.GetNamelinkOnly() ||
-      publicHeaderArgs.GetNamelinkOnly() || resourceArgs.GetNamelinkOnly()) {
+      publicHeaderArgs.GetNamelinkOnly() || resourceArgs.GetNamelinkOnly() ||
+      headersArgs.GetNamelinkOnly() ||
+      std::any_of(headerSetArgs.begin(), headerSetArgs.end(),
+                  [](const cmInstallCommandHeaderSetArguments& headerSetArg)
+                    -> bool { return headerSetArg.GetNamelinkOnly(); })) {
     status.SetError(
       "TARGETS given NAMELINK_ONLY option not in LIBRARY group.  "
       "The NAMELINK_ONLY option may be specified only following LIBRARY.");
@@ -501,7 +551,11 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
   if (archiveArgs.GetNamelinkSkip() || runtimeArgs.GetNamelinkSkip() ||
       objectArgs.GetNamelinkSkip() || frameworkArgs.GetNamelinkSkip() ||
       bundleArgs.GetNamelinkSkip() || privateHeaderArgs.GetNamelinkSkip() ||
-      publicHeaderArgs.GetNamelinkSkip() || resourceArgs.GetNamelinkSkip()) {
+      publicHeaderArgs.GetNamelinkSkip() || resourceArgs.GetNamelinkSkip() ||
+      headersArgs.GetNamelinkSkip() ||
+      std::any_of(headerSetArgs.begin(), headerSetArgs.end(),
+                  [](const cmInstallCommandHeaderSetArguments& headerSetArg)
+                    -> bool { return headerSetArg.GetNamelinkSkip(); })) {
     status.SetError(
       "TARGETS given NAMELINK_SKIP option not in LIBRARY group.  "
       "The NAMELINK_SKIP option may be specified only following LIBRARY.");
@@ -514,7 +568,11 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
       bundleArgs.HasNamelinkComponent() ||
       privateHeaderArgs.HasNamelinkComponent() ||
       publicHeaderArgs.HasNamelinkComponent() ||
-      resourceArgs.HasNamelinkComponent()) {
+      resourceArgs.HasNamelinkComponent() ||
+      headersArgs.HasNamelinkComponent() ||
+      std::any_of(headerSetArgs.begin(), headerSetArgs.end(),
+                  [](const cmInstallCommandHeaderSetArguments& headerSetArg)
+                    -> bool { return headerSetArg.HasNamelinkComponent(); })) {
     status.SetError(
       "TARGETS given NAMELINK_COMPONENT option not in LIBRARY group.  "
       "The NAMELINK_COMPONENT option may be specified only following "
@@ -530,10 +588,21 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
       !libraryArgs.GetType().empty() || !runtimeArgs.GetType().empty() ||
       !objectArgs.GetType().empty() || !frameworkArgs.GetType().empty() ||
       !bundleArgs.GetType().empty() || !privateHeaderArgs.GetType().empty() ||
-      !publicHeaderArgs.GetType().empty() || !resourceArgs.GetType().empty()) {
+      !publicHeaderArgs.GetType().empty() || !resourceArgs.GetType().empty() ||
+      !headersArgs.GetType().empty() ||
+      std::any_of(headerSetArgs.begin(), headerSetArgs.end(),
+                  [](const cmInstallCommandHeaderSetArguments& headerSetArg)
+                    -> bool { return !headerSetArg.GetType().empty(); })) {
     status.SetError(
       "TARGETS given TYPE option. The TYPE option may only be specified in "
       " install(FILES) and install(DIRECTORIES).");
+    return false;
+  }
+  if (std::any_of(headerSetArgs.begin(), headerSetArgs.end(),
+                  [](const cmInstallCommandHeaderSetArguments& headerSetArg)
+                    -> bool { return headerSetArg.GetHeaderSet().empty(); })) {
+    status.SetError(
+      "TARGETS given HEADER_SET option without header set name.");
     return false;
   }
 
@@ -646,6 +715,8 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
   bool installsPrivateHeader = false;
   bool installsPublicHeader = false;
   bool installsResource = false;
+  bool installsHeaders = false;
+  std::vector<bool> installsHeaderSet(headerSetArgs.size(), false);
 
   // Generate install script code to install the given targets.
   for (cmTarget* ti : targets) {
@@ -661,6 +732,9 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
     std::unique_ptr<cmInstallFilesGenerator> privateHeaderGenerator;
     std::unique_ptr<cmInstallFilesGenerator> publicHeaderGenerator;
     std::unique_ptr<cmInstallFilesGenerator> resourceGenerator;
+    std::unique_ptr<cmInstallHeaderSetGenerator> headersGenerator;
+    std::vector<std::unique_ptr<cmInstallHeaderSetGenerator>>
+      headerSetGenerators;
 
     // Avoid selecting default destinations for PUBLIC_HEADER and
     // PRIVATE_HEADER if any artifacts are specified.
@@ -990,6 +1064,36 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
       }
     }
 
+    if (!namelinkOnly) {
+      auto* anonymousHeaderSet = target.GetHeaderSet("");
+      if (anonymousHeaderSet) {
+        headersGenerator = CreateInstallHeaderSetGenerator(
+          helper, target, anonymousHeaderSet, headersArgs);
+      }
+
+      auto interfaceHeaderSets =
+        cmExpandedList(target.GetSafeProperty("INTERFACE_HEADER_SETS"));
+      for (std::size_t i = 0; i < headerSetArgs.size(); i++) {
+        if (std::find(interfaceHeaderSets.begin(), interfaceHeaderSets.end(),
+                      headerSetArgs[i].GetHeaderSet()) !=
+            interfaceHeaderSets.end()) {
+          auto* headerSet =
+            target.GetHeaderSet(headerSetArgs[i].GetHeaderSet());
+          if (!headerSet) {
+            status.SetError(cmStrCat(
+              "TARGETS header set \"", headerSetArgs[i].GetHeaderSet(),
+              "\" is listed in INTERFACE_HEADER_SETS of ", target.GetName(),
+              " but has not been created"));
+            return false;
+          }
+
+          headerSetGenerators.push_back(CreateInstallHeaderSetGenerator(
+            helper, target, headerSet, headerSetArgs[i]));
+          installsHeaderSet[i] = true;
+        }
+      }
+    }
+
     // Add this install rule to an export if one was specified.
     addTargetExport();
 
@@ -1004,6 +1108,7 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
     installsPrivateHeader = installsPrivateHeader || privateHeaderGenerator;
     installsPublicHeader = installsPublicHeader || publicHeaderGenerator;
     installsResource = installsResource || resourceGenerator;
+    installsHeaders = installsHeaders || headersGenerator;
 
     helper.Makefile->AddInstallGenerator(std::move(archiveGenerator));
     helper.Makefile->AddInstallGenerator(std::move(libraryGenerator));
@@ -1015,6 +1120,10 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
     helper.Makefile->AddInstallGenerator(std::move(privateHeaderGenerator));
     helper.Makefile->AddInstallGenerator(std::move(publicHeaderGenerator));
     helper.Makefile->AddInstallGenerator(std::move(resourceGenerator));
+    helper.Makefile->AddInstallGenerator(std::move(headersGenerator));
+    for (auto& gen : headerSetGenerators) {
+      helper.Makefile->AddInstallGenerator(std::move(gen));
+    }
   }
 
   if (withRuntimeDependencies && !runtimeDependencySet->Empty()) {
@@ -1065,6 +1174,16 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
   if (installsResource) {
     helper.Makefile->GetGlobalGenerator()->AddInstallComponent(
       resourceArgs.GetComponent());
+  }
+  if (installsHeaders) {
+    helper.Makefile->GetGlobalGenerator()->AddInstallComponent(
+      headersArgs.GetComponent());
+  }
+  for (std::size_t i = 0; i < headerSetArgs.size(); i++) {
+    if (installsHeaderSet[i]) {
+      helper.Makefile->GetGlobalGenerator()->AddInstallComponent(
+        headerSetArgs[i].GetComponent());
+    }
   }
 
   return true;
@@ -2060,12 +2179,20 @@ bool Helper::MakeFilesFullPath(const char* modeName,
                                const std::vector<std::string>& relFiles,
                                std::vector<std::string>& absFiles)
 {
+  return this->MakeFilesFullPath(
+    modeName, this->Makefile->GetCurrentSourceDirectory(), relFiles, absFiles);
+}
+
+bool Helper::MakeFilesFullPath(const char* modeName,
+                               const std::string& basePath,
+                               const std::vector<std::string>& relFiles,
+                               std::vector<std::string>& absFiles)
+{
   for (std::string const& relFile : relFiles) {
     std::string file = relFile;
     std::string::size_type gpos = cmGeneratorExpression::Find(file);
     if (gpos != 0 && !cmSystemTools::FileIsFullPath(file)) {
-      file =
-        cmStrCat(this->Makefile->GetCurrentSourceDirectory(), '/', relFile);
+      file = cmStrCat(basePath, '/', relFile);
     }
 
     // Make sure the file is not a directory.
