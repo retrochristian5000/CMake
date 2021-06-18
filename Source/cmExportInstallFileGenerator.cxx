@@ -12,9 +12,11 @@
 #include "cmGeneratorTarget.h"
 #include "cmGlobalGenerator.h"
 #include "cmInstallExportGenerator.h"
+#include "cmInstallHeaderSetGenerator.h"
 #include "cmInstallTargetGenerator.h"
 #include "cmLocalGenerator.h"
 #include "cmMakefile.h"
+#include "cmOutputConverter.h"
 #include "cmPolicies.h"
 #include "cmStateTypes.h"
 #include "cmStringAlgorithms.h"
@@ -146,6 +148,8 @@ bool cmExportInstallFileGenerator::GenerateMainFile(std::ostream& os)
     this->PopulateCompatibleInterfaceProperties(gt, properties);
 
     this->GenerateInterfaceProperties(gt, os, properties);
+
+    this->GenerateTargetHeaders(gt, os, te);
   }
 
   if (require3_1_0) {
@@ -532,4 +536,13 @@ std::string cmExportInstallFileGenerator::InstallNameDir(
   }
 
   return install_name_dir;
+}
+
+std::string cmExportInstallFileGenerator::GetHeaderSetDirectory(
+  cmHeaderSet* headerSet, cmTargetExport* te)
+{
+  return cmStrCat("\"${_IMPORT_PREFIX}/",
+                  cmOutputConverter::EscapeForCMake(
+                    te->HeaderSetGenerators.at(headerSet)->GetDestination())
+                    .substr(1));
 }

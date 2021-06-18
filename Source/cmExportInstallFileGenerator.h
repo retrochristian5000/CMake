@@ -16,6 +16,7 @@
 
 class cmGeneratorTarget;
 class cmGlobalGenerator;
+class cmHeaderSet;
 class cmInstallExportGenerator;
 class cmInstallTargetGenerator;
 class cmTargetExport;
@@ -96,6 +97,9 @@ protected:
 
   std::string InstallNameDir(cmGeneratorTarget const* target,
                              const std::string& config) override;
+
+  std::string GetHeaderSetDirectory(cmHeaderSet* headerSet,
+                                    cmTargetExport* te) override;
 
   cmInstallExportGenerator* IEGen;
 

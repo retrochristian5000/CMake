@@ -14,9 +14,12 @@
 #include "cmGeneratorExpression.h"
 #include "cmGeneratorTarget.h"
 #include "cmGlobalGenerator.h"
+#include "cmHeaderSet.h"
+#include "cmListFileCache.h"
 #include "cmLocalGenerator.h"
 #include "cmMakefile.h"
 #include "cmMessageType.h"
+#include "cmOutputConverter.h"
 #include "cmPolicies.h"
 #include "cmStateTypes.h"
 #include "cmStringAlgorithms.h"
@@ -134,6 +137,8 @@ bool cmExportBuildFileGenerator::GenerateMainFile(std::ostream& os)
     this->PopulateCompatibleInterfaceProperties(gte, properties);
 
     this->GenerateInterfaceProperties(gte, os, properties);
+
+    this->GenerateTargetHeaders(gte, os);
   }
 
   // Generate import file content for each configuration.
@@ -354,4 +359,10 @@ std::string cmExportBuildFileGenerator::InstallNameDir(
   }
 
   return install_name_dir;
+}
+
+std::string cmExportBuildFileGenerator::GetHeaderSetDirectory(
+  cmHeaderSet* headerSet, cmTargetExport* /*te*/)
+{
+  return cmOutputConverter::EscapeForCMake(headerSet->GetDirectory().Value);
 }

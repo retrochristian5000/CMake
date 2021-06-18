@@ -1249,3 +1249,50 @@ bool cmExportFileGenerator::PopulateExportProperties(
   }
   return true;
 }
+
+void cmExportFileGenerator::GenerateTargetHeaders(cmGeneratorTarget* gte,
+                                                  std::ostream& os,
+                                                  cmTargetExport* te)
+{
+  auto* anonymousHeaderSet = gte->Target->GetHeaderSet("");
+  if (anonymousHeaderSet ||
+      !gte->GetSafeProperty("INTERFACE_HEADER_SETS").empty()) {
+    std::string targetName = cmStrCat(this->Namespace, gte->GetExportName());
+    os << "if(NOT CMAKE_VERSION VERSION_LESS \"" << DEVEL_CMAKE_VERSION(3, 22)
+       << "\")\n"
+          "  target_headers("
+       << targetName << "\n";
+
+    if (anonymousHeaderSet) {
+      os << "    INTERFACE\n      DIRECTORY "
+         << this->GetHeaderSetDirectory(anonymousHeaderSet, te)
+         << "\n      HEADERS "
+         << cmOutputConverter::EscapeForCMake(
+              gte->GetSafeProperty("HEADER_SET"))
+         << "\n";
+    }
+
+    auto interfaceHeaderSets =
+      cmExpandedList(gte->GetSafeProperty("INTERFACE_HEADER_SETS"));
+    for (auto const& name : interfaceHeaderSets) {
+      auto* headerSet = gte->Target->GetHeaderSet(name);
+      if (!headerSet) {
+        gte->Makefile->IssueMessage(
+          MessageType::FATAL_ERROR,
+          cmStrCat("Header set \"", name,
+                   "\" is listed in INTERFACE_HEADER_SETS of ", gte->GetName(),
+                   " but has not been created"));
+        return;
+      }
+
+      os << "    INTERFACE HEADER_SET "
+         << cmOutputConverter::EscapeForCMake(name) << "\n      DIRECTORY "
+         << this->GetHeaderSetDirectory(headerSet, te) << "\n      HEADERS "
+         << cmOutputConverter::EscapeForCMake(
+              gte->GetSafeProperty(cmStrCat("HEADER_SET_", name)))
+         << "\n";
+    }
+
+    os << "  )\nendif()\n\n";
+  }
+}

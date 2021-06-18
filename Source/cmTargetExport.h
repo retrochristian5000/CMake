@@ -7,7 +7,9 @@
 #include <string>
 
 class cmGeneratorTarget;
+class cmHeaderSet;
 class cmInstallFilesGenerator;
+class cmInstallHeaderSetGenerator;
 class cmInstallTargetGenerator;
 
 /** \brief A member of an ExportSet
@@ -29,6 +31,7 @@ public:
   cmInstallTargetGenerator* FrameworkGenerator;
   cmInstallTargetGenerator* BundleGenerator;
   cmInstallFilesGenerator* HeaderGenerator;
+  std::map<cmHeaderSet*, cmInstallHeaderSetGenerator*> HeaderSetGenerators;
   ///@}
 
   bool NamelinkOnly = false;
