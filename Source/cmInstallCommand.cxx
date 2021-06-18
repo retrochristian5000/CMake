@@ -744,9 +744,26 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
     // Track whether this is a namelink-only rule.
     bool namelinkOnly = false;
 
-    auto addTargetExport = [&]() {
+    auto addTargetExport = [&]() -> bool {
       // Add this install rule to an export if one was specified.
       if (!exports.empty()) {
+        auto headerSets =
+          cmExpandedList(target.GetSafeProperty("INTERFACE_HEADER_SETS"));
+        if (std::any_of(
+              headerSets.begin(), headerSets.end(),
+              [&headerSetArgs](const std::string& name) -> bool {
+                return !std::any_of(
+                  headerSetArgs.begin(), headerSetArgs.end(),
+                  [name](
+                    const cmInstallCommandHeaderSetArguments& headerSetArg)
+                    -> bool { return headerSetArg.GetHeaderSet() == name; });
+              })) {
+          status.SetError(cmStrCat(
+            "TARGETS target ", target.GetName(),
+            " is exported but not all of its header set are installed"));
+          return false;
+        }
+
         auto te = cm::make_unique<cmTargetExport>();
         te->TargetName = target.GetName();
         te->ArchiveGenerator = archiveGenerator.get();
@@ -756,6 +773,13 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
         te->LibraryGenerator = libraryGenerator.get();
         te->RuntimeGenerator = runtimeGenerator.get();
         te->ObjectsGenerator = objectGenerator.get();
+        if (headersGenerator) {
+          te->HeaderSetGenerators[headersGenerator->GetHeaderSet()] =
+            headersGenerator.get();
+        }
+        for (auto const& gen : headerSetGenerators) {
+          te->HeaderSetGenerators[gen->GetHeaderSet()] = gen.get();
+        }
         target.AddInstallIncludeDirectories(
           cmMakeRange(includesArgs.GetIncludeDirs()));
         te->NamelinkOnly = namelinkOnly;
@@ -763,6 +787,7 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
           ->GetExportSets()[exports]
           .AddTargetExport(std::move(te));
       }
+      return true;
     };
 
     switch (target.GetType()) {
@@ -774,7 +799,9 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
           // When in namelink only mode skip all libraries on Windows.
           if (namelinkMode == cmInstallTargetGenerator::NamelinkModeOnly) {
             namelinkOnly = true;
-            addTargetExport();
+            if (!addTargetExport()) {
+              return false;
+            }
             continue;
           }
 
@@ -810,7 +837,9 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
             // When in namelink only mode skip frameworks.
             if (namelinkMode == cmInstallTargetGenerator::NamelinkModeOnly) {
               namelinkOnly = true;
-              addTargetExport();
+              if (!addTargetExport()) {
+                return false;
+              }
               continue;
             }
 
@@ -859,7 +888,9 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
           // When in namelink only mode skip frameworks.
           if (namelinkMode == cmInstallTargetGenerator::NamelinkModeOnly) {
             namelinkOnly = true;
-            addTargetExport();
+            if (!addTargetExport()) {
+              return false;
+            }
             continue;
           }
 
@@ -1096,7 +1127,9 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
     }
 
     // Add this install rule to an export if one was specified.
-    addTargetExport();
+    if (!addTargetExport()) {
+      return false;
+    }
 
     // Keep track of whether we're installing anything in each category
     installsArchive = installsArchive || archiveGenerator;

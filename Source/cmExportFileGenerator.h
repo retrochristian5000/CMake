@@ -16,6 +16,8 @@
 #include "cmVersionConfig.h"
 
 class cmGeneratorTarget;
+class cmHeaderSet;
+class cmTargetExport;
 
 #define STRINGIFY_HELPER(X) #X
 #define STRINGIFY(X) STRINGIFY_HELPER(X)
@@ -183,6 +185,12 @@ protected:
   bool PopulateExportProperties(cmGeneratorTarget const* gte,
                                 ImportPropertyMap& properties,
                                 std::string& errorMessage);
+
+  void GenerateTargetHeaders(cmGeneratorTarget* gte, std::ostream& os,
+                             cmTargetExport* te = nullptr);
+
+  virtual std::string GetHeaderSetDirectory(cmHeaderSet* headerSet,
+                                            cmTargetExport* te) = 0;
 
   // The namespace in which the exports are placed in the generated file.
   std::string Namespace;

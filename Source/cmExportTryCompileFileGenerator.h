@@ -13,7 +13,9 @@
 
 class cmGeneratorTarget;
 class cmGlobalGenerator;
+class cmHeaderSet;
 class cmMakefile;
+class cmTargetExport;
 
 class cmExportTryCompileFileGenerator : public cmExportFileGenerator
 {
@@ -47,6 +49,9 @@ protected:
 
   std::string InstallNameDir(cmGeneratorTarget const* target,
                              const std::string& config) override;
+
+  std::string GetHeaderSetDirectory(cmHeaderSet* headerSet,
+                                    cmTargetExport* te) override;
 
 private:
   std::string FindTargets(const std::string& prop,
