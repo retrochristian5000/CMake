@@ -1,0 +1,39 @@
+#include <stdio.h>
+
+int main()
+{
+#if defined(__clang__)
+  printf("__clang__\n");
+#else
+  printf("!__clang__\n");
+#endif
+#if defined(__GNUC__)
+  printf("__GNUC__\n");
+#else
+  printf("!__GNUC__\n");
+#endif
+#if defined(__STRICT_ANSI__)
+  printf("__STRICT_ANSI__\n");
+#else
+  printf("!__STRICT_ANSI__\n");
+#endif
+  printf("__STDC_VERSION__=%u\n\n", __STDC_VERSION__);
+
+#if (defined(__GNUC__) || defined(__clang__)) && !defined(__STRICT_ANSI__)
+  printf("GNU ");
+#endif
+
+  printf("C"
+#if __STDC_VERSION__ > 201710L
+         "23"
+#elif __STDC_VERSION__ >= 201710L
+         "17"
+#elif __STDC_VERSION__ >= 201000L
+         "11"
+#elif __STDC_VERSION__ >= 199901L
+         "99"
+#else
+         "90"
+#endif
+         "\n");
+}
