@@ -1,0 +1,5 @@
+enable_language(@lang@)
+try_run(run_result compile_result "${CMAKE_CURRENT_BINARY_DIR}" "@RunCMake_SOURCE_DIR_REAL@/defines.@ext@" RUN_OUTPUT_VARIABLE run_output)
+message("standard_default=@standard_default@")
+message("extensions_default=@extensions_default@")
+message("@lang@ run output:\n${run_output}")
