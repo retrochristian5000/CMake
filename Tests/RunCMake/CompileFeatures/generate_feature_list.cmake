@@ -2,6 +2,9 @@ enable_language(C CXX)
 
 function(info lang)
   set(info "\
+#${lang}_COMPILER=${CMAKE_${lang}_COMPILER}
+#${lang}_COMPILER_ID=${CMAKE_${lang}_COMPILER_ID}
+#${lang}_COMPILER_VERSION=${CMAKE_${lang}_COMPILER_VERSION}
 set(${lang}_STANDARD_DEFAULT ${CMAKE_${lang}_STANDARD_DEFAULT})
 set(${lang}_EXTENSIONS_DEFAULT ${CMAKE_${lang}_EXTENSIONS_DEFAULT})
 set(${lang}_FEATURES ${CMAKE_${lang}_COMPILE_FEATURES})\n")
