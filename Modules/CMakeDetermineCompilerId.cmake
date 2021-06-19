@@ -869,6 +869,7 @@ function(CMAKE_DETERMINE_COMPILER_ID_CHECK lang file)
     list(REMOVE_DUPLICATES CMAKE_${lang}_COMPILER_ID_STRINGS)
 
     set(COMPILER_ID_TWICE)
+    message("CMAKE_${lang}_COMPILER_ID_STRINGS=${CMAKE_${lang}_COMPILER_ID_STRINGS}")
     foreach(info ${CMAKE_${lang}_COMPILER_ID_STRINGS})
       if("${info}" MATCHES "INFO:compiler\\[([^]\"]*)\\]")
         if(COMPILER_ID)
