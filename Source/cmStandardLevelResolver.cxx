@@ -106,9 +106,9 @@ struct StanardLevelComputer
 
     // If the request matches the compiler's defaults we don't need to add
     // anything.
-    if (*standardProp == *defaultStd && ext == defaultExt) {
+    /*if (*standardProp == *defaultStd && ext == defaultExt) {
       return std::string{};
-    }
+    }*/
 
     if (target->GetLanguageStandardRequired(this->Language)) {
       std::string option_flag = cmStrCat(
