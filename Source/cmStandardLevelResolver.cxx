@@ -97,7 +97,8 @@ struct StanardLevelComputer
     cmProp standardProp = target->GetLanguageStandard(this->Language, config);
     if (!standardProp) {
       // Add extension flag if compiler's default doesn't match.
-      if (ext != defaultExt) {
+      // if (ext != defaultExt) {
+      if (ext) {
         return cmStrCat("CMAKE_", this->Language, "_", type,
                         "_COMPILE_OPTION");
       }
