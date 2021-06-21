@@ -39,6 +39,10 @@ public:
                               std::string& newRequiredStandard,
                               std::string* error = nullptr) const;
 
+  std::string NearestSupportedStandard(
+    const std::string& language, const std::string& languageToMatch,
+    const std::string& languageToMatchCurrentStandard) const;
+
   bool HaveStandardAvailable(cmGeneratorTarget const* target,
                              std::string const& lang,
                              std::string const& config,

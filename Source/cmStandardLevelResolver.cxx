@@ -294,6 +294,39 @@ struct StanardLevelComputer
     return maxLevel;
   }
 
+  std::string NearestStandardEnabled(cmMakefile* makefile,
+                                     std::string const& feature)
+  {
+    // Now that we have our desired level (newStandard) for langauge we need to
+    // clamp it to the valid range of our desired language. We only fail to
+    // find an exact match when the srcLang doesn't support new standard
+    // levels, and therefore the best match will be the highest supported
+    // level.
+    std::string prefix = cmStrCat("CMAKE_", this->Language);
+    StandardNeeded maxLevel = { -1, -1 };
+    StandardNeeded nearestLevel = { -1, -1 };
+    for (size_t i = 0; i < this->Levels.size(); ++i) {
+      if (cmProp prop = makefile->GetDefinition(
+            cmStrCat(prefix, this->LevelsAsStrings[i], "_COMPILE_FEATURES"))) {
+        std::vector<std::string> props = cmExpandedList(*prop);
+        if (cm::contains(props, feature)) {
+          maxLevel = { static_cast<int>(i), this->Levels[i] };
+        }
+        if (!props.empty()) {
+          nearestLevel = { static_cast<int>(i), this->Levels[i] };
+        }
+      }
+    }
+
+    std::string level;
+    if (maxLevel.index != -1) {
+      level = this->LevelsAsStrings[maxLevel.index];
+    } else if (nearestLevel.index != -1) {
+      level = this->LevelsAsStrings[nearestLevel.index];
+    }
+    return level;
+  }
+
   bool IsLaterStandard(int lhs, int rhs) const
   {
     auto rhsIt =
@@ -527,6 +560,41 @@ bool cmStandardLevelResolver::GetNewRequiredStandard(
       newRequiredStandard, error);
   }
   return false;
+}
+
+std::string cmStandardLevelResolver::NearestSupportedStandard(
+  const std::string& language, const std::string& languageToMatch,
+  const std::string& languageToMatchCurrentStandard) const
+{
+  // If the languageToMatch has an explicitly specified standard
+  // value use that, otherwise fall back to the default for
+  // languageToMatch
+  std::string newStandard;
+  if (!languageToMatchCurrentStandard.empty()) {
+    newStandard = languageToMatchCurrentStandard;
+  } else {
+    cmProp defaultStandard = this->Makefile->GetDefinition(
+      cmStrCat("CMAKE_", languageToMatch, "_STANDARD_DEFAULT"));
+    if (defaultStandard) {
+      newStandard = *defaultStandard;
+    }
+  }
+
+  // When inside `enable_language()` the standard default hasn't been
+  // computed and we can't determine the nearest level
+  if (newStandard.empty()) {
+    return newStandard;
+  }
+
+  // CUDA special case which allows us to not do any searching
+  auto destLang = StandardComputerMapping.find(language);
+  if (language == "CUDA" && newStandard == "98") {
+    return std::string{ "03" };
+  }
+
+  std::string feature =
+    cmStrCat(cmSystemTools::LowerCase(language), "_std_", newStandard);
+  return destLang->second.NearestStandardEnabled(this->Makefile, feature);
 }
 
 bool cmStandardLevelResolver::HaveStandardAvailable(
