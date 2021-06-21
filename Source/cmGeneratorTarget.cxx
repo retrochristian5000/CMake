@@ -4811,30 +4811,20 @@ bool cmGeneratorTarget::ComputeCompileFeatures(
     BTs<std::string> const* generatorTargetLanguageStandard =
       this->GetLanguageStandardProperty(language.first, config);
     if (!generatorTargetLanguageStandard) {
-      // If the standard isn't explicitly set we copy it over from the
-      // specified paired language.
-      std::string key =
-        cmStrCat(cmSystemTools::UpperCase(config), '-', language.first);
+      cmStandardLevelResolver standardResolver(this->Makefile);
+
       BTs<std::string> const* standardToCopy =
         this->GetLanguageStandardProperty(language.second, config);
-      if (standardToCopy) {
-        this->LanguageStandardMap[key] = *standardToCopy;
-        generatorTargetLanguageStandard = &this->LanguageStandardMap[key];
-      } else {
-        cmProp defaultStandard = this->Makefile->GetDefinition(
-          cmStrCat("CMAKE_", language.second, "_STANDARD_DEFAULT"));
-        if (defaultStandard) {
-          this->LanguageStandardMap[key] = BTs<std::string>(*defaultStandard);
-          generatorTargetLanguageStandard = &this->LanguageStandardMap[key];
-        }
-      }
 
-      // Custom updates for the CUDA standard.
-      if (generatorTargetLanguageStandard != nullptr &&
-          (language.first == "CUDA")) {
-        if (generatorTargetLanguageStandard->Value == "98") {
-          this->LanguageStandardMap[key].Value = "03";
-        }
+      auto nearestStandard = standardResolver.NearestSupportedStandard(
+        language.first, language.second,
+        (standardToCopy ? standardToCopy->Value : std::string{}));
+
+      if (!nearestStandard.empty()) {
+        std::string key =
+          cmStrCat(cmSystemTools::UpperCase(config), '-', language.first);
+        this->LanguageStandardMap[key] = BTs<std::string>(nearestStandard);
+        generatorTargetLanguageStandard = &this->LanguageStandardMap[key];
       }
     }
   }
