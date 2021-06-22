@@ -1638,6 +1638,14 @@ static void uv__fs_work(struct uv__work* w) {
 #undef X
   } while (r == -1 && errno == EINTR && retry_on_eintr);
 
+  /* Due to the fact that exFAT doesn't support any sort of links, it is
+   * impossible to compile some projects on my development drive, which is formatted
+   * as exFAT due to the fact that I use it with my Android phone sometimes. This
+   * fixes that issue by simply copying a file when an operation creating a link fails.
+   */
+  if (req->fs_type == UV_FS_LINK || req->fs_type == UV_FS_SYMLINK && r == -1)
+    r = uv__fs_copyfile(req);
+
   if (r == -1)
     req->result = UV__ERR(errno);
   else
