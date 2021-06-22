@@ -1648,14 +1648,15 @@ int cmcmd::SymlinkExecutable(std::vector<std::string> const& args)
 cmsys::Status cmcmd::SymlinkInternal(std::string const& file,
                                      std::string const& link)
 {
+  cmsys::Status status;
+
   if (cmSystemTools::FileExists(link) || cmSystemTools::FileIsSymlink(link)) {
     cmSystemTools::RemoveFile(link);
   }
   std::string linktext = cmSystemTools::GetFilenameName(file);
 #if defined(_WIN32) && !defined(__CYGWIN__)
   std::string errorMessage;
-  cmsys::Status status =
-    cmSystemTools::CreateSymlink(linktext, link, &errorMessage);
+  status = cmSystemTools::CreateSymlink(linktext, link, &errorMessage);
   // Creating a symlink will fail with ERROR_PRIVILEGE_NOT_HELD if the user
   // does not have SeCreateSymbolicLinkPrivilege, or if developer mode is not
   // active. In that case, we try to copy the file.
@@ -1664,10 +1665,10 @@ cmsys::Status cmcmd::SymlinkInternal(std::string const& file,
   } else if (!status) {
     cmSystemTools::Error(errorMessage);
   }
-  return status;
 #else
-  return cmSystemTools::CreateSymlink(linktext, link);
+  status = cmSystemTools::CreateSymlink(linktext, link);
 #endif
+  return status;
 }
 
 static void cmcmdProgressReport(std::string const& dir, std::string const& num)

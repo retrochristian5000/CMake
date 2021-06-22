@@ -3328,19 +3328,23 @@ cmsys::Status cmSystemTools::CreateSymlink(std::string const& origName,
                           flags, nullptr);
   cmsys::Status status;
   if (err) {
+    err = uv_fs_copyfile(nullptr, &req, origName.c_str(), newName.c_str(), 0,
+                         nullptr);
+    if (err) {
 #if defined(_WIN32)
-    status = cmsys::Status::Windows(uv_fs_get_system_error(&req));
+      status = cmsys::Status::Windows(uv_fs_get_system_error(&req));
 #elif UV_VERSION_MAJOR > 1 || (UV_VERSION_MAJOR == 1 && UV_VERSION_MINOR >= 38)
-    status = cmsys::Status::POSIX(uv_fs_get_system_error(&req));
+      status = cmsys::Status::POSIX(uv_fs_get_system_error(&req));
 #else
-    status = cmsys::Status::POSIX(-err);
+      status = cmsys::Status::POSIX(-err);
 #endif
-    std::string e = cmStrCat("failed to create symbolic link '", newName,
-                             "': ", status.GetString());
-    if (errorMessage) {
-      *errorMessage = std::move(e);
-    } else {
-      cmSystemTools::Error(e);
+      std::string e = cmStrCat("failed to create symbolic link '", newName,
+                               "': ", status.GetString());
+      if (errorMessage) {
+        *errorMessage = std::move(e);
+      } else {
+        cmSystemTools::Error(e);
+      }
     }
   }
   return status;
@@ -3355,19 +3359,23 @@ cmsys::Status cmSystemTools::CreateLink(std::string const& origName,
     uv_fs_link(nullptr, &req, origName.c_str(), newName.c_str(), nullptr);
   cmsys::Status status;
   if (err) {
+    err = uv_fs_copyfile(nullptr, &req, origName.c_str(), newName.c_str(), 0,
+                         nullptr);
+    if (err) {
 #if defined(_WIN32)
-    status = cmsys::Status::Windows(uv_fs_get_system_error(&req));
+      status = cmsys::Status::Windows(uv_fs_get_system_error(&req));
 #elif UV_VERSION_MAJOR > 1 || (UV_VERSION_MAJOR == 1 && UV_VERSION_MINOR >= 38)
-    status = cmsys::Status::POSIX(uv_fs_get_system_error(&req));
+      status = cmsys::Status::POSIX(uv_fs_get_system_error(&req));
 #else
-    status = cmsys::Status::POSIX(-err);
+      status = cmsys::Status::POSIX(-err);
 #endif
-    std::string e =
-      cmStrCat("failed to create link '", newName, "': ", status.GetString());
-    if (errorMessage) {
-      *errorMessage = std::move(e);
-    } else {
-      cmSystemTools::Error(e);
+      std::string e = cmStrCat("failed to create link '", newName,
+                               "': ", status.GetString());
+      if (errorMessage) {
+        *errorMessage = std::move(e);
+      } else {
+        cmSystemTools::Error(e);
+      }
     }
   }
   return status;
