@@ -445,6 +445,10 @@ public:
 
   virtual bool IsNinja() const { return false; }
 
+  /** Return true if this generator accepts explicit specification of
+      CMAKE_MAKE_PROGRAM, CMAKE_<LANG>_COMPILER, etc.  */
+  virtual bool UseExplicitTools() const { return true; }
+
   /** Return true if we know the exact location of object files.
       If false, store the reason in the given string.
       This is meaningful only after EnableLanguage has been called.  */

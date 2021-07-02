@@ -104,6 +104,8 @@ public:
 
   bool IsXcode() const override { return true; }
 
+  bool UseExplicitTools() const override { return false; }
+
   bool HasKnownObjectFileLocation(std::string* reason) const override;
 
   bool IsIPOSupported() const override { return true; }

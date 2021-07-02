@@ -82,6 +82,8 @@ public:
 
   const char* GetInstallTargetName() const override { return "install"; }
 
+  bool UseExplicitTools() const override { return false; }
+
 protected:
   void Generate() override;
   std::vector<GeneratedMakeCommand> GenerateBuildCommand(
