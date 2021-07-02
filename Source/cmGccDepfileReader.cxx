@@ -13,7 +13,8 @@
 #include "cmSystemTools.h"
 
 cm::optional<cmGccDepfileContent> cmReadGccDepfile(const char* filePath,
-                                                   const std::string& prefix)
+                                                   const std::string& prefix,
+                                                   bool dependenciesOnly)
 {
   cmGccDepfileLexerHelper helper;
   if (!helper.readFile(filePath)) {
@@ -23,7 +24,8 @@ cm::optional<cmGccDepfileContent> cmReadGccDepfile(const char* filePath,
 
   for (auto& dep : *deps) {
     for (auto& rule : dep.rules) {
-      if (!prefix.empty() && !cmSystemTools::FileIsFullPath(rule)) {
+      if (!dependenciesOnly && !prefix.empty() &&
+          !cmSystemTools::FileIsFullPath(rule)) {
         rule = cmStrCat(prefix, '/', rule);
       }
       if (cmSystemTools::FileIsFullPath(rule)) {
