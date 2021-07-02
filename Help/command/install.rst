@@ -128,7 +128,7 @@ Installing Targets
   install(TARGETS targets... [EXPORT <export-name>]
           [RUNTIME_DEPENDENCIES args...|RUNTIME_DEPENDENCY_SET <set-name>]
           [[ARCHIVE|LIBRARY|RUNTIME|OBJECTS|FRAMEWORK|BUNDLE|
-            PRIVATE_HEADER|PUBLIC_HEADER|RESOURCE]
+            PRIVATE_HEADER|PUBLIC_HEADER|RESOURCE|HEADERS|HEADER_SET <set-name>]
            [DESTINATION <dir>]
            [PERMISSIONS permissions...]
            [CONFIGURATIONS [Debug|Release|...]]
@@ -200,6 +200,22 @@ that may be installed:
   Similar to ``PUBLIC_HEADER`` and ``PRIVATE_HEADER``, but for
   ``RESOURCE`` files. See :prop_tgt:`RESOURCE` for details.
 
+``HEADERS``
+  Any headers added to the anonymous header set created by
+  :command:`target_headers` are installed in the specified destination,
+  preserving their directory structure relative to the anonymous header set's
+  base directory.
+
+  If a target has an anonymous header set, it is always installed, with the
+  default destination listed below (unless a ``DESTINATION`` is specified.) To
+  prevent automatic installation, use a named header set instead.
+
+``HEADER_SET <set>``
+  Any headers added to the header set ``<set>`` created by
+  :command:`target_headers` are installed in the specified destination,
+  preserving their directory structure relative to the header set's base
+  directory.
+
 For each of these arguments given, the arguments following them only apply
 to the target or file type specified in the argument. If none is given, the
 installation properties apply to all target types. If only one is given then
@@ -229,6 +245,8 @@ built-in defaults that apply when no destination is given:
 ``ARCHIVE``        ``${CMAKE_INSTALL_LIBDIR}``     ``lib``
 ``PRIVATE_HEADER`` ``${CMAKE_INSTALL_INCLUDEDIR}`` ``include``
 ``PUBLIC_HEADER``  ``${CMAKE_INSTALL_INCLUDEDIR}`` ``include``
+``HEADERS``        ``${CMAKE_INSTALL_INCLUDEDIR}`` ``include``
+``HEADER_SET``     ``${CMAKE_INSTALL_INCLUDEDIR}`` ``include``
 ================== =============================== ======================
 
 Projects wishing to follow the common practice of installing headers into a
@@ -333,6 +351,10 @@ top level:
   install the export file itself, call `install(EXPORT)`_, documented below.
   See documentation of the :prop_tgt:`EXPORT_NAME` target property to change
   the name of the exported target.
+
+  If ``EXPORT`` is used and the targets include named header sets, all of them
+  must be specified with ``HEADER_SET`` arguments. All header sets associated
+  with a target are included in the export.
 
 ``INCLUDES DESTINATION``
   This option specifies a list of directories which will be added to the
