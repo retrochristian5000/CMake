@@ -581,24 +581,31 @@ std::vector<std::string> cmNinjaNormalTargetGenerator::ComputeLinkCmd(
         }
       }
       cmExpandList(linkCmdStr, linkCmds);
-      if (this->GetGeneratorTarget()->GetPropertyAsBool("LINK_WHAT_YOU_USE")) {
-        std::string cmakeCommand = cmStrCat(
-          this->GetLocalGenerator()->ConvertToOutputFormat(
-            cmSystemTools::GetCMakeCommand(), cmLocalGenerator::SHELL),
-          " -E __run_co_compile --lwyu=");
-        cmGeneratorTarget& gt = *this->GetGeneratorTarget();
-        std::string targetOutputReal = this->ConvertToNinjaPath(
-          gt.GetFullPath(config, cmStateEnums::RuntimeBinaryArtifact,
-                         /*realname=*/true));
-        cmakeCommand += targetOutputReal;
-        linkCmds.push_back(std::move(cmakeCommand));
+      if (this->UseLWYU) {
+        cmProp lwyuCheck = mf->GetDefinition("CMAKE_LINK_WHAT_YOU_USE_CHECK");
+        if (lwyuCheck) {
+          std::string cmakeCommand = cmStrCat(
+            this->GetLocalGenerator()->ConvertToOutputFormat(
+              cmSystemTools::GetCMakeCommand(), cmLocalGenerator::SHELL),
+            " -E __run_co_compile --lwyu=");
+          cmakeCommand +=
+            this->GetLocalGenerator()->EscapeForShell(*lwyuCheck);
+
+          std::string targetOutputReal =
+            this->ConvertToNinjaPath(this->GetGeneratorTarget()->GetFullPath(
+              config, cmStateEnums::RuntimeBinaryArtifact,
+              /*realname=*/true));
+          cmakeCommand += cmStrCat(" --source=", targetOutputReal);
+          linkCmds.push_back(std::move(cmakeCommand));
+        }
       }
       return linkCmds;
     }
   }
   switch (this->GetGeneratorTarget()->GetType()) {
     case cmStateEnums::STATIC_LIBRARY: {
-      // We have archive link commands set. First, delete the existing archive.
+      // We have archive link commands set. First, delete the existing
+      // archive.
       {
         std::string cmakeCommand =
           this->GetLocalGenerator()->ConvertToOutputFormat(
@@ -630,9 +637,9 @@ std::vector<std::string> cmNinjaNormalTargetGenerator::ComputeLinkCmd(
       // On macOS ranlib truncates the fractional part of the static archive
       // file modification time.  If the archive and at least one contained
       // object file were created within the same second this will make look
-      // the archive older than the object file. On subsequent ninja runs this
-      // leads to re-achiving and updating dependent targets.
-      // As a work-around we touch the archive after ranlib (see #19222).
+      // the archive older than the object file. On subsequent ninja runs
+      // this leads to re-achiving and updating dependent targets. As a
+      // work-around we touch the archive after ranlib (see #19222).
       {
         std::string cmakeCommand =
           this->GetLocalGenerator()->ConvertToOutputFormat(
@@ -762,10 +769,10 @@ void cmNinjaNormalTargetGenerator::WriteDeviceLinkStatements(
     dlink.Outputs = { cubin };
     dlink.Variables["ARCH"] = cmStrCat("sm_", architecture);
 
-    // The generated register file contains macros that when expanded register
-    // the device routines. Because the routines are the same for all
-    // architectures the register file will be the same too. Thus generate it
-    // only on the first invocation to reduce overhead.
+    // The generated register file contains macros that when expanded
+    // register the device routines. Because the routines are the same for
+    // all architectures the register file will be the same too. Thus
+    // generate it only on the first invocation to reduce overhead.
     if (fatbinary.ExplicitDeps.size() == 1) {
       dlink.Variables["REGISTER"] = cmStrCat(
         "--register-link-binaries=", ninjaOutputDir, "/cmake_cuda_register.h");
@@ -779,7 +786,8 @@ void cmNinjaNormalTargetGenerator::WriteDeviceLinkStatements(
   this->GetGlobalGenerator()->WriteBuild(this->GetCommonFileStream(),
                                          fatbinary);
 
-  // Compile the stub that registers the kernels and contains the fatbinaries.
+  // Compile the stub that registers the kernels and contains the
+  // fatbinaries.
   cmNinjaBuild dcompile(this->LanguageLinkerCudaDeviceCompileRule(config));
   dcompile.Outputs = { output };
   dcompile.ExplicitDeps = { cmStrCat(ninjaOutputDir, "/cmake_cuda_fatbin.h") };
@@ -995,8 +1003,9 @@ void cmNinjaNormalTargetGenerator::WriteLinkStatement(
     if (globalGen->GetName() == "Ninja Multi-Config") {
       const auto postFix = this->GeneratorTarget->GetFilePostfix(config);
       // Skip creating Info.plist when there are multiple configurations, and
-      // the current configuration has a postfix. The non-postfix configuration
-      // Info.plist can be used by all the other configurations.
+      // the current configuration has a postfix. The non-postfix
+      // configuration Info.plist can be used by all the other
+      // configurations.
       if (!postFix.empty()) {
         bundleSkipParts.infoPlist = true;
       }
@@ -1156,9 +1165,11 @@ void cmNinjaNormalTargetGenerator::WriteLinkStatement(
 
   this->AddModuleDefinitionFlag(linkLineComputer.get(), vars["LINK_FLAGS"],
                                 config);
-  if (gt->GetPropertyAsBool("LINK_WHAT_YOU_USE")) {
-    vars["LINK_FLAGS"] += " -Wl,--no-as-needed";
-  }
+
+  this->UseLWYU = this->GetLocalGenerator()->AppendLWYUFlags(
+    vars["LINK_FLAGS"], this->GetGeneratorTarget(),
+    this->TargetLinkLanguage(config));
+
   vars["LINK_FLAGS"] = globalGen->EncodeLiteral(vars["LINK_FLAGS"]);
 
   vars["MANIFESTS"] = this->GetManifests(config);
@@ -1166,9 +1177,9 @@ void cmNinjaNormalTargetGenerator::WriteLinkStatement(
 
   vars["LINK_PATH"] = frameworkPath + linkPath;
 
-  // Compute architecture specific link flags.  Yes, these go into a different
-  // variable for executables, probably due to a mistake made when duplicating
-  // code between the Makefile executable and library generators.
+  // Compute architecture specific link flags.  Yes, these go into a
+  // different variable for executables, probably due to a mistake made when
+  // duplicating code between the Makefile executable and library generators.
   if (targetType == cmStateEnums::EXECUTABLE) {
     std::string t = vars["FLAGS"];
     localGen.AddArchitectureFlags(t, gt, this->TargetLinkLanguage(config),
@@ -1363,7 +1374,8 @@ void cmNinjaNormalTargetGenerator::WriteLinkStatement(
   this->GetLocalGenerator()->AppendTargetDepends(
     gt, linkBuild.OrderOnlyDeps, config, fileConfig, DependOnTargetArtifact);
 
-  // Add order-only dependencies on versioning symlinks of shared libs we link.
+  // Add order-only dependencies on versioning symlinks of shared libs we
+  // link.
   if (!this->GeneratorTarget->IsDLLPlatform()) {
     if (cmComputeLinkInformation* cli =
           this->GeneratorTarget->GetLinkInformation(config)) {
