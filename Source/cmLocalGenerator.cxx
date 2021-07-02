@@ -3047,6 +3047,28 @@ void cmLocalGenerator::AppendPositionIndependentLinkerFlags(
   }
 }
 
+bool cmLocalGenerator::AppendLWYUFlags(std::string& flags,
+                                       const cmGeneratorTarget* target,
+                                       const std::string& lang)
+{
+  auto useLWYU = target->GetPropertyAsBool("LINK_WHAT_YOU_USE") &&
+    (target->GetType() == cmStateEnums::TargetType::EXECUTABLE ||
+     target->GetType() == cmStateEnums::TargetType::SHARED_LIBRARY ||
+     target->GetType() == cmStateEnums::TargetType::MODULE_LIBRARY);
+
+  if (useLWYU) {
+    const auto& lwyuFlag = this->GetMakefile()->GetSafeDefinition(
+      cmStrCat("CMAKE_", lang, "_LINK_WHAT_YOU_USE_FLAG"));
+    useLWYU = !lwyuFlag.empty();
+
+    if (useLWYU) {
+      this->AppendFlags(flags, lwyuFlag);
+    }
+  }
+
+  return useLWYU;
+}
+
 void cmLocalGenerator::AppendCompileOptions(std::string& options,
                                             std::string const& options_list,
                                             const char* regex) const
