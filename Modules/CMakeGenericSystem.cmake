@@ -13,6 +13,14 @@ set(CMAKE_LIBRARY_PATH_FLAG "-L")
 set(CMAKE_LIBRARY_PATH_TERMINATOR "")  # for the Digital Mars D compiler the link paths have to be terminated with a "/"
 set(CMAKE_LINK_LIBRARY_FLAG "-l")
 
+if (CMAKE_EXECUTABLE_FORMAT STREQUAL "ELF")
+  set(CMAKE_LINK_WHAT_YOU_USE_FLAG "-Wl,--no-as-needed")
+  set(CMAKE_LINK_WHAT_YOU_USE_CHECK ldd -u -r)
+else()
+  set(CMAKE_LINK_WHAT_YOU_USE_FLAG "")
+  set(CMAKE_LINK_WHAT_YOU_USE_CHECK "")
+endif()
+
 set(CMAKE_LINK_LIBRARY_SUFFIX "")
 set(CMAKE_STATIC_LIBRARY_PREFIX "lib")
 set(CMAKE_STATIC_LIBRARY_SUFFIX ".a")
