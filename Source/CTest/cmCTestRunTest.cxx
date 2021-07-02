@@ -14,6 +14,7 @@
 #include <utility>
 
 #include <cm/memory>
+#include <cmext/string_view>
 
 #include "cmsys/RegularExpression.hxx"
 
@@ -640,6 +641,7 @@ bool cmCTestRunTest::StartTest(size_t completed, size_t total)
 
   return this->ForkProcess(timeout, this->TestProperties->ExplicitTimeout,
                            &this->TestProperties->Environment,
+                           &this->TestProperties->EnvironmentModification,
                            &this->TestProperties->Affinity);
 }
 
@@ -696,6 +698,15 @@ void cmCTestRunTest::ComputeArguments()
     cmCTestLog(this->CTest, HANDLER_VERBOSE_OUTPUT,
                this->Index << ":  " << env << std::endl);
   }
+  if (!this->TestProperties->EnvironmentModification.empty()) {
+    cmCTestLog(this->CTest, HANDLER_VERBOSE_OUTPUT,
+               this->Index << ": "
+                           << "Environment variable modifications: " << std::endl);
+  }
+  for (std::string const& envmod : this->TestProperties->EnvironmentModification) {
+    cmCTestLog(this->CTest, HANDLER_VERBOSE_OUTPUT,
+               this->Index << ":  " << envmod << std::endl);
+  }
 }
 
 void cmCTestRunTest::ParseOutputForMeasurements()
@@ -721,6 +732,7 @@ void cmCTestRunTest::ParseOutputForMeasurements()
 
 bool cmCTestRunTest::ForkProcess(cmDuration testTimeOut, bool explicitTimeout,
                                  std::vector<std::string>* environment,
+                                 std::vector<std::string>* environment_modification,
                                  std::vector<size_t>* affinity)
 {
   this->TestProcess->SetId(this->Index);
@@ -767,6 +779,113 @@ bool cmCTestRunTest::ForkProcess(cmDuration testTimeOut, bool explicitTimeout,
     cmSystemTools::AppendEnv(*environment);
     for (auto const& var : *environment) {
       envMeasurement << var << std::endl;
+    }
+  }
+
+  if (environment_modification && !environment_modification->empty()) {
+    std::map<std::string, cm::optional<std::string>> env_application;
+
+#ifdef _WIN32
+    char path_sep = ';';
+#else
+    char path_sep = ':';
+#endif
+
+    auto apply_diff = [&env_application](const std::string& name, std::function<void(std::string&)> apply) {
+      auto entry = env_application.find(name);
+      std::string output;
+      if (entry != env_application.end() && entry->second) {
+        output = *entry->second;
+      }
+      apply(output);
+      entry->second = output;
+    };
+
+    for (auto const& envmod : *environment_modification) {
+      // Split on `=`
+      auto const eq_loc = envmod.find_first_of('=');
+      if (eq_loc == std::string::npos) {
+        // TODO: error
+        continue;
+      }
+      auto const name = envmod.substr(0, eq_loc);
+
+      // Split value on `:`
+      auto const op_value_start = eq_loc + 1;
+      auto const colon_loc = envmod.find_first_of(':', op_value_start);
+      if (colon_loc == std::string::npos) {
+        // TODO: error
+        continue;
+      }
+      auto const op = envmod.substr(op_value_start, colon_loc - op_value_start);
+
+      auto const value_start = colon_loc + 1;
+      auto const value = envmod.substr(value_start);
+
+      // Determine what to do with the operation.
+      if (op == "ignore"_s) {
+        auto entry = env_application.find(name);
+        if (entry != env_application.end()) {
+          env_application.erase(entry);
+        }
+      } else if (op == "set"_s) {
+        env_application[name] = value;
+      } else if (op == "unset"_s) {
+        env_application[name] = {};
+      } else if (op == "string_append"_s) {
+        apply_diff(name, [&value](std::string& output) {
+          output += value;
+        });
+      } else if (op == "string_prepend"_s) {
+        apply_diff(name, [&value](std::string& output) {
+          output = value + output;
+        });
+      } else if (op == "path_list_append"_s) {
+        apply_diff(name, [&value, path_sep](std::string& output) {
+          if (!output.empty()) {
+            output += path_sep;
+          }
+          output += value;
+        });
+      } else if (op == "path_list_prepend"_s) {
+        apply_diff(name, [&value, path_sep](std::string& output) {
+          if (output.empty()) {
+            output = value + path_sep + output;
+          } else {
+            output = value;
+          }
+        });
+      } else if (op == "cmake_list_append"_s) {
+        apply_diff(name, [&value](std::string& output) {
+          if (!output.empty()) {
+            output += ';';
+          }
+          output += value;
+        });
+      } else if (op == "cmake_list_prepend"_s) {
+        apply_diff(name, [&value](std::string& output) {
+          if (output.empty()) {
+            output = value + ';' + output;
+          } else {
+            output = value;
+          }
+        });
+      } else {
+        // TODO: error
+        return false;
+      }
+    }
+
+    for (auto const& env_apply : env_application) {
+      if (env_apply.second) {
+        auto const env_update = cmStrCat(env_apply.first, '=', *env_apply.second);
+        cmSystemTools::PutEnv(env_update);
+        envMeasurement << env_update << std::endl;
+      } else {
+        cmSystemTools::UnsetEnv(env_apply.first.c_str());
+        // Signify that this variable is being actively unset
+        envMeasurement << "#" << env_apply.first << "=" << std::endl;
+      }
     }
   }
 
