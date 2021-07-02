@@ -110,6 +110,7 @@ These commands are available only in CMake projects.
    /command/target_compile_definitions
    /command/target_compile_features
    /command/target_compile_options
+   /command/target_headers
    /command/target_include_directories
    /command/target_link_directories
    /command/target_link_libraries
