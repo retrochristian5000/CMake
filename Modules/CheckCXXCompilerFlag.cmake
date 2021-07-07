@@ -38,4 +38,5 @@ include(Internal/CheckCompilerFlag)
 
 macro (CHECK_CXX_COMPILER_FLAG _FLAG _RESULT)
   cmake_check_compiler_flag(CXX "${_FLAG}" ${_RESULT})
+  unset(${_RESULT}) # Corrects Issue 21207
 endmacro ()
