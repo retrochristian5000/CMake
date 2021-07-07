@@ -448,8 +448,11 @@ which the file is found.  The :variable:`CMAKE_FIND_PACKAGE_RESOLVE_SYMLINKS`
 variable may be set to ``TRUE`` before calling ``find_package`` in order
 to resolve symbolic links and store the real path to the file.
 
-Every non-REQUIRED ``find_package`` call can be disabled by setting the
+Every non-REQUIRED ``find_package`` call can be made REQUIRED by setting
+the :variable:`CMAKE_REQUIRE_FIND_PACKAGE_<PackageName>` variable to ``TRUE``,
+or disabled by setting the
 :variable:`CMAKE_DISABLE_FIND_PACKAGE_<PackageName>` variable to ``TRUE``.
+Setting both variables to ``TRUE`` simultaneously will result in error.
 
 Package File Interface Variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

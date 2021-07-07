@@ -375,6 +375,12 @@ if(BUILD_TESTING)
   # add a bunch of standard build-and-test style tests
   ADD_TEST_MACRO(CommandLineTest CommandLineTest)
   ADD_TEST_MACRO(FindPackageTest FindPackageTest)
+  ADD_TEST_MACRO(FindPackageForceRequiredTest FindPackageForceRequiredTest)
+  set_tests_properties(FindPackageForceRequiredTest PROPERTIES
+    PASS_REGULAR_EXPRESSION "No \"FindDoesNotExist\.cmake\" found in CMAKE_MODULE_PATH")
+  ADD_TEST_MACRO(FindPackageRequiredOptionClashTest FindPackageRequiredOptionClashTest)
+  set_tests_properties(FindPackageRequiredOptionClashTest PROPERTIES
+    PASS_REGULAR_EXPRESSION "A REQUIRED package cannot be disabled")
   ADD_TEST_MACRO(StringFileTest StringFileTest)
   ADD_TEST_MACRO(TryCompile TryCompile)
   ADD_TEST_MACRO(SystemInformation SystemInformation)
