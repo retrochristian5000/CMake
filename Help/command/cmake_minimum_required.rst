@@ -5,7 +5,7 @@ Require a minimum version of cmake.
 
 .. code-block:: cmake
 
-  cmake_minimum_required(VERSION <min>[...<policy_max>] [FATAL_ERROR])
+  cmake_minimum_required([VERSION] <min>[...<policy_max>] [FATAL_ERROR])
 
 .. versionadded:: 3.12
   The optional ``<policy_max>`` version.
@@ -53,7 +53,7 @@ with an error instead of just a warning.
 Policy Settings
 ^^^^^^^^^^^^^^^
 
-The ``cmake_minimum_required(VERSION)`` command implicitly invokes the
+The ``cmake_minimum_required()`` command implicitly invokes the
 :command:`cmake_policy(VERSION)` command to specify that the current
 project code is written for the given range of CMake versions.
 All policies known to the running version of CMake and introduced

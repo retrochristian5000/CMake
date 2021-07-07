@@ -46,6 +46,11 @@ bool cmCMakeMinimumRequired(std::vector<std::string> const& args,
     return false;
   }
 
+  if(version_string.empty() && unknown_arguments.size() == 1) {
+    version_string = unknown_arguments.front();
+    unknown_arguments.clear();
+  }
+
   // Make sure there was a version to check.
   if (version_string.empty()) {
     return EnforceUnknownArguments(std::string(), unknown_arguments, status);
