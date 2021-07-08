@@ -583,7 +583,8 @@ void cmComputeLinkInformation::AddImplicitLinkInfo()
   // The link closure lists all languages whose implicit info is needed.
   cmGeneratorTarget::LinkClosure const* lc =
     this->Target->GetLinkClosure(this->Config);
-  for (std::string const& li : lc->Languages) {
+  for (auto const& p : lc->Languages) {
+    std::string const& li = p.first;
 
     if (li == "CUDA" || li == "HIP") {
       // These need to go before the other implicit link information
@@ -1854,7 +1855,8 @@ void cmComputeLinkInformation::GetRPath(std::vector<std::string>& runtimeDirs,
   {
     cmGeneratorTarget::LinkClosure const* lc =
       this->Target->GetLinkClosure(this->Config);
-    for (std::string const& li : lc->Languages) {
+    for (auto const& p : lc->Languages) {
+      std::string const& li = p.first;
       std::string useVar =
         "CMAKE_" + li + "_USE_IMPLICIT_LINK_DIRECTORIES_IN_RUNTIME_PATH";
       if (this->Makefile->IsOn(useVar)) {
