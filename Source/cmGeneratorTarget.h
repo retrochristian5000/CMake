@@ -382,7 +382,9 @@ public:
     std::string LinkerLanguage;
 
     // Languages whose runtime libraries must be linked.
-    std::vector<std::string> Languages;
+    typedef std::map<std::string, std::vector<cmGeneratorTarget const*>>
+      LanguageMap;
+    LanguageMap Languages;
   };
 
   LinkClosure const* GetLinkClosure(const std::string& config) const;
