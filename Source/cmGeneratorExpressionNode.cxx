@@ -364,6 +364,61 @@ static const struct FilterNode : public cmGeneratorExpressionNode
   }
 } filterNode;
 
+static const struct TransformNode : public cmGeneratorExpressionNode
+{
+  TransformNode() {} // NOLINT(modernize-use-equals-default)
+
+  // Syntax: $<TRANSFORM:list,action,[action args...]>
+  // action is the other generator expression name (without sigil)
+  // _1 arg is replaced with the list element
+  int NumExpectedParameters() const override { return TwoOrMoreParameters; }
+
+  std::string Evaluate(
+    const std::vector<std::string>& parameters,
+    cmGeneratorExpressionContext* context,
+    const GeneratorExpressionContent* content,
+    cmGeneratorExpressionDAGChecker* dagChecker) const override
+  {
+    if (parameters.size() < 2) {
+      reportError(
+        context, content->GetOriginalExpression(),
+        "$<TRANSFORM:...> expression requires at least two parameters");
+    }
+
+    const auto* actionNode = GetNode(parameters[1], *context);
+    if (!actionNode) {
+      reportError(context, content->GetOriginalExpression(),
+                  "Unknown action given to $<TRANSFORM:...> expression");
+    }
+
+    const auto placeholder = "_1"_s;
+
+    std::vector<std::string> actionParams;
+    std::vector<std::size_t> placeholderIndices;
+    const std::size_t actionArgsStartIndex = 2;
+    for (std::size_t i = actionArgsStartIndex; i < parameters.size(); ++i) {
+      if (parameters[i] == placeholder) {
+        placeholderIndices.push_back(i - actionArgsStartIndex);
+        actionParams.emplace_back("");
+      } else {
+        actionParams.push_back(parameters[i]);
+      }
+    }
+
+    const auto list = cmTokenize(parameters[0], ";"_s);
+    std::vector<std::string> result;
+    std::transform(list.begin(), list.end(), std::back_inserter(result),
+                   [&](const auto& elem) {
+                     for (std::size_t i : placeholderIndices) {
+                       actionParams[i] = elem;
+                     }
+                     return actionNode->Evaluate(actionParams, context,
+                                                 content, dagChecker);
+                   });
+    return cmJoin(result, ";"_s);
+  }
+} transformNode;
+
 static const struct RemoveDuplicatesNode : public cmGeneratorExpressionNode
 {
   RemoveDuplicatesNode() {} // NOLINT(modernize-use-equals-default)
@@ -2749,6 +2804,7 @@ const cmGeneratorExpressionNode* cmGeneratorExpressionNode::GetNode(
     { "EQUAL", &equalNode },
     { "IN_LIST", &inListNode },
     { "FILTER", &filterNode },
+    { "TRANSFORM", &transformNode },
     { "REMOVE_DUPLICATES", &removeDuplicatesNode },
     { "LOWER_CASE", &lowerCaseNode },
     { "UPPER_CASE", &upperCaseNode },
