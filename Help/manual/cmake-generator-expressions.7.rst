@@ -882,6 +882,19 @@ which is just the string ``tgt``.
   Note that ``tgt`` is not added as a dependency of the target this
   expression is evaluated on (see policy :policy:`CMP0112`).
 
+.. genex:: $<TARGET_LINKER_ARTIFACT:tgt>
+
+  .. versionadded:: 3.22
+
+  File or linker option (`-lname`) used when linking to the ``tgt`` target.
+
+  Added for convenience. Normal, imported, and interface libraries
+  require querying different properties to retrieve the library location or
+  linker option . This generator expression unifies access to this
+  bit of information, accessing the :prop_tgt:`INTERFACE_LINK_LIBRARIES` for
+  interface libraries or copying the `$<TARGET_LINKER_FILE:tgt>` behavior
+  otherwise.
+
 .. genex:: $<TARGET_LINKER_FILE:tgt>
 
   File used when linking to the ``tgt`` target.  This will usually

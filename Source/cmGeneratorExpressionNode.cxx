@@ -2372,11 +2372,11 @@ struct TargetArtifactBase : public cmGeneratorExpressionNode
   TargetArtifactBase() {} // NOLINT(modernize-use-equals-default)
 
 protected:
-  cmGeneratorTarget* GetTarget(
-    const std::vector<std::string>& parameters,
-    cmGeneratorExpressionContext* context,
-    const GeneratorExpressionContent* content,
-    cmGeneratorExpressionDAGChecker* dagChecker) const
+  cmGeneratorTarget* GetTarget(const std::vector<std::string>& parameters,
+                               cmGeneratorExpressionContext* context,
+                               const GeneratorExpressionContent* content,
+                               cmGeneratorExpressionDAGChecker* dagChecker,
+                               bool allowInterfaceLibraries = false) const
   {
     // Lookup the referenced target.
     std::string name = parameters.front();
@@ -2392,8 +2392,11 @@ protected:
                     "No target \"" + name + "\"");
       return nullptr;
     }
-    if (target->GetType() >= cmStateEnums::OBJECT_LIBRARY &&
-        target->GetType() != cmStateEnums::UNKNOWN_LIBRARY) {
+    const auto targetType = target->GetType();
+    if ((targetType >= cmStateEnums::OBJECT_LIBRARY &&
+         targetType < (allowInterfaceLibraries
+                         ? cmStateEnums::INTERFACE_LIBRARY
+                         : cmStateEnums::UNKNOWN_LIBRARY))) {
       ::reportError(context, content->GetOriginalExpression(),
                     "Target \"" + name +
                       "\" is not an executable or library.");
@@ -2477,6 +2480,33 @@ static const TargetFilesystemArtifact<ArtifactBundleContentDirTag,
                                       ArtifactPathTag>
   targetBundleContentDirNode;
 
+static const struct TargetLinkerArtifactNode : public TargetArtifactBase
+{
+  TargetLinkerArtifactNode() {} // NOLINT(modernize-use-equals-default)
+
+  int NumExpectedParameters() const override { return 1; }
+
+  std::string Evaluate(
+    const std::vector<std::string>& parameters,
+    cmGeneratorExpressionContext* context,
+    const GeneratorExpressionContent* content,
+    cmGeneratorExpressionDAGChecker* dagChecker) const override
+  {
+    cmGeneratorTarget* target =
+      this->GetTarget(parameters, context, content, dagChecker, true);
+    if (!target) {
+      return std::string();
+    }
+    if (target->GetType() == cmStateEnums::INTERFACE_LIBRARY) {
+      return cmGeneratorExpression::StripEmptyListElements(
+        target->EvaluateInterfaceProperty("INTERFACE_LINK_LIBRARIES", context,
+                                          dagChecker));
+    } else {
+      return targetLinkerNodeGroup.File.Evaluate(parameters, context, content,
+                                                 dagChecker);
+    }
+  }
+} targetLinkerArtifactNode;
 //
 // To retrieve base name for various artifacts
 //
@@ -2800,6 +2830,7 @@ const cmGeneratorExpressionNode* cmGeneratorExpressionNode::GetNode(
     { "TARGET_PDB_FILE_DIR", &targetPdbNodeGroup.FileDir },
     { "TARGET_BUNDLE_DIR", &targetBundleDirNode },
     { "TARGET_BUNDLE_CONTENT_DIR", &targetBundleContentDirNode },
+    { "TARGET_LINKER_ARTIFACT", &targetLinkerArtifactNode },
     { "STREQUAL", &strEqualNode },
     { "EQUAL", &equalNode },
     { "IN_LIST", &inListNode },
