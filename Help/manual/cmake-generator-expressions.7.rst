@@ -1038,12 +1038,17 @@ which is just the string ``tgt``.
   Note that ``tgt`` is not added as a dependency of the target this
   expression is evaluated on (see policy :policy:`CMP0112`).
 
-.. genex:: $<TARGET_PROPERTY:tgt,prop>
+.. genex:: $<TARGET_PROPERTY:tgt_list,prop>
 
   Value of the property ``prop`` on the target ``tgt``.
 
   Note that ``tgt`` is not added as a dependency of the target this
   expression is evaluated on.
+
+  .. versionadded:: 3.22
+
+  The expression accepts target list and returns list of property values
+  for each target.
 
 .. genex:: $<TARGET_PROPERTY:prop>
 
@@ -1051,6 +1056,33 @@ which is just the string ``tgt``.
   is being evaluated. Note that for generator expressions in
   :ref:`Target Usage Requirements` this is the consuming target rather
   than the target specifying the requirement.
+
+.. genex:: $<TARGET_PROPERTY_RECURSIVE:tgt_list,prop>
+.. genex:: $<TARGET_PROPERTY_RECURSIVE:tgt_list,prop,collect_targets>
+
+  .. versionadded:: 3.22
+
+A version of `TARGET_PROPERTY` expression which retrieves the given
+property ``prop`` from each target in the ``tgt_list`` and then
+recursively continues if there are targets in the retrieved results.
+It expands any encountered generator expression in target properties.
+
+The resulting list contains property values if ``collect_targets`` is
+`0` or absent, or the list of encountered targets if ``collect_targets``
+is `1`. For example:
+
+.. code-block:: cmake
+
+  add_library(lib)
+  target_link_librarires(lib PUBLIC Threads::Threads OpenSSL::SSL)
+
+Then
+.. code-block:: cmake
+  $<TARGET_PROPERTY_RECURSIVE:lib,INTERFACE_LINK_LIBRARIES>
+expands to `-lpthread` and
+.. code-block:: cmake
+  $<TARGET_PROPERTY_RECURSIVE:lib,INTERFACE_LINK_LIBRARIES,1>
+expands to `lib;Threads::Threads;OpenSSL::SSL;OpenSSL::Crypto`.
 
 .. genex:: $<TARGET_RUNTIME_DLLS:tgt>
 

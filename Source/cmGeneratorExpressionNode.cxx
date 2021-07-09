@@ -1294,24 +1294,30 @@ std::string getLinkedTargetsContent(
   return result;
 }
 
-static const struct TargetPropertyNode : public cmGeneratorExpressionNode
+struct TargetPropertyNodeCommon : public cmGeneratorExpressionNode
 {
-  TargetPropertyNode() {} // NOLINT(modernize-use-equals-default)
-
+  TargetPropertyNodeCommon(std::string_view name,
+                           std::size_t maxAdditionalParameters)
+    : Name(name)
+    , MaxAdditionalParameters(maxAdditionalParameters)
+  {
+  }
   // This node handles errors on parameter count itself.
   int NumExpectedParameters() const override { return OneOrMoreParameters; }
 
-  static const char* GetErrorText(std::string const& targetName,
-                                  std::string const& propertyName)
+  std::string GetErrorText(std::string const& targetName,
+                           std::string const& propertyName) const
   {
     static cmsys::RegularExpression propertyNameValidator("^[A-Za-z0-9_]+$");
     if (targetName.empty() && propertyName.empty()) {
-      return "$<TARGET_PROPERTY:tgt,prop> expression requires a non-empty "
-             "target name and property name.";
+      return cmStrCat("$<", Name,
+                      ":tgt,prop> expression requires a non-empty "
+                      "target name and property name.");
     }
     if (targetName.empty()) {
-      return "$<TARGET_PROPERTY:tgt,prop> expression requires a non-empty "
-             "target name.";
+      return cmStrCat("$<", Name,
+                      ":tgt,prop> expression requires a non-empty "
+                      "target name.");
     }
     if (!cmGeneratorExpression::IsValidTargetName(targetName)) {
       if (!propertyNameValidator.find(propertyName)) {
@@ -1319,7 +1325,7 @@ static const struct TargetPropertyNode : public cmGeneratorExpressionNode
       }
       return "Target name not supported.";
     }
-    return nullptr;
+    return {};
   }
 
   std::string Evaluate(
@@ -1328,19 +1334,69 @@ static const struct TargetPropertyNode : public cmGeneratorExpressionNode
     const GeneratorExpressionContent* content,
     cmGeneratorExpressionDAGChecker* dagCheckerParent) const override
   {
+    std::vector<std::string> targetNames;
+    std::string propertyName;
+    std::vector<std::string> additionalParameters;
+    if (parameters.size() >= 2) {
+      cmGeneratorExpression::Split(parameters[0], targetNames);
+      propertyName = parameters[1];
+      std::copy(parameters.begin() + 2, parameters.end(),
+                std::back_inserter(additionalParameters));
+    } else if (parameters.size() == 1) {
+      targetNames.emplace_back(""_s);
+      propertyName = parameters[0];
+    } else {
+      reportError(context, content->GetOriginalExpression(),
+                  cmStrCat("$<", Name,
+                           ":...> expression requires one or two parameters"));
+      return std::string();
+    }
+
+    std::vector<std::string> results;
+    std::transform(targetNames.begin(), targetNames.end(),
+                   std::back_inserter(results),
+                   [&, this](const auto& targetName) {
+                     return this->EvaluateTarget(targetName, propertyName,
+                                                 additionalParameters, context,
+                                                 content, dagCheckerParent);
+                   });
+    return cmJoin(results, ";"_s);
+  }
+
+  virtual std::string EvaluateTarget(
+    const std::string& targetName, const std::string& propertyName,
+    const std::vector<std::string>& additionalParameters,
+    cmGeneratorExpressionContext* context,
+    const GeneratorExpressionContent* content,
+    cmGeneratorExpressionDAGChecker* dagCheckerParent) const = 0;
+
+  std::string_view Name;
+  std::size_t MaxAdditionalParameters;
+};
+
+static const struct TargetPropertyNode : public TargetPropertyNodeCommon
+{
+  TargetPropertyNode()
+    : TargetPropertyNodeCommon("TARGET_PROPERTY", 0)
+  {
+  }
+
+  std::string EvaluateTarget(
+    const std::string& targetName, const std::string& propertyName,
+    const std::vector<std::string>& /* additionalParameters */,
+    cmGeneratorExpressionContext* context,
+    const GeneratorExpressionContent* content,
+    cmGeneratorExpressionDAGChecker* dagCheckerParent) const override
+  {
     static cmsys::RegularExpression propertyNameValidator("^[A-Za-z0-9_]+$");
 
-    cmGeneratorTarget const* target = nullptr;
-    std::string targetName;
-    std::string propertyName;
+    cmGeneratorTarget const* target;
 
-    if (parameters.size() == 2) {
-      targetName = parameters[0];
-      propertyName = parameters[1];
-
-      if (const char* e = GetErrorText(targetName, propertyName)) {
-        reportError(context, content->GetOriginalExpression(), e);
-        return std::string();
+    if (!targetName.empty()) {
+      const auto errorText = this->GetErrorText(targetName, propertyName);
+      if (!errorText.empty()) {
+        reportError(context, content->GetOriginalExpression(), errorText);
+        return {};
       }
       if (propertyName == "ALIASED_TARGET"_s) {
         if (context->LG->GetMakefile()->IsAlias(targetName)) {
@@ -1349,7 +1405,7 @@ static const struct TargetPropertyNode : public cmGeneratorExpressionNode
             return tgt->GetName();
           }
         }
-        return std::string();
+        return {};
       }
       if (propertyName == "ALIAS_GLOBAL"_s) {
         if (context->LG->GetMakefile()->IsAlias(targetName)) {
@@ -1357,7 +1413,7 @@ static const struct TargetPropertyNode : public cmGeneratorExpressionNode
             ? "TRUE"
             : "FALSE";
         }
-        return std::string();
+        return {};
       }
       target = context->LG->FindGeneratorTargetToUse(targetName);
 
@@ -1365,13 +1421,11 @@ static const struct TargetPropertyNode : public cmGeneratorExpressionNode
         std::ostringstream e;
         e << "Target \"" << targetName << "\" not found.";
         reportError(context, content->GetOriginalExpression(), e.str());
-        return std::string();
+        return {};
       }
       context->AllTargets.insert(target);
-
-    } else if (parameters.size() == 1) {
+    } else {
       target = context->HeadTarget;
-      propertyName = parameters[0];
 
       // Keep track of the properties seen while processing.
       // The evaluation of the LINK_LIBRARIES generator expressions
@@ -1390,11 +1444,6 @@ static const struct TargetPropertyNode : public cmGeneratorExpressionNode
           "$<TARGET_PROPERTY:tgt,prop> signature instead.");
         return std::string();
       }
-    } else {
-      reportError(
-        context, content->GetOriginalExpression(),
-        "$<TARGET_PROPERTY:...> expression requires one or two parameters");
-      return std::string();
     }
 
     if (propertyName == "SOURCES") {
@@ -1577,6 +1626,68 @@ static const struct TargetPropertyNode : public cmGeneratorExpressionNode
     return result;
   }
 } targetPropertyNode;
+
+static const struct TargetPropertyRecursiveNode
+  : public TargetPropertyNodeCommon
+{
+  TargetPropertyRecursiveNode()
+    : TargetPropertyNodeCommon("TARGET_PROPERTY_RECURSIVE", 1)
+  {
+  }
+
+  std::string EvaluateTarget(
+    const std::string& targetName, const std::string& propertyName,
+    const std::vector<std::string>& additionalParameters,
+    cmGeneratorExpressionContext* context,
+    const GeneratorExpressionContent* content,
+    cmGeneratorExpressionDAGChecker* dagCheckerParent) const override
+  {
+    const auto* const target =
+      context->LG->FindGeneratorTargetToUse(targetName);
+    if (!target) {
+      return targetName;
+    }
+
+    const bool collectTargets =
+      additionalParameters.size() && additionalParameters.front() == "1"_s;
+
+    std::vector<std::string> targets{ targetName };
+    std::vector<std::string> results;
+    while (!targets.empty()) {
+      std::vector<std::string> newTargets;
+      for (const auto& maybeTarget : targets) {
+        const auto* const tgt =
+          context->LG->FindGeneratorTargetToUse(maybeTarget);
+        if (tgt) {
+          cmGeneratorExpressionContext tgtContext = *context;
+          tgtContext.HeadTarget = tgtContext.CurrentTarget = tgt;
+          const auto expandedString = targetPropertyNode.EvaluateTarget(
+            maybeTarget, propertyName, {}, &tgtContext, content,
+            dagCheckerParent);
+          std::vector<std::string> expanded;
+          cmGeneratorExpression::Split(expandedString, expanded);
+          std::vector<std::string> expandedExaluated;
+          std::transform(expanded.begin(), expanded.end(),
+                         std::back_inserter(expandedExaluated),
+                         [&](const auto& s) {
+                           return cmGeneratorExpression::Evaluate(
+                             s, context->LG, context->Config,
+                             context->HeadTarget, context->InterfaceMode,
+                             dagCheckerParent, tgt, context->Language);
+                         });
+          std::copy_if(expandedExaluated.begin(), expandedExaluated.end(),
+                       std::back_inserter(newTargets),
+                       [](const auto& s) { return !s.empty(); });
+        }
+        if (collectTargets == (tgt != nullptr)) {
+          results.push_back(maybeTarget);
+        }
+      }
+      targets = std::move(newTargets);
+    }
+    return cmJoin(results, ";");
+  }
+} targetPropertyRecursiveNode;
 
 static const struct TargetNameNode : public cmGeneratorExpressionNode
 {
@@ -2648,6 +2759,7 @@ const cmGeneratorExpressionNode* cmGeneratorExpressionNode::GetNode(
     { "COMMA", &commaNode },
     { "SEMICOLON", &semicolonNode },
     { "TARGET_PROPERTY", &targetPropertyNode },
+    { "TARGET_PROPERTY_RECURSIVE", &targetPropertyRecursiveNode },
     { "TARGET_NAME", &targetNameNode },
     { "TARGET_OBJECTS", &targetObjectsNode },
     { "TARGET_POLICY", &targetPolicyNode },
