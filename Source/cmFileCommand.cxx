@@ -2470,7 +2470,8 @@ bool HandleUploadCommand(std::vector<std::string> const& args,
 void AddEvaluationFile(const std::string& inputName,
                        const std::string& targetName,
                        const std::string& outputExpr,
-                       const std::string& condition, bool inputIsContent,
+                       const std::string& condition,
+                       TargetInterfaceMode interfaceMode, bool inputIsContent,
                        const std::string& newLineCharacter, mode_t permissions,
                        cmExecutionStatus& status)
 {
@@ -2486,7 +2487,7 @@ void AddEvaluationFile(const std::string& inputName,
 
   status.GetMakefile().AddEvaluationFile(
     inputName, targetName, std::move(outputCge), std::move(conditionCge),
-    newLineCharacter, permissions, inputIsContent);
+    interfaceMode, newLineCharacter, permissions, inputIsContent);
 }
 
 bool HandleGenerateCommand(std::vector<std::string> const& args,
@@ -2504,6 +2505,7 @@ bool HandleGenerateCommand(std::vector<std::string> const& args,
     std::string Content;
     std::string Condition;
     std::string Target;
+    std::string TargetInterface;
     std::string NewLineStyle;
     bool NoSourcePermissions = false;
     bool UseSourcePermissions = false;
@@ -2517,6 +2519,7 @@ bool HandleGenerateCommand(std::vector<std::string> const& args,
       .Bind("CONTENT"_s, &Arguments::Content)
       .Bind("CONDITION"_s, &Arguments::Condition)
       .Bind("TARGET"_s, &Arguments::Target)
+      .Bind("TARGET_INTERFACE"_s, &Arguments::TargetInterface)
       .Bind("NO_SOURCE_PERMISSIONS"_s, &Arguments::NoSourcePermissions)
       .Bind("USE_SOURCE_PERMISSIONS"_s, &Arguments::UseSourcePermissions)
       .Bind("FILE_PERMISSIONS"_s, &Arguments::FilePermissions)
@@ -2569,6 +2572,24 @@ bool HandleGenerateCommand(std::vector<std::string> const& args,
     status.SetError("TARGET of sub-command GENERATE must not be empty "
                     "if specified.");
     return false;
+  }
+
+  // default value for previous versions
+  TargetInterfaceMode interfaceMode = TargetInterfaceMode::Build;
+  const bool interfaceOptionSpecified =
+    std::find(parsedKeywords.begin(), parsedKeywords.end(),
+              "TARGET_INTERFACE"_s) != parsedKeywords.end();
+  if (interfaceOptionSpecified) {
+    std::map<std::string, TargetInterfaceMode> choices{
+      { "BUILD_INTERFACE", TargetInterfaceMode::Build },
+      { "INSTALL_INTERFACE", TargetInterfaceMode::Install },
+    };
+    const auto it = choices.find(arguments.TargetInterface);
+    if (it == choices.end()) {
+      status.SetError("Incorrect argument to GENERATE subcommand");
+      return false;
+    }
+    interfaceMode = it->second;
   }
 
   const bool outputOptionSpecified =
@@ -2659,7 +2680,7 @@ bool HandleGenerateCommand(std::vector<std::string> const& args,
   }
 
   AddEvaluationFile(input, arguments.Target, arguments.Output,
-                    arguments.Condition, inputIsContent,
+                    arguments.Condition, interfaceMode, inputIsContent,
                     newLineStyle.GetCharacters(), permissions, status);
   return true;
 }

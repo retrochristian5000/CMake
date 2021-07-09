@@ -1874,8 +1874,8 @@ void cmGlobalGenerator::CheckTargetProperties()
         continue;
       }
 
-      std::string incDirs = cmGeneratorExpression::Preprocess(
-        *incDirProp, cmGeneratorExpression::StripAllGeneratorExpressions);
+      std::string incDirs =
+        cmGeneratorExpression::Preprocess(*incDirProp, cm::nullopt);
 
       cmExpandList(incDirs, incs);
 

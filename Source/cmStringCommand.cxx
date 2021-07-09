@@ -640,8 +640,7 @@ bool HandleGenexStripCommand(std::vector<std::string> const& args,
 
   const std::string& input = args[1];
 
-  std::string result = cmGeneratorExpression::Preprocess(
-    input, cmGeneratorExpression::StripAllGeneratorExpressions);
+  std::string result = cmGeneratorExpression::Preprocess(input, cm::nullopt);
 
   const std::string& variableName = args[2];
 

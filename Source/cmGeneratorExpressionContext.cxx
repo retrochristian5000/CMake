@@ -5,13 +5,14 @@
 #include <utility>
 
 cmGeneratorExpressionContext::cmGeneratorExpressionContext(
-  cmLocalGenerator* lg, std::string config, bool quiet,
-  cmGeneratorTarget const* headTarget, const cmGeneratorTarget* currentTarget,
-  bool evaluateForBuildsystem, cmListFileBacktrace backtrace,
-  std::string language)
+  cmLocalGenerator* lg, std::string config, TargetInterfaceMode interfaceMode,
+  bool quiet, cmGeneratorTarget const* headTarget,
+  const cmGeneratorTarget* currentTarget, bool evaluateForBuildsystem,
+  cmListFileBacktrace backtrace, std::string language)
   : Backtrace(std::move(backtrace))
   , LG(lg)
   , Config(std::move(config))
+  , InterfaceMode(interfaceMode)
   , Language(std::move(language))
   , HeadTarget(headTarget)
   , CurrentTarget(currentTarget)

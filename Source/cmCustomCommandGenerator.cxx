@@ -29,7 +29,8 @@ namespace {
 std::string EvaluateSplitConfigGenex(
   cm::string_view input, cmGeneratorExpression const& ge, cmLocalGenerator* lg,
   bool useOutputConfig, std::string const& outputConfig,
-  std::string const& commandConfig, cmGeneratorTarget const* target,
+  std::string const& commandConfig, TargetInterfaceMode interfaceMode,
+  cmGeneratorTarget const* target,
   std::set<BT<std::pair<std::string, bool>>>* utils = nullptr)
 {
   std::string result;
@@ -87,7 +88,7 @@ std::string EvaluateSplitConfigGenex(
     // Evaluate this genex in the selected configuration.
     std::unique_ptr<cmCompiledGeneratorExpression> cge =
       ge.Parse(std::string(genex));
-    result += cge->Evaluate(lg, *config, target);
+    result += cge->Evaluate(lg, *config, target, interfaceMode);
 
     // Record targets referenced by the genex.
     if (utils) {
@@ -111,11 +112,11 @@ std::vector<std::string> EvaluateDepends(std::vector<std::string> const& paths,
 {
   std::vector<std::string> depends;
   for (std::string const& p : paths) {
-    std::string const& ep =
-      EvaluateSplitConfigGenex(p, ge, lg, /*useOutputConfig=*/true,
-                               /*outputConfig=*/outputConfig,
-                               /*commandConfig=*/commandConfig,
-                               /*target=*/nullptr);
+    std::string const& ep = EvaluateSplitConfigGenex(
+      p, ge, lg, /*useOutputConfig=*/true,
+      /*outputConfig=*/outputConfig,
+      /*commandConfig=*/commandConfig, TargetInterfaceMode::Build,
+      /*target=*/nullptr);
     cm::append(depends, cmExpandedList(ep));
   }
   for (std::string& p : depends) {
@@ -184,7 +185,8 @@ cmCustomCommandGenerator::cmCustomCommandGenerator(
     for (std::string const& clarg : cmdline) {
       std::string parsed_arg = EvaluateSplitConfigGenex(
         clarg, ge, this->LG, useOutputConfig, this->OutputConfig,
-        this->CommandConfig, target, &this->Utilities);
+        this->CommandConfig, TargetInterfaceMode::Build, target,
+        &this->Utilities);
       if (this->CC->GetCommandExpandLists()) {
         cm::append(argv, cmExpandedList(parsed_arg));
       } else {
@@ -255,7 +257,7 @@ cmCustomCommandGenerator::cmCustomCommandGenerator(
   if (!workingdirectory.empty()) {
     this->WorkingDirectory = EvaluateSplitConfigGenex(
       workingdirectory, ge, this->LG, true, this->OutputConfig,
-      this->CommandConfig, target);
+      this->CommandConfig, TargetInterfaceMode::Build, target);
     // Convert working directory to a full path.
     if (!this->WorkingDirectory.empty()) {
       std::string const& build_dir = this->LG->GetCurrentBinaryDirectory();

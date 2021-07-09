@@ -848,9 +848,8 @@ bool HandleTransformCommand(std::vector<std::string> const& args,
                   { "GENEX_STRIP", 0,
                     [&command](const std::string& s) -> std::string {
                       if (command.Selector->InSelection(s)) {
-                        return cmGeneratorExpression::Preprocess(
-                          s,
-                          cmGeneratorExpression::StripAllGeneratorExpressions);
+                        return cmGeneratorExpression::Preprocess(s,
+                                                                 cm::nullopt);
                       }
 
                       return s;

@@ -83,35 +83,35 @@ bool cmExportBuildFileGenerator::GenerateMainFile(std::ostream& os)
     ImportPropertyMap properties;
 
     this->PopulateInterfaceProperty("INTERFACE_INCLUDE_DIRECTORIES", gte,
-                                    cmGeneratorExpression::BuildInterface,
-                                    properties, missingTargets);
+                                    TargetInterfaceMode::Build, properties,
+                                    missingTargets);
     this->PopulateInterfaceProperty("INTERFACE_SOURCES", gte,
-                                    cmGeneratorExpression::BuildInterface,
-                                    properties, missingTargets);
+                                    TargetInterfaceMode::Build, properties,
+                                    missingTargets);
     this->PopulateInterfaceProperty("INTERFACE_COMPILE_DEFINITIONS", gte,
-                                    cmGeneratorExpression::BuildInterface,
-                                    properties, missingTargets);
+                                    TargetInterfaceMode::Build, properties,
+                                    missingTargets);
     this->PopulateInterfaceProperty("INTERFACE_COMPILE_OPTIONS", gte,
-                                    cmGeneratorExpression::BuildInterface,
-                                    properties, missingTargets);
+                                    TargetInterfaceMode::Build, properties,
+                                    missingTargets);
     this->PopulateInterfaceProperty("INTERFACE_PRECOMPILE_HEADERS", gte,
-                                    cmGeneratorExpression::BuildInterface,
-                                    properties, missingTargets);
+                                    TargetInterfaceMode::Build, properties,
+                                    missingTargets);
     this->PopulateInterfaceProperty("INTERFACE_AUTOUIC_OPTIONS", gte,
-                                    cmGeneratorExpression::BuildInterface,
-                                    properties, missingTargets);
+                                    TargetInterfaceMode::Build, properties,
+                                    missingTargets);
     this->PopulateInterfaceProperty("INTERFACE_COMPILE_FEATURES", gte,
-                                    cmGeneratorExpression::BuildInterface,
-                                    properties, missingTargets);
+                                    TargetInterfaceMode::Build, properties,
+                                    missingTargets);
     this->PopulateInterfaceProperty("INTERFACE_LINK_OPTIONS", gte,
-                                    cmGeneratorExpression::BuildInterface,
-                                    properties, missingTargets);
+                                    TargetInterfaceMode::Build, properties,
+                                    missingTargets);
     this->PopulateInterfaceProperty("INTERFACE_LINK_DIRECTORIES", gte,
-                                    cmGeneratorExpression::BuildInterface,
-                                    properties, missingTargets);
+                                    TargetInterfaceMode::Build, properties,
+                                    missingTargets);
     this->PopulateInterfaceProperty("INTERFACE_LINK_DEPENDS", gte,
-                                    cmGeneratorExpression::BuildInterface,
-                                    properties, missingTargets);
+                                    TargetInterfaceMode::Build, properties,
+                                    missingTargets);
     this->PopulateInterfaceProperty("INTERFACE_POSITION_INDEPENDENT_CODE", gte,
                                     properties);
 
@@ -128,8 +128,7 @@ bool cmExportBuildFileGenerator::GenerateMainFile(std::ostream& os)
       gte->GetPolicyStatusCMP0022() != cmPolicies::OLD;
     if (newCMP0022Behavior) {
       this->PopulateInterfaceLinkLibrariesProperty(
-        gte, cmGeneratorExpression::BuildInterface, properties,
-        missingTargets);
+        gte, TargetInterfaceMode::Build, properties, missingTargets);
     }
     this->PopulateCompatibleInterfaceProperties(gte, properties);
 
@@ -164,8 +163,8 @@ void cmExportBuildFileGenerator::GenerateImportTargetsConfig(
         this->SetImportDetailProperties(config, suffix, target, properties,
                                         missingTargets);
         this->SetImportLinkInterface(config, suffix,
-                                     cmGeneratorExpression::BuildInterface,
-                                     target, properties, missingTargets);
+                                     TargetInterfaceMode::Build, target,
+                                     properties, missingTargets);
       }
 
       // TODO: PUBLIC_HEADER_LOCATION

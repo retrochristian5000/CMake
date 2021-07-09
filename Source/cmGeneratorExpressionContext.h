@@ -10,11 +10,13 @@
 
 class cmGeneratorTarget;
 class cmLocalGenerator;
+enum class TargetInterfaceMode : unsigned char;
 
 struct cmGeneratorExpressionContext
 {
   cmGeneratorExpressionContext(cmLocalGenerator* lg, std::string config,
-                               bool quiet, const cmGeneratorTarget* headTarget,
+                               TargetInterfaceMode interfaceMode, bool quiet,
+                               const cmGeneratorTarget* headTarget,
                                cmGeneratorTarget const* currentTarget,
                                bool evaluateForBuildsystem,
                                cmListFileBacktrace backtrace,
@@ -29,6 +31,7 @@ struct cmGeneratorExpressionContext
     MaxLanguageStandard;
   cmLocalGenerator* LG;
   std::string Config;
+  TargetInterfaceMode InterfaceMode;
   std::string Language;
   // The target whose property is being evaluated.
   cmGeneratorTarget const* HeadTarget;

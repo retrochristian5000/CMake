@@ -34,26 +34,26 @@ std::unique_ptr<cmCompiledGeneratorExpression> cmGeneratorExpression::Parse(
 
 std::string cmGeneratorExpression::Evaluate(
   std::string input, cmLocalGenerator* lg, const std::string& config,
-  cmGeneratorTarget const* headTarget,
+  cmGeneratorTarget const* headTarget, TargetInterfaceMode interfaceMode,
   cmGeneratorExpressionDAGChecker* dagChecker,
   cmGeneratorTarget const* currentTarget, std::string const& language)
 {
   if (Find(input) != std::string::npos) {
     cmCompiledGeneratorExpression cge(cmListFileBacktrace(), std::move(input));
-    return cge.Evaluate(lg, config, headTarget, dagChecker, currentTarget,
-                        language);
+    return cge.Evaluate(lg, config, headTarget, interfaceMode, dagChecker,
+                        currentTarget, language);
   }
   return input;
 }
 
 const std::string& cmCompiledGeneratorExpression::Evaluate(
   cmLocalGenerator* lg, const std::string& config,
-  const cmGeneratorTarget* headTarget,
+  const cmGeneratorTarget* headTarget, TargetInterfaceMode interfaceMode,
   cmGeneratorExpressionDAGChecker* dagChecker,
   const cmGeneratorTarget* currentTarget, std::string const& language) const
 {
   cmGeneratorExpressionContext context(
-    lg, config, this->Quiet, headTarget,
+    lg, config, interfaceMode, this->Quiet, headTarget,
     currentTarget ? currentTarget : headTarget, this->EvaluateForBuildsystem,
     this->Backtrace, language);
 
@@ -203,9 +203,9 @@ static void prefixItems(const std::string& content, std::string& result,
   }
 }
 
-static std::string stripExportInterface(
-  const std::string& input, cmGeneratorExpression::PreprocessContext context,
-  bool resolveRelative)
+static std::string stripExportInterface(const std::string& input,
+                                        TargetInterfaceMode context,
+                                        bool resolveRelative)
 {
   std::string result;
 
@@ -246,10 +246,9 @@ static std::string stripExportInterface(
         if (nestingLevel != 0) {
           continue;
         }
-        if (context == cmGeneratorExpression::BuildInterface &&
-            !gotInstallInterface) {
+        if (context == TargetInterfaceMode::Build && !gotInstallInterface) {
           result += input.substr(pos, c - cStart);
-        } else if (context == cmGeneratorExpression::InstallInterface &&
+        } else if (context == TargetInterfaceMode::Install &&
                    gotInstallInterface) {
           const std::string content = input.substr(pos, c - cStart);
           if (resolveRelative) {
@@ -332,15 +331,16 @@ void cmGeneratorExpression::Split(const std::string& input,
   }
 }
 
-std::string cmGeneratorExpression::Preprocess(const std::string& input,
-                                              PreprocessContext context,
-                                              bool resolveRelative)
+std::string cmGeneratorExpression::Preprocess(
+  const std::string& input, std::optional<TargetInterfaceMode> context,
+  bool resolveRelative)
 {
-  if (context == StripAllGeneratorExpressions) {
+  if (!context.has_value()) {
     return stripAllGeneratorExpressions(input);
   }
-  if (context == BuildInterface || context == InstallInterface) {
-    return stripExportInterface(input, context, resolveRelative);
+  if (context == TargetInterfaceMode::Build ||
+      context == TargetInterfaceMode::Install) {
+    return stripExportInterface(input, *context, resolveRelative);
   }
 
   assert(false &&
@@ -403,6 +403,6 @@ const std::string& cmGeneratorExpressionInterpreter::Evaluate(
     nullptr);
 
   return this->CompiledGeneratorExpression->Evaluate(
-    this->LocalGenerator, this->Config, this->HeadTarget, &dagChecker, nullptr,
-    this->Language);
+    this->LocalGenerator, this->Config, this->HeadTarget,
+    TargetInterfaceMode::Build, &dagChecker, nullptr, this->Language);
 }

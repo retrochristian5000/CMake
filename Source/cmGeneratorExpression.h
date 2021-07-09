@@ -6,6 +6,7 @@
 
 #include <map>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <utility>
@@ -19,6 +20,12 @@ class cmLocalGenerator;
 struct cmGeneratorExpressionContext;
 struct cmGeneratorExpressionDAGChecker;
 struct cmGeneratorExpressionEvaluator;
+
+enum class TargetInterfaceMode : unsigned char
+{
+  Build,
+  Install
+};
 
 /** \class cmGeneratorExpression
  * \brief Evaluate generate-time query expression syntax.
@@ -45,20 +52,14 @@ public:
   static std::string Evaluate(
     std::string input, cmLocalGenerator* lg, const std::string& config,
     cmGeneratorTarget const* headTarget = nullptr,
+    TargetInterfaceMode interfaceMode = TargetInterfaceMode::Build,
     cmGeneratorExpressionDAGChecker* dagChecker = nullptr,
     cmGeneratorTarget const* currentTarget = nullptr,
     std::string const& language = std::string());
 
-  enum PreprocessContext
-  {
-    StripAllGeneratorExpressions,
-    BuildInterface,
-    InstallInterface
-  };
-
-  static std::string Preprocess(const std::string& input,
-                                PreprocessContext context,
-                                bool resolveRelative = false);
+  static std::string Preprocess(
+    const std::string& input, std::optional<TargetInterfaceMode> interfaceMode,
+    bool resolveRelative = false);
 
   static void Split(const std::string& input,
                     std::vector<std::string>& output);
@@ -97,6 +98,7 @@ public:
   const std::string& Evaluate(
     cmLocalGenerator* lg, const std::string& config,
     cmGeneratorTarget const* headTarget = nullptr,
+    TargetInterfaceMode interfaceMode = TargetInterfaceMode::Build,
     cmGeneratorExpressionDAGChecker* dagChecker = nullptr,
     cmGeneratorTarget const* currentTarget = nullptr,
     std::string const& language = std::string()) const;

@@ -84,35 +84,35 @@ bool cmExportInstallFileGenerator::GenerateMainFile(std::ostream& os)
 
     ImportPropertyMap properties;
 
-    this->PopulateIncludeDirectoriesInterface(
-      te, cmGeneratorExpression::InstallInterface, properties, missingTargets);
-    this->PopulateSourcesInterface(te, cmGeneratorExpression::InstallInterface,
+    this->PopulateIncludeDirectoriesInterface(te, TargetInterfaceMode::Install,
+                                              properties, missingTargets);
+    this->PopulateSourcesInterface(te, TargetInterfaceMode::Install,
                                    properties, missingTargets);
     this->PopulateInterfaceProperty("INTERFACE_SYSTEM_INCLUDE_DIRECTORIES", gt,
-                                    cmGeneratorExpression::InstallInterface,
-                                    properties, missingTargets);
+                                    TargetInterfaceMode::Install, properties,
+                                    missingTargets);
     this->PopulateInterfaceProperty("INTERFACE_COMPILE_DEFINITIONS", gt,
-                                    cmGeneratorExpression::InstallInterface,
-                                    properties, missingTargets);
+                                    TargetInterfaceMode::Install, properties,
+                                    missingTargets);
     this->PopulateInterfaceProperty("INTERFACE_COMPILE_OPTIONS", gt,
-                                    cmGeneratorExpression::InstallInterface,
-                                    properties, missingTargets);
+                                    TargetInterfaceMode::Install, properties,
+                                    missingTargets);
     this->PopulateInterfaceProperty("INTERFACE_PRECOMPILE_HEADERS", gt,
-                                    cmGeneratorExpression::InstallInterface,
-                                    properties, missingTargets);
+                                    TargetInterfaceMode::Install, properties,
+                                    missingTargets);
     this->PopulateInterfaceProperty("INTERFACE_AUTOUIC_OPTIONS", gt,
-                                    cmGeneratorExpression::InstallInterface,
-                                    properties, missingTargets);
+                                    TargetInterfaceMode::Install, properties,
+                                    missingTargets);
     this->PopulateInterfaceProperty("INTERFACE_COMPILE_FEATURES", gt,
-                                    cmGeneratorExpression::InstallInterface,
-                                    properties, missingTargets);
+                                    TargetInterfaceMode::Install, properties,
+                                    missingTargets);
     this->PopulateInterfaceProperty("INTERFACE_LINK_OPTIONS", gt,
-                                    cmGeneratorExpression::InstallInterface,
-                                    properties, missingTargets);
-    this->PopulateLinkDirectoriesInterface(
-      te, cmGeneratorExpression::InstallInterface, properties, missingTargets);
-    this->PopulateLinkDependsInterface(
-      te, cmGeneratorExpression::InstallInterface, properties, missingTargets);
+                                    TargetInterfaceMode::Install, properties,
+                                    missingTargets);
+    this->PopulateLinkDirectoriesInterface(te, TargetInterfaceMode::Install,
+                                           properties, missingTargets);
+    this->PopulateLinkDependsInterface(te, TargetInterfaceMode::Install,
+                                       properties, missingTargets);
 
     std::string errorMessage;
     if (!this->PopulateExportProperties(gt, properties, errorMessage)) {
@@ -125,8 +125,7 @@ bool cmExportInstallFileGenerator::GenerateMainFile(std::ostream& os)
       gt->GetPolicyStatusCMP0022() != cmPolicies::OLD;
     if (newCMP0022Behavior) {
       if (this->PopulateInterfaceLinkLibrariesProperty(
-            gt, cmGeneratorExpression::InstallInterface, properties,
-            missingTargets) &&
+            gt, TargetInterfaceMode::Install, properties, missingTargets) &&
           !this->ExportOld) {
         require2_8_12 = true;
       }
@@ -346,8 +345,8 @@ void cmExportInstallFileGenerator::GenerateImportTargetsConfig(
                                       missingTargets);
 
       this->SetImportLinkInterface(config, suffix,
-                                   cmGeneratorExpression::InstallInterface,
-                                   gtgt, properties, missingTargets);
+                                   TargetInterfaceMode::Install, gtgt,
+                                   properties, missingTargets);
 
       // TODO: PUBLIC_HEADER_LOCATION
       // This should wait until the build feature propagation stuff

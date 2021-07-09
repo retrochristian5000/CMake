@@ -72,7 +72,7 @@ std::string GeneratorExpressionContent::Evaluate(
   }
 
   const cmGeneratorExpressionNode* node =
-    cmGeneratorExpressionNode::GetNode(identifier);
+    cmGeneratorExpressionNode::GetNode(identifier, *context);
 
   if (!node) {
     reportError(context, this->GetOriginalExpression(),

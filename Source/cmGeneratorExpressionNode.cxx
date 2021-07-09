@@ -59,8 +59,8 @@ std::string cmGeneratorExpressionNode::EvaluateDependentExpression(
   cge->SetEvaluateForBuildsystem(context->EvaluateForBuildsystem);
   cge->SetQuiet(context->Quiet);
   std::string result =
-    cge->Evaluate(lg, context->Config, headTarget, dagChecker, currentTarget,
-                  context->Language);
+    cge->Evaluate(lg, context->Config, headTarget, context->InterfaceMode,
+                  dagChecker, currentTarget, context->Language);
   if (cge->GetHadContextSensitiveCondition()) {
     context->HadContextSensitiveCondition = true;
   }
@@ -106,10 +106,6 @@ static const struct OneNode : public cmGeneratorExpressionNode
     return parameters.front();
   }
 } oneNode;
-
-static const struct OneNode buildInterfaceNode;
-
-static const struct ZeroNode installInterfaceNode;
 
 struct BooleanOpNode : public cmGeneratorExpressionNode
 {
@@ -535,8 +531,9 @@ static const struct TargetGenexEvalNode : public GenexEvaluator
     }
 
     cmGeneratorExpressionContext targetContext(
-      context->LG, context->Config, context->Quiet, target, target,
-      context->EvaluateForBuildsystem, context->Backtrace, context->Language);
+      context->LG, context->Config, context->InterfaceMode, context->Quiet,
+      target, target, context->EvaluateForBuildsystem, context->Backtrace,
+      context->Language);
 
     return this->EvaluateExpression("TARGET_GENEX_EVAL", expression,
                                     &targetContext, content, dagCheckerParent);
@@ -1277,9 +1274,9 @@ std::string getLinkedTargetsContent(
         // caller's property and hand-evaluate it as if it were compiled.
         // Create a context as cmCompiledGeneratorExpression::Evaluate does.
         cmGeneratorExpressionContext libContext(
-          target->GetLocalGenerator(), context->Config, context->Quiet, target,
-          target, context->EvaluateForBuildsystem, lib.Backtrace,
-          context->Language);
+          target->GetLocalGenerator(), context->Config, context->InterfaceMode,
+          context->Quiet, target, target, context->EvaluateForBuildsystem,
+          lib.Backtrace, context->Language);
         std::string libResult =
           lib.Target->EvaluateInterfaceProperty(prop, &libContext, dagChecker);
         if (!libResult.empty()) {
@@ -2584,9 +2581,10 @@ static const struct ShellPathNode : public cmGeneratorExpressionNode
 } shellPathNode;
 
 const cmGeneratorExpressionNode* cmGeneratorExpressionNode::GetNode(
-  const std::string& identifier)
+  const std::string& identifier, const cmGeneratorExpressionContext& context)
 {
-  static std::map<std::string, cmGeneratorExpressionNode const*> const nodeMap{
+  using NodeMap = std::map<std::string, cmGeneratorExpressionNode const*>;
+  static NodeMap const interfaceIndependentNodes{
     { "0", &zeroNode },
     { "1", &oneNode },
     { "AND", &andNode },
@@ -2658,8 +2656,6 @@ const cmGeneratorExpressionNode* cmGeneratorExpressionNode::GetNode(
     { "TARGET_GENEX_EVAL", &targetGenexEvalNode },
     { "TARGET_RUNTIME_DLLS", &targetRuntimeDllsNode },
     { "GENEX_EVAL", &genexEvalNode },
-    { "BUILD_INTERFACE", &buildInterfaceNode },
-    { "INSTALL_INTERFACE", &installInterfaceNode },
     { "INSTALL_PREFIX", &installPrefixNode },
     { "JOIN", &joinNode },
     { "LINK_ONLY", &linkOnlyNode },
@@ -2672,9 +2668,22 @@ const cmGeneratorExpressionNode* cmGeneratorExpressionNode::GetNode(
     { "SHELL_PATH", &shellPathNode }
   };
 
+  static std::map<TargetInterfaceMode, NodeMap> const interfaceMaps = {
+    { TargetInterfaceMode::Build,
+      { { "BUILD_INTERFACE", &oneNode },
+        { "INSTALL_INTERFACE", &zeroNode } } },
+    { TargetInterfaceMode::Install,
+      { { "BUILD_INTERFACE", &zeroNode }, { "INSTALL_INTERFACE", &oneNode } } }
+  };
+
   {
-    auto itr = nodeMap.find(identifier);
-    if (itr != nodeMap.end()) {
+    const auto& interfaceNodes = interfaceMaps.at(context.InterfaceMode);
+    auto itr = interfaceNodes.find(identifier);
+    if (itr != interfaceNodes.end()) {
+      return itr->second;
+    }
+    itr = interfaceIndependentNodes.find(identifier);
+    if (itr != interfaceIndependentNodes.end()) {
       return itr->second;
     }
   }

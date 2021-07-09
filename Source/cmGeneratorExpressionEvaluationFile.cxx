@@ -21,12 +21,14 @@ cmGeneratorExpressionEvaluationFile::cmGeneratorExpressionEvaluationFile(
   std::string input, std::string target,
   std::unique_ptr<cmCompiledGeneratorExpression> outputFileExpr,
   std::unique_ptr<cmCompiledGeneratorExpression> condition,
-  bool inputIsContent, std::string newLineCharacter, mode_t permissions,
+  TargetInterfaceMode interfaceMode, bool inputIsContent,
+  std::string newLineCharacter, mode_t permissions,
   cmPolicies::PolicyStatus policyStatusCMP0070)
   : Input(std::move(input))
   , Target(std::move(target))
   , OutputFileExpr(std::move(outputFileExpr))
   , Condition(std::move(condition))
+  , InterfaceMode(interfaceMode)
   , InputIsContent(inputIsContent)
   , NewLineCharacter(std::move(newLineCharacter))
   , PolicyStatusCMP0070(policyStatusCMP0070)
@@ -42,8 +44,8 @@ void cmGeneratorExpressionEvaluationFile::Generate(
   std::string rawCondition = this->Condition->GetInput();
   cmGeneratorTarget* target = lg->FindGeneratorTargetToUse(this->Target);
   if (!rawCondition.empty()) {
-    std::string condResult =
-      this->Condition->Evaluate(lg, config, target, nullptr, nullptr, lang);
+    std::string condResult = this->Condition->Evaluate(
+      lg, config, target, InterfaceMode, nullptr, nullptr, lang);
     if (condResult == "0") {
       return;
     }
@@ -60,8 +62,8 @@ void cmGeneratorExpressionEvaluationFile::Generate(
 
   const std::string outputFileName =
     this->GetOutputFileName(lg, target, config, lang);
-  const std::string& outputContent =
-    inputExpression->Evaluate(lg, config, target, nullptr, nullptr, lang);
+  const std::string& outputContent = inputExpression->Evaluate(
+    lg, config, target, InterfaceMode, nullptr, nullptr, lang);
 
   auto it = outputFiles.find(outputFileName);
 
@@ -167,7 +169,8 @@ void cmGeneratorExpressionEvaluationFile::Generate(cmLocalGenerator* lg)
   cmListFileBacktrace lfbt = this->OutputFileExpr->GetBacktrace();
   cmGeneratorExpression contentGE(lfbt);
   std::unique_ptr<cmCompiledGeneratorExpression> inputExpression =
-    contentGE.Parse(inputContent);
+    contentGE.Parse(
+      cmGeneratorExpression::Preprocess(inputContent, InterfaceMode));
 
   std::map<std::string, std::string> outputFiles;
 
@@ -207,8 +210,8 @@ std::string cmGeneratorExpressionEvaluationFile::GetOutputFileName(
   cmLocalGenerator* lg, cmGeneratorTarget* target, const std::string& config,
   const std::string& lang)
 {
-  std::string outputFileName =
-    this->OutputFileExpr->Evaluate(lg, config, target, nullptr, nullptr, lang);
+  std::string outputFileName = this->OutputFileExpr->Evaluate(
+    lg, config, target, InterfaceMode, nullptr, nullptr, lang);
 
   if (cmSystemTools::FileIsFullPath(outputFileName)) {
     outputFileName = cmSystemTools::CollapseFullPath(outputFileName);

@@ -46,7 +46,8 @@ struct cmGeneratorExpressionNode
     const cmGeneratorTarget* currentTarget);
 
   static const cmGeneratorExpressionNode* GetNode(
-    const std::string& identifier);
+    const std::string& identifier,
+    const cmGeneratorExpressionContext& context);
 };
 
 void reportError(cmGeneratorExpressionContext* context,

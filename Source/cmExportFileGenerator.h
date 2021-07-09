@@ -130,11 +130,11 @@ protected:
                                    cmGeneratorTarget* depender,
                                    cmGeneratorTarget* dependee) = 0;
   void PopulateInterfaceProperty(const std::string&, cmGeneratorTarget* target,
-                                 cmGeneratorExpression::PreprocessContext,
+                                 TargetInterfaceMode interfaceMode,
                                  ImportPropertyMap& properties,
                                  std::vector<std::string>& missingTargets);
   bool PopulateInterfaceLinkLibrariesProperty(
-    cmGeneratorTarget* target, cmGeneratorExpression::PreprocessContext,
+    cmGeneratorTarget* target, TargetInterfaceMode interfaceMode,
     ImportPropertyMap& properties, std::vector<std::string>& missingTargets);
   void PopulateInterfaceProperty(const std::string& propName,
                                  cmGeneratorTarget* target,
@@ -145,27 +145,26 @@ protected:
     cmGeneratorTarget const* target, std::ostream& os,
     const ImportPropertyMap& properties);
   void PopulateIncludeDirectoriesInterface(
-    cmTargetExport* target,
-    cmGeneratorExpression::PreprocessContext preprocessRule,
+    cmTargetExport* target, TargetInterfaceMode interfaceMode,
     ImportPropertyMap& properties, std::vector<std::string>& missingTargets);
-  void PopulateSourcesInterface(
-    cmTargetExport* target,
-    cmGeneratorExpression::PreprocessContext preprocessRule,
-    ImportPropertyMap& properties, std::vector<std::string>& missingTargets);
+  void PopulateSourcesInterface(cmTargetExport* target,
+                                TargetInterfaceMode interfaceMode,
+                                ImportPropertyMap& properties,
+                                std::vector<std::string>& missingTargets);
   void PopulateLinkDirectoriesInterface(
-    cmTargetExport* target,
-    cmGeneratorExpression::PreprocessContext preprocessRule,
+    cmTargetExport* target, TargetInterfaceMode interfaceMode,
     ImportPropertyMap& properties, std::vector<std::string>& missingTargets);
-  void PopulateLinkDependsInterface(
-    cmTargetExport* target,
-    cmGeneratorExpression::PreprocessContext preprocessRule,
-    ImportPropertyMap& properties, std::vector<std::string>& missingTargets);
+  void PopulateLinkDependsInterface(cmTargetExport* target,
+                                    TargetInterfaceMode interfaceMode,
+                                    ImportPropertyMap& properties,
+                                    std::vector<std::string>& missingTargets);
 
-  void SetImportLinkInterface(
-    const std::string& config, std::string const& suffix,
-    cmGeneratorExpression::PreprocessContext preprocessRule,
-    cmGeneratorTarget* target, ImportPropertyMap& properties,
-    std::vector<std::string>& missingTargets);
+  void SetImportLinkInterface(const std::string& config,
+                              std::string const& suffix,
+                              TargetInterfaceMode interfaceMode,
+                              cmGeneratorTarget* target,
+                              ImportPropertyMap& properties,
+                              std::vector<std::string>& missingTargets);
 
   enum FreeTargetsReplace
   {
@@ -206,7 +205,7 @@ protected:
 private:
   void PopulateInterfaceProperty(const std::string&, const std::string&,
                                  cmGeneratorTarget* target,
-                                 cmGeneratorExpression::PreprocessContext,
+                                 TargetInterfaceMode interfaceMode,
                                  ImportPropertyMap& properties,
                                  std::vector<std::string>& missingTargets);
 

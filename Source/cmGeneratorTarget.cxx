@@ -122,7 +122,8 @@ public:
                               cmGeneratorExpressionDAGChecker* dagChecker,
                               std::string const& language) const override
   {
-    return this->ge->Evaluate(lg, config, headTarget, dagChecker, nullptr,
+    return this->ge->Evaluate(lg, config, headTarget,
+                              TargetInterfaceMode::Build, dagChecker, nullptr,
                               language);
   }
 
@@ -754,6 +755,7 @@ void handleSystemIncludesDep(cmLocalGenerator* lg,
   if (cmProp dirs =
         depTgt->GetProperty("INTERFACE_SYSTEM_INCLUDE_DIRECTORIES")) {
     cmExpandList(cmGeneratorExpression::Evaluate(*dirs, lg, config, headTarget,
+                                                 TargetInterfaceMode::Build,
                                                  dagChecker, depTgt, language),
                  result);
   }
@@ -763,6 +765,7 @@ void handleSystemIncludesDep(cmLocalGenerator* lg,
 
   if (cmProp dirs = depTgt->GetProperty("INTERFACE_INCLUDE_DIRECTORIES")) {
     cmExpandList(cmGeneratorExpression::Evaluate(*dirs, lg, config, headTarget,
+                                                 TargetInterfaceMode::Build,
                                                  dagChecker, depTgt, language),
                  result);
   }
@@ -1222,10 +1225,11 @@ bool cmGeneratorTarget::IsSystemIncludeDirectory(
 
     std::vector<std::string> result;
     for (std::string const& it : this->Target->GetSystemIncludeDirectories()) {
-      cmExpandList(cmGeneratorExpression::Evaluate(it, this->LocalGenerator,
-                                                   config, this, &dagChecker,
-                                                   nullptr, language),
-                   result);
+      cmExpandList(
+        cmGeneratorExpression::Evaluate(it, this->LocalGenerator, config, this,
+                                        TargetInterfaceMode::Build,
+                                        &dagChecker, nullptr, language),
+        result);
     }
 
     std::vector<cmGeneratorTarget const*> const& deps =
@@ -1362,9 +1366,9 @@ std::string cmGeneratorTarget::EvaluateInterfaceProperty(
         // above property and hand-evaluate it as if it were compiled.
         // Create a context as cmCompiledGeneratorExpression::Evaluate does.
         cmGeneratorExpressionContext libContext(
-          context->LG, context->Config, context->Quiet, headTarget, this,
-          context->EvaluateForBuildsystem, context->Backtrace,
-          context->Language);
+          context->LG, context->Config, context->InterfaceMode, context->Quiet,
+          headTarget, this, context->EvaluateForBuildsystem,
+          context->Backtrace, context->Language);
         std::string libResult = cmGeneratorExpression::StripEmptyListElements(
           lib.Target->EvaluateInterfaceProperty(prop, &libContext, &dagChecker,
                                                 usage_requirements_only));
@@ -1503,8 +1507,8 @@ void addInterfaceEntry(cmGeneratorTarget const* headTarget,
       // caller's property and hand-evaluate it as if it were compiled.
       // Create a context as cmCompiledGeneratorExpression::Evaluate does.
       cmGeneratorExpressionContext context(
-        headTarget->GetLocalGenerator(), config, false, headTarget, headTarget,
-        true, lib.Backtrace, lang);
+        headTarget->GetLocalGenerator(), config, TargetInterfaceMode::Build,
+        false, headTarget, headTarget, true, lib.Backtrace, lang);
       cmExpandList(lib.Target->EvaluateInterfaceProperty(
                      prop, &context, dagChecker, usage_requirements_only),
                    ee.Values);
@@ -1587,7 +1591,8 @@ void AddObjectEntries(cmGeneratorTarget const* headTarget,
 
         EvaluatedTargetPropertyEntry ee(lib, lib.Backtrace);
         cmExpandList(cge->Evaluate(headTarget->GetLocalGenerator(), config,
-                                   headTarget, dagChecker),
+                                   headTarget, TargetInterfaceMode::Build,
+                                   dagChecker),
                      ee.Values);
         if (cge->GetHadContextSensitiveCondition()) {
           ee.ContextDependent = true;
@@ -2914,9 +2919,10 @@ void cmGeneratorTarget::GetAutoUicOptions(std::vector<std::string>& result,
 
   cmGeneratorExpressionDAGChecker dagChecker(this, "AUTOUIC_OPTIONS", nullptr,
                                              nullptr);
-  cmExpandList(cmGeneratorExpression::Evaluate(prop, this->LocalGenerator,
-                                               config, this, &dagChecker),
-               result);
+  cmExpandList(
+    cmGeneratorExpression::Evaluate(prop, this->LocalGenerator, config, this,
+                                    TargetInterfaceMode::Build, &dagChecker),
+    result);
 }
 
 void processILibs(const std::string& config,
@@ -6385,7 +6391,8 @@ void cmGeneratorTarget::ExpandLinkItems(
   std::unique_ptr<cmCompiledGeneratorExpression> cge = ge.Parse(value);
   cge->SetEvaluateForBuildsystem(true);
   cmExpandList(cge->Evaluate(this->LocalGenerator, config, headTarget,
-                             &dagChecker, this, headTarget->LinkerLanguage),
+                             TargetInterfaceMode::Build, &dagChecker, this,
+                             headTarget->LinkerLanguage),
                libs);
   cmMakefile const* mf = this->LocalGenerator->GetMakefile();
   LookupLinkItemScope scope{ this->LocalGenerator };
@@ -7628,9 +7635,9 @@ void cmGeneratorTarget::ComputeLinkImplementationLibraries(
     cmGeneratorExpression ge(*btIt);
     std::unique_ptr<cmCompiledGeneratorExpression> const cge = ge.Parse(*le);
     cge->SetEvaluateForBuildsystem(true);
-    std::string const& evaluated =
-      cge->Evaluate(this->LocalGenerator, config, head, &dagChecker, nullptr,
-                    this->LinkerLanguage);
+    std::string const& evaluated = cge->Evaluate(
+      this->LocalGenerator, config, head, TargetInterfaceMode::Build,
+      &dagChecker, nullptr, this->LinkerLanguage);
     cmExpandList(evaluated, llibs);
     if (cge->GetHadHeadSensitiveCondition()) {
       impl.HadHeadSensitiveCondition = true;
