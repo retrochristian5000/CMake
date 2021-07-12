@@ -10,3 +10,5 @@ endif()
 run_cmake(PrefixInPATH)
 run_cmake(Required)
 run_cmake(NO_CACHE)
+
+run_cmake_command(FromScriptMode ${CMAKE_COMMAND} -P ${RunCMake_SOURCE_DIR}/FromScriptMode.cmake)
