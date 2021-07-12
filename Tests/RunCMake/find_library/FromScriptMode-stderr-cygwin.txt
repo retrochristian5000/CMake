@@ -1,0 +1,2 @@
+.*find_library considered the following locations.*
+.*\(lib\)library_no_exist\(\\.lib\|\\.dll\\.a\|\\.a).*

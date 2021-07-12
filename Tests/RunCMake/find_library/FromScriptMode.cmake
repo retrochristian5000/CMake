@@ -1,0 +1,3 @@
+set(CMAKE_FIND_DEBUG_MODE 1)
+find_library(CREATED_LIBRARY NAMES library_no_exist)
+set(CMAKE_FIND_DEBUG_MODE 0)
