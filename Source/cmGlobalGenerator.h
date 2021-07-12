@@ -497,6 +497,7 @@ public:
     const std::string& filename) const;
   void AddCMP0042WarnTarget(const std::string& target);
   void AddCMP0068WarnTarget(const std::string& target);
+  bool NeedMissingLanguageDiagnostic(std::string const& lang, bool isError);
 
   virtual void ComputeTargetObjectDirectory(cmGeneratorTarget* gt) const;
 
@@ -745,6 +746,13 @@ private:
   std::set<std::string> CMP0042WarnTargets;
   // track targets to issue CMP0068 warning for.
   std::set<std::string> CMP0068WarnTargets;
+
+  enum class MissingLanguageDiagnostic
+  {
+    WarnCMP0127,
+    Error,
+  };
+  std::map<std::string, MissingLanguageDiagnostic> MissingLanguageDiagnostics;
 
   mutable std::map<cmSourceFile*, std::set<cmGeneratorTarget const*>>
     FilenameTargetDepends;

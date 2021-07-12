@@ -1344,6 +1344,23 @@ void cmGlobalGenerator::AddCMP0068WarnTarget(const std::string& target)
   this->CMP0068WarnTargets.insert(target);
 }
 
+bool cmGlobalGenerator::NeedMissingLanguageDiagnostic(std::string const& lang,
+                                                      bool isError)
+{
+  auto level = isError ? MissingLanguageDiagnostic::Error
+                       : MissingLanguageDiagnostic::WarnCMP0127;
+  auto const& i = this->MissingLanguageDiagnostics.find(lang);
+  if (i == this->MissingLanguageDiagnostics.end()) {
+    this->MissingLanguageDiagnostics.emplace(lang, level);
+    return true;
+  }
+  if (i->second < level) {
+    i->second = level;
+    return true;
+  }
+  return false;
+}
+
 bool cmGlobalGenerator::CheckALLOW_DUPLICATE_CUSTOM_TARGETS() const
 {
   // If the property is not enabled then okay.
@@ -1833,6 +1850,7 @@ void cmGlobalGenerator::ClearGeneratorMembers()
   this->DirectoryContentMap.clear();
   this->BinaryDirectories.clear();
   this->GeneratedFiles.clear();
+  this->MissingLanguageDiagnostics.clear();
 }
 
 void cmGlobalGenerator::ComputeTargetObjectDirectory(

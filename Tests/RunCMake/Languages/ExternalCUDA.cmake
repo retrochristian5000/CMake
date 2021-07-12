@@ -1,3 +1,4 @@
+cmake_policy(SET CMP0127 OLD) # this test covers OLD behavior
 enable_language(C)
 
 add_library(ext_cuda IMPORTED STATIC)

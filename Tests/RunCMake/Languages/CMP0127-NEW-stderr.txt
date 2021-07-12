@@ -1,0 +1,9 @@
+^CMake Error at CMP0127-Common.cmake:[0-9]+ \(add_executable\):
+  NotALang is not enabled, but it is required by target "main1" to link to:
+
+    MissingLanguage
+Call Stack \(most recent call first\):
+  CMP0127-NEW.cmake:[0-9]+ \(include\)
+  CMakeLists.txt:[0-9]+ \(include\)
++
+CMake Generate step failed.  Build files cannot be regenerated correctly.$

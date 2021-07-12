@@ -1,0 +1,28 @@
+CMP0127
+-------
+
+.. versionadded:: 3.22
+
+Languages needed to link dependencies must be enabled.
+
+An imported static library target may list in its
+:prop_tgt:`IMPORTED_LINK_INTERFACE_LANGUAGES` target property the names
+of languages whose runtime libraries are needed to link the library.
+CMake 3.21 and below silently ignore languages named by the property
+that are not enabled.  This can cause link errors when the static
+library is linked by a binary because the languages' runtime libraries
+are not available.  CMake 3.22 and above prefer to require all the named
+languages to be enabled, and issue an error if they are not.  This
+policy provides compatibility with projects that have not been updated
+to expect this.
+
+The ``OLD`` behavior for this policy is to silently ignore languages
+that are not enabled.  The ``NEW`` behavior for this policy is to
+require languages to be enabled if they are needed by any imported
+static libraries that are linked.
+
+This policy was introduced in CMake version 3.22.  CMake version |release|
+warns when the policy is not set and uses ``OLD`` behavior.  Use the
+:command:`cmake_policy` command to set it to ``OLD`` or ``NEW`` explicitly.
+
+.. include:: DEPRECATED.txt

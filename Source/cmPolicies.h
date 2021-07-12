@@ -379,7 +379,10 @@ class cmMakefile;
          3, 21, 0, cmPolicies::WARN)                                          \
   SELECT(POLICY, CMP0126,                                                     \
          "set(CACHE) does not remove a normal variable of the same name.", 3, \
-         21, 0, cmPolicies::WARN)
+         21, 0, cmPolicies::WARN)                                             \
+  SELECT(POLICY, CMP0127,                                                     \
+         "Languages needed to link dependencies must be enabled.", 3, 22, 0,  \
+         cmPolicies::WARN)
 
 #define CM_SELECT_ID(F, A1, A2, A3, A4, A5, A6) F(A1)
 #define CM_FOR_EACH_POLICY_ID(POLICY)                                         \
@@ -415,7 +418,8 @@ class cmMakefile;
   F(CMP0108)                                                                  \
   F(CMP0112)                                                                  \
   F(CMP0113)                                                                  \
-  F(CMP0119)
+  F(CMP0119)                                                                  \
+  F(CMP0127)
 
 /** \class cmPolicies
  * \brief Handles changes in CMake behavior and policies

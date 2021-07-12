@@ -596,7 +596,7 @@ void cmComputeLinkInformation::AddImplicitLinkInfo()
 
     // Skip those of the linker language.  They are implicit.
     if (li != this->LinkLanguage) {
-      this->AddImplicitLinkInfo(li);
+      this->AddImplicitLinkInfo(li, p.second);
     }
   }
 }
@@ -619,12 +619,60 @@ void cmComputeLinkInformation::AddRuntimeLinkLibrary(std::string const& lang)
   }
 }
 
-void cmComputeLinkInformation::AddImplicitLinkInfo(std::string const& lang)
+void cmComputeLinkInformation::AddImplicitLinkInfo(
+  std::string const& lang,
+  std::vector<cmGeneratorTarget const*> const& neededBy)
 {
   // Add libraries for this language that are not implied by the
   // linker language.
   std::string libVar = cmStrCat("CMAKE_", lang, "_IMPLICIT_LINK_LIBRARIES");
-  if (cmProp libs = this->Makefile->GetDefinition(libVar)) {
+  cmProp libs = this->Makefile->GetDefinition(libVar);
+
+  // Add linker search paths for this language that are not
+  // implied by the linker language.
+  std::string dirVar = cmStrCat("CMAKE_", lang, "_IMPLICIT_LINK_DIRECTORIES");
+  cmProp dirs = this->Makefile->GetDefinition(dirVar);
+
+  // If the implicit link information is not available, require the
+  // language to be enabled.
+  if (!libs && !dirs && !this->GlobalGenerator->GetLanguageEnabled(lang)) {
+    bool isError = true;
+    switch (this->Target->GetPolicyStatusCMP0127()) {
+      case cmPolicies::WARN:
+        isError = false;
+        break;
+      case cmPolicies::OLD:
+        return;
+      case cmPolicies::REQUIRED_ALWAYS:
+      case cmPolicies::REQUIRED_IF_USED:
+      case cmPolicies::NEW:
+        break;
+    }
+    if (this->GlobalGenerator->NeedMissingLanguageDiagnostic(lang, isError)) {
+      std::string e;
+      if (!isError) {
+        e = cmStrCat(cmPolicies::GetPolicyWarning(cmPolicies::CMP0127), '\n');
+      }
+      e = cmStrCat(e, lang, " is not enabled, but it is required by target \"",
+                   this->Target->GetName(), "\" to link");
+      if (!neededBy.empty()) {
+        e = cmStrCat(e, " to:");
+        for (cmGeneratorTarget const* neededByTarget : neededBy) {
+          e = cmStrCat(e, "\n  ", neededByTarget->GetName());
+        }
+      }
+      if (!isError) {
+        e = cmStrCat(e,
+                     "\nFor compatibility with older versions of CMake, "
+                     "generation will proceed anyway.");
+      }
+      this->CMakeInstance->IssueMessage(isError ? MessageType::FATAL_ERROR
+                                                : MessageType::WARNING,
+                                        e, this->Target->GetBacktrace());
+    }
+  }
+
+  if (libs) {
     std::vector<std::string> libsVec = cmExpandedList(*libs);
     for (std::string const& i : libsVec) {
       if (!cm::contains(this->ImplicitLinkLibs, i)) {
@@ -633,10 +681,7 @@ void cmComputeLinkInformation::AddImplicitLinkInfo(std::string const& lang)
     }
   }
 
-  // Add linker search paths for this language that are not
-  // implied by the linker language.
-  std::string dirVar = cmStrCat("CMAKE_", lang, "_IMPLICIT_LINK_DIRECTORIES");
-  if (cmProp dirs = this->Makefile->GetDefinition(dirVar)) {
+  if (dirs) {
     std::vector<std::string> dirsVec = cmExpandedList(*dirs);
     this->OrderLinkerSearchPath->AddLanguageDirectories(dirsVec);
   }
