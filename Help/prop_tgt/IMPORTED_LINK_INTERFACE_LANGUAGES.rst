@@ -12,3 +12,6 @@ runtime dependencies of the static library.
 
 This property is ignored for targets that are not ``STATIC`` libraries.
 This property is ignored for non-imported targets.
+
+Languages named by this property must be enabled if the static library
+is linked by a target.  See policy :policy:`CMP0127`.

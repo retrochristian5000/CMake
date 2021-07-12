@@ -1,0 +1,14 @@
+^CMake Warning at CMP0127-Common.cmake:[0-9]+ \(add_executable\):
+  Policy CMP0127 is not set: Languages needed to link dependencies must be
+  enabled.  Run "cmake --help-policy CMP0127" for policy details.  Use the
+  cmake_policy command to set the policy and suppress this warning.
+
+  NotALang is not enabled, but it is required by target "main1" to link to:
+
+    MissingLanguage
+
+  For compatibility with older versions of CMake, generation will proceed
+  anyway.
+Call Stack \(most recent call first\):
+  CMP0127-WARN.cmake:[0-9]+ \(include\)
+  CMakeLists.txt:[0-9]+ \(include\)$
