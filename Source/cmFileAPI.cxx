@@ -686,7 +686,7 @@ std::string cmFileAPI::NoSupportedVersion(
 
 // The "codemodel" object kind.
 
-static unsigned int const CodeModelV2Minor = 3;
+static unsigned int const CodeModelV2Minor = 4;
 
 void cmFileAPI::BuildClientRequestCodeModel(
   ClientRequest& r, std::vector<RequestVersion> const& versions)
