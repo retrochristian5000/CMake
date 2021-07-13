@@ -32,6 +32,7 @@
 #include "cmGeneratorExpressionDAGChecker.h"
 #include "cmGeneratorExpressionNode.h"
 #include "cmGlobalGenerator.h"
+#include "cmHeaderSet.h"
 #include "cmLocalGenerator.h"
 #include "cmMakefile.h"
 #include "cmMessageType.h"
@@ -41,6 +42,7 @@
 #include "cmSourceFile.h"
 #include "cmSourceFileLocation.h"
 #include "cmSourceFileLocationKind.h"
+#include "cmSourceGroup.h"
 #include "cmStandardLevelResolver.h"
 #include "cmState.h"
 #include "cmStringAlgorithms.h"
@@ -168,6 +170,64 @@ public:
 private:
   std::string PropertyValue;
   cmListFileBacktrace Backtrace;
+};
+
+class TargetPropertyEntryHeader : public cmGeneratorTarget::TargetPropertyEntry
+{
+public:
+  TargetPropertyEntryHeader(
+    std::unique_ptr<cmCompiledGeneratorExpression> dirCge,
+    std::unique_ptr<cmCompiledGeneratorExpression> entryCge,
+    const cmHeaderSet* headerSet, cmLinkImplItem const& item = NoLinkImplItem)
+    : cmGeneratorTarget::TargetPropertyEntry(item)
+    , DirectoryCge(std::move(dirCge))
+    , EntryCge(std::move(entryCge))
+    , HeaderSet(headerSet)
+  {
+  }
+
+  const std::string& Evaluate(cmLocalGenerator* lg, const std::string& config,
+                              cmGeneratorTarget const* headTarget,
+                              cmGeneratorExpressionDAGChecker* dagChecker,
+                              std::string const& /*lang*/) const override
+  {
+    auto dir = this->HeaderSet->EvaluateDirectory(
+      this->DirectoryCge, lg, config, headTarget, dagChecker);
+
+    std::map<std::string, std::vector<std::string>> filesPerDir;
+    this->HeaderSet->EvaluateHeaderEntry(dir, filesPerDir, this->EntryCge, lg,
+                                         config, headTarget, dagChecker);
+
+    std::vector<std::string> files;
+    for (auto const& it : filesPerDir) {
+      files.insert(files.end(), it.second.begin(), it.second.end());
+    }
+
+    static std::string filesStr;
+    filesStr = cmJoin(files, ";");
+    return filesStr;
+  }
+
+  cmListFileBacktrace GetBacktrace() const override
+  {
+    return this->EntryCge->GetBacktrace();
+  }
+
+  std::string const& GetInput() const override
+  {
+    return this->EntryCge->GetInput();
+  }
+
+  bool GetHadContextSensitiveCondition() const override
+  {
+    return this->DirectoryCge->GetHadContextSensitiveCondition() ||
+      this->EntryCge->GetHadContextSensitiveCondition();
+  }
+
+private:
+  const std::unique_ptr<cmCompiledGeneratorExpression> DirectoryCge;
+  const std::unique_ptr<cmCompiledGeneratorExpression> EntryCge;
+  const cmHeaderSet* HeaderSet;
 };
 
 std::unique_ptr<cmGeneratorTarget::TargetPropertyEntry>
@@ -1598,6 +1658,67 @@ void AddObjectEntries(cmGeneratorTarget const* headTarget,
   }
 }
 
+void addHeaderSetEntry(cmGeneratorTarget const* headTarget,
+                       std::string const& config,
+                       cmGeneratorExpressionDAGChecker* dagChecker,
+                       cmHeaderSet const* headerSet,
+                       EvaluatedTargetPropertyEntries& entries)
+{
+  for (auto& entryCge : headerSet->CompileHeaderEntries()) {
+    TargetPropertyEntryHeader tpe(headerSet->CompileDirectory(),
+                                  std::move(entryCge), headerSet);
+    entries.Entries.emplace_back(
+      EvaluateTargetPropertyEntry(headTarget, config, "", dagChecker, tpe));
+    for (auto const& file : entries.Entries.back().Values) {
+      auto* sf = headTarget->Makefile->GetOrCreateSource(file);
+      sf->SetProperty("HEADER_FILE_ONLY", "TRUE");
+
+#ifndef CMAKE_BOOTSTRAP
+      auto path = sf->ResolveFullPath();
+      bool found = false;
+      for (auto const& sg : headTarget->Makefile->GetSourceGroups()) {
+        if (sg.MatchesFiles(path)) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        headTarget->Makefile->GetOrCreateSourceGroup("Header Files")
+          ->AddGroupFile(path);
+      }
+#endif
+    }
+  }
+}
+
+void AddHeaderSetEntries(cmGeneratorTarget const* headTarget,
+                         std::string const& config,
+                         cmGeneratorExpressionDAGChecker* dagChecker,
+                         EvaluatedTargetPropertyEntries& entries)
+{
+  if (!headTarget->Target->GetAnonymousHeaderSetIsInterface()) {
+    if (auto const* anonymousHeaderSet =
+          headTarget->Target->GetHeaderSet("")) {
+      addHeaderSetEntry(headTarget, config, dagChecker, anonymousHeaderSet,
+                        entries);
+    }
+  }
+
+  for (auto const& entry : headTarget->Target->GetHeaderSetsEntries()) {
+    for (auto const& name : cmExpandedList(entry.Value)) {
+      auto const* headerSet = headTarget->Target->GetHeaderSet(name);
+      if (!headerSet) {
+        headTarget->Makefile->GetCMakeInstance()->IssueMessage(
+          MessageType::FATAL_ERROR,
+          cmStrCat("Header set \"", name, "\" does not exist"),
+          entry.Backtrace);
+        return;
+      }
+      addHeaderSetEntry(headTarget, config, dagChecker, headerSet, entries);
+    }
+  }
+}
+
 bool processSources(cmGeneratorTarget const* tgt,
                     EvaluatedTargetPropertyEntries& entries,
                     std::vector<BT<std::string>>& srcs,
@@ -1735,10 +1856,18 @@ std::vector<BT<std::string>> cmGeneratorTarget::GetSourceFilePaths(
                                              uniqueSrcs, debugSources);
   }
 
+  // Collect this target's header sets.
+  std::vector<std::string>::size_type numFilesBefore3 = files.size();
+  EvaluatedTargetPropertyEntries headerEntries;
+  AddHeaderSetEntries(this, config, &dagChecker, headerEntries);
+  bool contextDependentHeaders =
+    processSources(this, headerEntries, files, uniqueSrcs, debugSources);
+
   // Determine if sources are context-dependent or not.
   if (!contextDependentDirectSources &&
       !(contextDependentInterfaceSources && numFilesBefore < files.size()) &&
-      !(contextDependentObjects && numFilesBefore2 < files.size())) {
+      !(contextDependentObjects && numFilesBefore2 < files.size()) &&
+      !(contextDependentHeaders && numFilesBefore3 < files.size())) {
     this->SourcesAreContextDependent = Tribool::False;
   } else {
     this->SourcesAreContextDependent = Tribool::True;
