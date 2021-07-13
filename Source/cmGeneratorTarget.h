@@ -323,11 +323,6 @@ public:
 
   std::set<BT<std::pair<std::string, bool>>> const& GetUtilities() const;
 
-  bool LinkLanguagePropagatesToDependents() const
-  {
-    return this->GetType() == cmStateEnums::STATIC_LIBRARY;
-  }
-
   /** Get the macro to define when building sources in this target.
       If no macro should be defined null is returned.  */
   const std::string* GetExportMacro() const;

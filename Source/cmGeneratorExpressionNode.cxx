@@ -1421,7 +1421,8 @@ static const struct TargetPropertyNode : public cmGeneratorExpressionNode
     assert(target);
 
     if (propertyName == "LINKER_LANGUAGE") {
-      if (target->LinkLanguagePropagatesToDependents() && dagCheckerParent &&
+      if (target->GetType() == cmStateEnums::STATIC_LIBRARY &&
+          dagCheckerParent &&
           (dagCheckerParent->EvaluatingLinkLibraries() ||
            dagCheckerParent->EvaluatingSources())) {
         reportError(
