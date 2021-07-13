@@ -26,11 +26,13 @@
 #include "cmGeneratorExpression.h"
 #include "cmGeneratorTarget.h"
 #include "cmGlobalGenerator.h"
+#include "cmHeaderSet.h"
 #include "cmInstallDirectoryGenerator.h"
 #include "cmInstallExportGenerator.h"
 #include "cmInstallFilesGenerator.h"
 #include "cmInstallGenerator.h"
 #include "cmInstallGetRuntimeDependenciesGenerator.h"
+#include "cmInstallHeaderSetGenerator.h"
 #include "cmInstallImportedRuntimeArtifactsGenerator.h"
 #include "cmInstallRuntimeDependencySet.h"
 #include "cmInstallRuntimeDependencySetGenerator.h"
@@ -1043,6 +1045,44 @@ Json::Value DirectoryObject::DumpInstaller(cmInstallGenerator* gen)
       case cmInstallRuntimeDependencySetGenerator::DependencyType::Library:
         installer["runtimeDependencySetType"] = "library";
         break;
+    }
+  } else if (auto* installHeaderSet =
+               dynamic_cast<cmInstallHeaderSetGenerator*>(gen)) {
+    installer["type"] = "headerSet";
+    installer["destination"] = installHeaderSet->GetDestination(this->Config);
+
+    auto* headerSet = installHeaderSet->GetHeaderSet();
+    auto* target = installHeaderSet->GetTarget();
+
+    auto dirCge = headerSet->CompileDirectory();
+    auto const& dir = headerSet->EvaluateDirectory(
+      dirCge, target->GetLocalGenerator(), this->Config, target);
+
+    auto entryCges = headerSet->CompileHeaderEntries();
+    std::map<std::string, std::vector<std::string>> entries;
+    for (auto const& entryCge : entryCges) {
+      headerSet->EvaluateHeaderEntry(dir, entries, entryCge,
+                                     target->GetLocalGenerator(), this->Config,
+                                     target);
+    }
+
+    Json::Value files = Json::arrayValue;
+    for (auto const& it : entries) {
+      for (auto const& file : it.second) {
+        files.append(RelativeIfUnder(dir, file));
+      }
+    }
+    installer["paths"] = std::move(files);
+    if (!headerSet->GetName().empty()) {
+      installer["headerSetName"] = headerSet->GetName();
+    }
+    installer["headerSetDirectory"] = dir;
+    installer["headerSetTarget"] = Json::objectValue;
+    installer["headerSetTarget"]["id"] = TargetId(target, this->TopBuild);
+    installer["headerSetTarget"]["index"] = this->TargetIndexMap[target];
+
+    if (installHeaderSet->GetOptional()) {
+      installer["isOptional"] = true;
     }
   }
 
