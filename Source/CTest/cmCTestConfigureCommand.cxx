@@ -42,13 +42,13 @@ cmCTestGenericHandler* cmCTestConfigureCommand::InitializeHandler()
   cmProp ctestConfigureCommand =
     this->Makefile->GetDefinition("CTEST_CONFIGURE_COMMAND");
 
-  if (cmNonempty(ctestConfigureCommand)) {
+  if (!ctestConfigureCommand.IsEmpty()) {
     this->CTest->SetCTestConfiguration("ConfigureCommand",
                                        *ctestConfigureCommand, this->Quiet);
   } else {
     cmProp cmakeGeneratorName =
       this->Makefile->GetDefinition("CTEST_CMAKE_GENERATOR");
-    if (cmNonempty(cmakeGeneratorName)) {
+    if (!cmakeGeneratorName.IsEmpty()) {
       const std::string& source_dir =
         this->CTest->GetCTestConfiguration("SourceDirectory");
       if (source_dir.empty()) {
@@ -108,7 +108,7 @@ cmCTestGenericHandler* cmCTestConfigureCommand::InitializeHandler()
 
       cmProp cmakeGeneratorPlatform =
         this->Makefile->GetDefinition("CTEST_CMAKE_GENERATOR_PLATFORM");
-      if (cmNonempty(cmakeGeneratorPlatform)) {
+      if (!cmakeGeneratorPlatform.IsEmpty()) {
         cmakeConfigureCommand += " \"-A";
         cmakeConfigureCommand += *cmakeGeneratorPlatform;
         cmakeConfigureCommand += "\"";
@@ -116,7 +116,7 @@ cmCTestGenericHandler* cmCTestConfigureCommand::InitializeHandler()
 
       cmProp cmakeGeneratorToolset =
         this->Makefile->GetDefinition("CTEST_CMAKE_GENERATOR_TOOLSET");
-      if (cmNonempty(cmakeGeneratorToolset)) {
+      if (!cmakeGeneratorToolset.IsEmpty()) {
         cmakeConfigureCommand += " \"-T";
         cmakeConfigureCommand += *cmakeGeneratorToolset;
         cmakeConfigureCommand += "\"";

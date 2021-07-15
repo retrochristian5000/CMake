@@ -687,7 +687,7 @@ void cmGlobalUnixMakefileGenerator3::WriteConvenienceRules2(
       if (cmProp tgtMsg =
             this->GetCMakeInstance()->GetState()->GetGlobalProperty(
               "TARGET_MESSAGES")) {
-        targetMessages = cmIsOn(*tgtMsg);
+        targetMessages = tgtMsg.IsOn();
       }
 
       if (targetMessages) {

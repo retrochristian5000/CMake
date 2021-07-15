@@ -230,8 +230,8 @@ void cmMakefileExecutableTargetGenerator::WriteNvidiaDeviceExecutableRule(
 
     cmProp val = this->LocalGenerator->GetRuleLauncher(this->GeneratorTarget,
                                                        "RULE_LAUNCH_LINK");
-    if (cmNonempty(val)) {
-      launcher = cmStrCat(*val, ' ');
+    if (!val.IsEmpty()) {
+      launcher = cmStrCat(val, ' ');
     }
 
     std::unique_ptr<cmRulePlaceholderExpander> rulePlaceholderExpander(
@@ -572,7 +572,7 @@ void cmMakefileExecutableTargetGenerator::WriteExecutableRule(bool relink)
 
     std::string linkerLauncher =
       this->GetLinkerLauncher(this->GetConfigName());
-    if (cmNonempty(linkerLauncher)) {
+    if (!linkerLauncher.empty()) {
       vars.Launcher = linkerLauncher.c_str();
     }
 
@@ -594,8 +594,8 @@ void cmMakefileExecutableTargetGenerator::WriteExecutableRule(bool relink)
 
     cmProp val = this->LocalGenerator->GetRuleLauncher(this->GeneratorTarget,
                                                        "RULE_LAUNCH_LINK");
-    if (cmNonempty(val)) {
-      launcher = cmStrCat(*val, ' ');
+    if (!val.IsEmpty()) {
+      launcher = cmStrCat(val, ' ');
     }
 
     std::unique_ptr<cmRulePlaceholderExpander> rulePlaceholderExpander(

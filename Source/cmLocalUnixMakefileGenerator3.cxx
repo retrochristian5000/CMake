@@ -885,7 +885,7 @@ void cmLocalUnixMakefileGenerator3::AppendRuleDepend(
   // Add a dependency on the rule file itself unless an option to skip
   // it is specifically enabled by the user or project.
   cmProp nodep = this->Makefile->GetDefinition("CMAKE_SKIP_RULE_DEPENDENCY");
-  if (cmIsOff(nodep)) {
+  if (nodep.IsOff()) {
     depends.emplace_back(ruleFileName);
   }
 }
@@ -1000,7 +1000,7 @@ void cmLocalUnixMakefileGenerator3::AppendCustomCommand(
       std::string launcher;
       // Short-circuit if there is no launcher.
       cmProp val = this->GetRuleLauncher(target, "RULE_LAUNCH_CUSTOM");
-      if (cmNonempty(val)) {
+      if (!val.IsEmpty()) {
         // Expand rule variables referenced in the given launcher command.
         cmRulePlaceholderExpander::RuleVariables vars;
         vars.CMTargetName = target->GetName().c_str();
@@ -1431,8 +1431,8 @@ bool cmLocalUnixMakefileGenerator3::UpdateDependencies(
     std::string const depFile = targetDir + "/compiler_depend.make";
     cmDepends::DependencyMap dependencies;
     cmDependsCompiler depsManager;
-    bool projectOnly = cmIsOn(
-      this->Makefile->GetSafeDefinition("CMAKE_DEPENDS_IN_PROJECT_ONLY"));
+    bool projectOnly =
+      this->Makefile->GetDefinition("CMAKE_DEPENDS_IN_PROJECT_ONLY").IsOn();
 
     depsManager.SetVerbose(verbose);
     depsManager.SetLocalGenerator(this);
@@ -1502,7 +1502,7 @@ bool cmLocalUnixMakefileGenerator3::ScanDependencies(
   if (haveDirectoryInfo) {
     // Test whether we need to force Unix paths.
     if (cmProp force = mf->GetDefinition("CMAKE_FORCE_UNIX_PATHS")) {
-      if (!cmIsOff(force)) {
+      if (!force.IsOff()) {
         cmSystemTools::SetForceUnixPaths(true);
       }
     }
@@ -1756,7 +1756,7 @@ void cmLocalUnixMakefileGenerator3::WriteLocalAllRules(
   depends.clear();
   cmProp noall =
     this->Makefile->GetDefinition("CMAKE_SKIP_INSTALL_ALL_DEPENDENCY");
-  if (cmIsOff(noall)) {
+  if (noall.IsOff()) {
     // Drive the build before installing.
     depends.emplace_back("all");
   } else if (regenerate) {
@@ -1861,14 +1861,14 @@ void cmLocalUnixMakefileGenerator3::WriteDependLanguageInfo(
   std::ostream& cmakefileStream, cmGeneratorTarget* target)
 {
   // To enable dependencies filtering
-  cmakefileStream << "\n"
-                  << "# Consider dependencies only in project.\n"
-                  << "set(CMAKE_DEPENDS_IN_PROJECT_ONLY "
-                  << (cmIsOn(this->Makefile->GetSafeDefinition(
-                        "CMAKE_DEPENDS_IN_PROJECT_ONLY"))
-                        ? "ON"
-                        : "OFF")
-                  << ")\n\n";
+  cmakefileStream
+    << "\n"
+    << "# Consider dependencies only in project.\n"
+    << "set(CMAKE_DEPENDS_IN_PROJECT_ONLY "
+    << (this->Makefile->GetDefinition("CMAKE_DEPENDS_IN_PROJECT_ONLY").IsOn()
+          ? "ON"
+          : "OFF")
+    << ")\n\n";
 
   auto const& implicitLangs =
     this->GetImplicitDepends(target, cmDependencyScannerKind::CMake);
@@ -1904,7 +1904,7 @@ void cmLocalUnixMakefileGenerator3::WriteDependLanguageInfo(
       // Tell the dependency scanner what compiler is used.
       std::string cidVar = cmStrCat("CMAKE_", lang, "_COMPILER_ID");
       cmProp cid = this->Makefile->GetDefinition(cidVar);
-      if (cmNonempty(cid)) {
+      if (!cid.IsEmpty()) {
         cmakefileStream << "set(CMAKE_" << lang << "_COMPILER_ID \"" << *cid
                         << "\")\n";
       }

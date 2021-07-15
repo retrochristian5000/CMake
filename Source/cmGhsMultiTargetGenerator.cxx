@@ -547,7 +547,7 @@ void cmGhsMultiTargetGenerator::WriteSources(std::ostream& fout_proj)
   for (auto& sg : groupFilesList) {
     std::ostream* fout;
     bool useProjectFile =
-      cmIsOn(this->GeneratorTarget->GetProperty("GHS_NO_SOURCE_GROUP_FILE")) ||
+      this->GeneratorTarget->GetProperty("GHS_NO_SOURCE_GROUP_FILE").IsOn() ||
       this->Makefile->IsOn("CMAKE_GHS_NO_SOURCE_GROUP_FILE");
     if (useProjectFile || sg.empty()) {
       fout = &fout_proj;
@@ -718,7 +718,7 @@ void cmGhsMultiTargetGenerator::WriteObjectLangOverride(
 bool cmGhsMultiTargetGenerator::DetermineIfIntegrityApp()
 {
   if (cmProp p = this->GeneratorTarget->GetProperty("ghs_integrity_app")) {
-    return cmIsOn(*p);
+    return p.IsOn();
   }
   std::vector<cmSourceFile*> sources;
   this->GeneratorTarget->GetSourceFiles(sources, this->ConfigName);

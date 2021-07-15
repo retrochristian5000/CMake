@@ -36,6 +36,7 @@
 #include "cmMakefile.h"
 #include "cmMessageType.h"
 #include "cmOutputConverter.h"
+#include "cmProperty.h"
 #include "cmPropertyMap.h"
 #include "cmRange.h"
 #include "cmSourceFile.h"
@@ -62,7 +63,7 @@ cmProp cmTargetPropertyComputer::GetSources<cmGeneratorTarget>(
   cmGeneratorTarget const* tgt, cmMessenger* /* messenger */,
   cmListFileBacktrace const& /* context */)
 {
-  return &tgt->GetSourcesProperty();
+  return tgt->GetSourcesProperty();
 }
 
 template <>
@@ -332,7 +333,7 @@ cmGeneratorTarget::cmGeneratorTarget(cmTarget* t, cmLocalGenerator* lg)
 
 cmGeneratorTarget::~cmGeneratorTarget() = default;
 
-const std::string& cmGeneratorTarget::GetSourcesProperty() const
+cmProp cmGeneratorTarget::GetSourcesProperty() const
 {
   std::vector<std::string> values;
   for (auto const& se : this->SourceEntries) {
@@ -341,7 +342,7 @@ const std::string& cmGeneratorTarget::GetSourcesProperty() const
   static std::string value;
   value.clear();
   value = cmJoin(values, ";");
-  return value;
+  return cmProp(value);
 }
 
 cmGlobalGenerator* cmGeneratorTarget::GetGlobalGenerator() const
@@ -368,8 +369,8 @@ std::string cmGeneratorTarget::GetExportName() const
 {
   cmProp exportName = this->GetProperty("EXPORT_NAME");
 
-  if (cmNonempty(exportName)) {
-    if (!cmGeneratorExpression::IsValidTargetName(*exportName)) {
+  if (!exportName.IsEmpty()) {
+    if (!cmGeneratorExpression::IsValidTargetName(exportName)) {
       std::ostringstream e;
       e << "EXPORT_NAME property \"" << *exportName << "\" for \""
         << this->GetName() << "\": is not valid.";
@@ -564,7 +565,7 @@ std::string cmGeneratorTarget::GetFilePostfix(const std::string& config) const
     // framework postfix.
     frameworkPostfix = this->GetFrameworkMultiConfigPostfix(config);
     if (!frameworkPostfix.empty()) {
-      postfix = &frameworkPostfix;
+      postfix = cmProp(frameworkPostfix);
     }
   }
   return postfix ? *postfix : std::string();
@@ -624,7 +625,7 @@ cmProp cmGeneratorTarget::GetFilePrefixInternal(
 
   if (!targetPrefix) {
     const char* prefixVar = this->Target->GetPrefixVariableInternal(artifact);
-    if (!language.empty() && cmNonempty(prefixVar)) {
+    if (!language.empty() && !cmProp::IsEmpty(prefixVar)) {
       std::string langPrefix = cmStrCat(prefixVar, "_", language);
       targetPrefix = this->Makefile->GetDefinition(langPrefix);
     }
@@ -675,7 +676,7 @@ cmProp cmGeneratorTarget::GetFileSuffixInternal(
 
   if (!targetSuffix) {
     const char* suffixVar = this->Target->GetSuffixVariableInternal(artifact);
-    if (!language.empty() && cmNonempty(suffixVar)) {
+    if (!language.empty() && !cmProp::IsEmpty(suffixVar)) {
       std::string langSuffix = cmStrCat(suffixVar, "_", language);
       targetSuffix = this->Makefile->GetDefinition(langSuffix);
     }
@@ -853,7 +854,7 @@ bool cmGeneratorTarget::IsIPOEnabled(std::string const& lang,
 {
   cmProp feature = this->GetFeature("INTERPROCEDURAL_OPTIMIZATION", config);
 
-  if (!cmIsOn(feature)) {
+  if (!feature.IsOn()) {
     // 'INTERPROCEDURAL_OPTIMIZATION' is off, no need to check policies
     return false;
   }
@@ -966,7 +967,7 @@ cmProp cmGeneratorTarget::GetLanguageStandard(std::string const& lang,
     this->GetLanguageStandardProperty(lang, config);
 
   if (languageStandard) {
-    return &(languageStandard->Value);
+    return cmProp(languageStandard->Value);
   }
 
   return nullptr;
@@ -996,8 +997,8 @@ cmProp cmGeneratorTarget::GetLanguageExtensions(std::string const& lang) const
 bool cmGeneratorTarget::GetLanguageStandardRequired(
   std::string const& lang) const
 {
-  return cmIsOn(
-    this->GetPropertyWithPairedLanguageSupport(lang, "_STANDARD_REQUIRED"));
+  return this->GetPropertyWithPairedLanguageSupport(lang, "_STANDARD_REQUIRED")
+    .IsOn();
 }
 
 void cmGeneratorTarget::GetModuleDefinitionSources(
@@ -1277,7 +1278,7 @@ bool cmGeneratorTarget::MaybeHaveInterfaceProperty(
     bool& maybeInterfaceProp = i->second;
 
     // If this target itself has a non-empty property value, we are done.
-    maybeInterfaceProp = cmNonempty(this->GetProperty(prop));
+    maybeInterfaceProp = !this->GetProperty(prop).IsEmpty();
 
     // Otherwise, recurse to interface dependencies.
     if (!maybeInterfaceProp) {
@@ -1999,12 +2000,12 @@ std::string cmGeneratorTarget::GetCompilePDBName(
   std::string configUpper = cmSystemTools::UpperCase(config);
   std::string configProp = cmStrCat("COMPILE_PDB_NAME_", configUpper);
   cmProp config_name = this->GetProperty(configProp);
-  if (cmNonempty(config_name)) {
+  if (!config_name.IsEmpty()) {
     return prefix + *config_name + ".pdb";
   }
 
   cmProp name = this->GetProperty("COMPILE_PDB_NAME");
-  if (cmNonempty(name)) {
+  if (!name.IsEmpty()) {
     return prefix + *name + ".pdb";
   }
 
@@ -2149,7 +2150,7 @@ bool cmGeneratorTarget::IsChrpathUsed(const std::string& config) const
     std::string sepVar =
       cmStrCat("CMAKE_SHARED_LIBRARY_RUNTIME_", ll, "_FLAG_SEP");
     cmProp sep = this->Makefile->GetDefinition(sepVar);
-    if (cmNonempty(sep)) {
+    if (!sep.IsEmpty()) {
       // TODO: Add binary format check to ABI detection and get rid of
       // CMAKE_EXECUTABLE_FORMAT.
       if (cmProp fmt =
@@ -2268,7 +2269,7 @@ bool cmGeneratorTarget::MacOSXUseInstallNameDir() const
   cmProp build_with_install_name =
     this->GetProperty("BUILD_WITH_INSTALL_NAME_DIR");
   if (build_with_install_name) {
-    return cmIsOn(*build_with_install_name);
+    return build_with_install_name.IsOn();
   }
 
   cmPolicies::PolicyStatus cmp0068 = this->GetPolicyStatusCMP0068();
@@ -2378,7 +2379,7 @@ bool cmGeneratorTarget::IsBundleOnApple() const
 
 bool cmGeneratorTarget::IsWin32Executable(const std::string& config) const
 {
-  return cmIsOn(cmGeneratorExpression::Evaluate(
+  return cmProp::IsOn(cmGeneratorExpression::Evaluate(
     this->GetSafeProperty("WIN32_EXECUTABLE"), this->LocalGenerator, config));
 }
 
@@ -2468,8 +2469,8 @@ std::string cmGeneratorTarget::GetInstallNameDirForInstallTree(
     cmProp install_name_dir = this->GetProperty("INSTALL_NAME_DIR");
 
     if (this->CanGenerateInstallNameDir(INSTALL_NAME_FOR_INSTALL)) {
-      if (cmNonempty(install_name_dir)) {
-        dir = *install_name_dir;
+      if (!install_name_dir.IsEmpty()) {
+        dir = install_name_dir;
         cmGeneratorExpression::ReplaceInstallPrefix(dir, installPrefix);
         dir =
           cmGeneratorExpression::Evaluate(dir, this->LocalGenerator, config);
@@ -3281,9 +3282,9 @@ void cmGeneratorTarget::AddExplicitLanguageFlags(std::string& flags,
 
 void cmGeneratorTarget::AddCUDAArchitectureFlags(std::string& flags) const
 {
-  const std::string& property = this->GetSafeProperty("CUDA_ARCHITECTURES");
+  cmProp property = this->GetProperty("CUDA_ARCHITECTURES");
 
-  if (property.empty()) {
+  if (property.IsEmpty()) {
     switch (this->GetPolicyStatusCMP0104()) {
       case cmPolicies::WARN:
         if (!this->LocalGenerator->GetCMakeInstance()->GetIsInTryCompile()) {
@@ -3305,7 +3306,7 @@ void cmGeneratorTarget::AddCUDAArchitectureFlags(std::string& flags) const
   }
 
   // If CUDA_ARCHITECTURES is false we don't add any architectures.
-  if (cmIsOff(property)) {
+  if (property.IsOff()) {
     return;
   }
 
@@ -3391,10 +3392,10 @@ void cmGeneratorTarget::AddCUDAArchitectureFlags(std::string& flags) const
 
 void cmGeneratorTarget::AddISPCTargetFlags(std::string& flags) const
 {
-  const std::string& property = this->GetSafeProperty("ISPC_INSTRUCTION_SETS");
+  cmProp property = this->GetProperty("ISPC_INSTRUCTION_SETS");
 
   // If ISPC_TARGET is false we don't add any architectures.
-  if (cmIsOff(property)) {
+  if (property.IsOff()) {
     return;
   }
 
@@ -3412,16 +3413,16 @@ void cmGeneratorTarget::AddISPCTargetFlags(std::string& flags) const
 
 void cmGeneratorTarget::AddHIPArchitectureFlags(std::string& flags) const
 {
-  const std::string& property = this->GetSafeProperty("HIP_ARCHITECTURES");
+  cmProp property = this->GetProperty("HIP_ARCHITECTURES");
 
-  if (property.empty()) {
+  if (property.IsEmpty()) {
     this->Makefile->IssueMessage(MessageType::FATAL_ERROR,
                                  "HIP_ARCHITECTURES is empty for target \"" +
                                    this->GetName() + "\".");
   }
 
   // If HIP_ARCHITECTURES is false we don't add any architectures.
-  if (cmIsOff(property)) {
+  if (property.IsOff()) {
     return;
   }
 
@@ -3581,7 +3582,7 @@ void processIncludeDirectories(cmGeneratorTarget const* tgt,
         }
       }
 
-      if (!cmIsOff(entryInclude)) {
+      if (!cmProp::IsOff(entryInclude)) {
         cmSystemTools::ConvertToUnixSlashes(entryInclude);
       }
 
@@ -4968,11 +4969,11 @@ cmGeneratorTarget::Names cmGeneratorTarget::GetLibraryNames(
     // The library's soname.
     this->ComputeVersionedName(targetNames.SharedObject, prefix,
                                targetNames.Base, suffix, targetNames.Output,
-                               cmToCStr(soversion));
+                               soversion.GetCStr());
 
     // The library's real name on disk.
     this->ComputeVersionedName(targetNames.Real, prefix, targetNames.Base,
-                               suffix, targetNames.Output, cmToCStr(version));
+                               suffix, targetNames.Output, version.GetCStr());
   }
 
   // The import library name.
@@ -5008,7 +5009,7 @@ cmGeneratorTarget::Names cmGeneratorTarget::GetExecutableNames(
   const char* version = nullptr;
 #else
   // Check for executable version properties.
-  const char* version = cmToCStr(this->GetProperty("VERSION"));
+  const char* version = this->GetProperty("VERSION").GetCStr();
   if (this->GetType() != cmStateEnums::EXECUTABLE ||
       this->Makefile->IsOn("XCODE")) {
     version = nullptr;
@@ -5121,13 +5122,13 @@ void cmGeneratorTarget::GetFullNameInternal(
   if (this->IsFrameworkOnApple()) {
     fw_prefix =
       cmStrCat(this->GetFrameworkDirectory(config, ContentLevel), '/');
-    targetPrefix = &fw_prefix;
+    targetPrefix = cmProp(fw_prefix);
     targetSuffix = nullptr;
   }
 
   if (this->IsCFBundleOnApple()) {
     fw_prefix = cmStrCat(this->GetCFBundleDirectory(config, FullLevel), '/');
-    targetPrefix = &fw_prefix;
+    targetPrefix = cmProp(fw_prefix);
     targetSuffix = nullptr;
   }
 
@@ -5143,7 +5144,7 @@ void cmGeneratorTarget::GetFullNameInternal(
   // EXECUTABLE_SUFFIX attribute.
   if (this->IsFrameworkOnApple() &&
       this->GetGlobalGenerator()->GetName() == "Xcode") {
-    targetSuffix = &configPostfix;
+    targetSuffix = cmProp(configPostfix);
   } else {
     outBase += configPostfix;
   }
@@ -5296,7 +5297,7 @@ cmGeneratorTarget::GetTargetSourceFileFlags(const cmSourceFile* sf) const
     // Handle the MACOSX_PACKAGE_LOCATION property on source files that
     // were not listed in one of the other lists.
     if (cmProp location = sf->GetProperty("MACOSX_PACKAGE_LOCATION")) {
-      flags.MacFolder = location->c_str();
+      flags.MacFolder = location.GetCStr();
       const bool stripResources =
         this->GlobalGenerator->ShouldStripResourcePath(this->Makefile);
       if (*location == "Resources") {
@@ -5674,6 +5675,11 @@ std::string valueAsString<std::string>(std::string value)
   return value;
 }
 template <>
+std::string valueAsString<cmProp>(cmProp value)
+{
+  return value ? value : std::string("(unset)");
+}
+template <>
 std::string valueAsString<std::nullptr_t>(std::nullptr_t /*unused*/)
 {
   return "(unset)";
@@ -5724,7 +5730,8 @@ bool getTypedProperty<bool>(cmGeneratorTarget const* tgt,
   }
 
   cmProp value = tgt->GetProperty(prop);
-  return cmIsOn(genexInterpreter->Evaluate(value ? *value : "", prop));
+  return cmProp::IsOn(
+    genexInterpreter->Evaluate(value ? value : std::string{}, prop));
 }
 
 template <>
@@ -5735,10 +5742,11 @@ const char* getTypedProperty<const char*>(
   cmProp value = tgt->GetProperty(prop);
 
   if (genexInterpreter == nullptr) {
-    return cmToCStr(value);
+    return value.GetCStr();
   }
 
-  return genexInterpreter->Evaluate(value ? *value : "", prop).c_str();
+  return genexInterpreter->Evaluate(value ? value : std::string{}, prop)
+    .c_str();
 }
 
 template <>
@@ -5749,7 +5757,7 @@ std::string getTypedProperty<std::string>(
   cmProp value = tgt->GetProperty(prop);
 
   if (genexInterpreter == nullptr) {
-    return valueAsString(cmToCStr(value));
+    return valueAsString(value);
   }
 
   return genexInterpreter->Evaluate(value ? *value : "", prop);
@@ -5839,7 +5847,7 @@ std::pair<bool, const char*> consistentProperty(const char* lhs,
 
   switch (t) {
     case BoolType: {
-      bool same = cmIsOn(lhs) == cmIsOn(rhs);
+      bool same = cmProp::IsOn(lhs) == cmProp::IsOn(rhs);
       return { same, same ? lhs : nullptr };
     }
     case StringType:
@@ -5870,7 +5878,7 @@ std::pair<bool, std::string> consistentProperty(const std::string& lhs,
 
   switch (t) {
     case BoolType: {
-      bool same = cmIsOn(lhs) == cmIsOn(rhs);
+      bool same = cmProp::IsOn(lhs) == cmProp::IsOn(rhs);
       return { same, same ? lhs : null_ptr };
     }
     case StringType:
@@ -6153,7 +6161,7 @@ std::string cmGeneratorTarget::GetRuntimeLinkLibrary(
   // not it is overridden by a property.
   cmProp runtimeLibraryDefault = this->Makefile->GetDefinition(
     cmStrCat("CMAKE_", lang, "_RUNTIME_LIBRARY_DEFAULT"));
-  if (!cmNonempty(runtimeLibraryDefault)) {
+  if (runtimeLibraryDefault.IsEmpty()) {
     return std::string();
   }
   cmProp runtimeLibraryValue =
@@ -6179,10 +6187,7 @@ std::string cmGeneratorTarget::GetFortranModuleDirectory(
 
 bool cmGeneratorTarget::IsFortranBuildingInstrinsicModules() const
 {
-  if (cmProp prop = this->GetProperty("Fortran_BUILDING_INSTRINSIC_MODULES")) {
-    return cmIsOn(*prop);
-  }
-  return false;
+  return this->GetProperty("Fortran_BUILDING_INSTRINSIC_MODULES").IsOn();
 }
 
 std::string cmGeneratorTarget::CreateFortranModuleDirectory(
@@ -7214,9 +7219,9 @@ void cmGeneratorTarget::ComputeImportInfo(std::string const& desired_config,
   if (this->GetType() == cmStateEnums::SHARED_LIBRARY) {
     std::string soProp = cmStrCat("IMPORTED_NO_SONAME", suffix);
     if (cmProp config_no_soname = this->GetProperty(soProp)) {
-      info.NoSOName = cmIsOn(*config_no_soname);
+      info.NoSOName = config_no_soname.IsOn();
     } else if (cmProp no_soname = this->GetProperty("IMPORTED_NO_SONAME")) {
-      info.NoSOName = cmIsOn(*no_soname);
+      info.NoSOName = no_soname.IsOn();
     }
   }
 
@@ -7453,7 +7458,7 @@ std::string cmGeneratorTarget::CheckCMP0004(std::string const& item) const
 bool cmGeneratorTarget::IsDeprecated() const
 {
   cmProp deprecation = this->GetProperty("DEPRECATION");
-  return cmNonempty(deprecation);
+  return !deprecation.IsEmpty();
 }
 
 std::string cmGeneratorTarget::GetDeprecation() const
@@ -7531,7 +7536,7 @@ bool cmGeneratorTarget::IsCSharpOnly() const
   // Consider an explicit linker language property, but *not* the
   // computed linker language that may depend on linked targets.
   cmProp linkLang = this->GetProperty("LINKER_LANGUAGE");
-  if (cmNonempty(linkLang)) {
+  if (!linkLang.IsEmpty()) {
     languages.insert(*linkLang);
   }
   return languages.size() == 1 && languages.count("CSharp") > 0;

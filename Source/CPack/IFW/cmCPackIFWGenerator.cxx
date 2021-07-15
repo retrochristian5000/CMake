@@ -14,6 +14,7 @@
 #include "cmCPackLog.h" // IWYU pragma: keep
 #include "cmDuration.h"
 #include "cmGeneratedFileStream.h"
+#include "cmProperty.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
 
@@ -274,7 +275,7 @@ int cmCPackIFWGenerator::InitializeInternal()
   // Look 'binarycreator' executable (needs)
 
   const char* BinCreatorStr = this->GetOption(BinCreatorOpt);
-  if (!BinCreatorStr || cmIsNOTFOUND(BinCreatorStr)) {
+  if (!BinCreatorStr || cmProp::IsNOTFOUND(BinCreatorStr)) {
     this->BinCreator.clear();
   } else {
     this->BinCreator = BinCreatorStr;
@@ -291,7 +292,7 @@ int cmCPackIFWGenerator::InitializeInternal()
   // Look 'repogen' executable (optional)
 
   const char* RepoGenStr = this->GetOption(RepoGenOpt);
-  if (!RepoGenStr || cmIsNOTFOUND(RepoGenStr)) {
+  if (!RepoGenStr || cmProp::IsNOTFOUND(RepoGenStr)) {
     this->RepoGen.clear();
   } else {
     this->RepoGen = RepoGenStr;
@@ -344,10 +345,10 @@ int cmCPackIFWGenerator::InitializeInternal()
   }
 
   if (const char* ifwDownloadAll = this->GetOption("CPACK_IFW_DOWNLOAD_ALL")) {
-    this->OnlineOnly = cmIsOn(ifwDownloadAll);
+    this->OnlineOnly = cmProp::IsOn(ifwDownloadAll);
   } else if (const char* cpackDownloadAll =
                this->GetOption("CPACK_DOWNLOAD_ALL")) {
-    this->OnlineOnly = cmIsOn(cpackDownloadAll);
+    this->OnlineOnly = cmProp::IsOn(cpackDownloadAll);
   } else {
     this->OnlineOnly = false;
   }

@@ -222,7 +222,7 @@ void cmLocalGenerator::ComputeObjectMaxPath()
   this->ObjectPathMax = 1000;
 #endif
   cmProp plen = this->Makefile->GetDefinition("CMAKE_OBJECT_PATH_MAX");
-  if (cmNonempty(plen)) {
+  if (!plen.IsEmpty()) {
     unsigned int pmax;
     if (sscanf(plen->c_str(), "%u", &pmax) == 1) {
       if (pmax >= 128) {
@@ -426,7 +426,7 @@ void cmLocalGenerator::GenerateInstallRules()
 {
   // Compute the install prefix.
   const char* prefix =
-    cmToCStr(this->Makefile->GetDefinition("CMAKE_INSTALL_PREFIX"));
+    this->Makefile->GetDefinition("CMAKE_INSTALL_PREFIX").GetCStr();
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
   std::string prefix_win32;
@@ -435,9 +435,9 @@ void cmLocalGenerator::GenerateInstallRules()
       prefix_win32 = "C:";
     }
     cmProp project_name = this->Makefile->GetDefinition("PROJECT_NAME");
-    if (cmNonempty(project_name)) {
+    if (!project_name.IsEmpty()) {
       prefix_win32 += "/Program Files/";
-      prefix_win32 += *project_name;
+      prefix_win32 += project_name;
     } else {
       prefix_win32 += "/InstalledCMakeProject";
     }
@@ -858,8 +858,9 @@ std::string cmLocalGenerator::GetIncludeFlags(
 
   std::string const& includeFlag =
     this->Makefile->GetSafeDefinition(cmStrCat("CMAKE_INCLUDE_FLAG_", lang));
-  const char* sep = cmToCStr(
-    this->Makefile->GetDefinition(cmStrCat("CMAKE_INCLUDE_FLAG_SEP_", lang)));
+  const char* sep =
+    this->Makefile->GetDefinition(cmStrCat("CMAKE_INCLUDE_FLAG_SEP_", lang))
+      .GetCStr();
   bool quotePaths = false;
   if (this->Makefile->GetDefinition("CMAKE_QUOTE_INCLUDE_PATHS")) {
     quotePaths = true;
@@ -897,7 +898,7 @@ std::string cmLocalGenerator::GetIncludeFlags(
   emitted.insert("/System/Library/Frameworks");
 #endif
   for (std::string const& i : includes) {
-    if (cmNonempty(fwSearchFlag) && this->Makefile->IsOn("APPLE") &&
+    if (!fwSearchFlag.IsEmpty() && this->Makefile->IsOn("APPLE") &&
         cmSystemTools::IsPathToFramework(i)) {
       std::string const frameworkDir =
         cmSystemTools::CollapseFullPath(cmStrCat(i, "/../"));
@@ -906,7 +907,7 @@ std::string cmLocalGenerator::GetIncludeFlags(
             target->IsSystemIncludeDirectory(i, config, lang)) {
           includeFlags << *sysFwSearchFlag;
         } else {
-          includeFlags << *fwSearchFlag;
+          includeFlags << fwSearchFlag;
         }
         includeFlags << this->ConvertToOutputFormat(frameworkDir, shellFormat)
                      << " ";
@@ -1044,7 +1045,7 @@ void cmLocalGenerator::AddCompileOptions(std::vector<BT<std::string>>& flags,
             target->GetProperty("VS_JUST_MY_CODE_DEBUGGING")) {
         std::string isJMCEnabled =
           cmGeneratorExpression::Evaluate(*jmcExprGen, this, config);
-        if (cmIsOn(isJMCEnabled)) {
+        if (cmProp::IsOn(isJMCEnabled)) {
           std::vector<std::string> optVec = cmExpandedList(*jmc);
           std::string jmcFlags;
           this->AppendCompileOptions(jmcFlags, optVec);
@@ -1676,7 +1677,7 @@ static std::string GetFrameworkFlags(const std::string& lang,
 
   std::string fwSearchFlagVar = "CMAKE_" + lang + "_FRAMEWORK_SEARCH_FLAG";
   cmProp fwSearchFlag = mf->GetDefinition(fwSearchFlagVar);
-  if (!cmNonempty(fwSearchFlag)) {
+  if (fwSearchFlag.IsEmpty()) {
     return std::string();
   }
 
@@ -1875,12 +1876,12 @@ bool cmLocalGenerator::AllAppleArchSysrootsAreTheSame(
     return false;
   }
 
-  return std::all_of(archs.begin(), archs.end(),
-                     [this, &sysroot](std::string const& arch) -> bool {
-                       std::string const& archSysroot =
-                         this->AppleArchSysroots[arch];
-                       return cmIsOff(archSysroot) || archSysroot == sysroot;
-                     });
+  return std::all_of(
+    archs.begin(), archs.end(),
+    [this, &sysroot](std::string const& arch) -> bool {
+      std::string const& archSysroot = this->AppleArchSysroots[arch];
+      return cmProp::IsOff(archSysroot) || archSysroot == sysroot;
+    });
 }
 
 void cmLocalGenerator::AddArchitectureFlags(std::string& flags,
@@ -1910,12 +1911,12 @@ void cmLocalGenerator::AddArchitectureFlags(std::string& flags,
     }
     std::string sysrootFlagVar = "CMAKE_" + lang + "_SYSROOT_FLAG";
     cmProp sysrootFlag = this->Makefile->GetDefinition(sysrootFlagVar);
-    if (cmNonempty(sysrootFlag)) {
+    if (!sysrootFlag.IsEmpty()) {
       if (!this->AppleArchSysroots.empty() &&
-          !this->AllAppleArchSysrootsAreTheSame(archs, cmToCStr(sysroot))) {
+          !this->AllAppleArchSysrootsAreTheSame(archs, sysroot->c_str())) {
         for (std::string const& arch : archs) {
           std::string const& archSysroot = this->AppleArchSysroots[arch];
-          if (cmIsOff(archSysroot)) {
+          if (cmProp::IsOff(archSysroot)) {
             continue;
           }
           if (filterArch.empty() || filterArch == arch) {
@@ -1925,9 +1926,9 @@ void cmLocalGenerator::AddArchitectureFlags(std::string& flags,
             flags += this->ConvertToOutputFormat(arch_sysroot, SHELL);
           }
         }
-      } else if (cmNonempty(sysroot)) {
+      } else if (!sysroot.IsEmpty()) {
         flags += " ";
-        flags += *sysrootFlag;
+        flags += sysrootFlag;
         flags += " ";
         flags += this->ConvertToOutputFormat(*sysroot, SHELL);
       }
@@ -1939,10 +1940,10 @@ void cmLocalGenerator::AddArchitectureFlags(std::string& flags,
       "CMAKE_" + lang + "_OSX_DEPLOYMENT_TARGET_FLAG";
     cmProp deploymentTargetFlag =
       this->Makefile->GetDefinition(deploymentTargetFlagVar);
-    if (cmNonempty(deploymentTargetFlag) && cmNonempty(deploymentTarget)) {
+    if (!deploymentTargetFlag.IsEmpty() && !deploymentTarget.IsEmpty()) {
       flags += " ";
-      flags += *deploymentTargetFlag;
-      flags += *deploymentTarget;
+      flags += deploymentTargetFlag;
+      flags += deploymentTarget;
     }
   }
 }
@@ -1963,10 +1964,11 @@ void cmLocalGenerator::AddLanguageFlags(std::string& flags,
     cmStrCat("CMAKE_", lang, "_SIMULATE_ID"));
   if (lang == "Swift") {
     if (cmProp v = target->GetProperty("Swift_LANGUAGE_VERSION")) {
-      if (cmSystemTools::VersionCompare(cmSystemTools::OP_GREATER_EQUAL,
-                                        cmToCStr(this->Makefile->GetDefinition(
-                                          "CMAKE_Swift_COMPILER_VERSION")),
-                                        "4.2")) {
+      if (cmSystemTools::VersionCompare(
+            cmSystemTools::OP_GREATER_EQUAL,
+            this->Makefile->GetDefinition("CMAKE_Swift_COMPILER_VERSION")
+              ->c_str(),
+            "4.2")) {
         this->AppendFlags(flags, "-swift-version " + *v);
       }
     }
@@ -2010,7 +2012,7 @@ void cmLocalGenerator::AddLanguageFlags(std::string& flags,
   // of a default selection whether or not it is overridden by a property.
   cmProp msvcRuntimeLibraryDefault =
     this->Makefile->GetDefinition("CMAKE_MSVC_RUNTIME_LIBRARY_DEFAULT");
-  if (cmNonempty(msvcRuntimeLibraryDefault)) {
+  if (!msvcRuntimeLibraryDefault.IsEmpty()) {
     cmProp msvcRuntimeLibraryValue =
       target->GetProperty("MSVC_RUNTIME_LIBRARY");
     if (!msvcRuntimeLibraryValue) {
@@ -2798,7 +2800,7 @@ void cmLocalGenerator::IncludeFileInUnitySources(
   cmGeneratedFileStream& unity_file, std::string const& sf_full_path,
   cmProp beforeInclude, cmProp afterInclude, cmProp uniqueIdName) const
 {
-  if (cmNonempty(uniqueIdName)) {
+  if (!uniqueIdName.IsEmpty()) {
     std::string pathToHash;
     auto PathEqOrSubDir = [](std::string const& a, std::string const& b) {
       return (cmSystemTools::ComparePath(a, b) ||
@@ -3038,10 +3040,10 @@ void cmLocalGenerator::AppendPositionIndependentLinkerFlags(
     return;
   }
 
-  const std::string mode = cmIsOn(PICValue) ? "PIE" : "NO_PIE";
+  const std::string mode = cmProp::IsOn(PICValue) ? "PIE" : "NO_PIE";
 
   std::string supported = "CMAKE_" + lang + "_LINK_" + mode + "_SUPPORTED";
-  if (cmIsOff(this->Makefile->GetDefinition(supported))) {
+  if (this->Makefile->GetDefinition(supported).IsOff()) {
     return;
   }
 
@@ -3175,7 +3177,7 @@ void cmLocalGenerator::AppendIncludeDirectories(
 
     std::string inc = include;
 
-    if (!cmIsOff(inc)) {
+    if (!cmProp::IsOff(inc)) {
       cmSystemTools::ConvertToUnixSlashes(inc);
     }
 
@@ -3229,8 +3231,8 @@ void cmLocalGenerator::JoinDefines(const std::set<std::string>& defines,
   if (!lang.empty()) {
     cmProp df =
       this->Makefile->GetDefinition(cmStrCat("CMAKE_", lang, "_DEFINE_FLAG"));
-    if (cmNonempty(df)) {
-      dflag = *df;
+    if (!df.IsEmpty()) {
+      dflag = df;
     }
   }
   const char* itemSeparator = definesString.empty() ? "" : " ";
@@ -3845,7 +3847,7 @@ void cmLocalGenerator::GenerateAppleInfoPList(cmGeneratorTarget* target,
 {
   // Find the Info.plist template.
   cmProp in = target->GetProperty("MACOSX_BUNDLE_INFO_PLIST");
-  std::string inFile = cmNonempty(in) ? *in : "MacOSXBundleInfo.plist.in";
+  std::string inFile = in.IsEmpty() ? "MacOSXBundleInfo.plist.in" : *in;
   if (!cmSystemTools::FileIsFullPath(inFile)) {
     std::string inMod = this->Makefile->GetModulesFile(inFile);
     if (!inMod.empty()) {
@@ -3884,7 +3886,7 @@ void cmLocalGenerator::GenerateFrameworkInfoPList(
 {
   // Find the Info.plist template.
   cmProp in = target->GetProperty("MACOSX_FRAMEWORK_INFO_PLIST");
-  std::string inFile = cmNonempty(in) ? *in : "MacOSXFrameworkInfo.plist.in";
+  std::string inFile = in.IsEmpty() ? "MacOSXFrameworkInfo.plist.in" : *in;
   if (!cmSystemTools::FileIsFullPath(inFile)) {
     std::string inMod = this->Makefile->GetModulesFile(inFile);
     if (!inMod.empty()) {
@@ -4252,11 +4254,10 @@ void AddUtilityCommand(cmLocalGenerator& lg, const cmListFileBacktrace& lfbt,
 
 std::vector<std::string> ComputeISPCObjectSuffixes(cmGeneratorTarget* target)
 {
-  const std::string& targetProperty =
-    target->GetSafeProperty("ISPC_INSTRUCTION_SETS");
+  cmProp targetProperty = target->GetProperty("ISPC_INSTRUCTION_SETS");
   std::vector<std::string> ispcTargets;
 
-  if (!cmIsOff(targetProperty)) {
+  if (!targetProperty.IsOff()) {
     cmExpandList(targetProperty, ispcTargets);
     for (auto& ispcTarget : ispcTargets) {
       // transform targets into the suffixes

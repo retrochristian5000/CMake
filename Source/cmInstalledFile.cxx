@@ -7,6 +7,7 @@
 #include "cmGeneratorExpression.h"
 #include "cmListFileCache.h"
 #include "cmMakefile.h"
+#include "cmProperty.h"
 #include "cmStringAlgorithms.h"
 
 cmInstalledFile::cmInstalledFile() = default;
@@ -93,7 +94,7 @@ bool cmInstalledFile::GetPropertyAsBool(const std::string& prop) const
 {
   std::string value;
   bool isSet = this->GetProperty(prop, value);
-  return isSet && cmIsOn(value);
+  return isSet && cmProp::IsOn(value);
 }
 
 void cmInstalledFile::GetPropertyAsList(const std::string& prop,

@@ -174,9 +174,9 @@ bool cmFileCopier::GetDefaultDirectoryPermissions(mode_t** mode)
   // check if default dir creation permissions were set
   cmProp default_dir_install_permissions = this->Makefile->GetDefinition(
     "CMAKE_INSTALL_DEFAULT_DIRECTORY_PERMISSIONS");
-  if (cmNonempty(default_dir_install_permissions)) {
+  if (!default_dir_install_permissions.IsEmpty()) {
     std::vector<std::string> items =
-      cmExpandedList(*default_dir_install_permissions);
+      cmExpandedList(default_dir_install_permissions);
     for (const auto& arg : items) {
       if (!this->CheckPermissions(arg, **mode)) {
         this->Status.SetError(

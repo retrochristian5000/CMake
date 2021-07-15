@@ -23,7 +23,7 @@ bool cmGetFilenameComponentCommand(std::vector<std::string> const& args,
   // already, if so use that value
   if (args.size() >= 4 && args.back() == "CACHE") {
     cmProp cacheValue = status.GetMakefile().GetDefinition(args.front());
-    if (cacheValue && !cmIsNOTFOUND(*cacheValue)) {
+    if (cacheValue && !cacheValue.IsNOTFOUND()) {
       return true;
     }
   }

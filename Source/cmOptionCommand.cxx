@@ -29,11 +29,11 @@ bool cmOptionCommand(std::vector<std::string> const& args,
   {
     auto policyStatus =
       status.GetMakefile().GetPolicyStatus(cmPolicies::CMP0077);
-    const auto* existsBeforeSet =
+    const auto& existsBeforeSet =
       status.GetMakefile().GetStateSnapshot().GetDefinition(args[0]);
     switch (policyStatus) {
       case cmPolicies::WARN:
-        checkAndWarn = (existsBeforeSet != nullptr);
+        checkAndWarn = static_cast<bool>(existsBeforeSet);
         break;
       case cmPolicies::OLD:
         // OLD behavior does not warn.
@@ -61,11 +61,11 @@ bool cmOptionCommand(std::vector<std::string> const& args,
   }
 
   // Nothing in the cache so add it
-  std::string initialValue = existingValue ? *existingValue : "Off";
+  cmProp initialValue = existingValue ? existingValue : cmProp("Off");
   if (args.size() == 3) {
-    initialValue = args[2];
+    initialValue = cmProp(args[2]);
   }
-  bool init = cmIsOn(initialValue);
+  bool init = initialValue.IsOn();
   status.GetMakefile().AddCacheDefinition(args[0], init ? "ON" : "OFF",
                                           args[1].c_str(), cmStateEnums::BOOL);
   if (status.GetMakefile().GetPolicyStatus(cmPolicies::CMP0077) !=
@@ -77,7 +77,7 @@ bool cmOptionCommand(std::vector<std::string> const& args,
   }
 
   if (checkAndWarn) {
-    const auto* existsAfterSet =
+    const auto& existsAfterSet =
       status.GetMakefile().GetStateSnapshot().GetDefinition(args[0]);
     if (!existsAfterSet) {
       status.GetMakefile().IssueMessage(

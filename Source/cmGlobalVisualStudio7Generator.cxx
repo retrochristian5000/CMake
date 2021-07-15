@@ -374,7 +374,7 @@ void cmGlobalVisualStudio7Generator::WriteTargetsToSolution(
 
       this->WriteExternalProject(
         fout, project, location,
-        cmToCStr(target->GetProperty("VS_PROJECT_TYPE")),
+        target->GetProperty("VS_PROJECT_TYPE").GetCStr(),
         target->GetUtilities());
       written = true;
     } else {
@@ -671,8 +671,8 @@ std::set<std::string> cmGlobalVisualStudio7Generator::IsPartOfDefaultBuild(
           cmProp propertyValue =
             target->Target->GetMakefile()->GetDefinition(propertyName);
           if (propertyValue &&
-              cmIsOn(cmGeneratorExpression::Evaluate(
-                *propertyValue, target->GetLocalGenerator(), i))) {
+              cmProp::IsOn(cmGeneratorExpression::Evaluate(
+                propertyValue, target->GetLocalGenerator(), i))) {
             activeConfigs.insert(i);
           }
         }
@@ -686,7 +686,7 @@ std::set<std::string> cmGlobalVisualStudio7Generator::IsPartOfDefaultBuild(
   }
   // inspect EXCLUDE_FROM_DEFAULT_BUILD[_<CONFIG>] properties
   for (std::string const& i : configs) {
-    if (cmIsOff(target->GetFeature("EXCLUDE_FROM_DEFAULT_BUILD", i))) {
+    if (target->GetFeature("EXCLUDE_FROM_DEFAULT_BUILD", i).IsOff()) {
       activeConfigs.insert(i);
     }
   }

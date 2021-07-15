@@ -33,6 +33,7 @@
 #include "cmMakefile.h"
 #include "cmMessageType.h"
 #include "cmOutputConverter.h"
+#include "cmProperty.h"
 #include "cmSourceFile.h"
 #include "cmSourceGroup.h"
 #include "cmState.h"
@@ -261,7 +262,7 @@ bool cmGlobalXCodeGenerator::FindMakeProgram(cmMakefile* mf)
   // The Xcode generator knows how to lookup its build tool
   // directly instead of needing a helper module to do it, so we
   // do not actually need to put CMAKE_MAKE_PROGRAM into the cache.
-  if (cmIsOff(mf->GetDefinition("CMAKE_MAKE_PROGRAM"))) {
+  if (mf->GetDefinition("CMAKE_MAKE_PROGRAM").IsOff()) {
     mf->AddDefinition("CMAKE_MAKE_PROGRAM", this->GetXcodeBuildCommand());
   }
   return true;
@@ -2312,7 +2313,7 @@ void cmGlobalXCodeGenerator::AddPositionIndependentLinkAttribute(
   }
 
   buildSettings->AddAttribute(
-    "LD_NO_PIE", this->CreateString(cmIsOn(PICValue) ? "NO" : "YES"));
+    "LD_NO_PIE", this->CreateString(cmProp::IsOn(PICValue) ? "NO" : "YES"));
 }
 
 void cmGlobalXCodeGenerator::CreateBuildSettings(cmGeneratorTarget* gtgt,
@@ -3873,7 +3874,7 @@ void cmGlobalXCodeGenerator::AddEmbeddedObjects(
     bool removeHeaders = actionsOnByDefault & RemoveHeadersOnCopyByDefault;
     if (auto prop = gt->GetProperty(
           cmStrCat(embedPropertyName, "_REMOVE_HEADERS_ON_COPY"))) {
-      removeHeaders = cmIsOn(*prop);
+      removeHeaders = prop.IsOn();
     }
     if (removeHeaders) {
       attrs->AddObject(this->CreateString("RemoveHeadersOnCopy"));
@@ -3882,7 +3883,7 @@ void cmGlobalXCodeGenerator::AddEmbeddedObjects(
     bool codeSign = actionsOnByDefault & CodeSignOnCopyByDefault;
     if (auto prop =
           gt->GetProperty(cmStrCat(embedPropertyName, "_CODE_SIGN_ON_COPY"))) {
-      codeSign = cmIsOn(*prop);
+      codeSign = prop.IsOn();
     }
     if (codeSign) {
       attrs->AddObject(this->CreateString("CodeSignOnCopy"));
@@ -4198,7 +4199,7 @@ bool cmGlobalXCodeGenerator::CreateXCodeObjects(
     buildSettings->AddAttribute("ONLY_ACTIVE_ARCH", this->CreateString("YES"));
     // When targeting macOS, use only the host architecture.
     if (this->SystemName == "Darwin"_s &&
-        (!cmNonempty(sysroot) ||
+        (sysroot.IsEmpty() ||
          cmSystemTools::LowerCase(*sysroot).find("macos") !=
            std::string::npos)) {
       buildSettings->AddAttribute("ARCHS",
@@ -4208,7 +4209,7 @@ bool cmGlobalXCodeGenerator::CreateXCodeObjects(
     // Tell Xcode to use ARCHS (ONLY_ACTIVE_ARCH defaults to NO).
     buildSettings->AddAttribute("ARCHS", this->CreateString(archs));
   }
-  if (cmNonempty(deploymentTarget)) {
+  if (!deploymentTarget.IsEmpty()) {
     buildSettings->AddAttribute(GetDeploymentPlatform(root->GetMakefile()),
                                 this->CreateString(*deploymentTarget));
   }
@@ -4732,7 +4733,7 @@ std::string cmGlobalXCodeGenerator::LookupFlags(
   if (!varNameLang.empty()) {
     std::string varName = cmStrCat(varNamePrefix, varNameLang, varNameSuffix);
     if (cmProp varValue = this->CurrentMakefile->GetDefinition(varName)) {
-      if (!varValue->empty()) {
+      if (!varValue.IsEmpty()) {
         return *varValue;
       }
     }
@@ -4860,7 +4861,7 @@ bool cmGlobalXCodeGenerator::UseEffectivePlatformName(cmMakefile* mf) const
     return mf->PlatformIsAppleEmbedded();
   }
 
-  return cmIsOn(*epnValue);
+  return epnValue.IsOn();
 }
 
 bool cmGlobalXCodeGenerator::ShouldStripResourcePath(cmMakefile*) const

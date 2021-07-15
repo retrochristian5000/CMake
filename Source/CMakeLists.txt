@@ -382,6 +382,7 @@ set(SRCS
   cmProcessTools.cxx
   cmProcessTools.h
   cmProperty.h
+  cmProperty.cxx
   cmPropertyDefinition.cxx
   cmPropertyDefinition.h
   cmPropertyMap.cxx

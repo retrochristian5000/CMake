@@ -282,7 +282,7 @@ bool cmCTestSubmitHandler::SubmitUsingHTTP(
 
       upload_as += "&MD5=";
 
-      if (cmIsOn(this->GetOption("InternalTest"))) {
+      if (cmProp::IsOn(this->GetOption("InternalTest"))) {
         upload_as += "bad_md5sum";
       } else {
         upload_as +=
@@ -519,7 +519,7 @@ int cmCTestSubmitHandler::HandleCDashUploadFile(std::string const& file,
     fields = url.substr(pos + 1);
     url.erase(pos);
   }
-  bool internalTest = cmIsOn(this->GetOption("InternalTest"));
+  bool internalTest = cmProp::IsOn(this->GetOption("InternalTest"));
 
   // Get RETRY_COUNT and RETRY_DELAY values if they were set.
   std::string retryDelayString = this->GetOption("RetryDelay") == nullptr

@@ -41,7 +41,7 @@ bool cmQTWrapCPPCommand(std::vector<std::string> const& args,
         cmStrCat(mf.GetCurrentBinaryDirectory(), "/moc_", srcName, ".cxx");
       cmSourceFile* sf = mf.GetOrCreateSource(newName, true);
       if (curr) {
-        sf->SetProperty("ABSTRACT", cmToCStr(curr->GetProperty("ABSTRACT")));
+        sf->SetProperty("ABSTRACT", curr->GetProperty("ABSTRACT").GetCStr());
       }
 
       // Compute the name of the header from which to generate the file.
