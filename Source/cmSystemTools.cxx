@@ -23,6 +23,7 @@
 #include "cmELF.h"
 #include "cmMessageMetadata.h"
 #include "cmProcessOutput.h"
+#include "cmProperty.h"
 #include "cmRange.h"
 #include "cmStringAlgorithms.h"
 
@@ -3359,7 +3360,7 @@ cm::string_view cmSystemTools::GetSystemName()
     initialized = true;
     systemName = uts_name.sysname;
 
-    if (cmIsOff(systemName)) {
+    if (cmProp::IsOff(systemName)) {
       systemName = "UnknownOS";
     }
 

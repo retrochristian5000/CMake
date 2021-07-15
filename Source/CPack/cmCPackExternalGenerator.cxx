@@ -16,6 +16,7 @@
 #include "cmCPackComponentGroup.h"
 #include "cmCPackLog.h"
 #include "cmMakefile.h"
+#include "cmProperty.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
 
@@ -61,7 +62,7 @@ int cmCPackExternalGenerator::PackageFiles()
   }
 
   const char* packageScript = this->GetOption("CPACK_EXTERNAL_PACKAGE_SCRIPT");
-  if (cmNonempty(packageScript)) {
+  if (!cmProp::IsEmpty(packageScript)) {
     if (!cmSystemTools::FileIsFullPath(packageScript)) {
       cmCPackLogger(
         cmCPackLog::LOG_ERROR,
@@ -156,7 +157,7 @@ int cmCPackExternalGenerator::InstallCMakeProject(
 
 bool cmCPackExternalGenerator::StagingEnabled() const
 {
-  return !cmIsOff(this->GetOption("CPACK_EXTERNAL_ENABLE_STAGING"));
+  return !cmProp::IsOff(this->GetOption("CPACK_EXTERNAL_ENABLE_STAGING"));
 }
 
 cmCPackExternalGenerator::cmCPackExternalVersionGenerator::
@@ -211,7 +212,7 @@ int cmCPackExternalGenerator::cmCPackExternalVersionGenerator::WriteToJSON(
 
   const char* defaultDirectoryPermissions =
     this->Parent->GetOption("CPACK_INSTALL_DEFAULT_DIRECTORY_PERMISSIONS");
-  if (cmNonempty(defaultDirectoryPermissions)) {
+  if (!cmProp::IsEmpty(defaultDirectoryPermissions)) {
     root["defaultDirectoryPermissions"] = defaultDirectoryPermissions;
   }
   if (cmIsInternallyOn(this->Parent->GetOption("CPACK_SET_DESTDIR"))) {
@@ -222,7 +223,8 @@ int cmCPackExternalGenerator::cmCPackExternalVersionGenerator::WriteToJSON(
     root["setDestdir"] = false;
   }
 
-  root["stripFiles"] = !cmIsOff(this->Parent->GetOption("CPACK_STRIP_FILES"));
+  root["stripFiles"] =
+    !cmProp::IsOff(this->Parent->GetOption("CPACK_STRIP_FILES"));
   root["warnOnAbsoluteInstallDestination"] =
     this->Parent->IsOn("CPACK_WARN_ON_ABSOLUTE_INSTALL_DESTINATION");
   root["errorOnAbsoluteInstallDestination"] =

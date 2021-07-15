@@ -517,8 +517,8 @@ bool cmCTestTestHandler::ProcessOptions()
 {
   // Update internal data structure from generic one
   this->SetTestsToRunInformation(this->GetOption("TestsToRunInformation"));
-  this->SetUseUnion(cmIsOn(this->GetOption("UseUnion")));
-  if (cmIsOn(this->GetOption("ScheduleRandom"))) {
+  this->SetUseUnion(cmProp::IsOn(this->GetOption("UseUnion")));
+  if (cmProp::IsOn(this->GetOption("ScheduleRandom"))) {
     this->CTest->SetScheduleType("Random");
   }
   if (const char* repeat = this->GetOption("Repeat")) {
@@ -583,7 +583,7 @@ bool cmCTestTestHandler::ProcessOptions()
   if (val) {
     this->ResourceSpecFile = val;
   }
-  this->SetRerunFailed(cmIsOn(this->GetOption("RerunFailed")));
+  this->SetRerunFailed(cmProp::IsOn(this->GetOption("RerunFailed")));
 
   return true;
 }
@@ -2183,9 +2183,9 @@ bool cmCTestTestHandler::SetTestsProperties(
               }
             }
           } else if (key == "WILL_FAIL"_s) {
-            rt.WillFail = cmIsOn(val);
+            rt.WillFail = cmProp::IsOn(val);
           } else if (key == "DISABLED"_s) {
-            rt.Disabled = cmIsOn(val);
+            rt.Disabled = cmProp::IsOn(val);
           } else if (key == "ATTACHED_FILES"_s) {
             cmExpandList(val, rt.AttachedFiles);
           } else if (key == "ATTACHED_FILES_ON_FAIL"_s) {
@@ -2214,7 +2214,7 @@ bool cmCTestTestHandler::SetTestsProperties(
           } else if (key == "REQUIRED_FILES"_s) {
             cmExpandList(val, rt.RequiredFiles);
           } else if (key == "RUN_SERIAL"_s) {
-            rt.RunSerial = cmIsOn(val);
+            rt.RunSerial = cmProp::IsOn(val);
           } else if (key == "FAIL_REGULAR_EXPRESSION"_s) {
             std::vector<std::string> lval = cmExpandedList(val);
             for (std::string const& cr : lval) {
@@ -2231,7 +2231,7 @@ bool cmCTestTestHandler::SetTestsProperties(
               rt.Processors = 1;
             }
           } else if (key == "PROCESSOR_AFFINITY"_s) {
-            rt.WantAffinity = cmIsOn(val);
+            rt.WantAffinity = cmProp::IsOn(val);
           } else if (key == "RESOURCE_GROUPS"_s) {
             if (!ParseResourceGroupsProperty(val, rt.ResourceGroups)) {
               return false;

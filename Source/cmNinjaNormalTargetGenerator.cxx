@@ -269,7 +269,7 @@ void cmNinjaNormalTargetGenerator::WriteNvidiaDeviceLinkRule(
     std::string launcher;
     cmProp val = this->GetLocalGenerator()->GetRuleLauncher(
       this->GetGeneratorTarget(), "RULE_LAUNCH_LINK");
-    if (cmNonempty(val)) {
+    if (!val.IsEmpty()) {
       launcher = cmStrCat(*val, ' ');
     }
 
@@ -457,14 +457,14 @@ void cmNinjaNormalTargetGenerator::WriteLinkRule(bool useResponseFile,
     }
 
     std::string linkerLauncher = this->GetLinkerLauncher(config);
-    if (cmNonempty(linkerLauncher)) {
+    if (!linkerLauncher.empty()) {
       vars.Launcher = linkerLauncher.c_str();
     }
 
     std::string launcher;
     cmProp val = this->GetLocalGenerator()->GetRuleLauncher(
       this->GetGeneratorTarget(), "RULE_LAUNCH_LINK");
-    if (cmNonempty(val)) {
+    if (!val.IsEmpty()) {
       launcher = cmStrCat(*val, ' ');
     }
 
@@ -707,10 +707,10 @@ void cmNinjaNormalTargetGenerator::WriteDeviceLinkStatement(
     << this->GetTargetName() << "\n\n";
 
   if (this->Makefile->GetSafeDefinition("CMAKE_CUDA_COMPILER_ID") == "Clang") {
-    std::string architecturesStr =
-      this->GeneratorTarget->GetSafeProperty("CUDA_ARCHITECTURES");
+    cmProp architectures =
+      this->GeneratorTarget->GetProperty("CUDA_ARCHITECTURES");
 
-    if (cmIsOff(architecturesStr)) {
+    if (architectures.IsOff()) {
       this->Makefile->IssueMessage(MessageType::FATAL_ERROR,
                                    "CUDA_SEPARABLE_COMPILATION on Clang "
                                    "requires CUDA_ARCHITECTURES to be set.");
@@ -718,7 +718,7 @@ void cmNinjaNormalTargetGenerator::WriteDeviceLinkStatement(
     }
 
     this->WriteDeviceLinkRules(config);
-    this->WriteDeviceLinkStatements(config, cmExpandedList(architecturesStr),
+    this->WriteDeviceLinkStatements(config, cmExpandedList(architectures),
                                     targetOutputReal);
   } else {
     this->WriteNvidiaDeviceLinkStatement(config, fileConfig, targetOutputDir,
@@ -1298,10 +1298,10 @@ void cmNinjaNormalTargetGenerator::WriteLinkStatement(
       obj_list_file, cmOutputConverter::SHELL);
 
     cmProp nm_executable = this->GetMakefile()->GetDefinition("CMAKE_NM");
-    if (cmNonempty(nm_executable)) {
+    if (!nm_executable.IsEmpty()) {
       cmd += " --nm=";
       cmd += this->LocalCommonGenerator->ConvertToOutputFormat(
-        *nm_executable, cmOutputConverter::SHELL);
+        nm_executable, cmOutputConverter::SHELL);
     }
     preLinkCmdLines.push_back(std::move(cmd));
 

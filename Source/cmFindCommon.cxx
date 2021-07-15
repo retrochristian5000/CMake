@@ -185,7 +185,7 @@ void cmFindCommon::SelectDefaultSearchModes()
   for (auto const& path : search_paths) {
     cmProp def = this->Makefile->GetDefinition(path.second);
     if (def) {
-      path.first = !cmIsOn(*def);
+      path.first = !def.IsOn();
     }
   }
 }
@@ -208,10 +208,10 @@ void cmFindCommon::RerootPaths(std::vector<std::string>& paths)
     this->Makefile->GetDefinition("CMAKE_SYSROOT_COMPILE");
   cmProp sysrootLink = this->Makefile->GetDefinition("CMAKE_SYSROOT_LINK");
   cmProp rootPath = this->Makefile->GetDefinition("CMAKE_FIND_ROOT_PATH");
-  const bool noSysroot = !cmNonempty(sysroot);
-  const bool noCompileSysroot = !cmNonempty(sysrootCompile);
-  const bool noLinkSysroot = !cmNonempty(sysrootLink);
-  const bool noRootPath = !cmNonempty(rootPath);
+  const bool noSysroot = sysroot.IsEmpty();
+  const bool noCompileSysroot = sysrootCompile.IsEmpty();
+  const bool noLinkSysroot = sysrootLink.IsEmpty();
+  const bool noRootPath = rootPath.IsEmpty();
   if (noSysroot && noCompileSysroot && noLinkSysroot && noRootPath) {
     return;
   }

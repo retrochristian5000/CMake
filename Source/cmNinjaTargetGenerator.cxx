@@ -640,8 +640,8 @@ void cmNinjaTargetGenerator::WriteCompileRule(const std::string& lang,
   std::string launcher;
   cmProp val = this->GetLocalGenerator()->GetRuleLauncher(
     this->GetGeneratorTarget(), "RULE_LAUNCH_COMPILE");
-  if (cmNonempty(val)) {
-    launcher = cmStrCat(*val, ' ');
+  if (!val.IsEmpty()) {
+    launcher = cmStrCat(val, ' ');
   }
 
   std::string const cmakeCmd =
@@ -841,8 +841,8 @@ void cmNinjaTargetGenerator::WriteCompileRule(const std::string& lang,
        lang == "OBJCXX")) {
     std::string const clauncher_prop = cmStrCat(lang, "_COMPILER_LAUNCHER");
     cmProp clauncher = this->GeneratorTarget->GetProperty(clauncher_prop);
-    if (cmNonempty(clauncher)) {
-      compilerLauncher = *clauncher;
+    if (!clauncher.IsEmpty()) {
+      compilerLauncher = clauncher;
     }
   }
 
@@ -862,8 +862,8 @@ void cmNinjaTargetGenerator::WriteCompileRule(const std::string& lang,
       std::string const cppcheck_prop = cmStrCat(lang, "_CPPCHECK");
       cppcheck = this->GeneratorTarget->GetProperty(cppcheck_prop);
     }
-    if (cmNonempty(iwyu) || cmNonempty(tidy) || cmNonempty(cpplint) ||
-        cmNonempty(cppcheck)) {
+    if (!iwyu.IsEmpty() || !tidy.IsEmpty() || !cpplint.IsEmpty() ||
+        !cppcheck.IsEmpty()) {
       std::string run_iwyu = cmStrCat(cmakeCmd, " -E __run_co_compile");
       if (!compilerLauncher.empty()) {
         // In __run_co_compile case the launcher command is supplied
@@ -873,33 +873,32 @@ void cmNinjaTargetGenerator::WriteCompileRule(const std::string& lang,
                    this->LocalGenerator->EscapeForShell(compilerLauncher));
         compilerLauncher.clear();
       }
-      if (cmNonempty(iwyu)) {
+      if (!iwyu.IsEmpty()) {
         run_iwyu += cmStrCat(" --iwyu=",
                              this->GetLocalGenerator()->EscapeForShell(*iwyu));
       }
-      if (cmNonempty(tidy)) {
+      if (!tidy.IsEmpty()) {
         run_iwyu += " --tidy=";
         cmProp p = this->Makefile->GetDefinition(
           cmStrCat("CMAKE_", lang, "_CLANG_TIDY_DRIVER_MODE"));
         std::string driverMode;
-        if (cmNonempty(p)) {
-          driverMode = *p;
+        if (!p.IsEmpty()) {
+          driverMode = p;
         } else {
           driverMode = lang == "C" ? "gcc" : "g++";
         }
         run_iwyu += this->GetLocalGenerator()->EscapeForShell(
-          cmStrCat(*tidy, ";--extra-arg-before=--driver-mode=", driverMode));
+          cmStrCat(tidy, ";--extra-arg-before=--driver-mode=", driverMode));
       }
-      if (cmNonempty(cpplint)) {
+      if (!cpplint.IsEmpty()) {
         run_iwyu += cmStrCat(
-          " --cpplint=", this->GetLocalGenerator()->EscapeForShell(*cpplint));
+          " --cpplint=", this->GetLocalGenerator()->EscapeForShell(cpplint));
       }
-      if (cmNonempty(cppcheck)) {
-        run_iwyu +=
-          cmStrCat(" --cppcheck=",
-                   this->GetLocalGenerator()->EscapeForShell(*cppcheck));
+      if (!cppcheck.IsEmpty()) {
+        run_iwyu += cmStrCat(
+          " --cppcheck=", this->GetLocalGenerator()->EscapeForShell(cppcheck));
       }
-      if (cmNonempty(tidy) || cmNonempty(cpplint) || cmNonempty(cppcheck)) {
+      if (!tidy.IsEmpty() || !cpplint.IsEmpty() || !cppcheck.IsEmpty()) {
         run_iwyu += " --source=$in";
       }
       run_iwyu += " -- ";
@@ -995,7 +994,7 @@ void cmNinjaTargetGenerator::WriteObjectBuildStatements(
       auto objectFileName = this->GetGlobalGenerator()->ExpandCFGIntDir(
         this->ConvertToNinjaPath(sf->GetFullPath()), config);
       if (!cmSystemTools::StringEndsWith(objectFileName,
-                                         cmToCStr(pchExtension))) {
+                                         pchExtension.GetCStr())) {
         this->Configs[config].Objects.push_back(objectFileName);
       }
     }
@@ -1261,7 +1260,7 @@ void cmNinjaTargetGenerator::WriteObjectBuildStatement(
     cmProp pchExtension =
       this->GetMakefile()->GetDefinition("CMAKE_PCH_EXTENSION");
     if (!cmSystemTools::StringEndsWith(objectFileName,
-                                       cmToCStr(pchExtension))) {
+                                       pchExtension.GetCStr())) {
       // Add this object to the list of object files.
       this->Configs[config].Objects.push_back(objectFileName);
     }

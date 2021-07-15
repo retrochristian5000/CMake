@@ -39,10 +39,10 @@ std::vector<std::string> const& cmCommonTargetGenerator::GetConfigNames() const
   return this->ConfigNames;
 }
 
-const char* cmCommonTargetGenerator::GetFeature(const std::string& feature,
-                                                const std::string& config)
+cmProp cmCommonTargetGenerator::GetFeature(const std::string& feature,
+                                           const std::string& config)
 {
-  return this->GeneratorTarget->GetFeature(feature, config)->c_str();
+  return this->GeneratorTarget->GetFeature(feature, config);
 }
 
 void cmCommonTargetGenerator::AddModuleDefinitionFlag(
@@ -65,7 +65,7 @@ void cmCommonTargetGenerator::AddModuleDefinitionFlag(
   // Append the flag and value.  Use ConvertToLinkReference to help
   // vs6's "cl -link" pass it to the linker.
   std::string flag =
-    cmStrCat(*defFileFlag,
+    cmStrCat(defFileFlag,
              this->LocalCommonGenerator->ConvertToOutputFormat(
                linkLineComputer->ConvertToLinkReference(mdi->DefFile),
                cmOutputConverter::SHELL));
@@ -256,7 +256,7 @@ std::string cmCommonTargetGenerator::GetAIXExports(std::string const&)
   if (this->GeneratorTarget->Target->IsAIX()) {
     if (cmProp exportAll =
           this->GeneratorTarget->GetProperty("AIX_EXPORT_ALL_SYMBOLS")) {
-      if (cmIsOff(*exportAll)) {
+      if (exportAll.IsOff()) {
         aixExports = "-n";
       }
     }
@@ -299,9 +299,9 @@ std::string cmCommonTargetGenerator::GetLinkerLauncher(
   std::string lang = this->GeneratorTarget->GetLinkerLanguage(config);
   cmProp launcherProp =
     this->GeneratorTarget->GetProperty(lang + "_LINKER_LAUNCHER");
-  if (cmNonempty(launcherProp)) {
+  if (!launcherProp.IsEmpty()) {
     // Convert ;-delimited list to single string
-    std::vector<std::string> args = cmExpandedList(*launcherProp, true);
+    std::vector<std::string> args = cmExpandedList(launcherProp, true);
     if (!args.empty()) {
       args[0] = this->LocalCommonGenerator->ConvertToOutputFormat(
         args[0], cmOutputConverter::SHELL);

@@ -94,7 +94,7 @@ bool cmGetDirectoryPropertyCommand(std::vector<std::string> const& args,
         break;
     }
   }
-  prop = cmToCStr(dir->GetProperty(*i));
+  prop = dir->GetProperty(*i).GetCStr();
   StoreResult(status.GetMakefile(), variable, prop);
   return true;
 }

@@ -141,9 +141,9 @@ bool cmGlobalGhsMultiGenerator::SetGeneratorPlatform(std::string const& p,
   }
 
   /* check if OS location has been updated by platform scripts */
-  std::string platform = mf->GetSafeDefinition("GHS_TARGET_PLATFORM");
-  std::string osdir = mf->GetSafeDefinition("GHS_OS_DIR");
-  if (cmIsOff(osdir) && platform.find("integrity") != std::string::npos) {
+  cmProp platform = mf->GetDefinition("GHS_TARGET_PLATFORM");
+  cmProp osdir = mf->GetDefinition("GHS_OS_DIR");
+  if (osdir.IsOff() && platform->find("integrity") != std::string::npos) {
     if (!this->CMakeInstance->GetIsInTryCompile()) {
       /* required OS location is not found */
       std::string m = cmStrCat(
@@ -151,28 +151,27 @@ bool cmGlobalGhsMultiGenerator::SetGeneratorPlatform(std::string const& p,
         mf->GetSafeDefinition("GHS_OS_ROOT"), '"');
       cmSystemTools::Message(m);
     }
-    osdir = "GHS_OS_DIR-NOT-SPECIFIED";
+    this->OsDir = "GHS_OS_DIR-NOT-SPECIFIED";
   } else if (!this->CMakeInstance->GetIsInTryCompile() &&
-             cmIsOff(this->OsDir) && !cmIsOff(osdir)) {
+             cmProp::IsOff(this->OsDir) && !osdir.IsOff()) {
     /* OS location was updated by auto-selection */
     std::string m = cmStrCat(
-      "Green Hills MULTI: GHS_OS_DIR not specified; found \"", osdir, '"');
+      "Green Hills MULTI: GHS_OS_DIR not specified; found \"", *osdir, '"');
     cmSystemTools::Message(m);
+    this->OsDir = osdir;
   }
-  this->OsDir = osdir;
 
   // Determine GHS_BSP_NAME
-  std::string bspName = mf->GetSafeDefinition("GHS_BSP_NAME");
+  cmProp bspName = mf->GetDefinition("GHS_BSP_NAME");
 
-  if (cmIsOff(bspName) && platform.find("integrity") != std::string::npos) {
-    bspName = "sim" + arch;
+  if (bspName.IsOff() && platform->find("integrity") != std::string::npos) {
+    std::string bsp = "sim" + arch;
     /* write back the calculate name for next time */
-    mf->AddCacheDefinition("GHS_BSP_NAME", bspName,
-                           "Name of GHS target platform.",
+    mf->AddCacheDefinition("GHS_BSP_NAME", bsp, "Name of GHS target platform.",
                            cmStateEnums::STRING, true);
     std::string m = cmStrCat(
-      "Green Hills MULTI: GHS_BSP_NAME not specified; defaulting to \"",
-      bspName, '"');
+      "Green Hills MULTI: GHS_BSP_NAME not specified; defaulting to \"", bsp,
+      '"');
     cmSystemTools::Message(m);
   }
 
@@ -186,8 +185,7 @@ void cmGlobalGhsMultiGenerator::EnableLanguage(
 
   mf->AddDefinition("GHSMULTI", "1"); // identifier for user CMake files
 
-  const char* tgtPlatform =
-    cmToCStrSafe(mf->GetDefinition("GHS_TARGET_PLATFORM"));
+  const char* tgtPlatform = mf->GetDefinition("GHS_TARGET_PLATFORM")->c_str();
   if (!tgtPlatform) {
     cmSystemTools::Message("Green Hills MULTI: GHS_TARGET_PLATFORM not "
                            "specified; defaulting to \"integrity\"");
@@ -218,8 +216,8 @@ void cmGlobalGhsMultiGenerator::GetToolset(cmMakefile* mf, std::string& tsd,
 {
   cmProp ghsRoot = mf->GetDefinition("GHS_TOOLSET_ROOT");
 
-  if (cmNonempty(ghsRoot)) {
-    tsd = *ghsRoot;
+  if (!ghsRoot.IsEmpty()) {
+    tsd = ghsRoot;
   } else {
     tsd = DEFAULT_TOOLSET_ROOT;
   }
@@ -336,18 +334,18 @@ void cmGlobalGhsMultiGenerator::WriteTopLevelProject(std::ostream& fout,
   // Specify BSP option if supplied by user
   cmProp bspName =
     this->GetCMakeInstance()->GetCacheDefinition("GHS_BSP_NAME");
-  if (!cmIsOff(bspName)) {
-    fout << "    -bsp " << *bspName << '\n';
+  if (!bspName.IsOff()) {
+    fout << "    -bsp " << bspName << '\n';
   }
 
   // Specify OS DIR if supplied by user
   // -- not all platforms require this entry in the project file
-  if (!cmIsOff(this->OsDir)) {
+  if (!cmProp::IsOff(this->OsDir)) {
     cmProp osDirOption =
       this->GetCMakeInstance()->GetCacheDefinition("GHS_OS_DIR_OPTION");
     std::replace(this->OsDir.begin(), this->OsDir.end(), '\\', '/');
     fout << "    ";
-    if (cmIsOff(osDirOption)) {
+    if (osDirOption.IsOff()) {
       fout << "";
     } else {
       fout << *osDirOption;
@@ -634,7 +632,7 @@ void cmGlobalGhsMultiGenerator::WriteHighLevelDirectives(
   std::string tgt;
   cmProp t =
     this->GetCMakeInstance()->GetCacheDefinition("GHS_PRIMARY_TARGET");
-  if (cmNonempty(t)) {
+  if (!t.IsEmpty()) {
     tgt = *t;
     this->GetCMakeInstance()->MarkCliAsUsed("GHS_PRIMARY_TARGET");
   } else {
@@ -642,7 +640,7 @@ void cmGlobalGhsMultiGenerator::WriteHighLevelDirectives(
       this->GetCMakeInstance()->GetCacheDefinition("CMAKE_GENERATOR_PLATFORM");
     cmProp p =
       this->GetCMakeInstance()->GetCacheDefinition("GHS_TARGET_PLATFORM");
-    tgt = cmStrCat((a ? *a : ""), '_', (p ? *p : ""), ".tgt");
+    tgt = cmStrCat(a, '_', p, ".tgt");
   }
 
   /* clang-format off */
@@ -653,11 +651,11 @@ void cmGlobalGhsMultiGenerator::WriteHighLevelDirectives(
        << "/CMakeFiles/custom_target.bod" << '\n';
   /* clang-format on */
 
-  cmProp const customization =
+  cmProp customization =
     this->GetCMakeInstance()->GetCacheDefinition("GHS_CUSTOMIZATION");
-  if (cmNonempty(customization)) {
+  if (!customization.IsEmpty()) {
     fout << "customization="
-         << cmGlobalGhsMultiGenerator::TrimQuotes(*customization) << '\n';
+         << cmGlobalGhsMultiGenerator::TrimQuotes(customization) << '\n';
     this->GetCMakeInstance()->MarkCliAsUsed("GHS_CUSTOMIZATION");
   }
 }

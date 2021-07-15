@@ -34,7 +34,7 @@ bool cmUtilitySourceCommand(std::vector<std::string> const& args,
 
   bool haveCacheValue = false;
   if (status.GetMakefile().IsOn("CMAKE_CROSSCOMPILING")) {
-    haveCacheValue = (cacheValue != nullptr);
+    haveCacheValue = static_cast<bool>(cacheValue);
     if (!haveCacheValue) {
       std::string msg = cmStrCat(
         "UTILITY_SOURCE is used in cross compiling mode for ", cacheEntry,

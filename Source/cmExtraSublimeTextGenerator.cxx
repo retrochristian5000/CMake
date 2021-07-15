@@ -451,7 +451,7 @@ bool cmExtraSublimeTextGenerator::Open(const std::string& bindir,
   if (!sublExecutable) {
     return false;
   }
-  if (cmIsNOTFOUND(*sublExecutable)) {
+  if (sublExecutable.IsNOTFOUND()) {
     return false;
   }
 

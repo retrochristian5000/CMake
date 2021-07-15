@@ -405,7 +405,7 @@ public:
   }
   const char* GetIncludeRegularExpression() const
   {
-    return cmToCStr(this->GetProperty("INCLUDE_REGULAR_EXPRESSION"));
+    return this->GetProperty("INCLUDE_REGULAR_EXPRESSION").GetCStr();
   }
 
   /**

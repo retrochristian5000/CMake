@@ -20,6 +20,7 @@
 #include "cmCPackLog.h"
 #include "cmCryptoHash.h"
 #include "cmGeneratedFileStream.h"
+#include "cmProperty.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
 
@@ -505,7 +506,7 @@ cmCPackDebGenerator::~cmCPackDebGenerator() = default;
 int cmCPackDebGenerator::InitializeInternal()
 {
   this->SetOptionIfNotSet("CPACK_PACKAGING_INSTALL_PREFIX", "/usr");
-  if (cmIsOff(this->GetOption("CPACK_SET_DESTDIR"))) {
+  if (cmProp::IsOff(this->GetOption("CPACK_SET_DESTDIR"))) {
     this->SetOption("CPACK_SET_DESTDIR", "I_ON");
   }
   return this->Superclass::InitializeInternal();
@@ -716,57 +717,57 @@ bool cmCPackDebGenerator::createDeb()
 
   const char* debian_pkg_source =
     this->GetOption("GEN_CPACK_DEBIAN_PACKAGE_SOURCE");
-  if (cmNonempty(debian_pkg_source)) {
+  if (!cmProp::IsEmpty(debian_pkg_source)) {
     controlValues["Source"] = debian_pkg_source;
   }
   const char* debian_pkg_dep =
     this->GetOption("GEN_CPACK_DEBIAN_PACKAGE_DEPENDS");
-  if (cmNonempty(debian_pkg_dep)) {
+  if (!cmProp::IsEmpty(debian_pkg_dep)) {
     controlValues["Depends"] = debian_pkg_dep;
   }
   const char* debian_pkg_rec =
     this->GetOption("GEN_CPACK_DEBIAN_PACKAGE_RECOMMENDS");
-  if (cmNonempty(debian_pkg_rec)) {
+  if (!cmProp::IsEmpty(debian_pkg_rec)) {
     controlValues["Recommends"] = debian_pkg_rec;
   }
   const char* debian_pkg_sug =
     this->GetOption("GEN_CPACK_DEBIAN_PACKAGE_SUGGESTS");
-  if (cmNonempty(debian_pkg_sug)) {
+  if (!cmProp::IsEmpty(debian_pkg_sug)) {
     controlValues["Suggests"] = debian_pkg_sug;
   }
   const char* debian_pkg_url =
     this->GetOption("GEN_CPACK_DEBIAN_PACKAGE_HOMEPAGE");
-  if (cmNonempty(debian_pkg_url)) {
+  if (!cmProp::IsEmpty(debian_pkg_url)) {
     controlValues["Homepage"] = debian_pkg_url;
   }
   const char* debian_pkg_predep =
     this->GetOption("GEN_CPACK_DEBIAN_PACKAGE_PREDEPENDS");
-  if (cmNonempty(debian_pkg_predep)) {
+  if (!cmProp::IsEmpty(debian_pkg_predep)) {
     controlValues["Pre-Depends"] = debian_pkg_predep;
   }
   const char* debian_pkg_enhances =
     this->GetOption("GEN_CPACK_DEBIAN_PACKAGE_ENHANCES");
-  if (cmNonempty(debian_pkg_enhances)) {
+  if (!cmProp::IsEmpty(debian_pkg_enhances)) {
     controlValues["Enhances"] = debian_pkg_enhances;
   }
   const char* debian_pkg_breaks =
     this->GetOption("GEN_CPACK_DEBIAN_PACKAGE_BREAKS");
-  if (cmNonempty(debian_pkg_breaks)) {
+  if (!cmProp::IsEmpty(debian_pkg_breaks)) {
     controlValues["Breaks"] = debian_pkg_breaks;
   }
   const char* debian_pkg_conflicts =
     this->GetOption("GEN_CPACK_DEBIAN_PACKAGE_CONFLICTS");
-  if (cmNonempty(debian_pkg_conflicts)) {
+  if (!cmProp::IsEmpty(debian_pkg_conflicts)) {
     controlValues["Conflicts"] = debian_pkg_conflicts;
   }
   const char* debian_pkg_provides =
     this->GetOption("GEN_CPACK_DEBIAN_PACKAGE_PROVIDES");
-  if (cmNonempty(debian_pkg_provides)) {
+  if (!cmProp::IsEmpty(debian_pkg_provides)) {
     controlValues["Provides"] = debian_pkg_provides;
   }
   const char* debian_pkg_replaces =
     this->GetOption("GEN_CPACK_DEBIAN_PACKAGE_REPLACES");
-  if (cmNonempty(debian_pkg_replaces)) {
+  if (!cmProp::IsEmpty(debian_pkg_replaces)) {
     controlValues["Replaces"] = debian_pkg_replaces;
   }
 
@@ -776,7 +777,7 @@ bool cmCPackDebGenerator::createDeb()
   const char* debian_pkg_shlibs =
     this->GetOption("GEN_CPACK_DEBIAN_PACKAGE_SHLIBS");
   const bool gen_shibs = this->IsOn("CPACK_DEBIAN_PACKAGE_GENERATE_SHLIBS") &&
-    cmNonempty(debian_pkg_shlibs);
+    !cmProp::IsEmpty(debian_pkg_shlibs);
   if (gen_shibs) {
     cmGeneratedFileStream out;
     out.Open(shlibsfilename, false, true);
@@ -850,11 +851,11 @@ bool cmCPackDebGenerator::createDbgsymDDeb()
 
   const char* debian_pkg_source =
     this->GetOption("GEN_CPACK_DEBIAN_PACKAGE_SOURCE");
-  if (cmNonempty(debian_pkg_source)) {
+  if (!cmProp::IsEmpty(debian_pkg_source)) {
     controlValues["Source"] = debian_pkg_source;
   }
   const char* debian_build_ids = this->GetOption("GEN_BUILD_IDS");
-  if (cmNonempty(debian_build_ids)) {
+  if (!cmProp::IsEmpty(debian_build_ids)) {
     controlValues["Build-Ids"] = debian_build_ids;
   }
 
