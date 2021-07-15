@@ -6,6 +6,7 @@
 
 #include "cmsys/FStream.hxx"
 
+#include "cmProperty.h"
 #include "cmQtAutoGen.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
@@ -21,7 +22,7 @@ cmQtAutoGenerator::Logger::Logger()
         this->SetVerbosity(static_cast<unsigned int>(iVerbose));
       } else {
         // Non numeric verbosity
-        this->SetVerbose(cmIsOn(verbose));
+        this->SetVerbose(cmProp::IsOn(verbose));
       }
     }
   }
@@ -29,7 +30,7 @@ cmQtAutoGenerator::Logger::Logger()
     std::string colorEnv;
     cmSystemTools::GetEnv("COLOR", colorEnv);
     if (!colorEnv.empty()) {
-      this->SetColorOutput(cmIsOn(colorEnv));
+      this->SetColorOutput(cmProp::IsOn(colorEnv));
     } else {
       this->SetColorOutput(true);
     }

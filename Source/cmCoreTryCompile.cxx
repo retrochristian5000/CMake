@@ -247,10 +247,10 @@ int cmCoreTryCompile::TryCompileCode(std::vector<std::string> const& argv,
 
   cmStateEnums::TargetType targetType = cmStateEnums::EXECUTABLE;
   cmProp tt = this->Makefile->GetDefinition("CMAKE_TRY_COMPILE_TARGET_TYPE");
-  if (!isTryRun && cmNonempty(tt)) {
-    if (*tt == cmState::GetTargetTypeName(cmStateEnums::EXECUTABLE)) {
+  if (!isTryRun && !tt.IsEmpty()) {
+    if (tt == cmState::GetTargetTypeName(cmStateEnums::EXECUTABLE)) {
       targetType = cmStateEnums::EXECUTABLE;
-    } else if (*tt ==
+    } else if (tt ==
                cmState::GetTargetTypeName(cmStateEnums::STATIC_LIBRARY)) {
       targetType = cmStateEnums::STATIC_LIBRARY;
     } else {
@@ -552,7 +552,7 @@ int cmCoreTryCompile::TryCompileCode(std::vector<std::string> const& argv,
     if (cmProp msvcRuntimeLibraryDefault =
           this->Makefile->GetDefinition(kCMAKE_MSVC_RUNTIME_LIBRARY_DEFAULT)) {
       fprintf(fout, "cmake_policy(SET CMP0091 %s)\n",
-              !msvcRuntimeLibraryDefault->empty() ? "NEW" : "OLD");
+              !msvcRuntimeLibraryDefault.IsEmpty() ? "NEW" : "OLD");
     }
 
     /* Set CUDA architectures policy to match outer project.  */
@@ -606,7 +606,7 @@ int cmCoreTryCompile::TryCompileCode(std::vector<std::string> const& argv,
       std::string langFlags = "CMAKE_" + li + "_FLAGS";
       cmProp flags = this->Makefile->GetDefinition(langFlags);
       fprintf(fout, "set(CMAKE_%s_FLAGS %s)\n", li.c_str(),
-              cmOutputConverter::EscapeForCMake(cmToCStrSafe(flags)).c_str());
+              cmOutputConverter::EscapeForCMake(flags).c_str());
       fprintf(fout,
               "set(CMAKE_%s_FLAGS \"${CMAKE_%s_FLAGS}"
               " ${COMPILE_DEFINITIONS}\")\n",
@@ -644,9 +644,8 @@ int cmCoreTryCompile::TryCompileCode(std::vector<std::string> const& argv,
           std::string const langFlagsCfg =
             cmStrCat("CMAKE_", li, "_FLAGS_", cfg);
           cmProp flagsCfg = this->Makefile->GetDefinition(langFlagsCfg);
-          fprintf(
-            fout, "set(%s %s)\n", langFlagsCfg.c_str(),
-            cmOutputConverter::EscapeForCMake(cmToCStrSafe(flagsCfg)).c_str());
+          fprintf(fout, "set(%s %s)\n", langFlagsCfg.c_str(),
+                  cmOutputConverter::EscapeForCMake(flagsCfg).c_str());
         }
       } break;
     }
@@ -679,8 +678,7 @@ int cmCoreTryCompile::TryCompileCode(std::vector<std::string> const& argv,
           cmProp exeLinkFlags =
             this->Makefile->GetDefinition("CMAKE_EXE_LINKER_FLAGS");
           fprintf(fout, "set(CMAKE_EXE_LINKER_FLAGS %s)\n",
-                  cmOutputConverter::EscapeForCMake(cmToCStrSafe(exeLinkFlags))
-                    .c_str());
+                  cmOutputConverter::EscapeForCMake(exeLinkFlags).c_str());
         }
         break;
     }
@@ -1099,15 +1097,15 @@ void cmCoreTryCompile::FindOutputFile(const std::string& targetName,
   cmProp config =
     this->Makefile->GetDefinition("CMAKE_TRY_COMPILE_CONFIGURATION");
   // if a config was specified try that first
-  if (cmNonempty(config)) {
-    std::string tmp = cmStrCat('/', *config);
+  if (!config.IsEmpty()) {
+    std::string tmp = cmStrCat('/', config);
     searchDirs.push_back(std::move(tmp));
   }
   searchDirs.emplace_back("/Debug");
 #if defined(__APPLE__)
   std::string app = "/" + targetName + ".app";
-  if (cmNonempty(config)) {
-    std::string tmp = cmStrCat('/', *config, app);
+  if (!config.IsEmpty()) {
+    std::string tmp = cmStrCat('/', config, app);
     searchDirs.push_back(std::move(tmp));
   }
   std::string tmp = "/Debug" + app;

@@ -337,16 +337,15 @@ bool cmQtAutoGenInitializer::InitCustomTargets()
 
   // Verbosity
   {
-    std::string def =
-      this->Makefile->GetSafeDefinition("CMAKE_AUTOGEN_VERBOSE");
-    if (!def.empty()) {
+    cmProp def = this->Makefile->GetDefinition("CMAKE_AUTOGEN_VERBOSE");
+    if (!def.IsEmpty()) {
       unsigned long iVerb = 0;
       if (cmStrToULong(def, &iVerb)) {
         // Numeric verbosity
         this->Verbosity = static_cast<unsigned int>(iVerb);
       } else {
         // Non numeric verbosity
-        if (cmIsOn(def)) {
+        if (def.IsOn()) {
           this->Verbosity = 1;
         }
       }
@@ -501,7 +500,7 @@ bool cmQtAutoGenInitializer::InitCustomTargets()
 
     if (this->Moc.Enabled) {
       // Path prefix
-      if (cmIsOn(this->GenTarget->GetProperty("AUTOMOC_PATH_PREFIX"))) {
+      if (this->GenTarget->GetProperty("AUTOMOC_PATH_PREFIX").IsOn()) {
         this->Moc.PathPrefix = true;
       }
 
@@ -1789,8 +1788,8 @@ void cmQtAutoGenInitializer::AddToSourceGroup(std::string const& fileName,
       };
       for (std::string const& prop : props) {
         cmProp propName = this->Makefile->GetState()->GetGlobalProperty(prop);
-        if (cmNonempty(propName)) {
-          groupName = *propName;
+        if (!propName.IsEmpty()) {
+          groupName = propName;
           property = prop;
           break;
         }

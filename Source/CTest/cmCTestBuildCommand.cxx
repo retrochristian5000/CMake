@@ -41,7 +41,7 @@ cmCTestGenericHandler* cmCTestBuildCommand::InitializeHandler()
 
   cmProp ctestBuildCommand =
     this->Makefile->GetDefinition("CTEST_BUILD_COMMAND");
-  if (cmNonempty(ctestBuildCommand)) {
+  if (!ctestBuildCommand.IsEmpty()) {
     this->CTest->SetCTestConfiguration("MakeCommand", *ctestBuildCommand,
                                        this->Quiet);
   } else {
@@ -55,19 +55,19 @@ cmCTestGenericHandler* cmCTestBuildCommand::InitializeHandler()
     //
     cmProp ctestBuildConfiguration =
       this->Makefile->GetDefinition("CTEST_BUILD_CONFIGURATION");
-    std::string cmakeBuildConfiguration = cmNonempty(this->Configuration)
-      ? this->Configuration
-      : cmNonempty(ctestBuildConfiguration) ? *ctestBuildConfiguration
-                                            : this->CTest->GetConfigType();
+    std::string cmakeBuildConfiguration = this->Configuration.empty()
+      ? ctestBuildConfiguration.IsEmpty() ? this->CTest->GetConfigType()
+                                          : *ctestBuildConfiguration
+      : this->Configuration;
 
-    const std::string& cmakeBuildAdditionalFlags = cmNonempty(this->Flags)
-      ? this->Flags
-      : this->Makefile->GetSafeDefinition("CTEST_BUILD_FLAGS");
-    const std::string& cmakeBuildTarget = cmNonempty(this->Target)
-      ? this->Target
-      : this->Makefile->GetSafeDefinition("CTEST_BUILD_TARGET");
+    const std::string& cmakeBuildAdditionalFlags = this->Flags.empty()
+      ? this->Makefile->GetSafeDefinition("CTEST_BUILD_FLAGS")
+      : this->Flags;
+    const std::string& cmakeBuildTarget = this->Target.empty()
+      ? this->Makefile->GetSafeDefinition("CTEST_BUILD_TARGET")
+      : this->Target;
 
-    if (cmNonempty(cmakeGeneratorName)) {
+    if (!cmakeGeneratorName.IsEmpty()) {
       if (cmakeBuildConfiguration.empty()) {
         cmakeBuildConfiguration = "Release";
       }

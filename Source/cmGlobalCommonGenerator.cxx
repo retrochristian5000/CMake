@@ -52,7 +52,8 @@ cmGlobalCommonGenerator::ComputeDirectoryTargets() const
         for (const std::string& config : configs) {
           cmGeneratorExpressionInterpreter genexInterpreter(lg.get(), config,
                                                             gt.get());
-          if (cmIsOn(genexInterpreter.Evaluate(*exclude, EXCLUDE_FROM_ALL))) {
+          if (cmProp::IsOn(
+                genexInterpreter.Evaluate(exclude, EXCLUDE_FROM_ALL))) {
             // This target has been explicitly excluded.
             t.ExcludedFromAllInConfigs.push_back(config);
           }

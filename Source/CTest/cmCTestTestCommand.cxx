@@ -122,7 +122,7 @@ cmCTestGenericHandler* cmCTestTestCommand::InitializeHandler()
                  "Invalid value for 'TEST_LOAD' : " << this->TestLoad
                                                     << std::endl);
     }
-  } else if (cmNonempty(ctestTestLoad)) {
+  } else if (!ctestTestLoad.IsEmpty()) {
     if (!cmStrToULong(*ctestTestLoad, &testLoad)) {
       testLoad = 0;
       cmCTestLog(this->CTest, WARNING,

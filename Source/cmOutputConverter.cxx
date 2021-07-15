@@ -8,6 +8,7 @@
 #include <set>
 #include <vector>
 
+#include "cmProperty.h"
 #include "cmState.h"
 #include "cmStateDirectory.h"
 #include "cmStringAlgorithms.h"
@@ -271,8 +272,8 @@ cmOutputConverter::FortranPreprocess cmOutputConverter::GetFortranPreprocess(
     return FortranPreprocess::Unset;
   }
 
-  return cmIsOn(value) ? FortranPreprocess::Needed
-                       : FortranPreprocess::NotNeeded;
+  return cmProp::IsOn(value) ? FortranPreprocess::Needed
+                             : FortranPreprocess::NotNeeded;
 }
 
 void cmOutputConverter::SetLinkScriptShell(bool linkScriptShell)

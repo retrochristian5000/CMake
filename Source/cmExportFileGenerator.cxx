@@ -139,7 +139,7 @@ void cmExportFileGenerator::PopulateInterfaceProperty(
 {
   cmProp input = target->GetProperty(propName);
   if (input) {
-    if (input->empty()) {
+    if (input.IsEmpty()) {
       // Set to empty
       properties[outputName].clear();
       return;
@@ -347,7 +347,7 @@ void cmExportFileGenerator::PopulateSourcesInterface(
     return;
   }
 
-  if (input->empty()) {
+  if (input.IsEmpty()) {
     properties[propName].clear();
     return;
   }
@@ -400,7 +400,7 @@ void cmExportFileGenerator::PopulateIncludeDirectoriesInterface(
   if (!input && exportDirs.empty()) {
     return;
   }
-  if ((input && input->empty()) && exportDirs.empty()) {
+  if (input.IsEmpty() && exportDirs.empty()) {
     // Set to empty
     properties[propName].clear();
     return;
@@ -437,7 +437,7 @@ void cmExportFileGenerator::PopulateLinkDependsInterface(
     return;
   }
 
-  if (input->empty()) {
+  if (input.IsEmpty()) {
     properties[propName].clear();
     return;
   }
@@ -468,7 +468,7 @@ void cmExportFileGenerator::PopulateLinkDirectoriesInterface(
     return;
   }
 
-  if (input->empty()) {
+  if (input.IsEmpty()) {
     properties[propName].clear();
     return;
   }
@@ -788,13 +788,13 @@ void cmExportFileGenerator::SetImportLinkInterface(
     return;
   }
 
-  if (propContent->empty()) {
+  if (propContent.IsEmpty()) {
     properties["IMPORTED_LINK_INTERFACE_LIBRARIES" + suffix].clear();
     return;
   }
 
   std::string prepro =
-    cmGeneratorExpression::Preprocess(*propContent, preprocessRule);
+    cmGeneratorExpression::Preprocess(propContent, preprocessRule);
   if (!prepro.empty()) {
     this->ResolveTargetsInGeneratorExpressions(prepro, target, missingTargets,
                                                ReplaceFreeTargets);

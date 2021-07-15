@@ -936,7 +936,7 @@ cmDuration cmCTestScriptHandler::GetRemainingTimeAllowed()
     return cmCTest::MaxDuration();
   }
 
-  auto timelimit = cmDuration(atof(timelimitS->c_str()));
+  auto timelimit = cmDuration(atof(timelimitS.GetCStr()));
 
   auto duration = std::chrono::duration_cast<cmDuration>(
     std::chrono::steady_clock::now() - this->ScriptStartTime);

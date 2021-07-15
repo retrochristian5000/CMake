@@ -180,7 +180,7 @@ static const struct BoolNode : public cmGeneratorExpressionNode
     const GeneratorExpressionContent* /*content*/,
     cmGeneratorExpressionDAGChecker* /*dagChecker*/) const override
   {
-    return !cmIsOff(parameters.front()) ? "1" : "0";
+    return !cmProp::IsOff(parameters.front()) ? "1" : "0";
   }
 } boolNode;
 
@@ -1798,7 +1798,7 @@ static const struct CompileFeaturesNode : public cmGeneratorExpressionNode
         if (!cm::contains(langAvailable, it)) {
           return "0";
         }
-        if (standardDefault && standardDefault->empty()) {
+        if (standardDefault.IsEmpty()) {
           // This compiler has no notion of language standard levels.
           // All features known for the language are always available.
           continue;

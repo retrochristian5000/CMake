@@ -471,7 +471,7 @@ void cmComputeTargetDepends::ComputeIntermediateGraph()
     } else {
       if (cmProp optimizeDependencies =
             gt->GetProperty("OPTIMIZE_DEPENDENCIES")) {
-        if (cmIsOn(optimizeDependencies)) {
+        if (optimizeDependencies.IsOn()) {
           this->OptimizeLinkDependencies(gt, intermediateEdges, initialEdges);
         } else {
           intermediateEdges = initialEdges;

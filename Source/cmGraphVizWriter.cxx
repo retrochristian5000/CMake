@@ -246,7 +246,7 @@ void cmGraphVizWriter::ReadSettings(
   do {                                                                        \
     cmProp value = mf.GetDefinition(cmakeDefinition);                         \
     if (value) {                                                              \
-      (var) = cmIsOn(*value);                                                 \
+      (var) = value.IsOn();                                                   \
     }                                                                         \
   } while (false)
 

@@ -230,7 +230,7 @@ bool HandleAndValidateSourceFilePropertyGENERATED(
   const bool policyNEW = policyStatus != cmPolicies::OLD && !policyWARN;
 
   if (policyWARN) {
-    if (!cmIsOn(propertyValue) && !cmIsOff(propertyValue)) {
+    if (!cmProp::IsOn(propertyValue) && !cmProp::IsOff(propertyValue)) {
       mf.IssueMessage(
         MessageType::AUTHOR_WARNING,
         cmStrCat(cmPolicies::GetPolicyWarning(cmPolicies::CMP0118),
@@ -241,7 +241,7 @@ bool HandleAndValidateSourceFilePropertyGENERATED(
                  "\"0\" will be returned instead.\n"
                  "This will be an error under policy CMP0118.\n"));
     }
-    if (cmIsOff(propertyValue)) {
+    if (cmProp::IsOff(propertyValue)) {
       mf.IssueMessage(
         MessageType::AUTHOR_WARNING,
         cmStrCat(cmPolicies::GetPolicyWarning(cmPolicies::CMP0118),
@@ -256,7 +256,7 @@ bool HandleAndValidateSourceFilePropertyGENERATED(
                  "under policy CMP0118!\n"));
     }
   } else if (policyNEW) {
-    if (!cmIsOn(propertyValue) && !cmIsOff(propertyValue)) {
+    if (!cmProp::IsOn(propertyValue) && !cmProp::IsOff(propertyValue)) {
       mf.IssueMessage(
         MessageType::AUTHOR_ERROR,
         cmStrCat(
@@ -265,7 +265,7 @@ bool HandleAndValidateSourceFilePropertyGENERATED(
           propertyValue, "\nReplace it with a boolean value!\n"));
       return true;
     }
-    if (cmIsOff(propertyValue)) {
+    if (cmProp::IsOff(propertyValue)) {
       mf.IssueMessage(
         MessageType::AUTHOR_ERROR,
         "Unsetting the 'GENERATED' property is not allowed under CMP0118!\n");
@@ -695,7 +695,8 @@ bool HandleCacheMode(cmExecutionStatus& status,
                      bool appendMode, bool remove)
 {
   if (propertyName == "ADVANCED") {
-    if (!remove && !cmIsOn(propertyValue) && !cmIsOff(propertyValue)) {
+    if (!remove && !cmProp::IsOn(propertyValue) &&
+        !cmProp::IsOff(propertyValue)) {
       status.SetError(cmStrCat("given non-boolean value \"", propertyValue,
                                R"(" for CACHE property "ADVANCED".  )"));
       return false;

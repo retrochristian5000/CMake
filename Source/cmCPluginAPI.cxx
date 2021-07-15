@@ -12,6 +12,7 @@
 #include "cmExecutionStatus.h"
 #include "cmGlobalGenerator.h"
 #include "cmMakefile.h"
+#include "cmProperty.h"
 #include "cmSourceFile.h"
 #include "cmState.h"
 #include "cmVersion.h"
@@ -140,7 +141,7 @@ const char* CCONV cmGetCurrentOutputDirectory(void* arg)
 const char* CCONV cmGetDefinition(void* arg, const char* def)
 {
   cmMakefile* mf = static_cast<cmMakefile*>(arg);
-  return cmToCStr(mf->GetDefinition(def));
+  return mf->GetDefinition(def).GetCStr();
 }
 
 int CCONV cmIsOn(void* arg, const char* name)
@@ -592,12 +593,12 @@ const char* CCONV cmSourceFileGetProperty(void* arg, const char* prop)
 {
   cmCPluginAPISourceFile* sf = static_cast<cmCPluginAPISourceFile*>(arg);
   if (cmSourceFile* rsf = sf->RealSourceFile) {
-    return cmToCStr(rsf->GetProperty(prop));
+    return rsf->GetProperty(prop).GetCStr();
   }
   if (!strcmp(prop, "LOCATION")) {
     return sf->FullPath.c_str();
   }
-  return cmToCStr(sf->Properties.GetPropertyValue(prop));
+  return sf->Properties.GetPropertyValue(prop).GetCStr();
 }
 
 int CCONV cmSourceFileGetPropertyAsBool(void* arg, const char* prop)
@@ -606,7 +607,7 @@ int CCONV cmSourceFileGetPropertyAsBool(void* arg, const char* prop)
   if (cmSourceFile* rsf = sf->RealSourceFile) {
     return rsf->GetPropertyAsBool(prop) ? 1 : 0;
   }
-  return cmIsOn(cmSourceFileGetProperty(arg, prop)) ? 1 : 0;
+  return cmProp::IsOn(cmSourceFileGetProperty(arg, prop)) ? 1 : 0;
 }
 
 void CCONV cmSourceFileSetProperty(void* arg, const char* prop,
@@ -734,7 +735,7 @@ void CCONV cmSourceFileSetName2(void* arg, const char* name, const char* dir,
   }
   sf->SourceName = name;
   std::string fname = sf->SourceName;
-  if (cmNonempty(ext)) {
+  if (!cmProp::IsEmpty(ext)) {
     fname += ".";
     fname += ext;
   }

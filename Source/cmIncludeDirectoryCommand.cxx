@@ -11,6 +11,7 @@
 #include "cmExecutionStatus.h"
 #include "cmGeneratorExpression.h"
 #include "cmMakefile.h"
+#include "cmProperty.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
 
@@ -122,7 +123,7 @@ static void NormalizeInclude(cmMakefile& mf, std::string& inc)
     return;
   }
 
-  if (!cmIsOff(inc)) {
+  if (!cmProp::IsOff(inc)) {
     cmSystemTools::ConvertToUnixSlashes(inc);
     if (!cmSystemTools::FileIsFullPath(inc) &&
         !cmGeneratorExpression::StartsWithGeneratorExpression(inc)) {

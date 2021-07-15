@@ -309,7 +309,7 @@ bool cmProjectCommand(std::vector<std::string> const& args,
     std::string vw;
     for (std::string const& i : vv) {
       cmProp v = mf.GetDefinition(i);
-      if (cmNonempty(v)) {
+      if (!v.IsEmpty()) {
         if (cmp0048 == cmPolicies::WARN) {
           if (!injectedProjectCommand) {
             vw += "\n  ";

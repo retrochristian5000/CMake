@@ -284,7 +284,7 @@ cmComputeLinkInformation::cmComputeLinkInformation(
     std::string loader_flag_var =
       cmStrCat("CMAKE_SHARED_MODULE_LOADER_", this->LinkLanguage, "_FLAG");
     this->LoaderFlag =
-      cmToCStr(this->Makefile->GetDefinition(loader_flag_var));
+      this->Makefile->GetDefinition(loader_flag_var).GetCStr();
   }
 
   // Get options needed to link libraries.
@@ -529,7 +529,7 @@ bool cmComputeLinkInformation::Compute()
   // Restore the target link type so the correct system runtime
   // libraries are found.
   cmProp lss = this->Target->GetProperty("LINK_SEARCH_END_STATIC");
-  if (cmIsOn(lss)) {
+  if (lss.IsOn()) {
     this->SetCurrentLinkType(LinkStatic);
   } else {
     this->SetCurrentLinkType(this->StartLinkType);
@@ -871,15 +871,15 @@ void cmComputeLinkInformation::ComputeLinkTypeInfo()
 
   // We can support link type switching only if all needed flags are
   // known.
-  if (cmNonempty(static_link_type_flag) && cmNonempty(shared_link_type_flag)) {
+  if (!static_link_type_flag.IsEmpty() && !shared_link_type_flag.IsEmpty()) {
     this->LinkTypeEnabled = true;
-    this->StaticLinkTypeFlag = *static_link_type_flag;
-    this->SharedLinkTypeFlag = *shared_link_type_flag;
+    this->StaticLinkTypeFlag = static_link_type_flag;
+    this->SharedLinkTypeFlag = shared_link_type_flag;
   }
 
   // Lookup the starting link type from the target (linked statically?).
   cmProp lss = this->Target->GetProperty("LINK_SEARCH_START_STATIC");
-  this->StartLinkType = cmIsOn(lss) ? LinkStatic : LinkShared;
+  this->StartLinkType = lss.IsOn() ? LinkStatic : LinkShared;
   this->CurrentLinkType = this->StartLinkType;
 }
 
@@ -1805,8 +1805,8 @@ void cmComputeLinkInformation::GetRPath(std::vector<std::string>& runtimeDirs,
         std::string d = ri;
         if (!rootPath.empty() && cmHasPrefix(d, rootPath)) {
           d.erase(0, rootPath.size());
-        } else if (cmNonempty(stagePath) && cmHasPrefix(d, *stagePath)) {
-          d.erase(0, (*stagePath).size());
+        } else if (!stagePath.IsEmpty() && cmHasPrefix(d, stagePath)) {
+          d.erase(0, stagePath->size());
           d = cmStrCat(installPrefix, '/', d);
           cmSystemTools::ConvertToUnixSlashes(d);
         } else if (use_relative_build_rpath) {
@@ -1836,8 +1836,8 @@ void cmComputeLinkInformation::GetRPath(std::vector<std::string>& runtimeDirs,
           std::string d = ri;
           if (!rootPath.empty() && cmHasPrefix(d, rootPath)) {
             d.erase(0, rootPath.size());
-          } else if (cmNonempty(stagePath) && cmHasPrefix(d, *stagePath)) {
-            d.erase(0, (*stagePath).size());
+          } else if (!stagePath.IsEmpty() && cmHasPrefix(d, stagePath)) {
+            d.erase(0, stagePath->size());
             d = cmStrCat(installPrefix, '/', d);
             cmSystemTools::ConvertToUnixSlashes(d);
           }

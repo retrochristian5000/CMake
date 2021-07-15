@@ -871,7 +871,7 @@ std::string cmLocalNinjaGenerator::MakeCustomLauncher(
 {
   cmProp property_value = this->Makefile->GetProperty("RULE_LAUNCH_CUSTOM");
 
-  if (!cmNonempty(property_value)) {
+  if (property_value.IsEmpty()) {
     return std::string();
   }
 

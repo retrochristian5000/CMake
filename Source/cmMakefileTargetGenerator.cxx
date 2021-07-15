@@ -58,7 +58,7 @@ cmMakefileTargetGenerator::cmMakefileTargetGenerator(cmGeneratorTarget* target)
   cmake* cm = this->GlobalGenerator->GetCMakeInstance();
   this->NoRuleMessages = false;
   if (cmProp ruleStatus = cm->GetState()->GetGlobalProperty("RULE_MESSAGES")) {
-    this->NoRuleMessages = cmIsOff(*ruleStatus);
+    this->NoRuleMessages = ruleStatus.IsOff();
   }
   switch (this->GeneratorTarget->GetPolicyStatusCMP0113()) {
     case cmPolicies::WARN:
@@ -227,7 +227,7 @@ void cmMakefileTargetGenerator::WriteTargetBuildRules()
   }
 
   // add custom commands to the clean rules?
-  bool clean = cmIsOff(this->Makefile->GetProperty("CLEAN_NO_CUSTOM"));
+  bool clean = this->Makefile->GetProperty("CLEAN_NO_CUSTOM").IsOff();
 
   // First generate the object rule files.  Save a list of all object
   // files for this target.
@@ -294,7 +294,7 @@ void cmMakefileTargetGenerator::WriteTargetBuildRules()
   for (cmSourceFile const* sf : externalObjects) {
     auto const& objectFileName = sf->GetFullPath();
     if (!cmSystemTools::StringEndsWith(objectFileName,
-                                       cmToCStr(pchExtension))) {
+                                       pchExtension.GetCStr())) {
       this->ExternalObjects.push_back(objectFileName);
     }
   }
@@ -521,8 +521,9 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
   // Use compiler to generate dependencies, if supported.
   bool compilerGenerateDeps =
     this->GlobalGenerator->SupportsCompilerDependencies() &&
-    cmIsOn(this->Makefile->GetDefinition(
-      cmStrCat("CMAKE_", lang, "_DEPENDS_USE_COMPILER")));
+    this->Makefile
+      ->GetDefinition(cmStrCat("CMAKE_", lang, "_DEPENDS_USE_COMPILER"))
+      .IsOn();
   auto scanner = compilerGenerateDeps ? cmDependencyScannerKind::Compiler
                                       : cmDependencyScannerKind::CMake;
 
@@ -949,8 +950,8 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
          lang == "OBJCXX")) {
       std::string const clauncher_prop = lang + "_COMPILER_LAUNCHER";
       cmProp clauncher = this->GeneratorTarget->GetProperty(clauncher_prop);
-      if (cmNonempty(clauncher)) {
-        compilerLauncher = *clauncher;
+      if (!clauncher.IsEmpty()) {
+        compilerLauncher = clauncher;
       }
     }
 
@@ -970,8 +971,8 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
         std::string const cppcheck_prop = lang + "_CPPCHECK";
         cppcheck = this->GeneratorTarget->GetProperty(cppcheck_prop);
       }
-      if (cmNonempty(iwyu) || cmNonempty(tidy) || cmNonempty(cpplint) ||
-          cmNonempty(cppcheck)) {
+      if (!iwyu.IsEmpty() || !tidy.IsEmpty() || !cpplint.IsEmpty() ||
+          !cppcheck.IsEmpty()) {
         std::string run_iwyu = "$(CMAKE_COMMAND) -E __run_co_compile";
         if (!compilerLauncher.empty()) {
           // In __run_co_compile case the launcher command is supplied
@@ -980,33 +981,32 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
           run_iwyu += this->LocalGenerator->EscapeForShell(compilerLauncher);
           compilerLauncher.clear();
         }
-        if (cmNonempty(iwyu)) {
+        if (!iwyu.IsEmpty()) {
           run_iwyu += " --iwyu=";
-          run_iwyu += this->LocalGenerator->EscapeForShell(*iwyu);
+          run_iwyu += this->LocalGenerator->EscapeForShell(iwyu);
         }
-        if (cmNonempty(tidy)) {
+        if (!tidy.IsEmpty()) {
           run_iwyu += " --tidy=";
           cmProp p = this->Makefile->GetDefinition("CMAKE_" + lang +
                                                    "_CLANG_TIDY_DRIVER_MODE");
           std::string driverMode;
-          if (cmNonempty(p)) {
+          if (!p.IsEmpty()) {
             driverMode = *p;
           } else {
             driverMode = lang == "C" ? "gcc" : "g++";
           }
           run_iwyu += this->LocalGenerator->EscapeForShell(
-            cmStrCat(*tidy, ";--extra-arg-before=--driver-mode=", driverMode));
+            cmStrCat(tidy, ";--extra-arg-before=--driver-mode=", driverMode));
         }
-        if (cmNonempty(cpplint)) {
+        if (!cpplint.IsEmpty()) {
           run_iwyu += " --cpplint=";
           run_iwyu += this->LocalGenerator->EscapeForShell(*cpplint);
         }
-        if (cmNonempty(cppcheck)) {
+        if (!cppcheck.IsEmpty()) {
           run_iwyu += " --cppcheck=";
-          run_iwyu += this->LocalGenerator->EscapeForShell(*cppcheck);
+          run_iwyu += this->LocalGenerator->EscapeForShell(cppcheck);
         }
-        if (cmNonempty(tidy) || (cmNonempty(cpplint)) ||
-            (cmNonempty(cppcheck))) {
+        if (!tidy.IsEmpty() || !cpplint.IsEmpty() || !cppcheck.IsEmpty()) {
           run_iwyu += " --source=";
           run_iwyu += sourceFile;
         }
@@ -1033,8 +1033,8 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
     {
       cmProp val = this->LocalGenerator->GetRuleLauncher(
         this->GeneratorTarget, "RULE_LAUNCH_COMPILE");
-      if (cmNonempty(val)) {
-        launcher = cmStrCat(*val, ' ');
+      if (!val.IsEmpty()) {
+        launcher = cmStrCat(val, ' ');
       }
     }
 
@@ -1480,17 +1480,17 @@ void cmMakefileTargetGenerator::WriteObjectDependRules(
 void cmMakefileTargetGenerator::WriteDeviceLinkRule(
   std::vector<std::string>& commands, const std::string& output)
 {
-  std::string architecturesStr =
-    this->GeneratorTarget->GetSafeProperty("CUDA_ARCHITECTURES");
+  cmProp propArchitectures =
+    this->GeneratorTarget->GetProperty("CUDA_ARCHITECTURES");
 
-  if (cmIsOff(architecturesStr)) {
+  if (propArchitectures.IsOff()) {
     this->Makefile->IssueMessage(MessageType::FATAL_ERROR,
                                  "CUDA_SEPARABLE_COMPILATION on Clang "
                                  "requires CUDA_ARCHITECTURES to be set.");
     return;
   }
 
-  std::vector<std::string> architectures = cmExpandedList(architecturesStr);
+  std::vector<std::string> architectures = cmExpandedList(propArchitectures);
   std::string const& relPath =
     this->LocalGenerator->GetHomeRelativeOutputPath();
 
@@ -1714,7 +1714,7 @@ void cmMakefileTargetGenerator::WriteObjectsVariable(
   cmProp pchExtension = this->Makefile->GetDefinition("CMAKE_PCH_EXTENSION");
 
   for (std::string const& obj : this->Objects) {
-    if (cmSystemTools::StringEndsWith(obj, cmToCStr(pchExtension))) {
+    if (cmSystemTools::StringEndsWith(obj, pchExtension.GetCStr())) {
       continue;
     }
     *this->BuildFileStream << " " << lineContinue;
@@ -1804,7 +1804,7 @@ void cmMakefileTargetGenerator::WriteObjectsStrings(
     objStrings, this->LocalGenerator,
     this->LocalGenerator->GetStateSnapshot().GetDirectory(), limit);
   for (std::string const& obj : this->Objects) {
-    if (cmSystemTools::StringEndsWith(obj, cmToCStr(pchExtension))) {
+    if (cmSystemTools::StringEndsWith(obj, pchExtension.GetCStr())) {
       continue;
     }
     helper.Feed(obj);
@@ -1983,8 +1983,8 @@ bool cmMakefileTargetGenerator::CheckUseResponseFileForObjects(
   std::string const responseVar =
     "CMAKE_" + l + "_USE_RESPONSE_FILE_FOR_OBJECTS";
   if (cmProp val = this->Makefile->GetDefinition(responseVar)) {
-    if (!val->empty()) {
-      return cmIsOn(val);
+    if (!val.IsEmpty()) {
+      return val.IsOn();
     }
   }
 
@@ -2022,8 +2022,8 @@ bool cmMakefileTargetGenerator::CheckUseResponseFileForLibraries(
   std::string const responseVar =
     "CMAKE_" + l + "_USE_RESPONSE_FILE_FOR_LIBRARIES";
   if (cmProp val = this->Makefile->GetDefinition(responseVar)) {
-    if (!val->empty()) {
-      return cmIsOn(val);
+    if (!val.IsEmpty()) {
+      return val.IsOn();
     }
   }
 
@@ -2221,10 +2221,10 @@ void cmMakefileTargetGenerator::GenDefFile(
     this->LocalGenerator->MaybeRelativeToCurBinDir(objlist_file),
     cmOutputConverter::SHELL);
   cmProp nm_executable = this->Makefile->GetDefinition("CMAKE_NM");
-  if (cmNonempty(nm_executable)) {
+  if (!nm_executable.IsEmpty()) {
     cmd += " --nm=";
     cmd += this->LocalCommonGenerator->ConvertToOutputFormat(
-      *nm_executable, cmOutputConverter::SHELL);
+      nm_executable, cmOutputConverter::SHELL);
   }
   real_link_commands.insert(real_link_commands.begin(), cmd);
   // create a list of obj files for the -E __create_def to read

@@ -498,7 +498,7 @@ bool cmGlobalVisualStudioGenerator::FindMakeProgram(cmMakefile* mf)
   // Visual Studio generators know how to lookup their build tool
   // directly instead of needing a helper module to do it, so we
   // do not actually need to put CMAKE_MAKE_PROGRAM into the cache.
-  if (cmIsOff(mf->GetDefinition("CMAKE_MAKE_PROGRAM"))) {
+  if (mf->GetDefinition("CMAKE_MAKE_PROGRAM").IsOff()) {
     mf->AddDefinition("CMAKE_MAKE_PROGRAM", this->GetVSMakeProgram());
   }
   return true;
@@ -520,8 +520,8 @@ std::string cmGlobalVisualStudioGenerator::GetStartupProjectName(
   cmLocalGenerator const* root) const
 {
   cmProp n = root->GetMakefile()->GetProperty("VS_STARTUP_PROJECT");
-  if (cmNonempty(n)) {
-    std::string startup = *n;
+  if (!n.IsEmpty()) {
+    std::string startup = n;
     if (this->FindTarget(startup)) {
       return startup;
     } else {
@@ -821,8 +821,8 @@ bool cmGlobalVisualStudioGenerator::TargetIsFortranOnly(
   // a target with none of its own sources, e.g. when also using
   // object libraries.
   cmProp linkLang = gt->GetProperty("LINKER_LANGUAGE");
-  if (cmNonempty(linkLang)) {
-    languages.insert(*linkLang);
+  if (!linkLang.IsEmpty()) {
+    languages.insert(linkLang);
   }
 
   // Intel Fortran .vfproj files do support the resource compiler.

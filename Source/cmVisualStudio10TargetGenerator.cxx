@@ -490,10 +490,7 @@ void cmVisualStudio10TargetGenerator::Generate()
 
       e1.Element("Platform", this->Platform);
       cmProp projLabel = this->GeneratorTarget->GetProperty("PROJECT_LABEL");
-      if (!projLabel) {
-        projLabel = &this->Name;
-      }
-      e1.Element("ProjectName", *projLabel);
+      e1.Element("ProjectName", projLabel ? projLabel : this->Name);
       {
         cmProp targetFramework =
           this->GeneratorTarget->GetProperty("DOTNET_TARGET_FRAMEWORK");
@@ -511,16 +508,17 @@ void cmVisualStudio10TargetGenerator::Generate()
             p = this->GeneratorTarget->GetProperty(
               "DOTNET_TARGET_FRAMEWORK_VERSION");
           }
-          const char* targetFrameworkVersion = cmToCStr(p);
-          if (!targetFrameworkVersion && this->ProjectType == csproj &&
+          cm::string_view targetFrameworkVersion = p;
+          if (!p && this->ProjectType == csproj &&
               this->GlobalGenerator->TargetsWindowsCE() &&
               this->GlobalGenerator->GetVersion() ==
                 cmGlobalVisualStudioGenerator::VS12) {
             // VS12 .NETCF default to .NET framework 3.9
             targetFrameworkVersion = "v3.9";
           }
-          if (targetFrameworkVersion) {
-            e1.Element("TargetFrameworkVersion", targetFrameworkVersion);
+          if (!targetFrameworkVersion.empty()) {
+            e1.Element("TargetFrameworkVersion",
+                       std::string(targetFrameworkVersion));
           }
         }
         if (this->ProjectType == vcxproj &&
@@ -592,9 +590,9 @@ void cmVisualStudio10TargetGenerator::Generate()
             outputType = "Module";
             break;
           case cmStateEnums::EXECUTABLE: {
-            auto const win32 =
-              this->GeneratorTarget->GetSafeProperty("WIN32_EXECUTABLE");
-            if (win32.find("$<") != std::string::npos) {
+            cmProp win32 =
+              this->GeneratorTarget->GetProperty("WIN32_EXECUTABLE");
+            if (win32->find("$<") != std::string::npos) {
               this->Makefile->IssueMessage(
                 MessageType::FATAL_ERROR,
                 cmStrCat(
@@ -603,7 +601,7 @@ void cmVisualStudio10TargetGenerator::Generate()
                   "property. This is not supported on managed executables."));
               return;
             }
-            if (cmIsOn(win32)) {
+            if (win32.IsOn()) {
               outputType = "WinExe";
             } else {
               outputType = "Exe";
@@ -887,7 +885,7 @@ void cmVisualStudio10TargetGenerator::WriteDotNetReference(
     const char* privateReference = "True";
     if (cmProp value = this->GeneratorTarget->GetProperty(
           "VS_DOTNET_REFERENCES_COPY_LOCAL")) {
-      if (cmIsOff(*value)) {
+      if (value.IsOff()) {
         privateReference = "False";
       }
     }
@@ -1028,8 +1026,8 @@ void cmVisualStudio10TargetGenerator::WriteEmbeddedResourceGroup(Elem& e0)
               cm::string_view(p).substr(propNamePrefix.length());
             if (!tagName.empty()) {
               cmProp value = props.GetPropertyValue(p);
-              if (cmNonempty(value)) {
-                e2.Element(tagName, *value);
+              if (!value.IsEmpty()) {
+                e2.Element(tagName, value);
               }
             }
           }
@@ -1942,7 +1940,7 @@ void cmVisualStudio10TargetGenerator::WriteExtraSource(Elem& e1,
 
         if (!evaluated.empty()) {
           toolSettings[config]["EnableDebuggingInformation"] =
-            cmIsOn(evaluated) ? "true" : "false";
+            cmProp::IsOn(evaluated) ? "true" : "false";
         }
       }
     }
@@ -1956,7 +1954,7 @@ void cmVisualStudio10TargetGenerator::WriteExtraSource(Elem& e1,
 
         if (!evaluated.empty()) {
           toolSettings[config]["DisableOptimizations"] =
-            cmIsOn(evaluated) ? "true" : "false";
+            cmProp::IsOn(evaluated) ? "true" : "false";
         }
       }
     }
@@ -2013,7 +2011,7 @@ void cmVisualStudio10TargetGenerator::WriteExtraSource(Elem& e1,
   }
 
   cmProp toolOverride = sf->GetProperty("VS_TOOL_OVERRIDE");
-  if (cmNonempty(toolOverride)) {
+  if (!toolOverride.IsEmpty()) {
     tool = toolOverride->c_str();
   }
 
@@ -2022,12 +2020,12 @@ void cmVisualStudio10TargetGenerator::WriteExtraSource(Elem& e1,
   if (this->GlobalGenerator->TargetsWindowsPhone() ||
       this->GlobalGenerator->TargetsWindowsStore()) {
     cmProp content = sf->GetProperty("VS_DEPLOYMENT_CONTENT");
-    if (cmNonempty(content)) {
+    if (!content.IsEmpty()) {
       toolHasSettings = true;
       deployContent = *content;
 
       cmProp location = sf->GetProperty("VS_DEPLOYMENT_LOCATION");
-      if (cmNonempty(location)) {
+      if (!location.IsEmpty()) {
         deployLocation = *location;
       }
     }
@@ -2988,7 +2986,7 @@ bool cmVisualStudio10TargetGenerator::ComputeClOptions(
       }
     }
     if (const char* winRT = clOptions.GetFlag("CompileAsWinRT")) {
-      if (cmIsOn(winRT)) {
+      if (cmProp::IsOn(winRT)) {
         this->TargetCompileAsWinRT = true;
       }
     }
@@ -3618,9 +3616,9 @@ void cmVisualStudio10TargetGenerator::WriteManifestOptions(
     if (dpiAware) {
       if (*dpiAware == "PerMonitor") {
         e2.Element("EnableDpiAwareness", "PerMonitorHighDPIAware");
-      } else if (cmIsOn(*dpiAware)) {
+      } else if (dpiAware.IsOn()) {
         e2.Element("EnableDpiAwareness", "true");
-      } else if (cmIsOff(*dpiAware)) {
+      } else if (dpiAware.IsOff()) {
         e2.Element("EnableDpiAwareness", "false");
       } else {
         cmSystemTools::Error("Bad parameter for VS_DPI_AWARE: " + *dpiAware);
@@ -5041,8 +5039,8 @@ void cmVisualStudio10TargetGenerator::GetCSharpSourceProperties(
         std::string tagName = p.substr(propNamePrefix.length());
         if (!tagName.empty()) {
           cmProp val = props.GetPropertyValue(p);
-          if (cmNonempty(val)) {
-            tags[tagName] = *val;
+          if (!val.IsEmpty()) {
+            tags[tagName] = val;
           } else {
             tags.erase(tagName);
           }

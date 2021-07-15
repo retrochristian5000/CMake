@@ -201,8 +201,7 @@ bool cmStateSnapshot::HasDefinedPolicyCMP0011()
   return !this->Position->Policies->IsEmpty();
 }
 
-std::string const* cmStateSnapshot::GetDefinition(
-  std::string const& name) const
+cmProp cmStateSnapshot::GetDefinition(std::string const& name) const
 {
   assert(this->Position->Vars.IsValid());
   return cmDefinitions::Get(name, this->Position->Vars, this->Position->Root);
@@ -308,7 +307,7 @@ void cmStateSnapshot::SetDefaultDefinitions()
 #if defined(__CYGWIN__)
   std::string legacy;
   if (cmSystemTools::GetEnv("CMAKE_LEGACY_CYGWIN_WIN32", legacy) &&
-      cmIsOn(legacy)) {
+      cmProp::IsOn(legacy)) {
     this->SetDefinition("WIN32", "1");
     this->SetDefinition("CMAKE_HOST_WIN32", "1");
   }
@@ -396,7 +395,7 @@ void cmStateSnapshot::InitializeFromParent()
     parent->BuildSystemDirectory->Properties.GetPropertyValue(
       "INCLUDE_REGULAR_EXPRESSION");
   this->Position->BuildSystemDirectory->Properties.SetProperty(
-    "INCLUDE_REGULAR_EXPRESSION", cmToCStr(include_regex));
+    "INCLUDE_REGULAR_EXPRESSION", include_regex.GetCStr());
 }
 
 cmState* cmStateSnapshot::GetState() const

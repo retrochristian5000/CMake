@@ -168,7 +168,7 @@ cmProp cmConditionEvaluator::GetVariableOrString(
   cmProp def = this->GetDefinitionIfUnquoted(argument);
 
   if (!def) {
-    def = &argument.GetValue();
+    def = cmProp(argument.GetValue());
   }
 
   return def;
@@ -217,10 +217,10 @@ bool cmConditionEvaluator::GetBooleanValue(
   }
 
   // Check named constants.
-  if (cmIsOn(arg.GetValue())) {
+  if (cmProp::IsOn(arg.GetValue())) {
     return true;
   }
-  if (cmIsOff(arg.GetValue())) {
+  if (cmProp::IsOff(arg.GetValue())) {
     return false;
   }
 
@@ -236,7 +236,7 @@ bool cmConditionEvaluator::GetBooleanValue(
 
   // Check definition.
   cmProp def = this->GetDefinitionIfUnquoted(arg);
-  return !cmIsOff(def);
+  return !def.IsOff();
 }
 
 //=========================================================================
@@ -253,14 +253,14 @@ bool cmConditionEvaluator::GetBooleanValueOld(
       return true;
     }
     cmProp def = this->GetDefinitionIfUnquoted(arg);
-    return !cmIsOff(def);
+    return !def.IsOff();
   }
   // Old GetVariableOrNumber behavior.
   cmProp def = this->GetDefinitionIfUnquoted(arg);
   if (!def && atoi(arg.GetValue().c_str())) {
-    def = &arg.GetValue();
+    def = cmProp(arg.GetValue());
   }
-  return !cmIsOff(def);
+  return !def.IsOff();
 }
 
 //=========================================================================
@@ -499,8 +499,8 @@ bool cmConditionEvaluator::HandleLevel1(cmArgumentList& newArgs, std::string&,
                    cmHasLiteralPrefix(argP1->GetValue(), "CACHE{") &&
                    argP1->GetValue().operator[](argP1len - 1) == '}') {
           std::string cache = argP1->GetValue().substr(6, argP1len - 7);
-          bdef =
-            this->Makefile.GetState()->GetCacheEntryValue(cache) != nullptr;
+          bdef = static_cast<bool>(
+            this->Makefile.GetState()->GetCacheEntryValue(cache));
         } else {
           bdef = this->Makefile.IsDefinitionSet(argP1->GetValue());
         }
@@ -534,12 +534,12 @@ bool cmConditionEvaluator::HandleLevel2(cmArgumentList& newArgs,
           this->IsKeyword(keyMATCHES, *argP1)) {
         def = this->GetDefinitionIfUnquoted(*arg);
         if (!def) {
-          def = &arg->GetValue();
+          def = cmProp(arg->GetValue());
         } else if (cmHasLiteralPrefix(arg->GetValue(), "CMAKE_MATCH_")) {
           // The string to match is owned by our match result variables.
           // Move it to our own buffer before clearing them.
           def_buf = *def;
-          def = &def_buf;
+          def = cmProp(def_buf);
         }
         const std::string& rex = argP2->GetValue();
         this->Makefile.ClearMatches();

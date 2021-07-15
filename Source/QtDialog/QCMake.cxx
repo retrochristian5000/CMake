@@ -14,6 +14,7 @@
 #include "cmExternalMakefileProjectGenerator.h"
 #include "cmGlobalGenerator.h"
 #include "cmMessageMetadata.h"
+#include "cmProperty.h"
 #include "cmState.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
@@ -407,7 +408,7 @@ QCMakePropertyList QCMake::properties() const
     prop.Advanced = state->GetCacheEntryPropertyAsBool(key, "ADVANCED");
     if (t == cmStateEnums::BOOL) {
       prop.Type = QCMakeProperty::BOOL;
-      prop.Value = cmIsOn(*cachedValue);
+      prop.Value = cachedValue.IsOn();
     } else if (t == cmStateEnums::PATH) {
       prop.Type = QCMakeProperty::PATH;
     } else if (t == cmStateEnums::FILEPATH) {
@@ -442,7 +443,7 @@ QCMakePropertyList QCMake::properties() const
           switch (type) {
             case cmStateEnums::BOOL:
               prop.Type = QCMakeProperty::BOOL;
-              prop.Value = cmIsOn(v.second->Value);
+              prop.Value = cmProp::IsOn(v.second->Value);
               break;
             case cmStateEnums::PATH:
               prop.Type = QCMakeProperty::PATH;

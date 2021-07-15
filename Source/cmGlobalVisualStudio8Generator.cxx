@@ -289,14 +289,14 @@ bool cmGlobalVisualStudio8Generator::NeedsDeploy(
 
   if (cmProp prop = target.GetProperty("VS_SOLUTION_DEPLOY")) {
     // If set, it dictates behavior
-    return cmIsOn(
+    return cmProp::IsOn(
       cmGeneratorExpression::Evaluate(*prop, target.LocalGenerator, config));
   }
 
   // To be deprecated, disable deployment even if target supports it.
   if (cmProp prop = target.GetProperty("VS_NO_SOLUTION_DEPLOY")) {
-    if (cmIsOn(cmGeneratorExpression::Evaluate(*prop, target.LocalGenerator,
-                                               config))) {
+    if (cmProp::IsOn(cmGeneratorExpression::Evaluate(
+          prop, target.LocalGenerator, config))) {
       // If true, always disable deployment
       return false;
     }

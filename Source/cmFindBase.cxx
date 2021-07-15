@@ -304,16 +304,16 @@ bool cmFindBase::CheckForVariableDefined()
   if (cmProp value = this->Makefile->GetDefinition(this->VariableName)) {
     cmState* state = this->Makefile->GetState();
     cmProp cacheEntry = state->GetCacheEntryValue(this->VariableName);
-    bool found = !cmIsNOTFOUND(*value);
-    bool cached = cacheEntry != nullptr;
+    bool found = !value.IsNOTFOUND();
+    bool cached = static_cast<bool>(cacheEntry);
     auto cacheType = cached ? state->GetCacheEntryType(this->VariableName)
                             : cmStateEnums::UNINITIALIZED;
 
     if (cached && cacheType != cmStateEnums::UNINITIALIZED) {
       this->VariableType = cacheType;
-      if (const auto* hs =
+      if (const auto& hs =
             state->GetCacheEntryProperty(this->VariableName, "HELPSTRING")) {
-        this->VariableDocumentation = *hs;
+        this->VariableDocumentation = hs;
       }
     }
 
@@ -336,12 +336,12 @@ void cmFindBase::NormalizeFindResult()
   if (this->Makefile->GetPolicyStatus(cmPolicies::CMP0125) ==
       cmPolicies::NEW) {
     // ensure the path returned by find_* command is absolute
-    const auto* existingValue =
+    const auto& existingValue =
       this->Makefile->GetDefinition(this->VariableName);
     std::string value;
-    if (!existingValue->empty()) {
+    if (!existingValue.IsEmpty()) {
       value =
-        cmCMakePath(*existingValue, cmCMakePath::auto_format)
+        cmCMakePath(existingValue, cmCMakePath::auto_format)
           .Absolute(cmCMakePath(
             this->Makefile->GetCMakeInstance()->GetCMakeWorkingDirectory()))
           .Normal()

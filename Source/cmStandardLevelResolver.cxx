@@ -78,14 +78,14 @@ struct StanardLevelComputer
 
     cmProp defaultStd = makefile->GetDefinition(
       cmStrCat("CMAKE_", this->Language, "_STANDARD_DEFAULT"));
-    if (!cmNonempty(defaultStd)) {
+    if (defaultStd.IsEmpty()) {
       // this compiler has no notion of language standard levels
       return std::string{};
     }
 
     bool ext = true;
     if (cmProp extPropValue = target->GetLanguageExtensions(this->Language)) {
-      if (cmIsOff(*extPropValue)) {
+      if (extPropValue.IsOff()) {
         ext = false;
       }
     }
@@ -190,7 +190,7 @@ struct StanardLevelComputer
     if (!existingStandard) {
       cmProp defaultStandard = makefile->GetDefinition(
         cmStrCat("CMAKE_", this->Language, "_STANDARD_DEFAULT"));
-      if (cmNonempty(defaultStandard)) {
+      if (!defaultStandard.IsEmpty()) {
         existingStandard = defaultStandard;
       }
     }
@@ -491,7 +491,7 @@ const char* cmStandardLevelResolver::CompileFeaturesAvailable(
   cmProp featuresKnown =
     this->Makefile->GetDefinition("CMAKE_" + lang + "_COMPILE_FEATURES");
 
-  if (!cmNonempty(featuresKnown)) {
+  if (featuresKnown.IsEmpty()) {
     std::ostringstream e;
     if (error) {
       e << "no";
@@ -511,7 +511,7 @@ const char* cmStandardLevelResolver::CompileFeaturesAvailable(
     }
     return nullptr;
   }
-  return cmToCStr(featuresKnown);
+  return featuresKnown->c_str();
 }
 
 bool cmStandardLevelResolver::GetNewRequiredStandard(

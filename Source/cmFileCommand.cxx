@@ -686,10 +686,10 @@ bool HandleGlobImpl(std::vector<std::string> const& args, bool recurse,
     if (*i == "LIST_DIRECTORIES") {
       ++i; // skip LIST_DIRECTORIES
       if (i != args.end()) {
-        if (cmIsOn(*i)) {
+        if (cmProp::IsOn(*i)) {
           g.SetListDirs(true);
           g.SetRecurseListDirs(true);
-        } else if (cmIsOff(*i)) {
+        } else if (cmProp::IsOff(*i)) {
           g.SetListDirs(false);
           g.SetRecurseListDirs(false);
         } else {
@@ -1842,7 +1842,7 @@ bool HandleDownloadCommand(std::vector<std::string> const& args,
     } else if (*i == "TLS_VERIFY") {
       ++i;
       if (i != args.end()) {
-        tls_verify = cmIsOn(*i);
+        tls_verify = cmProp::IsOn(*i);
       } else {
         status.SetError("DOWNLOAD missing bool value for TLS_VERIFY.");
         return false;
@@ -1850,7 +1850,7 @@ bool HandleDownloadCommand(std::vector<std::string> const& args,
     } else if (*i == "TLS_CAINFO") {
       ++i;
       if (i != args.end()) {
-        cainfo = &(*i);
+        cainfo = cmProp(*i);
       } else {
         status.SetError("DOWNLOAD missing file value for TLS_CAINFO.");
         return false;
@@ -2017,7 +2017,7 @@ bool HandleDownloadCommand(std::vector<std::string> const& args,
 
   // check to see if a CAINFO file has been specified
   // command arg comes first
-  std::string const& cainfo_err = cmCurlSetCAInfo(curl, cmToCStr(cainfo));
+  std::string const& cainfo_err = cmCurlSetCAInfo(curl, cainfo->c_str());
   if (!cainfo_err.empty()) {
     status.SetError(cainfo_err);
     return false;
@@ -2228,7 +2228,7 @@ bool HandleUploadCommand(std::vector<std::string> const& args,
     } else if (*i == "TLS_VERIFY") {
       ++i;
       if (i != args.end()) {
-        tls_verify = cmIsOn(*i);
+        tls_verify = cmProp::IsOn(*i);
       } else {
         status.SetError("UPLOAD missing bool value for TLS_VERIFY.");
         return false;
@@ -2236,7 +2236,7 @@ bool HandleUploadCommand(std::vector<std::string> const& args,
     } else if (*i == "TLS_CAINFO") {
       ++i;
       if (i != args.end()) {
-        cainfo = &(*i);
+        cainfo = cmProp(*i);
       } else {
         status.SetError("UPLOAD missing file value for TLS_CAINFO.");
         return false;
@@ -2337,7 +2337,7 @@ bool HandleUploadCommand(std::vector<std::string> const& args,
 
   // check to see if a CAINFO file has been specified
   // command arg comes first
-  std::string const& cainfo_err = cmCurlSetCAInfo(curl, cmToCStr(cainfo));
+  std::string const& cainfo_err = cmCurlSetCAInfo(curl, cainfo->c_str());
   if (!cainfo_err.empty()) {
     status.SetError(cainfo_err);
     return false;

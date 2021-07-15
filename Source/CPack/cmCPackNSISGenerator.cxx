@@ -19,6 +19,7 @@
 #include "cmCPackLog.h"
 #include "cmDuration.h"
 #include "cmGeneratedFileStream.h"
+#include "cmProperty.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
 
@@ -332,7 +333,7 @@ int cmCPackNSISGenerator::PackageFiles()
 
     if (anyDownloadedComponents) {
       defines += "!define CPACK_USES_DOWNLOAD\n";
-      if (cmIsOn(this->GetOption("CPACK_ADD_REMOVE"))) {
+      if (cmProp::IsOn(this->GetOption("CPACK_ADD_REMOVE"))) {
         defines += "!define CPACK_NSIS_ADD_REMOVE\n";
       }
     }
@@ -379,7 +380,7 @@ int cmCPackNSISGenerator::PackageFiles()
 
 int cmCPackNSISGenerator::InitializeInternal()
 {
-  if (cmIsOn(this->GetOption("CPACK_INCLUDE_TOPLEVEL_DIRECTORY"))) {
+  if (cmProp::IsOn(this->GetOption("CPACK_INCLUDE_TOPLEVEL_DIRECTORY"))) {
     cmCPackLogger(
       cmCPackLog::LOG_WARNING,
       "NSIS Generator cannot work with CPACK_INCLUDE_TOPLEVEL_DIRECTORY set. "
@@ -724,7 +725,7 @@ std::string cmCPackNSISGenerator::CreateComponentDescription(
     const char* userUploadDirectory =
       this->GetOption("CPACK_UPLOAD_DIRECTORY");
     std::string uploadDirectory;
-    if (cmNonempty(userUploadDirectory)) {
+    if (!cmProp::IsEmpty(userUploadDirectory)) {
       uploadDirectory = userUploadDirectory;
     } else {
       uploadDirectory =
@@ -772,7 +773,8 @@ std::string cmCPackNSISGenerator::CreateComponentDescription(
     // size of the installed component.
     std::string zipListFileName = cmStrCat(
       this->GetOption("CPACK_TEMPORARY_DIRECTORY"), "/winZip.filelist");
-    bool needQuotesInFile = cmIsOn(this->GetOption("CPACK_ZIP_NEED_QUOTES"));
+    bool needQuotesInFile =
+      cmProp::IsOn(this->GetOption("CPACK_ZIP_NEED_QUOTES"));
     unsigned long totalSize = 0;
     { // the scope is needed for cmGeneratedFileStream
       cmGeneratedFileStream out(zipListFileName);

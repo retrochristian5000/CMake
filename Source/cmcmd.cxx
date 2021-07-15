@@ -12,6 +12,7 @@
 #include "cmGlobalGenerator.h"
 #include "cmLocalGenerator.h"
 #include "cmMakefile.h"
+#include "cmProperty.h"
 #include "cmQtAutoMocUic.h"
 #include "cmQtAutoRcc.h"
 #include "cmRange.h"
@@ -1234,7 +1235,7 @@ int cmcmd::ExecuteCMakeCommand(std::vector<std::string> const& args,
         depInfo = args[7];
         if (args.size() >= 9 && cmHasLiteralPrefix(args[8], "--color=")) {
           // Enable or disable color based on the switch value.
-          color = (args[8].size() == 8 || cmIsOn(args[8].substr(8)));
+          color = (args[8].size() == 8 || cmProp::IsOn(args[8].substr(8)));
         }
       } else {
         // Support older signature for existing makefiles:
@@ -1726,7 +1727,7 @@ int cmcmd::ExecuteEchoColor(std::vector<std::string> const& args)
       // Enable or disable color based on the switch value.
       std::string value = arg.substr(9);
       if (!value.empty()) {
-        enabled = cmIsOn(value);
+        enabled = cmProp::IsOn(value);
       }
     } else if (cmHasLiteralPrefix(arg, "--progress-dir=")) {
       progressDir = arg.substr(15);
@@ -1778,7 +1779,7 @@ int cmcmd::ExecuteLinkScript(std::vector<std::string> const& args)
   bool verbose = false;
   if (args.size() >= 4) {
     if (cmHasLiteralPrefix(args[3], "--verbose=")) {
-      if (!cmIsOff(args[3].substr(10))) {
+      if (!cmProp::IsOff(args[3].substr(10))) {
         verbose = true;
       }
     }
