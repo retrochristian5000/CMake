@@ -1,0 +1,5 @@
+^CMake Error at NoScope\.cmake:[0-9]+ \(target_headers\):
+  target_headers Header set "a" is not in HEADER_SETS or
+  INTERFACE_HEADER_SETS
+Call Stack \(most recent call first\):
+  CMakeLists\.txt:[0-9]+ \(include\)$
