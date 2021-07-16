@@ -12,7 +12,7 @@ def read_codemodel_json_data(filename):
 def check_objects(o, g):
     assert is_list(o)
     assert len(o) == 1
-    check_index_object(o[0], "codemodel", 2, 3, check_object_codemodel(g))
+    check_index_object(o[0], "codemodel", 2, 4, check_object_codemodel(g))
 
 def check_backtrace(t, b, backtrace):
     btg = t["backtraceGraph"]
@@ -187,6 +187,24 @@ def check_directory(c):
             if e.get("runtimeDependencySetType", None) is not None:
                 expected_keys.append("runtimeDependencySetType")
                 assert is_string(a["runtimeDependencySetType"], e["runtimeDependencySetType"])
+
+            if e.get("headerSetName", None) is not None:
+                expected_keys.append("headerSetName")
+                assert is_string(a["headerSetName"], e["headerSetName"])
+
+            if e.get("headerSetDirectory", None) is not None:
+                expected_keys.append("headerSetDirectory")
+                assert matches(a["headerSetDirectory"], e["headerSetDirectory"])
+
+            if e.get("headerSetTarget", None) is not None:
+                expected_keys.append("headerSetTarget")
+                et = e["headerSetTarget"]
+                at = a["headerSetTarget"]
+                assert is_dict(at)
+                assert sorted(at.keys()) == ["id", "index"]
+                assert matches(at["id"], et["id"])
+                assert is_int(at["index"])
+                assert c["targets"][at["index"]]["name"] == et["index"]
 
             if e["backtrace"] is not None:
                 expected_keys.append("backtrace")
@@ -628,6 +646,7 @@ def gen_check_directories(c, g):
         read_codemodel_json_data("directories/dir.json"),
         read_codemodel_json_data("directories/dir_dir.json"),
         read_codemodel_json_data("directories/external.json"),
+        read_codemodel_json_data("directories/target_headers.json"),
     ]
 
     if matches(g["name"], "^Visual Studio "):
@@ -729,6 +748,9 @@ def gen_check_targets(c, g, inSource):
         read_codemodel_json_data("targets/all_build_external.json"),
         read_codemodel_json_data("targets/zero_check_external.json"),
         read_codemodel_json_data("targets/generated_exe.json"),
+
+        read_codemodel_json_data("targets/c_headers_1.json"),
+        read_codemodel_json_data("targets/c_headers_2.json"),
     ]
 
     if cxx_compiler_id in ['Clang', 'AppleClang', 'GNU', 'Intel', 'IntelLLVM', 'MSVC', 'Embarcadero'] and g["name"] != "Xcode":
