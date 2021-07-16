@@ -1,0 +1,12 @@
+^CMake Error at ChangeDir\.cmake:[0-9]+ \(target_headers\):
+  target_headers Directory:
+
+    [^
+]*/Tests/RunCMake/target_headers/dir2
+
+  for anonymous header set does not match old directory:
+
+    [^
+]*/Tests/RunCMake/target_headers/dir1
+Call Stack \(most recent call first\):
+  CMakeLists\.txt:[0-9]+ \(include\)$

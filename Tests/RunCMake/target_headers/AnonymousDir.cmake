@@ -1,0 +1,16 @@
+enable_language(C)
+
+function(assert_prop_eq tgt prop value)
+  unset(actual_value)
+  get_property(actual_value TARGET ${tgt} PROPERTY ${prop})
+  if(NOT actual_value STREQUAL value)
+    message(SEND_ERROR "Expected value of ${prop}:\n  ${value}\nActual value:\n  ${actual_value}")
+  endif()
+endfunction()
+
+add_library(lib1 STATIC empty.c)
+target_headers(lib1 PUBLIC DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/dir")
+assert_prop_eq(lib1 HEADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/dir")
+assert_prop_eq(lib1 HEADER_SET "")
+assert_prop_eq(lib1 INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/dir>")
+assert_prop_eq(lib1 INTERFACE_INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/dir>")

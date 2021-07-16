@@ -1,0 +1,22 @@
+enable_language(C)
+
+function(assert_prop_undef tgt prop)
+  unset(actual_value)
+  get_property(actual_value TARGET ${tgt} PROPERTY ${prop})
+  if(DEFINED actual_value)
+    message(SEND_ERROR "${prop} should be undefined, actual value:\n  ${actual_value}")
+  endif()
+endfunction()
+
+function(assert_prop_eq tgt prop value)
+  unset(actual_value)
+  get_property(actual_value TARGET ${tgt} PROPERTY ${prop})
+  if(NOT actual_value STREQUAL value)
+    message(SEND_ERROR "Expected value of ${prop}:\n  ${value}\nActual value:\n  ${actual_value}")
+  endif()
+endfunction()
+
+add_library(lib1 STATIC empty.c)
+target_headers(lib1 INTERFACE HEADERS h1.h)
+assert_prop_undef(lib1 INCLUDE_DIRECTORIES)
+assert_prop_eq(lib1 INTERFACE_INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")
