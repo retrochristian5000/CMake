@@ -1,0 +1,4 @@
+CMake Error at FileSetWrongBaseDirs\.cmake:[0-9]+ \(target_sources\):
+  File must be in one of the file set's base directories
+Call Stack \(most recent call first\):
+  CMakeLists\.txt:[0-9]+ \(include\)
