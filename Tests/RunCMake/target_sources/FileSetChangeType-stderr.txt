@@ -1,0 +1,5 @@
+^CMake Error at FileSetChangeType\.cmake:[0-9]+ \(target_sources\):
+  target_sources File set "a" was created with type "HEADERS", but type
+  "RESOURCES" was specified
+Call Stack \(most recent call first\):
+  CMakeLists\.txt:[0-9]+ \(include\)$
