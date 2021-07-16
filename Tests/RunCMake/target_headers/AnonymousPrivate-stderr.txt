@@ -1,0 +1,4 @@
+^CMake Error at AnonymousPrivate\.cmake:[0-9]+ \(target_headers\):
+  target_headers Anonymous header set cannot be PRIVATE
+Call Stack \(most recent call first\):
+  CMakeLists\.txt:[0-9]+ \(include\)$

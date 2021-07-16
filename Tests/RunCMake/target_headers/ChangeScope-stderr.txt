@@ -1,0 +1,5 @@
+^CMake Error at ChangeScope\.cmake:[0-9]+ \(target_headers\):
+  target_headers Scope PUBLIC for header set "a" does not match old scope
+  INTERFACE
+Call Stack \(most recent call first\):
+  CMakeLists\.txt:[0-9]+ \(include\)$
