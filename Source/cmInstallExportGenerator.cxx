@@ -11,8 +11,10 @@
 
 #ifndef CMAKE_BOOTSTRAP
 #  include "cmExportInstallAndroidMKGenerator.h"
+#  include "cmExportInstallPkgConfigGenerator.h"
 #endif
-#include "cmExportInstallFileGenerator.h"
+#include "cmCMakePath.h"
+#include "cmExportInstallCMakeConfigFileGenerator.h"
 #include "cmExportSet.h"
 #include "cmInstallType.h"
 #include "cmLocalGenerator.h"
@@ -23,7 +25,7 @@ cmInstallExportGenerator::cmInstallExportGenerator(
   cmExportSet* exportSet, std::string const& destination,
   std::string file_permissions, std::vector<std::string> const& configurations,
   std::string const& component, MessageLevel message, bool exclude_from_all,
-  std::string filename, std::string name_space, bool exportOld, bool android,
+  std::string filename, std::string name_space, bool exportOld, Mode mode,
   cmListFileBacktrace backtrace)
   : cmInstallGenerator(destination, configurations, component, message,
                        exclude_from_all, false, std::move(backtrace))
@@ -34,12 +36,19 @@ cmInstallExportGenerator::cmInstallExportGenerator(
   , ExportOld(exportOld)
   , LocalGenerator(nullptr)
 {
-  if (android) {
+  switch (mode) {
 #ifndef CMAKE_BOOTSTRAP
-    this->EFGen = cm::make_unique<cmExportInstallAndroidMKGenerator>(this);
+    case Mode::Android:
+      this->EFGen = cm::make_unique<cmExportInstallAndroidMKGenerator>(this);
+      break;
+    case Mode::PkgConfig:
+      this->EFGen = cm::make_unique<cmExportInstallPkgConfigGenerator>(this);
+      break;
 #endif
-  } else {
-    this->EFGen = cm::make_unique<cmExportInstallFileGenerator>(this);
+    case Mode::CMakeConfig:
+      this->EFGen =
+        cm::make_unique<cmExportInstallCMakeConfigFileGenerator>(this);
+      break;
   }
   exportSet->AddInstallation(this);
 }
@@ -165,13 +174,23 @@ void cmInstallExportGenerator::GenerateScriptConfigs(std::ostream& os,
   // Create the main install rules first.
   this->cmInstallGenerator::GenerateScriptConfigs(os, indent);
 
+  cmCMakePath expandedTempDir;
+  if (this->EFGen->GeneratedFilesRequireVariableExpansion()) {
+    expandedTempDir = this->MakeTempDirForExpandedFiles();
+  }
   // Now create a configuration-specific install rule for the import
   // file of each configuration.
   std::vector<std::string> files;
   for (auto const& i : this->EFGen->GetConfigImportFiles()) {
-    files.push_back(i.second);
     std::string config_test = this->CreateConfigTest(i.first);
     os << indent << "if(" << config_test << ")\n";
+    if (this->EFGen->GeneratedFilesRequireVariableExpansion()) {
+      files = this->AddExpandVariablesRule(os, expandedTempDir.String(),
+                                           { i.second }, false, false,
+                                           indent.Next());
+    } else {
+      files.push_back(i.second);
+    }
     this->AddInstallRule(os, this->Destination, cmInstallType_FILES, files,
                          false, this->FilePermissions.c_str(), nullptr,
                          nullptr, nullptr, indent.Next());
@@ -209,7 +228,13 @@ void cmInstallExportGenerator::GenerateScriptActions(std::ostream& os,
 
   // Install the main export file.
   std::vector<std::string> files;
-  files.push_back(this->MainImportFile);
+  if (this->EFGen->GeneratedFilesRequireVariableExpansion()) {
+    files = this->AddExpandVariablesRule(
+      os, this->MakeTempDirForExpandedFiles().String(),
+      { this->MainImportFile }, false, false, indent);
+  } else {
+    files.push_back(this->MainImportFile);
+  }
   this->AddInstallRule(os, this->Destination, cmInstallType_FILES, files,
                        false, this->FilePermissions.c_str(), nullptr, nullptr,
                        nullptr, indent);
@@ -218,4 +243,15 @@ void cmInstallExportGenerator::GenerateScriptActions(std::ostream& os,
 std::string cmInstallExportGenerator::GetDestinationFile() const
 {
   return this->Destination + '/' + this->FileName;
+}
+
+cmCMakePath cmInstallExportGenerator::MakeTempDirForExpandedFiles()
+{
+  cmCMakePath result = cmCMakePath(this->TempDir);
+  result.Append("expanded");
+  const cmsys::Status st = cmSystemTools::MakeDirectory(result.String());
+  if (!st) {
+    // TODO where to report the error?
+  }
+  return result;
 }

@@ -5,6 +5,7 @@
 #include <sstream>
 #include <utility>
 
+#include "cmCMakePath.h"
 #include "cmMakefile.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
@@ -155,6 +156,36 @@ void cmInstallGenerator::AddInstallRule(
     os << literal_args;
   }
   os << ")\n";
+}
+
+std::vector<std::string> cmInstallGenerator::AddExpandVariablesRule(
+  std::ostream& os, const std::string& dest,
+  const std::vector<std::string>& files, bool at_only, bool escape_quotes,
+  cmScriptGenerator::Indent indent, const char* permissions_file)
+{
+  std::vector<std::string> result;
+  result.reserve(files.size());
+  cmCMakePath destDir{ dest };
+
+  std::ostringstream configureOptionsBuilder;
+  if (at_only) {
+    configureOptionsBuilder << " @ONLY"_s;
+  }
+  if (escape_quotes) {
+    configureOptionsBuilder << " ESCAPE_QUOTES"_s;
+  }
+  if (permissions_file) {
+    configureOptionsBuilder << " FILE_PERMISSIONS "_s << permissions_file;
+  }
+  const std::string configureOptions = configureOptionsBuilder.str();
+
+  for (cmCMakePath f : files) {
+    const cmCMakePath destFile = dest / f.GetFileName();
+    result.push_back(destFile.String());
+    os << indent << "configure_file(\""_s << f.String() << "\" \""_s
+       << destFile.String() << '"' << configureOptions << ')' << std::endl;
+  }
+  return result;
 }
 
 std::string cmInstallGenerator::CreateComponentTest(

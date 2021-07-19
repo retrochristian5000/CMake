@@ -60,12 +60,12 @@ protected:
     cmGeneratorTarget const* target) const;
   void HandleMissingTarget(std::string& link_libs,
                            std::vector<std::string>& missingTargets,
-                           cmGeneratorTarget* depender,
-                           cmGeneratorTarget* dependee) override;
+                           const cmGeneratorTarget* depender,
+                           cmGeneratorTarget* dependee) const override;
 
-  void ComplainAboutMissingTarget(cmGeneratorTarget* depender,
-                                  cmGeneratorTarget* dependee,
-                                  std::vector<std::string> const& namespaces);
+  void ComplainAboutMissingTarget(
+    const cmGeneratorTarget* depender, cmGeneratorTarget* dependee,
+    std::vector<std::string> const& namespaces) const;
 
   /** Fill in properties indicating built file locations.  */
   void SetImportLocationProperty(const std::string& config,
@@ -73,11 +73,11 @@ protected:
                                  cmGeneratorTarget* target,
                                  ImportPropertyMap& properties);
 
-  std::string InstallNameDir(cmGeneratorTarget* target,
+  std::string InstallNameDir(const cmGeneratorTarget* target,
                              const std::string& config) override;
 
   std::pair<std::vector<std::string>, std::string> FindBuildExportInfo(
-    cmGlobalGenerator* gg, const std::string& name);
+    cmGlobalGenerator* gg, const std::string& name) const;
 
   std::vector<std::string> Targets;
   cmExportSet* ExportSet;

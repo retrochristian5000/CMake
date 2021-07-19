@@ -79,20 +79,9 @@ void cmExportInstallAndroidMKGenerator::GenerateExpectedTargetsCode(
 {
 }
 
-void cmExportInstallAndroidMKGenerator::GenerateImportPropertyCode(
-  std::ostream&, const std::string&, cmGeneratorTarget const*,
-  ImportPropertyMap const&)
-{
-}
-
-void cmExportInstallAndroidMKGenerator::GenerateMissingTargetsCheckCode(
-  std::ostream&, const std::vector<std::string>&)
-{
-}
-
 void cmExportInstallAndroidMKGenerator::GenerateInterfaceProperties(
   cmGeneratorTarget const* target, std::ostream& os,
-  const ImportPropertyMap& properties)
+  const ImportPropertyMap& properties) const
 {
   std::string config;
   if (!this->Configurations.empty()) {
@@ -102,37 +91,18 @@ void cmExportInstallAndroidMKGenerator::GenerateInterfaceProperties(
     target, os, properties, cmExportBuildAndroidMKGenerator::INSTALL, config);
 }
 
-void cmExportInstallAndroidMKGenerator::LoadConfigFiles(std::ostream&)
+bool cmExportInstallAndroidMKGenerator::
+  GeneratedFilesRequireVariableExpansion() const
+{
+  return false;
+}
+
+bool cmExportInstallAndroidMKGenerator::GenerateMainFile(std::ostream& os)
 {
 }
 
-void cmExportInstallAndroidMKGenerator::GenerateImportPrefix(std::ostream&)
+void cmExportInstallAndroidMKGenerator::GenerateImportTargetsConfig(
+  std::ostream& os, const std::string& config, const std::string& suffix,
+  std::vector<std::string>& missingTargets)
 {
-}
-
-void cmExportInstallAndroidMKGenerator::GenerateRequiredCMakeVersion(
-  std::ostream&, const char*)
-{
-}
-
-void cmExportInstallAndroidMKGenerator::CleanupTemporaryVariables(
-  std::ostream&)
-{
-}
-
-void cmExportInstallAndroidMKGenerator::GenerateImportedFileCheckLoop(
-  std::ostream&)
-{
-}
-
-void cmExportInstallAndroidMKGenerator::GenerateImportedFileChecksCode(
-  std::ostream&, cmGeneratorTarget*, ImportPropertyMap const&,
-  const std::set<std::string>&)
-{
-}
-
-bool cmExportInstallAndroidMKGenerator::GenerateImportFileConfig(
-  const std::string&, std::vector<std::string>&)
-{
-  return true;
 }

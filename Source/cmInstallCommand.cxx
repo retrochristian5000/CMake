@@ -19,6 +19,7 @@
 #include "cmExecutionStatus.h"
 #include "cmExportSet.h"
 #include "cmGeneratorExpression.h"
+#include "cmGeneratorTarget.h"
 #include "cmGlobalGenerator.h"
 #include "cmInstallCommandArguments.h"
 #include "cmInstallDirectoryGenerator.h"
@@ -1739,28 +1740,14 @@ bool HandleDirectoryMode(std::vector<std::string> const& args,
   return true;
 }
 
-bool HandleExportAndroidMKMode(std::vector<std::string> const& args,
-                               cmExecutionStatus& status)
-{
 #ifndef CMAKE_BOOTSTRAP
-  Helper helper(status);
-
-  // This is the EXPORT mode.
-  cmInstallCommandArguments ica(helper.DefaultComponentName);
-
-  std::string exp;
-  std::string name_space;
-  bool exportOld = false;
-  std::string filename;
-
-  ica.Bind("EXPORT_ANDROID_MK"_s, exp);
-  ica.Bind("NAMESPACE"_s, name_space);
-  ica.Bind("EXPORT_LINK_INTERFACE_LIBRARIES"_s, exportOld);
-  ica.Bind("FILE"_s, filename);
-
+namespace {
+bool parseAndCheckCommonExportArgs(std::vector<std::string> const& args,
+                                   cmInstallCommandArguments& ica,
+                                   cmExecutionStatus& status)
+{
   std::vector<std::string> unknownArgs;
   ica.Parse(args, &unknownArgs);
-
   if (!unknownArgs.empty()) {
     // Unknown argument.
     status.SetError(
@@ -1776,6 +1763,33 @@ bool HandleExportAndroidMKMode(std::vector<std::string> const& args,
   if (ica.GetDestination().empty()) {
     // A destination is required.
     status.SetError(cmStrCat(args[0], " given no DESTINATION!"));
+    return false;
+  }
+
+  return true;
+}
+}
+#endif
+
+bool HandleExportAndroidMKMode(const std::string& exportName,
+                               std::vector<std::string> const& args,
+                               cmExecutionStatus& status)
+{
+#ifndef CMAKE_BOOTSTRAP
+  Helper helper(status);
+
+  // This is the EXPORT mode.
+  cmInstallCommandArguments ica(helper.DefaultComponentName);
+
+  std::string name_space;
+  bool exportOld = false;
+  std::string filename;
+
+  ica.Bind("NAMESPACE"_s, name_space);
+  ica.Bind("EXPORT_LINK_INTERFACE_LIBRARIES"_s, exportOld);
+  ica.Bind("FILE"_s, filename);
+
+  if (!parseAndCheckCommonExportArgs(args, ica, status)) {
     return false;
   }
 
@@ -1799,7 +1813,7 @@ bool HandleExportAndroidMKMode(std::vector<std::string> const& args,
   }
   if (fname.find_first_of(":/\\") != std::string::npos) {
     status.SetError(
-      cmStrCat(args[0], " given export name \"", exp,
+      cmStrCat(args[0], " given export name \"", exportName,
                "\".  "
                "This name cannot be safely converted to a file name.  "
                "Specify a different export name or use the FILE option to set "
@@ -1812,7 +1826,7 @@ bool HandleExportAndroidMKMode(std::vector<std::string> const& args,
   }
 
   cmExportSet& exportSet =
-    helper.Makefile->GetGlobalGenerator()->GetExportSets()[exp];
+    helper.Makefile->GetGlobalGenerator()->GetExportSets()[exportName];
 
   cmInstallGenerator::MessageLevel message =
     cmInstallGenerator::SelectMessageLevel(helper.Makefile);
@@ -1822,7 +1836,8 @@ bool HandleExportAndroidMKMode(std::vector<std::string> const& args,
     cm::make_unique<cmInstallExportGenerator>(
       &exportSet, ica.GetDestination(), ica.GetPermissions(),
       ica.GetConfigurations(), ica.GetComponent(), message,
-      ica.GetExcludeFromAll(), fname, name_space, exportOld, true,
+      ica.GetExcludeFromAll(), fname, name_space, exportOld,
+      cmInstallExportGenerator::Mode::Android,
       helper.Makefile->GetBacktrace()));
 
   return true;
@@ -1833,42 +1848,134 @@ bool HandleExportAndroidMKMode(std::vector<std::string> const& args,
 #endif
 }
 
-bool HandleExportMode(std::vector<std::string> const& args,
-                      cmExecutionStatus& status)
+bool HandleExportPkgConfigMode(const std::string& exportName,
+                               std::vector<std::string> const& args,
+                               cmExecutionStatus& status)
+{
+#ifndef CMAKE_BOOTSTRAP
+  Helper helper(status);
+
+  // This is the EXPORT mode.
+  cmInstallCommandArguments ica(helper.DefaultComponentName);
+
+  std::string name_space;
+  bool exportOld = false;
+  std::string filename;
+
+  ica.Bind("NAMESPACE"_s, name_space);
+  ica.Bind("EXPORT_LINK_INTERFACE_LIBRARIES"_s, exportOld);
+  ica.Bind("FILE"_s, filename);
+
+  if (!parseAndCheckCommonExportArgs(args, ica, status)) {
+    return false;
+  }
+
+  cmExportSet& exportSet =
+    helper.Makefile->GetGlobalGenerator()->GetExportSets()[exportName];
+
+  static const cmsys::RegularExpression pkgConfValidExport(
+    "^[A-Za-z0-9\\-]+$");
+  for (const auto& exportTarget : exportSet.GetTargetExports()) {
+    const auto* target =
+      helper.Makefile->FindTargetToUse(exportTarget->TargetName);
+    const auto pkgConfName = target->GetProperty("PKG_CONFIG_NAME");
+    const std::string& exportedName =
+      pkgConfName ? *pkgConfName : exportTarget->TargetName;
+    cmsys::RegularExpressionMatch dummy;
+    if (!pkgConfValidExport.find(exportedName.c_str(), dummy)) {
+      status.SetError(cmStrCat(
+        "EXPORT given export name \"", exportName,
+        "\" which contains target named \"", exportedName,
+        "\". "
+        "This name cannot be safely converted to a pkg-config package "
+        "name.  Specify a different target name or use the "
+        "\"PKG_CONFIG_NAME\" target property option to set the name "
+        "explicitly."));
+      return false;
+    }
+  }
+
+  // Check the file name.
+  std::string fname = filename;
+  if (fname.find_first_of(":/\\") != std::string::npos) {
+    status.SetError(cmStrCat(args[0], " given invalid export file name \"",
+                             fname,
+                             "\".  The FILE argument may not contain a path.  "
+                             "Specify the path in the DESTINATION argument."));
+    return false;
+  }
+
+  // Check the file extension.
+  if (!fname.empty() &&
+      cmSystemTools::GetFilenameLastExtension(fname) != ".pc") {
+    status.SetError(cmStrCat(
+      args[0], " given invalid export file name \"", fname,
+      R"(".  The FILE argument must specify a name ending in ".pc".)"));
+    return false;
+  }
+  if (fname.find_first_of(":/\\") != std::string::npos) {
+    status.SetError(
+      cmStrCat(args[0], " given export name \"", exportName,
+               "\".  "
+               "This name cannot be safely converted to a file name.  "
+               "Specify a different export name or use the FILE option to set "
+               "a file name explicitly."));
+    return false;
+  }
+
+  // Construct the file name.
+  if (fname.empty()) {
+    fname = cmStrCat(exportName, ".pc");
+
+    if (fname.find_first_of(":/\\") != std::string::npos) {
+      status.SetError(cmStrCat(
+        args[0], " given export name \"", exportName,
+        "\".  "
+        "This name cannot be safely converted to a file name.  "
+        "Specify a different export name or use the FILE option to set "
+        "a file name explicitly."));
+      return false;
+    }
+  }
+
+  cmInstallGenerator::MessageLevel message =
+    cmInstallGenerator::SelectMessageLevel(helper.Makefile);
+
+  // Create the export install generator.
+  helper.Makefile->AddInstallGenerator(
+    cm::make_unique<cmInstallExportGenerator>(
+      &exportSet, ica.GetDestination(), ica.GetPermissions(),
+      ica.GetConfigurations(), ica.GetComponent(), message,
+      ica.GetExcludeFromAll(), fname, name_space, exportOld,
+      cmInstallExportGenerator::Mode::PkgConfig,
+      helper.Makefile->GetBacktrace()));
+
+  return true;
+#else
+  static_cast<void>(args);
+  status.SetError("EXPORT_PKG_CONFIG not supported in bootstrap cmake");
+  return false;
+#endif
+}
+
+bool HandleExportCMakeConfigMode(const std::string& exportName,
+                                 std::vector<std::string> const& args,
+                                 cmExecutionStatus& status)
 {
   Helper helper(status);
 
   // This is the EXPORT mode.
   cmInstallCommandArguments ica(helper.DefaultComponentName);
 
-  std::string exp;
   std::string name_space;
   bool exportOld = false;
   std::string filename;
 
-  ica.Bind("EXPORT"_s, exp);
   ica.Bind("NAMESPACE"_s, name_space);
   ica.Bind("EXPORT_LINK_INTERFACE_LIBRARIES"_s, exportOld);
   ica.Bind("FILE"_s, filename);
 
-  std::vector<std::string> unknownArgs;
-  ica.Parse(args, &unknownArgs);
-
-  if (!unknownArgs.empty()) {
-    // Unknown argument.
-    status.SetError(
-      cmStrCat(args[0], " given unknown argument \"", unknownArgs[0], "\"."));
-    return false;
-  }
-
-  if (!ica.Finalize()) {
-    return false;
-  }
-
-  // Make sure there is a destination.
-  if (ica.GetDestination().empty()) {
-    // A destination is required.
-    status.SetError(cmStrCat(args[0], " given no DESTINATION!"));
+  if (!parseAndCheckCommonExportArgs(args, ica, status)) {
     return false;
   }
 
@@ -1895,11 +2002,11 @@ bool HandleExportMode(std::vector<std::string> const& args,
 
   // Construct the file name.
   if (fname.empty()) {
-    fname = cmStrCat(exp, ".cmake");
+    fname = cmStrCat(exportName, ".cmake");
 
     if (fname.find_first_of(":/\\") != std::string::npos) {
       status.SetError(cmStrCat(
-        args[0], " given export name \"", exp,
+        args[0], " given export name \"", exportName,
         "\".  "
         "This name cannot be safely converted to a file name.  "
         "Specify a different export name or use the FILE option to set "
@@ -1909,7 +2016,7 @@ bool HandleExportMode(std::vector<std::string> const& args,
   }
 
   cmExportSet& exportSet =
-    helper.Makefile->GetGlobalGenerator()->GetExportSets()[exp];
+    helper.Makefile->GetGlobalGenerator()->GetExportSets()[exportName];
   if (exportOld) {
     for (auto const& te : exportSet.GetTargetExports()) {
       cmTarget* tgt =
@@ -1936,8 +2043,78 @@ bool HandleExportMode(std::vector<std::string> const& args,
     cm::make_unique<cmInstallExportGenerator>(
       &exportSet, ica.GetDestination(), ica.GetPermissions(),
       ica.GetConfigurations(), ica.GetComponent(), message,
-      ica.GetExcludeFromAll(), fname, name_space, exportOld, false,
+      ica.GetExcludeFromAll(), fname, name_space, exportOld,
+      cmInstallExportGenerator::Mode::CMakeConfig,
       helper.Makefile->GetBacktrace()));
+
+  return true;
+}
+
+bool HandleExportMode(std::vector<std::string> const& args,
+                      cmExecutionStatus& status)
+{
+  struct ArgVectors
+  {
+    std::vector<std::string> CMakeConfig;
+    std::vector<std::string> AndroidMK;
+    std::vector<std::string> PkgConfig;
+  };
+
+  static auto const argHelper =
+    cmArgumentParser<ArgVectors>{}
+      .Bind("CMAKE_CONFIG"_s, &ArgVectors::CMakeConfig)
+      .Bind("ANDROID_MK"_s, &ArgVectors::AndroidMK)
+      .Bind("PKG_CONFIG"_s, &ArgVectors::PkgConfig);
+
+  std::vector<std::string> genericArgVector;
+  ArgVectors const argVectors = argHelper.Parse(args, &genericArgVector);
+
+  // now we parse the export name and possibly legacy ANDROID_MK mode switch
+  std::string exp;
+  std::string expAndroidMk;
+
+  auto genericArgPapser = cmArgumentParser<void>{}
+                            .Bind("EXPORT"_s, exp)
+                            .Bind("EXPORT_ANDROID_MK"_s, expAndroidMk);
+
+  std::vector<std::string> genericArgVector2; // TODO fix name
+  genericArgPapser.Parse(genericArgVector, &genericArgVector2);
+
+  if (!exp.empty() && !expAndroidMk.empty()) {
+    status.SetError(cmStrCat(
+      args[0], " can not accept both the EXPORT and EXPORT_ANDROID_MK"));
+    return false;
+  }
+
+  if (!genericArgVector2.empty() &&
+      (!argVectors.CMakeConfig.empty() || !argVectors.AndroidMK.empty() ||
+       !argVectors.PkgConfig.empty())) {
+    status.SetError(
+      cmStrCat(args[0], " can not accept mode and generic args at once"));
+    return false;
+  }
+
+  if (!argVectors.CMakeConfig.empty() &&
+      !HandleExportCMakeConfigMode(exp, argVectors.CMakeConfig, status)) {
+    return false;
+  }
+  if (!argVectors.AndroidMK.empty() &&
+      !HandleExportAndroidMKMode(exp, argVectors.AndroidMK, status)) {
+    return false;
+  }
+  if (!argVectors.PkgConfig.empty() &&
+      !HandleExportPkgConfigMode(exp, argVectors.PkgConfig, status)) {
+    return false;
+  }
+
+  if (!genericArgVector2.empty()) {
+    if (!exp.empty()) {
+      return HandleExportCMakeConfigMode(exp, genericArgVector2, status);
+    } else if (!expAndroidMk.empty()) {
+      return HandleExportAndroidMKMode(expAndroidMk, genericArgVector2,
+                                       status);
+    }
+  }
 
   return true;
 }
@@ -2289,7 +2466,7 @@ bool cmInstallCommand(std::vector<std::string> const& args,
     { "PROGRAMS"_s, HandleFilesMode },
     { "DIRECTORY"_s, HandleDirectoryMode },
     { "EXPORT"_s, HandleExportMode },
-    { "EXPORT_ANDROID_MK"_s, HandleExportAndroidMKMode },
+    { "EXPORT_ANDROID_MK"_s, HandleExportMode },
     { "RUNTIME_DEPENDENCY_SET"_s, HandleRuntimeDependencySetMode },
   };
 

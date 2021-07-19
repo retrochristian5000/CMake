@@ -749,6 +749,22 @@ Installing Exports
           [EXCLUDE_FROM_ALL])
   install(EXPORT_ANDROID_MK <export-name> DESTINATION <dir> [...])
 
+.. versionadded:: 3.22
+
+.. code-block:: cmake
+
+  install(EXPORT <export-name>
+    [CMAKE_CONFIG|ANDROID_MK|PKG_CONFIG
+      DESTINATION <dir> [NAMESPACE <namespace>]
+        [[FILE <name>]|
+          [PERMISSIONS permissions...]
+          [CONFIGURATIONS [Debug|Release|...]]
+          [EXPORT_LINK_INTERFACE_LIBRARIES]
+          [COMPONENT <component>]
+          [EXCLUDE_FROM_ALL]
+        ]
+    ])
+
 The ``EXPORT`` form generates and installs a CMake file containing code to
 import targets from the installation tree into another project.
 Target installations are associated with the export ``<export-name>``
@@ -791,13 +807,18 @@ of the ``Development`` component in the package metadata, ensuring that the
 library is always installed if the headers and CMake export file are present.
 
 .. versionadded:: 3.7
-  In addition to cmake language files, the ``EXPORT_ANDROID_MK`` mode maybe
+  In addition to cmake language files, the ``EXPORT_ANDROID_MK`` mode may be
   used to specify an export to the android ndk build system.  This mode
   accepts the same options as the normal export mode.  The Android
   NDK supports the use of prebuilt libraries, both static and shared. This
   allows cmake to build the libraries of a project and make them available
   to an ndk build system complete with transitive dependencies, include flags
   and defines required to use the libraries.
+
+.. versionadded:: 3.22
+  In addition to cmake and ndk export formats, `PKG_CONFIG` export mode may be
+  used to export the pkg-config format. This mode accepts the same options as
+  the cmake mode.
 
 The ``EXPORT`` form is useful to help outside projects use targets built
 and installed by the current project.  For example, the code

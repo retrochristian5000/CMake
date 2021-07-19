@@ -254,7 +254,7 @@ void cmExportBuildFileGenerator::SetImportLocationProperty(
 
 void cmExportBuildFileGenerator::HandleMissingTarget(
   std::string& link_libs, std::vector<std::string>& missingTargets,
-  cmGeneratorTarget* depender, cmGeneratorTarget* dependee)
+  const cmGeneratorTarget* depender, cmGeneratorTarget* dependee) const
 {
   // The target is not in the export.
   if (!this->AppendMode) {
@@ -300,7 +300,7 @@ void cmExportBuildFileGenerator::GetTargets(
 
 std::pair<std::vector<std::string>, std::string>
 cmExportBuildFileGenerator::FindBuildExportInfo(cmGlobalGenerator* gg,
-                                                const std::string& name)
+                                                const std::string& name) const
 {
   std::vector<std::string> exportFiles;
   std::string ns;
@@ -321,8 +321,8 @@ cmExportBuildFileGenerator::FindBuildExportInfo(cmGlobalGenerator* gg,
 }
 
 void cmExportBuildFileGenerator::ComplainAboutMissingTarget(
-  cmGeneratorTarget* depender, cmGeneratorTarget* dependee,
-  std::vector<std::string> const& exportFiles)
+  const cmGeneratorTarget* depender, cmGeneratorTarget* dependee,
+  std::vector<std::string> const& exportFiles) const
 {
   std::ostringstream e;
   e << "export called with target \"" << depender->GetName()
@@ -344,7 +344,7 @@ void cmExportBuildFileGenerator::ComplainAboutMissingTarget(
 }
 
 std::string cmExportBuildFileGenerator::InstallNameDir(
-  cmGeneratorTarget* target, const std::string& config)
+  const cmGeneratorTarget* target, const std::string& config)
 {
   std::string install_name_dir;
 

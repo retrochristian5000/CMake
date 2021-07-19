@@ -4,13 +4,6 @@
 
 #include "cmConfigure.h" // IWYU pragma: keep
 
-#include <iosfwd>
-#include <map>
-#include <set>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "cmExportFileGenerator.h"
 #include "cmStateTypes.h"
 
@@ -37,9 +30,7 @@ class cmTargetExport;
 class cmExportInstallFileGenerator : public cmExportFileGenerator
 {
 public:
-  /** Construct with the export installer that will install the
-      files.  */
-  cmExportInstallFileGenerator(cmInstallExportGenerator* iegen);
+  cmExportInstallFileGenerator(cmInstallExportGenerator* ieGen);
 
   /** Get the per-config file generated for each configuration.  This
       maps from the configuration name to the file temporary location
@@ -49,55 +40,47 @@ public:
     return this->ConfigImportFiles;
   }
 
+  void SetImportFileForConfig(const std::string& config,
+                              const std::string& fileName);
+
   /** Compute the globbing expression used to load per-config import
       files from the main file.  */
-  std::string GetConfigImportFileGlob();
+  virtual std::string GetConfigImportFileGlob() const;
+  virtual bool GeneratedFilesRequireVariableExpansion() const = 0;
 
 protected:
-  // Implement virtual methods from the superclass.
-  bool GenerateMainFile(std::ostream& os) override;
-  void GenerateImportTargetsConfig(
-    std::ostream& os, const std::string& config, std::string const& suffix,
-    std::vector<std::string>& missingTargets) override;
-  cmStateEnums::TargetType GetExportTargetType(
-    cmTargetExport const* targetExport) const;
-  void HandleMissingTarget(std::string& link_libs,
-                           std::vector<std::string>& missingTargets,
-                           cmGeneratorTarget* depender,
-                           cmGeneratorTarget* dependee) override;
-
-  void ReplaceInstallPrefix(std::string& input) override;
-
-  void ComplainAboutMissingTarget(cmGeneratorTarget* depender,
-                                  cmGeneratorTarget* dependee,
-                                  std::vector<std::string> const& exportFiles);
-
-  std::pair<std::vector<std::string>, std::string> FindNamespaces(
-    cmGlobalGenerator* gg, const std::string& name);
-
-  /** Generate the relative import prefix.  */
-  virtual void GenerateImportPrefix(std::ostream&);
-
-  /** Generate the relative import prefix.  */
-  virtual void LoadConfigFiles(std::ostream&);
-
-  virtual void CleanupTemporaryVariables(std::ostream&);
-
-  /** Generate a per-configuration file for the targets.  */
-  virtual bool GenerateImportFileConfig(
-    const std::string& config, std::vector<std::string>& missingTargets);
-
-  /** Fill in properties indicating installed file locations.  */
-  void SetImportLocationProperty(const std::string& config,
-                                 std::string const& suffix,
-                                 cmInstallTargetGenerator* itgen,
-                                 ImportPropertyMap& properties,
-                                 std::set<std::string>& importedLocations);
-
-  std::string InstallNameDir(cmGeneratorTarget* target,
+  std::string InstallNameDir(const cmGeneratorTarget* target,
                              const std::string& config) override;
 
+  void HandleMissingTarget(std::string& link_libs,
+                           std::vector<std::string>& missingTargets,
+                           const cmGeneratorTarget* depender,
+                           cmGeneratorTarget* dependee) const override;
+
+  void ComplainAboutMissingTarget(
+    const cmGeneratorTarget* depender, cmGeneratorTarget* dependee,
+    std::vector<std::string> const& exportFiles) const;
+  std::pair<std::vector<std::string>, std::string> FindNamespaces(
+    cmGlobalGenerator* gg, const std::string& name) const;
+
+  ImportPropertyMap CommonInterfaceProperties(
+    const cmGeneratorTarget* target,
+    cmGeneratorExpression::PreprocessContext preprocessRule,
+    std::vector<std::string>& missingTargets) const;
+
+  ImportPropertyMap CommonInterfaceProperties(
+    const cmTargetExport* te,
+    cmGeneratorExpression::PreprocessContext preprocessRule,
+    std::vector<std::string>& missingTargets) const;
+
   cmInstallExportGenerator* IEGen;
+
+private:
+  void PopulateCommonInterfaceProperties(
+    const cmGeneratorTarget* target, ImportPropertyMap& properties,
+    const std::string& exportIncludeDirectories,
+    cmGeneratorExpression::PreprocessContext preprocessRule,
+    std::vector<std::string>& missingTargets) const;
 
   // The import file generated for each configuration.
   std::map<std::string, std::string> ConfigImportFiles;

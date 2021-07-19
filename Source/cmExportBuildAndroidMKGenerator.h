@@ -60,5 +60,5 @@ protected:
     std::ostream& os, const std::vector<std::string>& missingTargets) override;
   void GenerateInterfaceProperties(
     cmGeneratorTarget const* target, std::ostream& os,
-    const ImportPropertyMap& properties) override;
+    const ImportPropertyMap& properties) const override;
 };

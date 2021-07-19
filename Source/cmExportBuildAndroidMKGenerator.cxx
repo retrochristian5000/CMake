@@ -66,7 +66,7 @@ void cmExportBuildAndroidMKGenerator::GenerateMissingTargetsCheckCode(
 
 void cmExportBuildAndroidMKGenerator::GenerateInterfaceProperties(
   const cmGeneratorTarget* target, std::ostream& os,
-  const ImportPropertyMap& properties)
+  const ImportPropertyMap& properties) const
 {
   std::string config;
   if (!this->Configurations.empty()) {
