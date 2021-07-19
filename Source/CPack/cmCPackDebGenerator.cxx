@@ -897,3 +897,17 @@ std::string cmCPackDebGenerator::GetComponentInstallDirNameSuffix(
   }
   return componentName;
 }
+
+bool cmCPackDebGenerator::HasDebugInfoRequested(
+  const std::string& component) const
+{
+  // check the per-component variable first
+  auto debuginfoPackageVar = "CPACK_DEBIAN_" +
+    cmSystemTools::UpperCase(component) + "_DEBUGINFO_PACKAGE";
+  if (this->GetOption(debuginfoPackageVar) != nullptr) {
+    return this->IsOn(debuginfoPackageVar);
+  }
+
+  // then check the default
+  return this->IsOn("CPACK_DEBIAN_DEBUGINFO_PACAKGE");
+}

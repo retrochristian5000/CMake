@@ -61,6 +61,7 @@ protected:
   bool SupportsComponentInstallation() const override;
   std::string GetComponentInstallDirNameSuffix(
     const std::string& componentName) override;
+  bool HasDebugInfoRequested(const std::string& componentName) const override;
 
 private:
   bool createDebPackages();

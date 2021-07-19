@@ -870,7 +870,9 @@ int cmCPackGenerator::InstallCMakeProject(
 
   // strip on TRUE, ON, 1, one or several file names, but not on
   // FALSE, OFF, 0 and an empty string
-  if (!cmIsOff(this->GetOption("CPACK_STRIP_FILES"))) {
+  // Don't strip the pacakge if it wants debuginfo for the packaging stage
+  if (!cmIsOff(this->GetOption("CPACK_STRIP_FILES") &&
+               !this->HasDebugInfoRequested(component))) {
     mf.AddDefinition("CMAKE_INSTALL_DO_STRIP", "1");
   }
   // Remember the list of files before installation
@@ -1648,4 +1650,10 @@ cmCPackComponentGroup* cmCPackGenerator::GetComponentGroup(
     }
   }
   return group;
+}
+
+bool cmCPackGenerator::HasDebugInfoRequestor(
+  const std::string& /*component*/) const
+{
+  return false;
 }

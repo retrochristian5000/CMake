@@ -253,6 +253,13 @@ protected:
   virtual cmCPackComponentGroup* GetComponentGroup(
     const std::string& projectName, const std::string& name);
 
+  /**
+   * Does the generator want debug info to be passed into it, perhaps
+   * to generate a separate debuginfo package? Used to control if the
+   * CMake install process strips the binaries
+   */
+  virtual bool HasDebugInfoRequested() const;
+
   cmSystemTools::OutputOption GeneratorVerbose;
   std::string Name;
 

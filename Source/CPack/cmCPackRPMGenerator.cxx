@@ -438,3 +438,17 @@ std::string cmCPackRPMGenerator::GetComponentInstallDirNameSuffix(
   }
   return componentName;
 }
+
+bool cmCPackRPMGenerator::HasDebugInfoRequested(
+  const std::string& component) const
+{
+  // check the per-component variable first
+  auto debuginfoPackageVar =
+    "CPACK_RPM_" + cmSystemTools::UpperCase(component) + "_DEBUGINFO_PACKAGE";
+  if (this->GetOption(debuginfoPackageVar) != nullptr) {
+    return this->IsOn(debuginfoPackageVar);
+  }
+
+  // then check the default
+  return this->IsOn("CPACK_RPM_DEBUGINFO_PACAKGE");
+}
