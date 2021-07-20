@@ -36,7 +36,8 @@ protected:
   {
   }
   void HandleMissingTarget(std::string&, std::vector<std::string>&,
-                           cmGeneratorTarget*, cmGeneratorTarget*) override
+                           const cmGeneratorTarget*,
+                           cmGeneratorTarget*) override
   {
   }
 
@@ -44,7 +45,7 @@ protected:
                           ImportPropertyMap& properties,
                           std::set<const cmGeneratorTarget*>& emitted);
 
-  std::string InstallNameDir(cmGeneratorTarget* target,
+  std::string InstallNameDir(const cmGeneratorTarget* target,
                              const std::string& config) override;
 
 private:
