@@ -60,6 +60,16 @@ public:
       error.  */
   bool GenerateImportFile();
 
+  struct SpecialTargetProprties
+  {
+    /** \brief Contains INCLUDES DESTINATION from install(TARGETS
+     *
+     * install(TARGETS ...) handler sets this property on targets
+     * when INCLUDES DESTINATION parameters was passed to it
+     */
+    static const std::string InterfaceIncludeDirectories;
+  };
+
 protected:
   using ImportPropertyMap = std::map<std::string, std::string>;
 

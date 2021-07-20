@@ -17,6 +17,7 @@
 
 #include "cmArgumentParser.h"
 #include "cmExecutionStatus.h"
+#include "cmExportFileGenerator.h"
 #include "cmExportSet.h"
 #include "cmGeneratorExpression.h"
 #include "cmGlobalGenerator.h"
@@ -681,8 +682,9 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
         te->LibraryGenerator = libraryGenerator.get();
         te->RuntimeGenerator = runtimeGenerator.get();
         te->ObjectsGenerator = objectGenerator.get();
-        te->InterfaceIncludeDirectories =
-          cmJoin(includesArgs.GetIncludeDirs(), ";");
+        target.SetProperty(cmExportFileGenerator::SpecialTargetProprties::
+                             InterfaceIncludeDirectories,
+                           cmJoin(includesArgs.GetIncludeDirs(), ";"));
         te->NamelinkOnly = namelinkOnly;
         helper.Makefile->GetGlobalGenerator()
           ->GetExportSets()[exports]

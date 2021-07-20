@@ -29,6 +29,10 @@
 #include "cmTarget.h"
 #include "cmTargetExport.h"
 
+const std::string
+  cmExportFileGenerator::SpecialTargetProprties::InterfaceIncludeDirectories =
+    "__EXPORT_INTERFACE_INCLUDE_DIRECTORIES";
+
 static std::string cmExportFileGeneratorEscape(std::string const& str)
 {
   // Escape a property value for writing into a .cmake file.
@@ -378,7 +382,9 @@ void cmExportFileGenerator::PopulateIncludeDirectoriesInterface(
   cmGeneratorExpression ge;
 
   std::string dirs = cmGeneratorExpression::Preprocess(
-    tei->InterfaceIncludeDirectories, preprocessRule, true);
+    target->GetSafeProperty(
+      SpecialTargetProprties::InterfaceIncludeDirectories),
+    preprocessRule, true);
   this->ReplaceInstallPrefix(dirs);
   std::unique_ptr<cmCompiledGeneratorExpression> cge = ge.Parse(dirs);
   std::string exportDirs =
