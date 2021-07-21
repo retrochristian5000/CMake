@@ -159,6 +159,7 @@ std::string cmTimestamp::AddTimestampComponent(char flag,
     case 'M':
     case 'S':
     case 'U':
+    case 'V':
     case 'w':
     case 'y':
     case 'Y':
