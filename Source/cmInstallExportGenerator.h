@@ -24,13 +24,19 @@ class cmLocalGenerator;
 class cmInstallExportGenerator : public cmInstallGenerator
 {
 public:
+  enum class Mode
+  {
+    Android,
+    CMakeConfig,
+  };
+
   cmInstallExportGenerator(cmExportSet* exportSet, std::string const& dest,
                            std::string file_permissions,
                            const std::vector<std::string>& configurations,
                            std::string const& component, MessageLevel message,
                            bool exclude_from_all, std::string filename,
-                           std::string name_space, bool exportOld,
-                           bool android, cmListFileBacktrace backtrace);
+                           std::string name_space, bool exportOld, Mode mode,
+                           cmListFileBacktrace backtrace);
   cmInstallExportGenerator(const cmInstallExportGenerator&) = delete;
   ~cmInstallExportGenerator() override;
 
