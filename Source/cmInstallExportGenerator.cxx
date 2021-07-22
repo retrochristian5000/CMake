@@ -11,6 +11,7 @@
 
 #ifndef CMAKE_BOOTSTRAP
 #  include "cmExportInstallAndroidMKGenerator.h"
+#  include "cmExportInstallPkgConfigGenerator.h"
 #endif
 #include "cmCMakePath.h"
 #include "cmExportInstallCMakeConfigFileGenerator.h"
@@ -39,6 +40,9 @@ cmInstallExportGenerator::cmInstallExportGenerator(
 #ifndef CMAKE_BOOTSTRAP
     case Mode::Android:
       this->EFGen = cm::make_unique<cmExportInstallAndroidMKGenerator>(this);
+      break;
+    case Mode::PkgConfig:
+      this->EFGen = cm::make_unique<cmExportInstallPkgConfigGenerator>(this);
       break;
 #endif
     case Mode::CMakeConfig:
