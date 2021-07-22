@@ -157,7 +157,9 @@ function(xctest_add_bundle target testee)
         XCODE_ATTRIBUTE_TEST_HOST "$<TARGET_FILE:${testee}>")
       if(XCODE_VERSION VERSION_GREATER_EQUAL 7.3)
         # CMAKE_XCODE_BUILD_SYSTEM equals 12 means that at least Xcode 11.x is used.
+        # In Xcode 12.5 behaviour is changed again
         if(CMAKE_XCODE_BUILD_SYSTEM EQUAL 12 AND
+           XCODE_VERSION VERSION_LESS 12.5 AND
            NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
           set(_output_directory "$<TARGET_BUNDLE_CONTENT_DIR:${testee}>")
         else()
