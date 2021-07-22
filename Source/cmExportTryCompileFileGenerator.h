@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "cmExportFileGenerator.h"
+#include "cmStateTypes.h"
 
 class cmGeneratorTarget;
 class cmGlobalGenerator;
@@ -30,14 +31,18 @@ protected:
   // Implement virtual methods from the superclass.
   bool GenerateMainFile(std::ostream& os) override;
 
-  void GenerateImportTargetsConfig(std::ostream&, const std::string&,
-                                   std::string const&,
-                                   std::vector<std::string>&) override
+  void GenerateImportTargetsConfig(std::ostream&, std::string const&, Context&,
+                                   std::string const&) override
   {
   }
+
+  void GenerateImportTargetCode(std::ostream& os,
+                                cmGeneratorTarget const* target,
+                                cmStateEnums::TargetType targetType) override;
+
   void HandleMissingTarget(std::string&, std::vector<std::string>&,
                            cmGeneratorTarget const*,
-                           cmGeneratorTarget*) override
+                           cmGeneratorTarget const*) const override
   {
   }
 
@@ -48,11 +53,14 @@ protected:
   std::string InstallNameDir(cmGeneratorTarget const* target,
                              const std::string& config) override;
 
+  Context* MakeAndSetupContext(Context* preCreated) const override;
+
 private:
   std::string FindTargets(const std::string& prop,
                           const cmGeneratorTarget* tgt,
                           std::string const& language,
                           std::set<const cmGeneratorTarget*>& emitted);
+  void InvocationSyntax(std::ostream& os) const override;
 
   std::vector<cmGeneratorTarget const*> Exports;
   std::string Config;

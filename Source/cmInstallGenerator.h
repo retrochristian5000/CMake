@@ -52,6 +52,11 @@ public:
     const char* permissions_dir = nullptr, const char* rename = nullptr,
     const char* literal_args = nullptr, Indent indent = Indent(),
     const char* files_var = nullptr);
+  std::vector<std::string> AddExpandVariablesRule(
+    std::ostream& os, std::string const& dest,
+    std::vector<std::string> const& files, bool at_only = false,
+    bool escape_quotes = false, Indent indent = Indent(),
+    const char* permissions_file = nullptr);
 
   /** Get the install destination as it should appear in the
       installation script.  */
