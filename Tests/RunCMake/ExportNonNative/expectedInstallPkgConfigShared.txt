@@ -1,0 +1,9 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+
+Name: build
+Description: sample description
+URL: http://sample.org
+Version: 3\.4\.5
+Requires: car-pkg
+Cflags: -std=c\+\+20 -I/opt/include2 -I/opt/include1
+Libs: -L\${prefix}/lib -lfoo3Shared -l:libfoo2\.a

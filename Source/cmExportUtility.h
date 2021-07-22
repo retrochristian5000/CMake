@@ -2,10 +2,12 @@
    file Copyright.txt or https://cmake.org/licensing for details.  */
 #pragma once
 
+#include <functional>
 #include <iosfwd>
 #include <map>
 #include <set>
 #include <string>
+#include <vector>
 
 #include "cmStateTypes.h"
 
@@ -14,6 +16,7 @@ class cmTargetExport;
 
 namespace Exporting {
 using PropertyMap = std::map<std::string, std::string>;
+using PropertyLoader = std::function<PropertyMap(cmGeneratorTarget const&)>;
 
 struct NamespacedTarget
 {
@@ -25,6 +28,9 @@ struct NamespacedTarget
 
 cmStateEnums::TargetType GetExportTargetType(
   cmTargetExport const& targetExport);
+
+std::string CompileFeatureToCompileFlag(cmGeneratorTarget const& target,
+                                        std::string const& compileFeature);
 
 #ifndef CMAKE_BOOTSTRAP
 enum class GenerateType
@@ -38,6 +44,26 @@ void GenerateInterfaceProperties(cmGeneratorTarget const& target,
                                  std::ostream& os,
                                  const PropertyMap& properties,
                                  GenerateType type, std::string const& config);
+}
+
+namespace PkgConfig {
+/**! \brief Can the given target be represented in the pkg-config format? **/
+bool CanBeExported(cmGeneratorTarget const& target,
+                   cmStateEnums::TargetType targetType);
+void GenerateExportMetadata(std::ostream& os, cmGeneratorTarget const& target);
+bool GenerateInterfaceProperties(std::ostream& os,
+                                 cmGeneratorTarget const& target,
+                                 GenerateType type, std::string const& config);
+std::vector<std::string> OmitImplicitEntries(
+  cmGeneratorTarget const& target, std::string const& config,
+  std::string const& entryName, std::vector<std::string> const& entries);
+
+void ReplaceImportPrefix(std::string& input);
+bool GenerateTargetExportCode(std::ostream& os,
+                              cmGeneratorTarget const& target,
+                              cmStateEnums::TargetType targetType,
+                              std::string const& config,
+                              PropertyLoader const& targetPropertyLoader);
 }
 #endif
 

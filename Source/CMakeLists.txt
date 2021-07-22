@@ -225,6 +225,8 @@ set(SRCS
   cmExportInstallCMakeConfigFileGenerator.cxx
   cmExportInstallFileGenerator.h
   cmExportInstallFileGenerator.cxx
+  cmExportInstallPkgConfigGenerator.h
+  cmExportInstallPkgConfigGenerator.cxx
   cmExportTryCompileFileGenerator.h
   cmExportTryCompileFileGenerator.cxx
   cmExportSet.h
@@ -232,6 +234,7 @@ set(SRCS
   cmExportUtility.h
   cmExportUtility.cxx
   cmExportUtility_Android.cxx
+  cmExportUtility_PkgConfig.cxx
   cmExternalMakefileProjectGenerator.cxx
   cmExternalMakefileProjectGenerator.h
   cmExtraCodeBlocksGenerator.cxx

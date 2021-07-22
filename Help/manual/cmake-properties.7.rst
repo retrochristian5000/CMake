@@ -327,6 +327,7 @@ Properties on Targets
    /prop_tgt/PDB_NAME_CONFIG
    /prop_tgt/PDB_OUTPUT_DIRECTORY
    /prop_tgt/PDB_OUTPUT_DIRECTORY_CONFIG
+   /prop_tgt/PKG_CONFIG_NAME
    /prop_tgt/POSITION_INDEPENDENT_CODE
    /prop_tgt/PRECOMPILE_HEADERS
    /prop_tgt/PRECOMPILE_HEADERS_REUSE_FROM

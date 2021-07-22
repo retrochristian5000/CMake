@@ -29,6 +29,7 @@ public:
   {
     Android,
     CMakeConfig,
+    PkgConfig
   };
 
   cmInstallExportGenerator(cmExportSet* exportSet, std::string const& dest,

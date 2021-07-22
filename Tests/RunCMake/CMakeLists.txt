@@ -830,7 +830,7 @@ add_RunCMake_test(AutoExportDll
   -DCMAKE_CXX_COMPILER_ID=${CMAKE_CXX_COMPILER_ID}
   )
 
-add_RunCMake_test(AndroidMK)
+add_RunCMake_test(ExportNonNative)
 
 if(CMake_TEST_ANDROID_NDK OR CMake_TEST_ANDROID_STANDALONE_TOOLCHAIN)
   if(NOT "${CMAKE_GENERATOR}" MATCHES "Make|Ninja|Visual Studio 1[456]")
