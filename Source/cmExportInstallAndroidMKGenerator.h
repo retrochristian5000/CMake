@@ -5,14 +5,13 @@
 #include "cmConfigure.h" // IWYU pragma: keep
 
 #include <iosfwd>
-#include <set>
 #include <string>
-#include <vector>
 
 #include "cmExportFileGenerator.h"
 #include "cmExportInstallFileGenerator.h"
 #include "cmStateTypes.h"
 
+class cmTargetExport;
 class cmGeneratorTarget;
 class cmInstallExportGenerator;
 
@@ -29,6 +28,8 @@ class cmInstallExportGenerator;
  */
 class cmExportInstallAndroidMKGenerator : public cmExportInstallFileGenerator
 {
+  using base = cmExportInstallFileGenerator;
+
 public:
   /** Construct with the export installer that will install the
       files.  */
@@ -36,35 +37,20 @@ public:
 
 protected:
   // Implement virtual methods from the superclass.
-  void GeneratePolicyHeaderCode(std::ostream&) override {}
-  void GeneratePolicyFooterCode(std::ostream&) override {}
-  void GenerateImportHeaderCode(std::ostream& os,
-                                const std::string& config = "") override;
-  void GenerateImportFooterCode(std::ostream& os) override;
+  bool GenerateImportHeaderCode(std::ostream& os, Context& ctx) override;
+  bool GenerateImportFooterCode(std::ostream& os, Context& ctx) override;
+  bool GenerateTargetExportCode(std::ostream& os, Context& ctx,
+                                const cmTargetExport& target,
+                                cmStateEnums::TargetType targetType) override;
   void GenerateImportTargetCode(
     std::ostream& os, cmGeneratorTarget const* target,
     cmStateEnums::TargetType /*targetType*/) override;
-  void GenerateExpectedTargetsCode(
-    std::ostream& os, const std::string& expectedTargets) override;
-  void GenerateImportPropertyCode(
-    std::ostream& os, const std::string& config,
-    cmGeneratorTarget const* target,
-    ImportPropertyMap const& properties) override;
-  void GenerateMissingTargetsCheckCode(
-    std::ostream& os, const std::vector<std::string>& missingTargets) override;
   void GenerateInterfaceProperties(
     cmGeneratorTarget const* target, std::ostream& os,
-    const ImportPropertyMap& properties) override;
-  void GenerateImportPrefix(std::ostream& os) override;
-  void LoadConfigFiles(std::ostream&) override;
-  void GenerateRequiredCMakeVersion(std::ostream& os,
-                                    const char* versionString) override;
-  void CleanupTemporaryVariables(std::ostream&) override;
-  void GenerateImportedFileCheckLoop(std::ostream& os) override;
-  void GenerateImportedFileChecksCode(
-    std::ostream& os, cmGeneratorTarget* target,
-    ImportPropertyMap const& properties,
-    const std::set<std::string>& importedLocations) override;
-  bool GenerateImportFileConfig(const std::string& config,
-                                std::vector<std::string>&) override;
+    const ImportPropertyMap& properties) const override;
+  bool GeneratedFilesRequireVariableExpansion() const override;
+
+  void GenerateImportTargetsConfig(std::ostream& os, const std::string& config,
+                                   cmExportFileGenerator::Context& ctx,
+                                   const std::string& suffix) override;
 };

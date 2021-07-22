@@ -332,8 +332,10 @@ CMAKE_CXX_SOURCES="\
   cmExpandedCommandArgument \
   cmExportBuildFileGenerator \
   cmExportFileGenerator \
+  cmExportInstallCMakeConfigFileGenerator \
   cmExportInstallFileGenerator \
   cmExportSet \
+  cmExportUtility \
   cmExportTryCompileFileGenerator \
   cmExprParserHelper \
   cmExternalMakefileProjectGenerator \

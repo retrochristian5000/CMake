@@ -12,6 +12,8 @@
 #ifndef CMAKE_BOOTSTRAP
 #  include "cmExportInstallAndroidMKGenerator.h"
 #endif
+#include "cmCMakePath.h"
+#include "cmExportInstallCMakeConfigFileGenerator.h"
 #include "cmExportInstallFileGenerator.h"
 #include "cmExportSet.h"
 #include "cmInstallType.h"
@@ -41,7 +43,8 @@ cmInstallExportGenerator::cmInstallExportGenerator(
       break;
 #endif
     case Mode::CMakeConfig:
-      this->EFGen = cm::make_unique<cmExportInstallFileGenerator>(this);
+      this->EFGen =
+        cm::make_unique<cmExportInstallCMakeConfigFileGenerator>(this);
       break;
   }
   exportSet->AddInstallation(this);
@@ -168,13 +171,23 @@ void cmInstallExportGenerator::GenerateScriptConfigs(std::ostream& os,
   // Create the main install rules first.
   this->cmInstallGenerator::GenerateScriptConfigs(os, indent);
 
+  cmCMakePath expandedTempDir;
+  if (this->EFGen->GeneratedFilesRequireVariableExpansion()) {
+    expandedTempDir = this->MakeTempDirForExpandedFiles();
+  }
   // Now create a configuration-specific install rule for the import
   // file of each configuration.
   std::vector<std::string> files;
   for (auto const& i : this->EFGen->GetConfigImportFiles()) {
-    files.push_back(i.second);
     std::string config_test = this->CreateConfigTest(i.first);
     os << indent << "if(" << config_test << ")\n";
+    if (this->EFGen->GeneratedFilesRequireVariableExpansion()) {
+      files = this->AddExpandVariablesRule(os, expandedTempDir.String(),
+                                           { i.second }, false, false,
+                                           indent.Next());
+    } else {
+      files.push_back(i.second);
+    }
     this->AddInstallRule(os, this->Destination, cmInstallType_FILES, files,
                          false, this->FilePermissions.c_str(), nullptr,
                          nullptr, nullptr, indent.Next());
@@ -212,7 +225,13 @@ void cmInstallExportGenerator::GenerateScriptActions(std::ostream& os,
 
   // Install the main export file.
   std::vector<std::string> files;
-  files.push_back(this->MainImportFile);
+  if (this->EFGen->GeneratedFilesRequireVariableExpansion()) {
+    files = this->AddExpandVariablesRule(
+      os, this->MakeTempDirForExpandedFiles().String(),
+      { this->MainImportFile }, false, false, indent);
+  } else {
+    files.push_back(this->MainImportFile);
+  }
   this->AddInstallRule(os, this->Destination, cmInstallType_FILES, files,
                        false, this->FilePermissions.c_str(), nullptr, nullptr,
                        nullptr, indent);
@@ -221,4 +240,15 @@ void cmInstallExportGenerator::GenerateScriptActions(std::ostream& os,
 std::string cmInstallExportGenerator::GetDestinationFile() const
 {
   return this->Destination + '/' + this->FileName;
+}
+
+cmCMakePath cmInstallExportGenerator::MakeTempDirForExpandedFiles()
+{
+  cmCMakePath result = cmCMakePath(this->TempDir);
+  result.Append("expanded");
+  const cmsys::Status st = cmSystemTools::MakeDirectory(result.String());
+  if (!st) {
+    // TODO where to report the error?
+  }
+  return result;
 }

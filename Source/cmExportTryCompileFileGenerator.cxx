@@ -1,12 +1,13 @@
 /* Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
    file Copyright.txt or https://cmake.org/licensing for details.  */
-#include "cmExportTryCompileFileGenerator.h"
-
 #include <map>
+#include <ostream>
 #include <utility>
 
 #include <cm/memory>
 
+#include "cmExportTryCompileFileGenerator.h"
+#include "cmExportUtility.h"
 #include "cmGeneratorExpression.h"
 #include "cmGeneratorExpressionDAGChecker.h"
 #include "cmGeneratorTarget.h"
@@ -136,4 +137,18 @@ std::string cmExportTryCompileFileGenerator::InstallNameDir(
   }
 
   return install_name_dir;
+}
+
+void cmExportTryCompileFileGenerator::GenerateImportTargetCode(
+  std::ostream& os, cmGeneratorTarget const* target,
+  cmStateEnums::TargetType targetType)
+{
+  Exporting::CMakeConfig::GenerateImportTargetCode(
+    os, { this->Namespace, *target }, targetType);
+}
+
+void cmExportTryCompileFileGenerator::InvocationSyntax(std::ostream& os) const
+{
+  // FIXME
+  os << "try_compile(...)";
 }

@@ -14,6 +14,7 @@
 #include "cmListFileCache.h"
 #include "cmScriptGenerator.h"
 
+class cmCMakePath;
 class cmExportInstallFileGenerator;
 class cmExportSet;
 class cmLocalGenerator;
@@ -76,4 +77,7 @@ protected:
   std::string TempDir;
   std::string MainImportFile;
   std::unique_ptr<cmExportInstallFileGenerator> EFGen;
+
+private:
+  cmCMakePath MakeTempDirForExpandedFiles();
 };
