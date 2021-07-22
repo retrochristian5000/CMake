@@ -1,13 +1,13 @@
 /* Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
    file Copyright.txt or https://cmake.org/licensing for details.  */
-#include "cmInstallExportGenerator.h"
-
 #include <algorithm>
 #include <map>
 #include <sstream>
 #include <utility>
 
 #include <cm/memory>
+
+#include "cmInstallExportGenerator.h"
 
 #ifndef CMAKE_BOOTSTRAP
 #  include "cmExportInstallAndroidMKGenerator.h"
@@ -23,7 +23,7 @@ cmInstallExportGenerator::cmInstallExportGenerator(
   cmExportSet* exportSet, std::string const& destination,
   std::string file_permissions, std::vector<std::string> const& configurations,
   std::string const& component, MessageLevel message, bool exclude_from_all,
-  std::string filename, std::string name_space, bool exportOld, bool android,
+  std::string filename, std::string name_space, bool exportOld, Mode mode,
   cmListFileBacktrace backtrace)
   : cmInstallGenerator(destination, configurations, component, message,
                        exclude_from_all, false, std::move(backtrace))
@@ -34,12 +34,15 @@ cmInstallExportGenerator::cmInstallExportGenerator(
   , ExportOld(exportOld)
   , LocalGenerator(nullptr)
 {
-  if (android) {
+  switch (mode) {
 #ifndef CMAKE_BOOTSTRAP
-    this->EFGen = cm::make_unique<cmExportInstallAndroidMKGenerator>(this);
+    case Mode::Android:
+      this->EFGen = cm::make_unique<cmExportInstallAndroidMKGenerator>(this);
+      break;
 #endif
-  } else {
-    this->EFGen = cm::make_unique<cmExportInstallFileGenerator>(this);
+    case Mode::CMakeConfig:
+      this->EFGen = cm::make_unique<cmExportInstallFileGenerator>(this);
+      break;
   }
   exportSet->AddInstallation(this);
 }
