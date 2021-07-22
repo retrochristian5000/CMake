@@ -137,3 +137,9 @@ std::string cmExportTryCompileFileGenerator::InstallNameDir(
 
   return install_name_dir;
 }
+
+void cmExportTryCompileFileGenerator::InvocationSyntax(std::ostream& os) const
+{
+  // FIXME
+  os << "try_compile(...)";
+}

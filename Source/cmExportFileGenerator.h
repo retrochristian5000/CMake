@@ -10,7 +10,9 @@
 #include <string>
 #include <vector>
 
+#include "cmExportUtility.h"
 #include "cmGeneratorExpression.h"
+#include "cmRange.h"
 #include "cmStateTypes.h"
 #include "cmVersion.h"
 #include "cmVersionConfig.h"
@@ -59,45 +61,31 @@ public:
   bool GenerateImportFile();
 
 protected:
-  using ImportPropertyMap = std::map<std::string, std::string>;
+  using ImportPropertyMap = Exporting::PropertyMap;
+  struct Context
+  {
+    // The set of targets included in the export.
+    std::vector<cmGeneratorTarget*> const& ExportedTargets;
+    std::vector<std::string> MissingTargets;
+  };
 
   // Generate per-configuration target information to the given output
   // stream.
-  void GenerateImportConfig(std::ostream& os, const std::string& config,
-                            std::vector<std::string>& missingTargets);
+  void GenerateImportConfig(std::ostream& os, std::string const& config,
+                            Context& ctx);
 
   // Methods to implement export file code generation.
-  virtual void GeneratePolicyHeaderCode(std::ostream& os);
-  virtual void GeneratePolicyFooterCode(std::ostream& os);
-  virtual void GenerateImportHeaderCode(std::ostream& os,
-                                        const std::string& config = "");
-  virtual void GenerateImportFooterCode(std::ostream& os);
-  void GenerateImportVersionCode(std::ostream& os);
-  virtual void GenerateImportTargetCode(std::ostream& os,
-                                        cmGeneratorTarget const* target,
-                                        cmStateEnums::TargetType targetType);
-  virtual void GenerateImportPropertyCode(std::ostream& os,
-                                          const std::string& config,
-                                          cmGeneratorTarget const* target,
-                                          ImportPropertyMap const& properties);
-  virtual void GenerateImportedFileChecksCode(
-    std::ostream& os, cmGeneratorTarget* target,
-    ImportPropertyMap const& properties,
-    const std::set<std::string>& importedLocations);
-  virtual void GenerateImportedFileCheckLoop(std::ostream& os);
-  virtual void GenerateMissingTargetsCheckCode(
-    std::ostream& os, const std::vector<std::string>& missingTargets);
 
-  virtual void GenerateExpectedTargetsCode(std::ostream& os,
-                                           const std::string& expectedTargets);
+  virtual void GenerateImportTargetCode(
+    std::ostream& os, cmGeneratorTarget const* target,
+    cmStateEnums::TargetType targetType) = 0;
 
   // Collect properties with detailed information about targets beyond
   // their location on disk.
   void SetImportDetailProperties(const std::string& config,
                                  std::string const& suffix,
-                                 cmGeneratorTarget* target,
-                                 ImportPropertyMap& properties,
-                                 std::vector<std::string>& missingTargets);
+                                 cmGeneratorTarget const* target,
+                                 ImportPropertyMap& properties, Context& ctx);
 
   enum class ImportLinkPropertyTargetNames
   {
@@ -109,62 +97,72 @@ protected:
                              cmGeneratorTarget const* target,
                              const std::string& propName,
                              std::vector<T> const& entries,
-                             ImportPropertyMap& properties,
-                             std::vector<std::string>& missingTargets,
+                             ImportPropertyMap& properties, Context& ctx,
                              ImportLinkPropertyTargetNames targetNames);
 
   /** Each subclass knows how to generate its kind of export file.  */
   virtual bool GenerateMainFile(std::ostream& os) = 0;
 
   /** Each subclass knows where the target files are located.  */
-  virtual void GenerateImportTargetsConfig(
-    std::ostream& os, const std::string& config, std::string const& suffix,
-    std::vector<std::string>& missingTargets) = 0;
+  virtual void GenerateImportTargetsConfig(std::ostream& os,
+                                           std::string const& config,
+                                           Context& ctx,
+                                           std::string const& suffix) = 0;
 
   /** Each subclass knows how to deal with a target that is  missing from an
    *  export set.  */
-  virtual void HandleMissingTarget(std::string& link_libs,
-                                   std::vector<std::string>& missingTargets,
-                                   cmGeneratorTarget const* depender,
-                                   cmGeneratorTarget* dependee) = 0;
+  virtual void HandleMissingTarget(
+    std::string& link_libs, std::vector<std::string>& missingTargets,
+    cmGeneratorTarget const* depender,
+    cmGeneratorTarget const* dependee) const = 0;
+
+  virtual void ComplainAboutMissingTarget(
+    cmGeneratorTarget const* depender, cmGeneratorTarget const* dependee,
+    std::vector<std::string> const& exportFiles) const;
+
   void PopulateInterfaceProperty(const std::string&,
                                  cmGeneratorTarget const* target,
                                  cmGeneratorExpression::PreprocessContext,
                                  ImportPropertyMap& properties,
-                                 std::vector<std::string>& missingTargets);
+                                 Context& ctx) const;
   bool PopulateInterfaceLinkLibrariesProperty(
-    cmGeneratorTarget const* target, cmGeneratorExpression::PreprocessContext,
-    ImportPropertyMap& properties, std::vector<std::string>& missingTargets);
+    const cmGeneratorTarget* target, cmGeneratorExpression::PreprocessContext,
+    ImportPropertyMap& properties, Context& ctx) const;
   void PopulateInterfaceProperty(const std::string& propName,
-                                 cmGeneratorTarget const* target,
-                                 ImportPropertyMap& properties);
-  void PopulateCompatibleInterfaceProperties(cmGeneratorTarget const* target,
-                                             ImportPropertyMap& properties);
+                                 const cmGeneratorTarget* target,
+                                 ImportPropertyMap& properties) const;
+  void PopulateCompatibleInterfaceProperties(
+    const cmGeneratorTarget* target, ImportPropertyMap& properties) const;
   virtual void GenerateInterfaceProperties(
     cmGeneratorTarget const* target, std::ostream& os,
-    const ImportPropertyMap& properties);
+    const ImportPropertyMap& properties) const;
+  void PopulateIncludeDirectoriesInterface(
+    cmGeneratorTarget const* target, std::string additionalIncludeDirectories,
+    cmGeneratorExpression::PreprocessContext preprocessRule,
+    ImportPropertyMap& properties,
+    std::vector<std::string>& missingTargets) const;
   void PopulateIncludeDirectoriesInterface(
     cmGeneratorTarget const* target,
     cmGeneratorExpression::PreprocessContext preprocessRule,
-    ImportPropertyMap& properties, std::vector<std::string>& missingTargets);
+    ImportPropertyMap& properties, Context& ctx) const;
   void PopulateSourcesInterface(
     cmGeneratorTarget const* target,
     cmGeneratorExpression::PreprocessContext preprocessRule,
-    ImportPropertyMap& properties, std::vector<std::string>& missingTargets);
+    ImportPropertyMap& properties, Context& ctx) const;
   void PopulateLinkDirectoriesInterface(
     cmGeneratorTarget const* target,
     cmGeneratorExpression::PreprocessContext preprocessRule,
-    ImportPropertyMap& properties, std::vector<std::string>& missingTargets);
+    ImportPropertyMap& properties, Context& ctx) const;
   void PopulateLinkDependsInterface(
     cmGeneratorTarget const* target,
     cmGeneratorExpression::PreprocessContext preprocessRule,
-    ImportPropertyMap& properties, std::vector<std::string>& missingTargets);
+    ImportPropertyMap& properties, Context& ctx) const;
 
   void SetImportLinkInterface(
     const std::string& config, std::string const& suffix,
     cmGeneratorExpression::PreprocessContext preprocessRule,
     cmGeneratorTarget const* target, ImportPropertyMap& properties,
-    std::vector<std::string>& missingTargets);
+    Context& ctx);
 
   enum FreeTargetsReplace
   {
@@ -173,16 +171,17 @@ protected:
   };
 
   void ResolveTargetsInGeneratorExpressions(
-    std::string& input, cmGeneratorTarget const* target,
-    std::vector<std::string>& missingTargets,
-    FreeTargetsReplace replace = NoReplaceFreeTargets);
-
-  virtual void GenerateRequiredCMakeVersion(std::ostream& os,
-                                            const char* versionString);
+    std::string& input, cmGeneratorTarget const* target, Context& ctx,
+    FreeTargetsReplace replace = NoReplaceFreeTargets) const;
 
   bool PopulateExportProperties(cmGeneratorTarget const* gte,
                                 ImportPropertyMap& properties,
-                                std::string& errorMessage);
+                                std::string& errorMessage) const;
+
+  ImportPropertyMap CommonInterfaceProperties(
+    cmGeneratorTarget const* target,
+    cmGeneratorExpression::PreprocessContext preprocessRule,
+    Context& ctx) const;
 
   // The namespace in which the exports are placed in the generated file.
   std::string Namespace;
@@ -199,25 +198,29 @@ protected:
   std::string FileExt;
   bool AppendMode;
 
-  // The set of targets included in the export.
-  std::set<cmGeneratorTarget*> ExportedTargets;
-
 private:
   void PopulateInterfaceProperty(const std::string&, const std::string&,
                                  cmGeneratorTarget const* target,
                                  cmGeneratorExpression::PreprocessContext,
                                  ImportPropertyMap& properties,
-                                 std::vector<std::string>& missingTargets);
+                                 Context& ctx) const;
+
+  void PopulateCommonInterfaceProperties(
+    cmGeneratorTarget const* target, ImportPropertyMap& properties,
+    cmGeneratorExpression::PreprocessContext preprocessRule,
+    Context& ctx) const;
 
   bool AddTargetNamespace(std::string& input, cmGeneratorTarget const* target,
-                          std::vector<std::string>& missingTargets);
+                          Context& ctx) const;
 
-  void ResolveTargetsInGeneratorExpression(
-    std::string& input, cmGeneratorTarget const* target,
-    std::vector<std::string>& missingTargets);
+  void ResolveTargetsInGeneratorExpression(std::string& input,
+                                           cmGeneratorTarget const* target,
+                                           Context& ctx) const;
 
-  virtual void ReplaceInstallPrefix(std::string& input);
+  virtual void ReplaceInstallPrefix(std::string& input) const;
 
   virtual std::string InstallNameDir(cmGeneratorTarget const* target,
                                      const std::string& config) = 0;
+
+  virtual void InvocationSyntax(std::ostream& os) const = 0;
 };

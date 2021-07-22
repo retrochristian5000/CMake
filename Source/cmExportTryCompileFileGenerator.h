@@ -30,14 +30,19 @@ protected:
   // Implement virtual methods from the superclass.
   bool GenerateMainFile(std::ostream& os) override;
 
-  void GenerateImportTargetsConfig(std::ostream&, const std::string&,
-                                   std::string const&,
-                                   std::vector<std::string>&) override
+  void GenerateImportTargetsConfig(std::ostream&, std::string const&, Context&,
+                                   std::string const&) override
   {
   }
+
+  void GenerateImportTargetCode(std::ostream&, cmGeneratorTarget const*,
+                                cmStateEnums::TargetType) override
+  {
+  }
+
   void HandleMissingTarget(std::string&, std::vector<std::string>&,
                            cmGeneratorTarget const*,
-                           cmGeneratorTarget*) override
+                           cmGeneratorTarget const*) const override
   {
   }
 
@@ -53,6 +58,7 @@ private:
                           const cmGeneratorTarget* tgt,
                           std::string const& language,
                           std::set<const cmGeneratorTarget*>& emitted);
+  void InvocationSyntax(std::ostream& os) const override;
 
   std::vector<cmGeneratorTarget const*> Exports;
   std::string Config;
