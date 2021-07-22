@@ -50,6 +50,29 @@ cmStateEnums::TargetType Exporting::GetExportTargetType(
   return targetType;
 }
 
+std::string Exporting::CompileFeatureToCompileFlag(
+  const cmGeneratorTarget& target, const std::string& compileFeature)
+{
+  // compile feature alike: c_std_23 or cxx_std_20
+  // variables:
+  // CMAKE_CXX20_STANDARD_COMPILE_OPTION "-std=c++20")
+  // CMAKE_CXX20_EXTENSION_COMPILE_OPTION "-std=gnu++20")
+  auto langEndPos = compileFeature.find('_');
+  auto versionDelimPos = compileFeature.find('_', langEndPos + 1);
+  const auto lang =
+    cmSystemTools::UpperCase(compileFeature.substr(0, langEndPos));
+
+  const auto featureType =
+    compileFeature.substr(langEndPos + 1, versionDelimPos - langEndPos - 1);
+  if (featureType == "std"_s) {
+    return target.Makefile->GetSafeDefinition(
+      cmStrCat("CMAKE_", lang, compileFeature.substr(versionDelimPos + 1),
+               "_STANDARD_COMPILE_OPTION"));
+  }
+
+  return {};
+}
+
 #ifndef CMAKE_BOOTSTRAP
 void Exporting::AndroidMK::GenerateInterfaceProperties(
   cmGeneratorTarget const& target, std::ostream& os,

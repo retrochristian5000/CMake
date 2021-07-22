@@ -225,12 +225,15 @@ set(SRCS
   cmExportInstallCMakeConfigFileGenerator.cxx
   cmExportInstallFileGenerator.h
   cmExportInstallFileGenerator.cxx
+  cmExportInstallPkgConfigGenerator.h
+  cmExportInstallPkgConfigGenerator.cxx
   cmExportTryCompileFileGenerator.h
   cmExportTryCompileFileGenerator.cxx
   cmExportSet.h
   cmExportSet.cxx
   cmExportUtility.h
   cmExportUtility.cxx
+  cmExportUtility_PkgConfig.cxx
   cmExternalMakefileProjectGenerator.cxx
   cmExternalMakefileProjectGenerator.h
   cmExtraCodeBlocksGenerator.cxx

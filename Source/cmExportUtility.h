@@ -6,6 +6,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <vector>
 
 #include "cmStateTypes.h"
 
@@ -26,6 +27,9 @@ struct NamespacedTarget
 cmStateEnums::TargetType GetExportTargetType(
   cmTargetExport const& targetExport);
 
+std::string CompileFeatureToCompileFlag(cmGeneratorTarget const& target,
+                                        std::string const& compileFeature);
+
 #ifndef CMAKE_BOOTSTRAP
 enum class GenerateType
 {
@@ -38,6 +42,18 @@ void GenerateInterfaceProperties(cmGeneratorTarget const& target,
                                  std::ostream& os,
                                  const PropertyMap& properties,
                                  GenerateType type, std::string const& config);
+}
+
+namespace PkgConfig {
+void GenerateExportMetadata(std::ostream& os, cmGeneratorTarget const& target);
+bool GenerateInterfaceProperties(std::ostream& os,
+                                 cmGeneratorTarget const& target,
+                                 GenerateType type, std::string const& config);
+std::vector<std::string> RemoveImplicitEntries(
+  cmGeneratorTarget const& target, std::string const& entryName,
+  std::vector<std::string> const& entries);
+
+void ReplaceImportPrefix(std::string& input);
 }
 #endif
 
