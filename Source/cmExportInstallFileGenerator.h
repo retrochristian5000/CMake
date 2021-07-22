@@ -6,7 +6,6 @@
 
 #include <iosfwd>
 #include <map>
-#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -17,7 +16,6 @@
 class cmGeneratorTarget;
 class cmGlobalGenerator;
 class cmInstallExportGenerator;
-class cmInstallTargetGenerator;
 class cmTargetExport;
 
 /** \class cmExportInstallFileGenerator
@@ -37,9 +35,9 @@ class cmTargetExport;
 class cmExportInstallFileGenerator : public cmExportFileGenerator
 {
 public:
-  /** Construct with the export installer that will install the
-      files.  */
-  cmExportInstallFileGenerator(cmInstallExportGenerator* iegen);
+  using Base = cmExportFileGenerator;
+
+  cmExportInstallFileGenerator(cmInstallExportGenerator* ieGen);
 
   /** Get the per-config file generated for each configuration.  This
       maps from the configuration name to the file temporary location
@@ -49,55 +47,56 @@ public:
     return this->ConfigImportFiles;
   }
 
+  void SetImportFileForConfig(const std::string& config,
+                              const std::string& fileName);
+
   /** Compute the globbing expression used to load per-config import
       files from the main file.  */
-  std::string GetConfigImportFileGlob();
+  virtual std::string GetConfigImportFileGlob() const;
+  struct VariableExpansionSettings
+  {
+    bool Required;
+    bool AtOnly;
+  };
+  virtual VariableExpansionSettings GeneratedFilesRequireVariableExpansion()
+    const = 0;
+
+  bool GenerateMainFile(std::ostream& os) final;
 
 protected:
-  // Implement virtual methods from the superclass.
-  bool GenerateMainFile(std::ostream& os) override;
-  void GenerateImportTargetsConfig(
-    std::ostream& os, const std::string& config, std::string const& suffix,
-    std::vector<std::string>& missingTargets) override;
-  cmStateEnums::TargetType GetExportTargetType(
-    cmTargetExport const* targetExport) const;
+  struct InstallContext : public Context
+  {
+    std::vector<cmTargetExport const*> TargetExports;
+    std::string Config;
+  };
+
+  InstallContext* MakeAndSetupContext(Context* preCreated) const override;
+
+  // new virtual methods
+  virtual bool GenerateImportHeaderCode(std::ostream& os,
+                                        InstallContext& ctx) = 0;
+  virtual bool GenerateImportFooterCode(std::ostream& os,
+                                        InstallContext& ctx) = 0;
+
+  virtual bool GenerateTargetExportCode(std::ostream& os, InstallContext& ctx,
+                                        cmTargetExport const& target,
+                                        cmStateEnums::TargetType targetType);
+
+  std::string InstallNameDir(const cmGeneratorTarget* target,
+                             const std::string& config) override;
+
   void HandleMissingTarget(std::string& link_libs,
                            std::vector<std::string>& missingTargets,
                            cmGeneratorTarget const* depender,
-                           cmGeneratorTarget* dependee) override;
-
-  void ReplaceInstallPrefix(std::string& input) override;
-
-  void ComplainAboutMissingTarget(cmGeneratorTarget const* depender,
-                                  cmGeneratorTarget const* dependee,
-                                  std::vector<std::string> const& exportFiles);
+                           cmGeneratorTarget const* dependee) const override;
 
   std::pair<std::vector<std::string>, std::string> FindNamespaces(
-    cmGlobalGenerator* gg, const std::string& name);
-
-  /** Generate the relative import prefix.  */
-  virtual void GenerateImportPrefix(std::ostream&);
-
-  /** Generate the relative import prefix.  */
-  virtual void LoadConfigFiles(std::ostream&);
-
-  virtual void CleanupTemporaryVariables(std::ostream&);
-
-  /** Generate a per-configuration file for the targets.  */
-  virtual bool GenerateImportFileConfig(
-    const std::string& config, std::vector<std::string>& missingTargets);
-
-  /** Fill in properties indicating installed file locations.  */
-  void SetImportLocationProperty(const std::string& config,
-                                 std::string const& suffix,
-                                 cmInstallTargetGenerator* itgen,
-                                 ImportPropertyMap& properties,
-                                 std::set<std::string>& importedLocations);
-
-  std::string InstallNameDir(cmGeneratorTarget const* target,
-                             const std::string& config) override;
+    cmGlobalGenerator* gg, const std::string& name) const;
 
   cmInstallExportGenerator* IEGen;
+
+private:
+  void InvocationSyntax(std::ostream& os) const override;
 
   // The import file generated for each configuration.
   std::map<std::string, std::string> ConfigImportFiles;
