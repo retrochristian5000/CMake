@@ -282,7 +282,7 @@ function(_pkg_find_libs _prefix _no_cmake_path _no_cmake_environment_path)
 endfunction()
 
 # create an imported target from all the information returned by pkg-config
-function(_pkg_create_imp_target _prefix _imp_target_global)
+function(_pkg_create_imp_target _prefix _imp_target_global _pkg_id)
   if (NOT TARGET PkgConfig::${_prefix})
     if(${_imp_target_global})
       set(_global_opt "GLOBAL")
@@ -307,15 +307,19 @@ function(_pkg_create_imp_target _prefix _imp_target_global)
       set_property(TARGET PkgConfig::${_prefix} PROPERTY
                    INTERFACE_COMPILE_OPTIONS "${${_prefix}_CFLAGS_OTHER}")
     endif()
+    if(_pkg_id)
+      set_property(TARGET PkgConfig::${_prefix} PROPERTY
+                   PKG_CONFIG_NAME "${_pkg_id}")
+    endif()
   endif()
 endfunction()
 
 # recalculate the dynamic output
 # this is a macro and not a function so the result of _pkg_find_libs is automatically propagated
-macro(_pkg_recalculate _prefix _no_cmake_path _no_cmake_environment_path _imp_target _imp_target_global)
+macro(_pkg_recalculate _prefix _no_cmake_path _no_cmake_environment_path _imp_target _imp_target_global _pkg_id)
   _pkg_find_libs(${_prefix} ${_no_cmake_path} ${_no_cmake_environment_path})
   if(${_imp_target})
-    _pkg_create_imp_target(${_prefix} ${_imp_target_global})
+    _pkg_create_imp_target(${_prefix} ${_imp_target_global} "${_pkg_id}")
   endif()
 endmacro()
 
@@ -555,11 +559,12 @@ macro(_pkg_check_modules_internal _is_required _is_silent _no_cmake_path _no_cma
       # * --exists <pkg-name>
       list(APPEND _pkg_check_modules_exist_query --print-errors --short-errors)
       if (_pkg_check_modules_pkg_op)
-        list(APPEND _pkg_check_modules_exist_query "${_pkg_check_modules_pkg_name} ${_pkg_check_modules_pkg_op} ${_pkg_check_modules_pkg_ver}")
+        set(_pkg_check_package_id "${_pkg_check_modules_pkg_name} ${_pkg_check_modules_pkg_op} ${_pkg_check_modules_pkg_ver}")
       else()
         list(APPEND _pkg_check_modules_exist_query --exists)
-        list(APPEND _pkg_check_modules_exist_query "${_pkg_check_modules_pkg_name}")
+        set(_pkg_check_package_id "${_pkg_check_modules_pkg_name}")
       endif()
+      list(APPEND _pkg_check_modules_exist_query "${_pkg_check_package_id}")
 
       # execute the query
       execute_process(
@@ -631,7 +636,8 @@ macro(_pkg_check_modules_internal _is_required _is_silent _no_cmake_path _no_cma
         _pkgconfig_extract_isystem("${_prefix}")
       endif ()
 
-      _pkg_recalculate("${_prefix}" ${_no_cmake_path} ${_no_cmake_environment_path} ${_imp_target} ${_imp_target_global})
+      _pkg_recalculate("${_prefix}" ${_no_cmake_path} ${_no_cmake_environment_path} ${_imp_target}
+                       ${_imp_target_global} ${_pkg_check_package_id})
     endif()
 
     _pkg_restore_path_internal()
@@ -811,7 +817,7 @@ macro(pkg_check_modules _prefix _module0)
     endif()
   else()
     if (${_prefix}_FOUND)
-      _pkg_recalculate("${_prefix}" ${_no_cmake_path} ${_no_cmake_environment_path} ${_imp_target} ${_imp_target_global})
+      _pkg_recalculate("${_prefix}" ${_no_cmake_path} ${_no_cmake_environment_path} ${_imp_target} ${_imp_target_global} "${_module0}")
     endif()
   endif()
 endmacro()
@@ -874,7 +880,7 @@ macro(pkg_search_module _prefix _module0)
 
     _pkgconfig_set(__pkg_config_checked_${_prefix} ${PKG_CONFIG_VERSION})
   elseif (${_prefix}_FOUND)
-    _pkg_recalculate("${_prefix}" ${_no_cmake_path} ${_no_cmake_environment_path} ${_imp_target} ${_imp_target_global})
+    _pkg_recalculate("${_prefix}" ${_no_cmake_path} ${_no_cmake_environment_path} ${_imp_target} ${_imp_target_global} "${_pkg_alt}")
   endif()
 endmacro()
 
