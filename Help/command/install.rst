@@ -832,6 +832,18 @@ may load this file with the include command and reference the ``myexe``
 executable from the installation tree using the imported target name
 ``mp_myexe`` as if the target were built in its own tree.
 
+.. versionadded:: 3.22
+  Some basic functionality to export to the pkg-config format is available:
+
+.. code-block:: cmake
+
+  install(TARGETS mylib EXPORT myproj DESTINATION bin)
+  install(EXPORT myproj PKG_CONFIG NAMESPACE mp_ DESTINATION lib/pkgconfig)
+
+This mode currently implies a limitation, which might be lifted in the future,
+that the export may not contain more than a single target.
+
+
 .. note::
   This command supersedes the :command:`install_targets` command and
   the :prop_tgt:`PRE_INSTALL_SCRIPT` and :prop_tgt:`POST_INSTALL_SCRIPT`
