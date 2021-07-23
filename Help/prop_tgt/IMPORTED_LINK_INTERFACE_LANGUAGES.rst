@@ -12,3 +12,8 @@ runtime dependencies of the static library.
 
 This property is ignored for targets that are not ``STATIC`` libraries.
 This property is ignored for non-imported targets.
+
+If the static library is linked by a target and the languages named
+by this property are not enabled, some of the languages may be enabled
+externally by CMake to load their implicit link information.
+See policy :policy:`CMP0127`.

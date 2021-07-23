@@ -49,6 +49,7 @@ public:
   {
     Normal,
     TryCompile,
+    ExternalLanguage,
   };
 
   cmState(Mode mode, ProjectKind projectKind = ProjectKind::Normal);
