@@ -6533,7 +6533,14 @@ void cmGeneratorTarget::ComputeLinkInterface(
     // Targets using this archive need its language runtime libraries.
     if (cmLinkImplementation const* impl =
           this->GetLinkImplementation(config, secondPass)) {
-      iface.Languages = impl->Languages;
+      // Implementation languages whose runtime libraries need to
+      // be explicitly linked by dependents become interface languages.
+      for (std::string const& lang : impl->Languages) {
+        if (!this->Makefile->IsOn(
+              cmStrCat("CMAKE_", lang, "_OBJECTS_LINK_LANGUAGE_RUNTIME"))) {
+          iface.Languages.emplace_back(lang);
+        }
+      }
     }
   }
 

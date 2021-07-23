@@ -42,3 +42,5 @@ if(NOT CMAKE_GENERATOR MATCHES "Visual Studio")
   set(CMAKE_Fortran_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_SingleThreadedDebug            -libs:static -dbglibs)
   set(CMAKE_Fortran_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_SingleThreadedDebugDLL         -libs:dll    -dbglibs)
 endif()
+
+set(CMAKE_Fortran_OBJECTS_LINK_LANGUAGE_RUNTIME 1)

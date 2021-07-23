@@ -6,3 +6,5 @@ set(CMAKE_Fortran_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreaded         -Xc
 set(CMAKE_Fortran_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreadedDLL      -Xclang --dependent-lib=msvcrt)
 set(CMAKE_Fortran_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreadedDebug    -Xclang --dependent-lib=libcmtd)
 set(CMAKE_Fortran_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreadedDebugDLL -Xclang --dependent-lib=msvcrtd)
+
+set(CMAKE_Fortran_OBJECTS_LINK_LANGUAGE_RUNTIME 1)
