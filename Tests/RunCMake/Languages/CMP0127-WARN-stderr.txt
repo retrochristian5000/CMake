@@ -1,0 +1,16 @@
+^CMake Warning \(dev\) at CMP0127-Common.cmake:[0-9]+ \(add_executable\):
+  Policy CMP0127 is not set: Fortran enabled externally when needed for
+  implicit link information.  Run "cmake --help-policy CMP0127" for policy
+  details.  Use the cmake_policy command to set the policy and suppress this
+  warning.
+
+  Fortran is not enabled, but it is required by target "main1" to link to:
+
+    NeedsFortran
+
+  For compatibility with older versions of CMake, generation will proceed
+  without it.
+Call Stack \(most recent call first\):
+  CMP0127-WARN.cmake:[0-9]+ \(include\)
+  CMakeLists.txt:[0-9]+ \(include\)
+This warning is for project developers.  Use -Wno-dev to suppress it.$

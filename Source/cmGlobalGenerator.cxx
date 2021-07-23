@@ -920,6 +920,106 @@ void cmGlobalGenerator::EnableLanguage(
   }
 }
 
+class cmGlobalGenerator::ExternalLanguage
+{
+  cmake CM;
+
+public:
+  ExternalLanguage()
+    : CM(cmake::RoleProject, cmState::Project,
+         cmState::ProjectKind::ExternalLanguage)
+  {
+  }
+  cmake& GetCMake() { return this->CM; }
+  cmMakefile* GetMakefile() const
+  {
+    return this->CM.GetGlobalGenerator()->GetMakefiles()[0].get();
+  }
+};
+
+cmMakefile* cmGlobalGenerator::GetExternalLanguage(std::string const& lang)
+{
+  auto i = this->ExternalLanguages.find(lang);
+  if (i == this->ExternalLanguages.end()) {
+    i =
+      this->ExternalLanguages.emplace(lang, this->EnableExternalLanguage(lang))
+        .first;
+  }
+  if (std::unique_ptr<ExternalLanguage> const& el = i->second) {
+    return el->GetMakefile();
+  }
+  return nullptr;
+}
+
+std::unique_ptr<cmGlobalGenerator::ExternalLanguage>
+cmGlobalGenerator::EnableExternalLanguage(std::string const& lang)
+{
+  assert(!this->Makefiles.empty());
+  cmMakefile* mf = this->Makefiles[0].get();
+  mf->DisplayStatus(
+    cmStrCat("Loading ", lang, " support for an external dependency"), -1);
+
+  std::string externalDir =
+    cmStrCat(this->CMakeInstance->GetHomeOutputDirectory(), "/CMakeFiles/",
+             cmVersion::GetCMakeVersion(), "/External", lang);
+  cmSystemTools::MakeDirectory(externalDir);
+  std::string externalCMakeLists = cmStrCat(externalDir, "/CMakeLists.txt");
+  {
+    cmGeneratedFileStream fout(externalCMakeLists);
+    fout << "cmake_minimum_required(VERSION " << cmVersion::GetMajorVersion()
+         << "." << cmVersion::GetMinorVersion() << "."
+         << cmVersion::GetPatchVersion() << "." << cmVersion::GetTweakVersion()
+         << ")\n";
+    fout << "project(External" << lang << " LANGUAGES " << lang << ")\n";
+  }
+
+  auto el = cm::make_unique<ExternalLanguage>();
+  cmake& cm = el->GetCMake();
+  cm.SetProgressCallback([this](std::string const& msg, float prog) {
+    // Indent messages.  Skip progress updates.
+    if (prog < 0) {
+      this->GetCMakeInstance()->UpdateProgress(cmStrCat("  ", msg), prog);
+    }
+  });
+  auto gg = cm.CreateGlobalGenerator(this->GetName());
+  if (!gg) {
+    this->GetCMakeInstance()->IssueMessage(
+      MessageType::FATAL_ERROR,
+      cmStrCat("Could not create generator:\n ", this->GetName(),
+               "\nfor external language ", lang, "."));
+    return {};
+  }
+  gg->RecursionDepth = this->RecursionDepth;
+  cm.SetGlobalGenerator(std::move(gg));
+  cm.SetHomeDirectory(externalDir);
+  cm.SetHomeOutputDirectory(externalDir);
+  cm.SetGeneratorInstance(mf->GetSafeDefinition("CMAKE_GENERATOR_INSTANCE"));
+  cm.SetGeneratorPlatform(mf->GetSafeDefinition("CMAKE_GENERATOR_PLATFORM"));
+  cm.SetGeneratorToolset(mf->GetSafeDefinition("CMAKE_GENERATOR_TOOLSET"));
+  cm.LoadCache();
+  if (cmProp toolchainFile = mf->GetDefinition("CMAKE_TOOLCHAIN_FILE")) {
+    cm.AddCacheEntry("CMAKE_TOOLCHAIN_FILE", toolchainFile->c_str(),
+                     "The CMake toolchain file", cmStateEnums::FILEPATH);
+  }
+  if (this->UseExplicitTools()) {
+    if (cmProp toolchainFile = mf->GetDefinition("CMAKE_MAKE_PROGRAM")) {
+      cm.AddCacheEntry("CMAKE_MAKE_PROGRAM", toolchainFile->c_str(),
+                       "Program used to build", cmStateEnums::FILEPATH);
+    }
+    std::string compilerVar = cmStrCat("CMAKE_", lang, "_COMPILER");
+    if (cmProp compiler = mf->GetDefinition(compilerVar)) {
+      cm.AddCacheEntry(compilerVar, compiler->c_str(),
+                       cmStrCat(lang, " compiler").c_str(),
+                       cmStateEnums::STRING);
+    }
+  }
+  if (cm.Configure() != 0) {
+    return {};
+  }
+
+  return el;
+}
+
 void cmGlobalGenerator::PrintCompilerAdvice(std::ostream& os,
                                             std::string const& lang,
                                             const char* envVar) const
@@ -1277,7 +1377,9 @@ void cmGlobalGenerator::Configure()
                                           "number of local generators",
                                           cmStateEnums::INTERNAL);
 
-  if (this->CMakeInstance->GetWorkingMode() == cmake::NORMAL_MODE) {
+  if (this->CMakeInstance->GetWorkingMode() == cmake::NORMAL_MODE &&
+      this->CMakeInstance->GetState()->GetProjectKind() !=
+        cmState::ProjectKind::ExternalLanguage) {
     std::ostringstream msg;
     if (cmSystemTools::GetErrorOccuredFlag()) {
       msg << "Configuring incomplete, errors occurred!";
@@ -1342,6 +1444,11 @@ void cmGlobalGenerator::AddCMP0042WarnTarget(const std::string& target)
 void cmGlobalGenerator::AddCMP0068WarnTarget(const std::string& target)
 {
   this->CMP0068WarnTargets.insert(target);
+}
+
+bool cmGlobalGenerator::NeedCMP0127Warning(std::string const& lang)
+{
+  return this->CMP0127Warning.emplace(lang).second;
 }
 
 bool cmGlobalGenerator::CheckALLOW_DUPLICATE_CUSTOM_TARGETS() const
@@ -1833,6 +1940,8 @@ void cmGlobalGenerator::ClearGeneratorMembers()
   this->DirectoryContentMap.clear();
   this->BinaryDirectories.clear();
   this->GeneratedFiles.clear();
+  this->ExternalLanguages.clear();
+  this->CMP0127Warning.clear();
 }
 
 void cmGlobalGenerator::ComputeTargetObjectDirectory(
