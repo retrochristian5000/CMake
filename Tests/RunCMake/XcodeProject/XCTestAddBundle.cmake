@@ -1,9 +1,15 @@
-enable_language(Swift)
+project (testapp VERSION 1.0 LANGUAGES Swift)
+
+set(CMAKE_Swift_LANGUAGE_VERSION 5)
+set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED NO)
+set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "")
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+
 find_package(XCTest REQUIRED)
 
-add_executable(TestedApp MACOSX_BUNDLE EXCLUDE_FROM_ALL foo.swift)
+add_executable(TestedApp MACOSX_BUNDLE dummy_main.swift)
 
-xctest_add_bundle(TestingAppBundle TestedApp foo.swift)
+xctest_add_bundle(TestingAppBundle TestedApp dummy_main.swift)
 
 get_target_property(_lib_output_dir TestingAppBundle LIBRARY_OUTPUT_DIRECTORY)
 
