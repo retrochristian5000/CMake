@@ -8,4 +8,7 @@ will be collected by the :command:`ctest_test` command. Defaults to 1024
 If a test's output contains the literal string "CTEST_FULL_OUTPUT",
 the output will not be truncated and may exceed the maximum size.
 
+For controlling the output collection of failing tests, see
+:variable:`CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE`.
+
 .. include:: CTEST_CUSTOM_XXX.txt
