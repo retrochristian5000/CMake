@@ -12,6 +12,8 @@ run_cmake(NotAFeature_OriginDebugCommand)
 run_cmake(generate_feature_list)
 include("${RunCMake_BINARY_DIR}/generate_feature_list-build/C_info.cmake")
 include("${RunCMake_BINARY_DIR}/generate_feature_list-build/CXX_info.cmake")
+file(READ "${RunCMake_BINARY_DIR}/generate_feature_list-build/CXX_info.cmake" cxx_info)
+message("CXX info:\n${cxx_info}")
 
 if (NOT C_FEATURES)
   run_cmake(NoSupportedCFeatures)
