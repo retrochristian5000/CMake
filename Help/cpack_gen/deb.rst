@@ -278,6 +278,7 @@ List of CPack DEB generator specific variables:
  - xz
  - bzip2
  - gzip
+ - zstd
 
 .. variable:: CPACK_DEBIAN_PACKAGE_PRIORITY
               CPACK_DEBIAN_<COMPONENT>_PACKAGE_PRIORITY
