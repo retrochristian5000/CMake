@@ -123,6 +123,7 @@ struct StanardLevelComputer
       return option_flag;
     }
 
+    std::printf("standardProp=%s defaultStd=%s ext=%s defaultExt=%s\n", standardProp->c_str(), defaultStd->c_str(), ext ? "true" : "false", defaultExt ? "true" : "false");
     // If the request matches the compiler's defaults we don't need to add
     // anything.
     if (*standardProp == *defaultStd && ext == defaultExt) {
