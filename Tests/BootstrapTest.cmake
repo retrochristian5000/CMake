@@ -7,6 +7,7 @@ endif()
 if(NOT nproc EQUAL 0)
   set(parallel_arg --parallel=${nproc})
 endif()
+message(STATUS "CTEST_FULL_OUTPUT") # avoid truncation
 message(STATUS "running bootstrap: ${bootstrap} ${ninja_arg} ${parallel_arg}")
 execute_process(
   COMMAND ${bootstrap} ${ninja_arg} ${parallel_arg}
