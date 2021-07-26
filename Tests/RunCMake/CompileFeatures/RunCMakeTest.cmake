@@ -13,6 +13,12 @@ run_cmake(generate_feature_list)
 include("${RunCMake_BINARY_DIR}/generate_feature_list-build/C_info.cmake")
 include("${RunCMake_BINARY_DIR}/generate_feature_list-build/CXX_info.cmake")
 
+message(STATUS "CTEST_FULL_OUTPUT") # avoid truncation
+file(READ "${RunCMake_BINARY_DIR}/generate_feature_list-build/C_info.cmake" c_info)
+file(READ "${RunCMake_BINARY_DIR}/generate_feature_list-build/CXX_info.cmake" cxx_info)
+message("C info:\n${c_info}\n")
+message("CXX info:\n${cxx_info}\n")
+
 if (NOT C_FEATURES)
   run_cmake(NoSupportedCFeatures)
   run_cmake(NoSupportedCFeaturesGenex)
