@@ -195,6 +195,11 @@ public:
   virtual void EnableLanguage(std::vector<std::string> const& languages,
                               cmMakefile*, bool optional);
 
+  /** Enable a language in an external tree without affecting the
+      project's state.  Returns a disjoint cmMakefile that can be
+      queried for language information variables.  */
+  cmMakefile* GetExternalLanguage(std::string const& lang);
+
   /**
    * Resolve the CMAKE_<lang>_COMPILER setting for the given language.
    * Intended to be called from EnableLanguage.
@@ -445,6 +450,10 @@ public:
 
   virtual bool IsNinja() const { return false; }
 
+  /** Return true if this generator accepts explicit specification of
+      CMAKE_MAKE_PROGRAM, CMAKE_<LANG>_COMPILER, etc.  */
+  virtual bool UseExplicitTools() const { return true; }
+
   /** Return true if we know the exact location of object files.
       If false, store the reason in the given string.
       This is meaningful only after EnableLanguage has been called.  */
@@ -497,6 +506,7 @@ public:
     const std::string& filename) const;
   void AddCMP0042WarnTarget(const std::string& target);
   void AddCMP0068WarnTarget(const std::string& target);
+  bool NeedCMP0127Warning(std::string const& lang);
 
   virtual void ComputeTargetObjectDirectory(cmGeneratorTarget* gt) const;
 
@@ -671,6 +681,12 @@ private:
   std::map<std::string, int> LanguageToLinkerPreference;
   std::map<std::string, std::string> LanguageToOriginalSharedLibFlags;
 
+  class ExternalLanguage;
+  std::unique_ptr<ExternalLanguage> EnableExternalLanguage(
+    std::string const& lang);
+
+  std::map<std::string, std::unique_ptr<ExternalLanguage>> ExternalLanguages;
+
   // Deferral id generation.
   size_t NextDeferId = 0;
 
@@ -745,6 +761,8 @@ private:
   std::set<std::string> CMP0042WarnTargets;
   // track targets to issue CMP0068 warning for.
   std::set<std::string> CMP0068WarnTargets;
+
+  std::set<std::string> CMP0127Warning;
 
   mutable std::map<cmSourceFile*, std::set<cmGeneratorTarget const*>>
     FilenameTargetDepends;

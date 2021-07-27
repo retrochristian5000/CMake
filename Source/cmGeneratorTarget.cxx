@@ -2528,10 +2528,10 @@ const std::string* cmGeneratorTarget::GetExportMacro() const
 class cmTargetCollectLinkLanguages
 {
 public:
-  cmTargetCollectLinkLanguages(cmGeneratorTarget const* target,
-                               std::string config,
-                               std::unordered_set<std::string>& languages,
-                               cmGeneratorTarget const* head, bool secondPass)
+  cmTargetCollectLinkLanguages(
+    cmGeneratorTarget const* target, std::string config,
+    cmGeneratorTarget::LinkClosure::LanguageMap& languages,
+    cmGeneratorTarget const* head, bool secondPass)
     : Config(std::move(config))
     , Languages(languages)
     , HeadTarget(head)
@@ -2588,7 +2588,7 @@ public:
     }
 
     for (std::string const& language : iface->Languages) {
-      this->Languages.insert(language);
+      this->Languages[language].emplace_back(item.Target);
     }
 
     for (cmLinkItem const& lib : iface->Libraries) {
@@ -2603,7 +2603,7 @@ public:
 
 private:
   std::string Config;
-  std::unordered_set<std::string>& Languages;
+  cmGeneratorTarget::LinkClosure::LanguageMap& Languages;
   cmGeneratorTarget const* HeadTarget;
   const cmGeneratorTarget* Target;
   std::set<cmGeneratorTarget const*> Visited;
@@ -2683,11 +2683,13 @@ bool cmGeneratorTarget::ComputeLinkClosure(const std::string& config,
                                            bool secondPass) const
 {
   // Get languages built in this target.
-  std::unordered_set<std::string> languages;
+  LinkClosure::LanguageMap languages;
   cmLinkImplementation const* impl =
     this->GetLinkImplementation(config, secondPass);
   assert(impl);
-  languages.insert(impl->Languages.cbegin(), impl->Languages.cend());
+  for (std::string const& lang : impl->Languages) {
+    languages.emplace(lang, std::vector<cmGeneratorTarget const*>());
+  }
 
   // Add interface languages from linked targets.
   // cmTargetCollectLinkLanguages cll(this, config, languages, this,
@@ -2698,7 +2700,9 @@ bool cmGeneratorTarget::ComputeLinkClosure(const std::string& config,
   }
 
   // Store the transitive closure of languages.
-  cm::append(lc.Languages, languages);
+  for (auto const& p : languages) {
+    cm::append(lc.Languages[p.first], p.second);
+  }
 
   // Choose the language whose linker should be used.
   if (secondPass || lc.LinkerLanguage.empty()) {
@@ -2711,7 +2715,8 @@ bool cmGeneratorTarget::ComputeLinkClosure(const std::string& config,
     }
 
     // Now consider languages that propagate from linked targets.
-    for (std::string const& lang : languages) {
+    for (auto const& p : languages) {
+      std::string const& lang = p.first;
       std::string propagates =
         "CMAKE_" + lang + "_LINKER_PREFERENCE_PROPAGATES";
       if (this->Makefile->IsOn(propagates)) {
@@ -6524,11 +6529,18 @@ void cmGeneratorTarget::ComputeLinkInterface(
     iface.WrongConfigLibraries = impl->WrongConfigLibraries;
   }
 
-  if (this->LinkLanguagePropagatesToDependents()) {
+  if (this->GetType() == cmStateEnums::STATIC_LIBRARY) {
     // Targets using this archive need its language runtime libraries.
     if (cmLinkImplementation const* impl =
           this->GetLinkImplementation(config, secondPass)) {
-      iface.Languages = impl->Languages;
+      // Implementation languages whose runtime libraries need to
+      // be explicitly linked by dependents become interface languages.
+      for (std::string const& lang : impl->Languages) {
+        if (!this->Makefile->IsOn(
+              cmStrCat("CMAKE_", lang, "_OBJECTS_LINK_LANGUAGE_RUNTIME"))) {
+          iface.Languages.emplace_back(lang);
+        }
+      }
     }
   }
 
@@ -7246,7 +7258,7 @@ void cmGeneratorTarget::ComputeImportInfo(std::string const& desired_config,
   }
 
   // Get the link languages.
-  if (this->LinkLanguagePropagatesToDependents()) {
+  if (this->GetType() == cmStateEnums::STATIC_LIBRARY) {
     std::string linkProp =
       cmStrCat("IMPORTED_LINK_INTERFACE_LANGUAGES", suffix);
     if (cmProp config_libs = this->GetProperty(linkProp)) {

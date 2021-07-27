@@ -152,6 +152,8 @@ public:
 
   bool IsVisualStudio() const override { return true; }
 
+  bool UseExplicitTools() const override { return false; }
+
 protected:
   cmGlobalVisualStudioGenerator(cmake* cm,
                                 std::string const& platformInGeneratorName);

@@ -414,6 +414,7 @@ if(BUILD_TESTING)
   endif()
   if(CMAKE_Fortran_COMPILER)
     ADD_TEST_MACRO(FortranOnly FortranOnly)
+    ADD_TEST_MACRO(FortranExternal Consume-build/FortranExternal)
   endif()
   # test Visual Studio GNU Fortran mixing with cmake_add_fortran_subdirectory
   # run this project if we have a working fortran compiler or

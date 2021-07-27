@@ -1,0 +1,36 @@
+CMP0127
+-------
+
+.. versionadded:: 3.22
+
+Fortran enabled externally when needed for implicit link information.
+
+An imported static library target may list ``Fortran`` in its
+:prop_tgt:`IMPORTED_LINK_INTERFACE_LANGUAGES` target property when
+the language runtime libraries need to be linked with the library.
+Linking requires Fortran implicit link information to be available:
+
+* :variable:`CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES <CMAKE_<LANG>_IMPLICIT_LINK_LIBRARIES>`
+* :variable:`CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES <CMAKE_<LANG>_IMPLICIT_LINK_DIRECTORIES>`
+
+These variables are set automatically when ``Fortran`` is enabled by
+the :command:`project` or :command:`enable_language` commands.
+
+CMake 3.21 and below silently leave out implicit link libraries if the
+above variables are not set.  This can cause link errors when a static
+library is linked by a binary because the language runtime libraries are
+not available.  CMake 3.22 and above prefer to enable Fortran in an
+external test project in order to extract implicit link information,
+thus requiring the Fortran compiler to be available.  This policy
+provides compatibility with projects that have not been updated to
+expect this.
+
+The ``OLD`` behavior for this policy is to leave out Fortran implicit link
+information if it is not available.  The ``NEW`` behavior for this policy
+is to load implicit link information by enabling the language externally.
+
+This policy was introduced in CMake version 3.22.  CMake version |release|
+warns when the policy is not set and uses ``OLD`` behavior.  Use the
+:command:`cmake_policy` command to set it to ``OLD`` or ``NEW`` explicitly.
+
+.. include:: DEPRECATED.txt

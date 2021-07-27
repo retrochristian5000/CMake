@@ -286,7 +286,10 @@ add_RunCMake_test(GNUInstallDirs -DSYSTEM_NAME=${CMAKE_SYSTEM_NAME})
 add_RunCMake_test(GoogleTest) # Note: does not actually depend on Google Test
 add_RunCMake_test(Graphviz)
 add_RunCMake_test(TargetPropertyGeneratorExpressions)
-add_RunCMake_test(Languages)
+add_RunCMake_test(Languages
+  -DCMAKE_C_COMPILER_ID=${CMAKE_C_COMPILER_ID}
+  -DCMAKE_C_SIMULATE_ID=${CMAKE_C_SIMULATE_ID}
+  )
 add_RunCMake_test(LinkStatic)
 if(CMAKE_CXX_COMPILER_ID MATCHES "^(Cray|PGI|NVHPC|XL|XLClang|Fujitsu|FujitsuClang)$")
   add_RunCMake_test(MetaCompileFeatures)

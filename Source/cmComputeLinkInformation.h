@@ -205,7 +205,9 @@ private:
   // Implicit link libraries and directories for linker language.
   void LoadImplicitLinkInfo();
   void AddImplicitLinkInfo();
-  void AddImplicitLinkInfo(std::string const& lang);
+  void AddImplicitLinkInfo(
+    std::string const& lang,
+    std::vector<cmGeneratorTarget const*> const& neededBy);
   void AddRuntimeLinkLibrary(std::string const& lang);
   std::set<std::string> ImplicitLinkDirs;
   std::set<std::string> ImplicitLinkLibs;
