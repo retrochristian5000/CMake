@@ -67,6 +67,8 @@ protected:
 
   bool InstallSymlinkChain(std::string& fromFile, std::string& toFile);
   bool InstallSymlink(const std::string& fromFile, const std::string& toFile);
+  bool InstallAsSymlink(const std::string& fromFile,
+                        const std::string& toFile);
   bool InstallFile(const std::string& fromFile, const std::string& toFile,
                    MatchProperties match_properties);
   bool InstallDirectory(const std::string& source,

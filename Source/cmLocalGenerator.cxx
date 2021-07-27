@@ -507,6 +507,14 @@ void cmLocalGenerator::GenerateInstallRules()
        << "\"${CMAKE_INSTALL_PREFIX}\")\n\n";
   /* clang-format on */
 
+  const char* cis =
+    this->Makefile->IsOn("CMAKE_INSTALL_SYMLINKS") ? "ON" : "OFF";
+  fout << "# Set the installation behavior (copy/symlink)" << std::endl
+       << "if(NOT DEFINED CMAKE_INSTALL_SYMLINKS)" << std::endl
+       << "  set(CMAKE_INSTALL_SYMLINKS \"" << cis << "\")" << std::endl
+       << "endif()" << std::endl
+       << std::endl;
+
   // Write support code for generating per-configuration install rules.
   /* clang-format off */
   fout <<

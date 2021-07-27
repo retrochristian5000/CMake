@@ -476,12 +476,21 @@ bool cmFileCopier::Install(const std::string& fromFile,
   if (cmSystemTools::FileIsSymlink(newFromFile)) {
     return this->InstallSymlink(newFromFile, newToFile);
   }
+
   if (cmSystemTools::FileIsDirectory(newFromFile)) {
     return this->InstallDirectory(newFromFile, newToFile, match_properties);
   }
-  if (cmSystemTools::FileExists(newFromFile)) {
-    return this->InstallFile(newFromFile, newToFile, match_properties);
+
+  if (this->Makefile->IsDefinitionSet("CMAKE_INSTALL_SYMLINKS")) {
+    if (cmSystemTools::FileExists(newFromFile)) {
+      return this->InstallAsSymlink(newFromFile, newToFile);
+    }
+  } else {
+    if (cmSystemTools::FileExists(newFromFile)) {
+      return this->InstallFile(newFromFile, newToFile, match_properties);
+    }
   }
+
   return this->ReportMissing(newFromFile);
 }
 
@@ -570,6 +579,45 @@ bool cmFileCopier::InstallSymlink(const std::string& fromFile,
     if (!cmSystemTools::CreateSymlink(symlinkTarget, toFile)) {
       std::ostringstream e;
       e << this->Name << " cannot duplicate symlink \"" << fromFile
+        << "\" at \"" << toFile
+        << "\": " << cmSystemTools::GetLastSystemError() << ".";
+      this->Status.SetError(e.str());
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool cmFileCopier::InstallAsSymlink(const std::string& fromFile,
+                                    const std::string& toFile)
+{
+  // Compare the symlink value to that at the destination if not
+  // always installing.
+  bool copy = true;
+  if (!this->Always) {
+    std::string oldSymlinkTarget;
+    if (cmSystemTools::ReadSymlink(toFile, oldSymlinkTarget)) {
+      if (fromFile == oldSymlinkTarget) {
+        copy = false;
+      }
+    }
+  }
+
+  // Inform the user about this file installation.
+  this->ReportCopy(toFile, TypeLink, copy);
+
+  if (copy) {
+    // Remove the destination file so we can always create the symlink.
+    cmSystemTools::RemoveFile(toFile);
+
+    // Create destination directory if it doesn't exist
+    cmSystemTools::MakeDirectory(cmSystemTools::GetFilenamePath(toFile));
+
+    // Create the symlink.
+    if (!cmSystemTools::CreateSymlink(fromFile, toFile)) {
+      std::ostringstream e;
+      e << this->Name << " cannot create symlink to \"" << fromFile
         << "\" at \"" << toFile
         << "\": " << cmSystemTools::GetLastSystemError() << ".";
       this->Status.SetError(e.str());
