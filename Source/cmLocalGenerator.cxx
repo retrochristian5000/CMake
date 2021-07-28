@@ -507,6 +507,16 @@ void cmLocalGenerator::GenerateInstallRules()
        << "\"${CMAKE_INSTALL_PREFIX}\")\n\n";
   /* clang-format on */
 
+  /* clang-format off */
+  if (cmProp install_mode =
+        this->Makefile->GetDefinition("CMAKE_INSTALL_MODE")) {
+    fout << "# Set the installation behavior (copy/symlink)\n"
+            "if(NOT DEFINED CMAKE_INSTALL_MODE)\n"
+            "  set(CMAKE_INSTALL_MODE \"" << *install_mode << "\")\n"
+            "endif()\n\n";
+  }
+  /* clang-format on */
+
   // Write support code for generating per-configuration install rules.
   /* clang-format off */
   fout <<

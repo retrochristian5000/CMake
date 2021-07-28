@@ -3,6 +3,7 @@
 
 #include "cmFileInstaller.h"
 
+#include <cassert>
 #include <sstream>
 
 #include "cm_sys_stat.h"
@@ -18,6 +19,7 @@ using namespace cmFSPermissions;
 cmFileInstaller::cmFileInstaller(cmExecutionStatus& status)
   : cmFileCopier(status, "INSTALL")
   , InstallType(cmInstallType_FILES)
+  , InstallMode(cmInstallMode_COPY)
   , Optional(false)
   , MessageAlways(false)
   , MessageLazy(false)
@@ -82,6 +84,60 @@ bool cmFileInstaller::Install(const std::string& fromFile,
   return this->cmFileCopier::Install(fromFile, toFile);
 }
 
+bool cmFileInstaller::InstallFile(const std::string& fromFile,
+                                  const std::string& toFile,
+                                  MatchProperties match_properties)
+{
+  if (this->InstallMode == cmInstallMode_COPY) {
+    return this->cmFileCopier::InstallFile(fromFile, toFile, match_properties);
+  }
+
+  // Apart from the default 'COPY' mode only symlinks are supported for now.
+  assert(this->InstallMode == cmInstallMode_SYMLINK ||
+         this->InstallMode == cmInstallMode_SYMLINK_OR_COPY);
+
+  // Compare the symlink value to that at the destination if not
+  // always installing.
+  bool copy = true;
+  if (!this->Always) {
+    std::string oldSymlinkTarget;
+    if (cmSystemTools::ReadSymlink(toFile, oldSymlinkTarget)) {
+      if (fromFile == oldSymlinkTarget) {
+        copy = false;
+      }
+    }
+  }
+
+  // Inform the user about this file installation.
+  this->ReportCopy(toFile, TypeLink, copy);
+
+  if (copy) {
+    // Remove the destination file so we can always create the symlink.
+    cmSystemTools::RemoveFile(toFile);
+
+    // Create destination directory if it doesn't exist
+    cmSystemTools::MakeDirectory(cmSystemTools::GetFilenamePath(toFile));
+
+    // Create the symlink.
+    if (!cmSystemTools::CreateSymlink(fromFile, toFile)) {
+      if (this->InstallMode == cmInstallMode_SYMLINK_OR_COPY) {
+        // Failed to create a symbolic link, falling back to copying.
+        return this->cmFileCopier::InstallFile(fromFile, toFile,
+                                               match_properties);
+      }
+
+      std::ostringstream e;
+      e << this->Name << " cannot create symlink to \"" << fromFile
+        << "\" at \"" << toFile
+        << "\": " << cmSystemTools::GetLastSystemError() << ".";
+      this->Status.SetError(e.str());
+      return false;
+    }
+  }
+
+  return true;
+}
+
 void cmFileInstaller::DefaultFilePermissions()
 {
   this->cmFileCopier::DefaultFilePermissions();
@@ -138,6 +194,21 @@ bool cmFileInstaller::Parse(std::vector<std::string> const& args)
     this->Status.SetError("INSTALL options MESSAGE_ALWAYS, "
                           "MESSAGE_LAZY, and MESSAGE_NEVER "
                           "are mutually exclusive.");
+    return false;
+  }
+
+  const std::string& install_mode =
+    this->Makefile->GetSafeDefinition("CMAKE_INSTALL_MODE");
+  if (install_mode.empty() || install_mode == "COPY") {
+    this->InstallMode = cmInstallMode_COPY;
+  } else if (install_mode == "SYMLINK_OR_COPY") {
+    this->InstallMode = cmInstallMode_SYMLINK_OR_COPY;
+  } else if (install_mode == "SYMLINK") {
+    this->InstallMode = cmInstallMode_SYMLINK;
+  } else {
+    std::ostringstream os;
+    os << "Unrecognized value '" << install_mode << "' for CMAKE_INSTALL_MODE";
+    this->Status.SetError(os.str());
     return false;
   }
 
