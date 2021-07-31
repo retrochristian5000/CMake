@@ -9,6 +9,7 @@ if(GTK2_GTK_FOUND)
     "${CMake_BINARY_DIR}/Tests/FindGTK2/GTK2Components/gtk"
      ${build_generator_args}
     --build-target gtk-all-libs
+    --build-options -DCMAKE_VERBOSE_MAKEFILE=ON
     --build-project gtk
     --build-exe-dir "${CMake_BINARY_DIR}/Tests/FindGTK2/GTK2Components/gtk"
     --force-new-ctest-process
