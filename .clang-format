@@ -19,6 +19,7 @@ IndentPPDirectives: AfterHash
 SortUsingDeclarations: false
 SpaceAfterTemplateKeyword: true
 IncludeBlocks: Regroup
+IncludeIsMainRegex: '_.+$'
 IncludeCategories:
   - Regex:           '^[<"]cmSTL\.hxx'
     Priority:        -2
