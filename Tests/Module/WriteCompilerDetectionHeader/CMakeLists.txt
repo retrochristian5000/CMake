@@ -67,11 +67,17 @@ if (C_expected_features)
       OR CMAKE_C_COMPILER_ID STREQUAL "AppleClang"
       OR CMAKE_C_COMPILER_ID STREQUAL "Intel")
     add_executable(WriteCompilerDetectionHeader_C11 main.c)
-    set_property(TARGET WriteCompilerDetectionHeader_C11 PROPERTY C_STANDARD 11)
+    set_target_properties(WriteCompilerDetectionHeader_C11 PROPERTIES
+      C_STANDARD 11
+      C_STANDARD_REQUIRED ON
+    )
     set_defines(WriteCompilerDetectionHeader_C11 "EXPECTED_COMPILER_C_FUNCTION_PROTOTYPES;EXPECTED_COMPILER_C_RESTRICT" "")
 
     add_executable(WriteCompilerDetectionHeader_C11_multi main_multi.c)
-    set_property(TARGET WriteCompilerDetectionHeader_C11_multi PROPERTY C_STANDARD 11)
+    set_target_properties(WriteCompilerDetectionHeader_C11_multi PROPERTIES
+      C_STANDARD 11
+      C_STANDARD_REQUIRED ON
+    )
     set_defines(WriteCompilerDetectionHeader_C11_multi "EXPECTED_COMPILER_C_FUNCTION_PROTOTYPES;EXPECTED_COMPILER_C_RESTRICT" "")
     target_include_directories(WriteCompilerDetectionHeader_C11_multi PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/compiler_multi_files)
 
@@ -144,11 +150,17 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC"
 endif()
 
 add_executable(WriteCompilerDetectionHeader main.cpp)
-set_property(TARGET WriteCompilerDetectionHeader PROPERTY CXX_STANDARD 98)
+set_target_properties(WriteCompilerDetectionHeader PROPERTIES
+  CXX_STANDARD 98
+  CXX_STANDARD_REQUIRED ON
+)
 set_defines(WriteCompilerDetectionHeader "${true_defs}" "${false_defs}")
 
 add_executable(multi_files multi_files.cpp)
-set_property(TARGET multi_files PROPERTY CXX_STANDARD 98)
+set_target_properties(multi_files PROPERTIES
+  CXX_STANDARD 98
+  CXX_STANDARD_REQUIRED ON
+)
 target_include_directories(multi_files PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/compiler_multi_files)
 set_defines(multi_files "${true_defs}" "${false_defs}")
 
