@@ -12,6 +12,7 @@ if(GTK2_GTK_FOUND)
     --build-project gtk
     --build-exe-dir "${CMake_BINARY_DIR}/Tests/FindGTK2/GTK2Components/gtk"
     --force-new-ctest-process
+    --build-options -DCMAKE_VERBOSE_MAKEFILE=ON
     --test-command ${CMAKE_CTEST_COMMAND} -V
     )
 endif()

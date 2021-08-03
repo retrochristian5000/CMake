@@ -661,6 +661,7 @@ if(BUILD_TESTING)
 
   ADD_TEST_MACRO(Module.FindDependency FindDependency)
 
+  set(Module.WriteCompilerDetectionHeader_BUILD_OPTIONS -DCMAKE_VERBOSE_MAKEFILE=ON)
   ADD_TEST_MACRO(Module.WriteCompilerDetectionHeader WriteCompilerDetectionHeader)
 
   if (APPLE OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")

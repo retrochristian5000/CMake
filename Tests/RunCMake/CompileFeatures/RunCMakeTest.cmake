@@ -10,16 +10,14 @@ run_cmake(NotAFeature_OriginDebugTransitive)
 run_cmake(NotAFeature_OriginDebugCommand)
 
 run_cmake(generate_feature_list)
-file(READ
-  "${RunCMake_BINARY_DIR}/generate_feature_list-build/c_features.txt"
-  C_FEATURES
-)
-file(READ
-  "${RunCMake_BINARY_DIR}/generate_feature_list-build/cxx_features.txt"
-  CXX_FEATURES
-)
-include("${RunCMake_BINARY_DIR}/generate_feature_list-build/c_standard_default.cmake")
-include("${RunCMake_BINARY_DIR}/generate_feature_list-build/cxx_standard_default.cmake")
+include("${RunCMake_BINARY_DIR}/generate_feature_list-build/C_info.cmake")
+include("${RunCMake_BINARY_DIR}/generate_feature_list-build/CXX_info.cmake")
+
+message(STATUS "CTEST_FULL_OUTPUT") # avoid truncation
+file(READ "${RunCMake_BINARY_DIR}/generate_feature_list-build/C_info.cmake" c_info)
+file(READ "${RunCMake_BINARY_DIR}/generate_feature_list-build/CXX_info.cmake" cxx_info)
+message("C info:\n${c_info}\n")
+message("CXX info:\n${cxx_info}\n")
 
 if (NOT C_FEATURES)
   run_cmake(NoSupportedCFeatures)
@@ -43,21 +41,62 @@ elseif (cxx_std_98 IN_LIST CXX_FEATURES AND cxx_std_11 IN_LIST CXX_FEATURES)
   unset(RunCMake_TEST_OPTIONS)
 endif()
 
+configure_file("${RunCMake_SOURCE_DIR}/CMakeLists.txt" "${RunCMake_BINARY_DIR}/CMakeLists.txt" COPYONLY)
+
+function(test_flags name lang ext)
+  if(CMake_NO_${lang}_STANDARD)
+    return()
+  endif()
+
+  set(standard_flag "${${lang}${${lang}_STANDARD_DEFAULT}_FLAG}")
+  set(extension_flag "${${lang}${${lang}_STANDARD_DEFAULT}_EXT_FLAG}")
+
+  if(NOT standard_flag AND NOT extension_flag)
+    return()
+  endif()
+
+  set(test ${name}-${lang})
+  set(standard_default "${${lang}_STANDARD_DEFAULT}")
+  set(extensions_default "${${lang}_EXTENSIONS_DEFAULT}")
+  configure_file("${RunCMake_SOURCE_DIR}/${name}.cmake" "${RunCMake_BINARY_DIR}/${test}.cmake" @ONLY)
+  configure_file("${RunCMake_SOURCE_DIR}/${name}-build-check.cmake" "${RunCMake_BINARY_DIR}/${test}-build-check.cmake" @ONLY)
+
+  set(RunCMake_SOURCE_DIR_REAL "${RunCMake_SOURCE_DIR}")
+  set(RunCMake_SOURCE_DIR "${RunCMake_BINARY_DIR}")
+  set(RunCMake_TEST_BINARY_DIR "${RunCMake_BINARY_DIR}/${test}-build")
+  run_cmake(${test})
+  set(RunCMake_TEST_NO_CLEAN 1)
+  run_cmake_command(${test}-build ${CMAKE_COMMAND} --build . --verbose)
+  file(READ "${RunCMake_TEST_BINARY_DIR}/CMakeFiles/${CMAKE_VERSION}/CMake${lang}Compiler.cmake" compiler)
+  message("${RunCMake_TEST_BINARY_DIR}/CMakeFiles/${CMAKE_VERSION}/CMake${lang}Compiler.cmake:\n${compiler}")
+
+  if(lang STREQUAL C)
+    set(test defines-${lang})
+    configure_file("${RunCMake_SOURCE_DIR_REAL}/defines.cmake" "${RunCMake_BINARY_DIR}/${test}.cmake" @ONLY)
+    set(RunCMake_TEST_BINARY_DIR "${RunCMake_BINARY_DIR}/${test}-build")
+    run_cmake(${test})
+    file(READ "${RunCMake_TEST_BINARY_DIR}/output.txt" output)
+    message("defines-${lang}:\n${output}")
+  endif()
+endfunction()
+
+if(C_STANDARD_DEFAULT)
+  test_flags(NoUnnecessaryFlag C c)
+endif()
+
 if(CXX_STANDARD_DEFAULT)
   run_cmake(NotAStandard)
 
   foreach(standard 98 11)
-    file(READ
-      "${RunCMake_BINARY_DIR}/generate_feature_list-build/cxx${standard}_flag.txt"
-      CXX${standard}_FLAG
-    )
     if (CXX${standard}_FLAG STREQUAL NOTFOUND)
       run_cmake(RequireCXX${standard})
       run_cmake(RequireCXX${standard}Variable)
     endif()
-    if (CXX${standard}EXT_FLAG STREQUAL NOTFOUND)
+    if (CXX${standard}_EXT_FLAG STREQUAL NOTFOUND)
       run_cmake(RequireCXX${standard}Ext)
       run_cmake(RequireCXX${standard}ExtVariable)
     endif()
   endforeach()
+
+  test_flags(NoUnnecessaryFlag CXX cpp)
 endif()
