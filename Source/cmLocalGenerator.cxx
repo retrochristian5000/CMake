@@ -834,6 +834,14 @@ cmProp cmLocalGenerator::GetRuleLauncher(cmGeneratorTarget* target,
   return this->Makefile->GetProperty(prop);
 }
 
+std::string cmLocalGenerator::GetPositionIndependentFlags(
+  std::string const& language, int targetType) const
+{
+  std::string result;
+  this->AddPositionIndependentFlags(result, language, targetType);
+  return result;
+}
+
 std::string cmLocalGenerator::ConvertToIncludeReference(
   std::string const& path, IncludePathStyle pathStyle, OutputFormat format)
 {
@@ -2377,7 +2385,7 @@ bool cmLocalGenerator::GetShouldUseOldFlags(bool shared,
 
 void cmLocalGenerator::AddPositionIndependentFlags(std::string& flags,
                                                    std::string const& lang,
-                                                   int targetType)
+                                                   int targetType) const
 {
   std::string picFlags;
 

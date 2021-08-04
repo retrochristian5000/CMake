@@ -548,6 +548,8 @@ public:
   void ProcessEvaluationFiles(std::vector<std::string>& generatedFiles);
 
   cmProp GetRuleLauncher(cmGeneratorTarget* target, const std::string& prop);
+  std::string GetPositionIndependentFlags(std::string const& language,
+                                          int targetType) const;
 
 protected:
   // The default implementation ignores the IncludePathStyle and always
@@ -647,7 +649,7 @@ private:
                       bool shared);
   bool GetShouldUseOldFlags(bool shared, const std::string& lang) const;
   void AddPositionIndependentFlags(std::string& flags, std::string const& l,
-                                   int targetType);
+                                   int targetType) const;
 
   void ComputeObjectMaxPath();
   bool AllAppleArchSysrootsAreTheSame(const std::vector<std::string>& archs,
