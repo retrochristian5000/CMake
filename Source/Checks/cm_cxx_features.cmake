@@ -33,6 +33,9 @@ function(cm_check_cxx_feature name)
         OUTPUT_VARIABLE OUTPUT
         )
     endif()
+    if(CMAKE_CXX_COMPILER_ID STREQUAL SunPro AND "${name}" STREQUAL "unique_ptr")
+      message("CMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}\nmaybe_cxx_standard=${maybe_cxx_standard}\n\ncm_check_cxx_feature(${name}):\n${OUTPUT}")
+    endif()
     set(check_output "${OUTPUT}")
     # Filter out MSBuild output that looks like a warning.
     string(REGEX REPLACE " +0 Warning\\(s\\)" "" check_output "${check_output}")
