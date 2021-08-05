@@ -798,7 +798,7 @@ void cmGeneratorTarget::GetObjectSources(
   this->VisitedConfigsForObjects.insert(config);
 }
 
-void cmGeneratorTarget::ComputeObjectMapping()
+void cmGeneratorTarget::ComputeObjectMapping() const
 {
   auto const& configs =
     this->Makefile->GetGeneratorConfigs(cmMakefile::IncludeEmptyConfig);
@@ -916,7 +916,8 @@ bool cmGeneratorTarget::IsIPOEnabled(std::string const& lang,
   return false;
 }
 
-const std::string& cmGeneratorTarget::GetObjectName(cmSourceFile const* file)
+const std::string& cmGeneratorTarget::GetObjectName(
+  cmSourceFile const* file) const
 {
   this->ComputeObjectMapping();
   return this->Objects[file];
