@@ -90,17 +90,19 @@ struct StandardLevelComputer
       }
     }
 
+    bool const defaultExt{ cmIsOn(*makefile->GetDefinition(
+      cmStrCat("CMAKE_", this->Language, "_EXTENSIONS_DEFAULT"))) };
+    std::string const type{ ext ? "EXTENSION" : "STANDARD" };
+
     cmProp standardProp = target->GetLanguageStandard(this->Language, config);
     if (!standardProp) {
-      if (ext) {
-        // No language standard is specified and extensions are not disabled.
-        // Check if this compiler needs a flag to enable extensions.
-        return cmStrCat("CMAKE_", this->Language, "_EXTENSION_COMPILE_OPTION");
+      // Add extension flag if compiler's default doesn't match.
+      if (ext != defaultExt) {
+        return cmStrCat("CMAKE_", this->Language, "_", type,
+                        "_COMPILE_OPTION");
       }
       return std::string{};
     }
-
-    std::string const type = ext ? "EXTENSION" : "STANDARD";
 
     if (target->GetLanguageStandardRequired(this->Language)) {
       std::string option_flag = cmStrCat(
@@ -119,6 +121,15 @@ struct StandardLevelComputer
         makefile->IssueMessage(MessageType::FATAL_ERROR, e.str());
       }
       return option_flag;
+    }
+
+    std::printf("standardProp=%s defaultStd=%s ext=%s defaultExt=%s\n",
+                standardProp->c_str(), defaultStd->c_str(),
+                ext ? "true" : "false", defaultExt ? "true" : "false");
+    // If the request matches the compiler's defaults we don't need to add
+    // anything.
+    if (*standardProp == *defaultStd && ext == defaultExt) {
+      return std::string{};
     }
 
     std::string standardStr(*standardProp);
@@ -147,17 +158,17 @@ struct StandardLevelComputer
       return std::string{};
     }
 
-    // If the standard requested is older than the compiler's default
-    // then we need to use a flag to change it.
-    if (stdIt <= defaultStdIt) {
+    // If the standard requested is older than the compiler's default or the
+    // extension mode doesn't match then we need to use a flag.
+    if (stdIt < defaultStdIt || ext != defaultExt) {
       auto offset = std::distance(cm::cbegin(stds), stdIt);
       return cmStrCat("CMAKE_", this->Language, stdsStrings[offset], "_", type,
                       "_COMPILE_OPTION");
     }
 
-    // The standard requested is at least as new as the compiler's default,
-    // and the standard request is not required.  Decay to the newest standard
-    // for which a flag is defined.
+    // The compiler's default is at least as new as the requested standard,
+    // and the requested standard is not required.  Decay to the newest
+    // standard for which a flag is defined.
     for (; defaultStdIt < stdIt; --stdIt) {
       auto offset = std::distance(cm::cbegin(stds), stdIt);
       std::string option_flag =
