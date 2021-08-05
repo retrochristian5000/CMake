@@ -154,7 +154,7 @@ public:
 
   void GetObjectSources(std::vector<cmSourceFile const*>&,
                         const std::string& config) const;
-  const std::string& GetObjectName(cmSourceFile const* file);
+  const std::string& GetObjectName(cmSourceFile const* file) const;
   const char* GetCustomObjectExtension() const;
 
   bool HasExplicitObjectName(cmSourceFile const* file) const;
@@ -185,7 +185,7 @@ public:
 
   std::set<cmLinkItem> const& GetUtilityItems() const;
 
-  void ComputeObjectMapping();
+  void ComputeObjectMapping() const;
 
   cmProp GetFeature(const std::string& feature,
                     const std::string& config) const;
