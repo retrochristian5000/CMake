@@ -2552,6 +2552,11 @@ void cmLocalGenerator::AddPchDependencies(cmGeneratorTarget* target)
         const std::string pchHeader = target->GetPchHeader(config, lang, arch);
 
         if (pchSource.empty() || pchHeader.empty()) {
+          if (this->GetGlobalGenerator()->IsXcode()) {
+            for (auto *sf : sources) {
+              sf->SetProperty("SKIP_PRECOMPILE_HEADERS", "ON");
+            }
+          }
           continue;
         }
 
