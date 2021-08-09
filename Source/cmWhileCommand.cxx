@@ -80,12 +80,10 @@ bool cmWhileFunctionBlocker::Replay(std::vector<cmListFileFunction> functions,
 
   std::string errorString;
   MessageType messageType;
-  auto isTrue = true;
 
   for (cmConditionEvaluator conditionEvaluator(mf, whileBT);
-       (isTrue =
-          conditionEvaluator.IsTrue(expandArgs(this->Args, expandedArguments),
-                                    errorString, messageType));) {
+       conditionEvaluator.IsTrue(expandArgs(this->Args, expandedArguments),
+                                 errorString, messageType);) {
     // Invoke all the functions that were collected in the block.
     for (cmListFileFunction const& fn : functions) {
       cmExecutionStatus status(mf);
@@ -106,7 +104,7 @@ bool cmWhileFunctionBlocker::Replay(std::vector<cmListFileFunction> functions,
     }
   }
 
-  if (!isTrue && !errorString.empty()) {
+  if (!errorString.empty()) {
     std::string err = "had incorrect arguments:\n ";
     for (auto const& i : expandedArguments) {
       err += " ";
