@@ -255,6 +255,37 @@ void cmCPackIFWInstaller::ConfigureFromOptions()
     }
   }
 
+  // DisableCommandLineInterface
+  if (const char* option =
+        this->GetOption("CPACK_IFW_PACKAGE_DISABLE_COMMAND_LINE_INTERFACE")) {
+    if (!this->IsVersionLess("4.0")) {
+      if (this->IsSetToOff(
+            "CPACK_IFW_PACKAGE_DISABLE_COMMAND_LINE_INTERFACE")) {
+        this->DisableCommandLineInterface = "false";
+      } else if (this->IsOn(
+                   "CPACK_IFW_PACKAGE_DISABLE_COMMAND_LINE_INTERFACE")) {
+        this->DisableCommandLineInterface = "true";
+      } else {
+        this->DisableCommandLineInterface.clear();
+      }
+    } else {
+      std::string currentVersionMsg;
+      if (this->Generator) {
+        currentVersionMsg =
+          "QtIFW version " + this->Generator->FrameworkVersion;
+      } else {
+        currentVersionMsg = "an older QtIFW version";
+      }
+      cmCPackIFWLogger(
+        WARNING,
+        "Option CPACK_IFW_PACKAGE_DISABLE_COMMAND_LINE_INTERFACE is set to \""
+          << option
+          << "\", but it is only supported with QtIFW version 4.0 or later. "
+             "It is being ignored because you are using "
+          << currentVersionMsg << std::endl);
+    }
+  }
+
   // Space in path
   if (this->GetOption("CPACK_IFW_PACKAGE_ALLOW_SPACE_IN_PATH")) {
     if (this->IsOn("CPACK_IFW_PACKAGE_ALLOW_SPACE_IN_PATH")) {
@@ -499,6 +530,13 @@ void cmCPackIFWInstaller::GenerateInstallerFile()
     if (!this->AllowSpaceInPath.empty()) {
       xout.Element("AllowSpaceInPath", this->AllowSpaceInPath);
     }
+  }
+
+  // DisableCommandLineInterface
+  if (!this->IsVersionLess("4.0") &&
+      !this->DisableCommandLineInterface.empty()) {
+    xout.Element("DisableCommandLineInterface",
+                 this->DisableCommandLineInterface);
   }
 
   // Control script (copy to config dir)
