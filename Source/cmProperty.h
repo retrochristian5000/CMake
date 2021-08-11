@@ -147,6 +147,7 @@ public:
   static bool IsEmpty(cm::string_view value) noexcept { return value.empty(); }
 
   void ExpandList(std::vector<std::string>&, bool emptyArgs = false) const;
+  std::vector<std::string> ExpandedList(bool emptyArgs = false) const;
 
 private:
   static std::string Empty;

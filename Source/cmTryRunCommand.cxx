@@ -185,10 +185,10 @@ void cmTryRunCommand::RunExecutable(const std::string& runArgs,
   int retVal = -1;
 
   std::string finalCommand;
-  const std::string& emulator =
-    this->Makefile->GetSafeDefinition("CMAKE_CROSSCOMPILING_EMULATOR");
-  if (!emulator.empty()) {
-    std::vector<std::string> emulatorWithArgs = cmExpandedList(emulator);
+  cmProp emulator =
+    this->Makefile->GetDefinition("CMAKE_CROSSCOMPILING_EMULATOR");
+  if (!emulator.IsEmpty()) {
+    std::vector<std::string> emulatorWithArgs = emulator.ExpandedList();
     finalCommand +=
       cmSystemTools::ConvertToRunCommandPath(emulatorWithArgs[0]);
     finalCommand += " ";

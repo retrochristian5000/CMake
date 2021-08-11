@@ -62,14 +62,14 @@ cmCTestGenericHandler* cmCTestSubmitCommand::InitializeHandler()
   cmProp notesFilesVariable =
     this->Makefile->GetDefinition("CTEST_NOTES_FILES");
   if (notesFilesVariable) {
-    std::vector<std::string> notesFiles = cmExpandedList(*notesFilesVariable);
+    std::vector<std::string> notesFiles = notesFilesVariable.ExpandedList();
     this->CTest->GenerateNotesFile(notesFiles);
   }
 
   cmProp extraFilesVariable =
     this->Makefile->GetDefinition("CTEST_EXTRA_SUBMIT_FILES");
   if (extraFilesVariable) {
-    std::vector<std::string> extraFiles = cmExpandedList(*extraFilesVariable);
+    std::vector<std::string> extraFiles = extraFilesVariable.ExpandedList();
     if (!this->CTest->SubmitExtraFiles(extraFiles)) {
       this->SetError("problem submitting extra files.");
       return nullptr;

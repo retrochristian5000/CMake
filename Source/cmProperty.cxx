@@ -119,3 +119,12 @@ void cmProp::ExpandList(std::vector<std::string>& argsOut,
     cmExpandList(*this->Value, argsOut, emptyArgs);
   }
 }
+
+std::vector<std::string> cmProp::ExpandedList(bool emptyArgs) const
+{
+  if (this->Value) {
+    return cmExpandedList(*this->Value, emptyArgs);
+  } else {
+    return {};
+  }
+}

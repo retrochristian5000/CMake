@@ -285,7 +285,7 @@ struct StandardLevelComputer
     for (size_t i = 0; i < this->Levels.size(); ++i) {
       if (cmProp prop = makefile->GetDefinition(
             cmStrCat(prefix, this->LevelsAsStrings[i], "_COMPILE_FEATURES"))) {
-        std::vector<std::string> props = cmExpandedList(*prop);
+        std::vector<std::string> props = prop.ExpandedList();
         if (cm::contains(props, feature)) {
           maxLevel = { static_cast<int>(i), this->Levels[i] };
         }

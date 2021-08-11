@@ -925,10 +925,10 @@ void cmNinjaTargetGenerator::WriteCompileRule(const std::string& lang,
     compileCmds.front().insert(0, cldeps);
   }
 
-  const auto& extraCommands = this->GetMakefile()->GetSafeDefinition(
+  cmProp extraCommands = this->GetMakefile()->GetDefinition(
     cmStrCat("CMAKE_", lang, "_DEPENDS_EXTRA_COMMANDS"));
-  if (!extraCommands.empty()) {
-    auto commandList = cmExpandedList(extraCommands);
+  if (!extraCommands.IsEmpty()) {
+    auto commandList = extraCommands.ExpandedList();
     compileCmds.insert(compileCmds.end(), commandList.cbegin(),
                        commandList.cend());
   }
@@ -1300,7 +1300,7 @@ void cmNinjaTargetGenerator::WriteObjectBuildStatement(
   }
 
   if (cmProp objectDeps = source->GetProperty("OBJECT_DEPENDS")) {
-    std::vector<std::string> objDepList = cmExpandedList(*objectDeps);
+    std::vector<std::string> objDepList = objectDeps.ExpandedList();
     std::copy(objDepList.begin(), objDepList.end(),
               std::back_inserter(depList));
   }

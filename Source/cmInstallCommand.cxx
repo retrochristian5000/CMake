@@ -928,7 +928,7 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
     if (createInstallGeneratorsForTargetFileSets && !namelinkOnly) {
       cmProp files = target.GetProperty("PRIVATE_HEADER");
       if (cmNonempty(files)) {
-        std::vector<std::string> relFiles = cmExpandedList(*files);
+        std::vector<std::string> relFiles = files.ExpandedList();
         std::vector<std::string> absFiles;
         if (!helper.MakeFilesFullPath("PRIVATE_HEADER", relFiles, absFiles)) {
           return false;
@@ -950,7 +950,7 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
 
       files = target.GetProperty("PUBLIC_HEADER");
       if (cmNonempty(files)) {
-        std::vector<std::string> relFiles = cmExpandedList(*files);
+        std::vector<std::string> relFiles = files.ExpandedList();
         std::vector<std::string> absFiles;
         if (!helper.MakeFilesFullPath("PUBLIC_HEADER", relFiles, absFiles)) {
           return false;
@@ -972,7 +972,7 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
 
       files = target.GetProperty("RESOURCE");
       if (cmNonempty(files)) {
-        std::vector<std::string> relFiles = cmExpandedList(*files);
+        std::vector<std::string> relFiles = files.ExpandedList();
         std::vector<std::string> absFiles;
         if (!helper.MakeFilesFullPath("RESOURCE", relFiles, absFiles)) {
           return false;

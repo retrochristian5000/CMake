@@ -1436,7 +1436,7 @@ bool cmMakefile::ParseDefineFlag(std::string const& def, bool remove)
   if (remove) {
     if (cmProp cdefs = this->GetProperty("COMPILE_DEFINITIONS")) {
       // Expand the list.
-      std::vector<std::string> defs = cmExpandedList(*cdefs);
+      std::vector<std::string> defs = cdefs.ExpandedList();
 
       // Recompose the list without the definition.
       auto defEnd = std::remove(defs.begin(), defs.end(), define);
@@ -2046,7 +2046,7 @@ void cmMakefile::AddGlobalLinkInformation(cmTarget& target)
   }
 
   if (cmProp linkLibsProp = this->GetProperty("LINK_LIBRARIES")) {
-    std::vector<std::string> linkLibs = cmExpandedList(*linkLibsProp);
+    std::vector<std::string> linkLibs = linkLibsProp.ExpandedList();
 
     for (auto j = linkLibs.begin(); j != linkLibs.end(); ++j) {
       std::string libraryName = *j;
@@ -2351,7 +2351,7 @@ void cmMakefile::ExpandVariablesCMP0019()
   }
 
   if (cmProp linkLibsProp = this->GetProperty("LINK_LIBRARIES")) {
-    std::vector<std::string> linkLibs = cmExpandedList(*linkLibsProp);
+    std::vector<std::string> linkLibs = linkLibsProp.ExpandedList();
 
     for (auto l = linkLibs.begin(); l != linkLibs.end(); ++l) {
       std::string libName = *l;
@@ -3731,7 +3731,7 @@ std::string cmMakefile::GetModulesFile(const std::string& filename,
   // Always search in CMAKE_MODULE_PATH:
   cmProp cmakeModulePath = this->GetDefinition("CMAKE_MODULE_PATH");
   if (cmakeModulePath) {
-    std::vector<std::string> modulePath = cmExpandedList(*cmakeModulePath);
+    std::vector<std::string> modulePath = cmakeModulePath.ExpandedList();
 
     // Look through the possible module directories.
     for (std::string itempl : modulePath) {

@@ -899,7 +899,7 @@ void cmVisualStudio10TargetGenerator::WriteImports(Elem& e0)
   cmProp imports =
     this->GeneratorTarget->Target->GetProperty("VS_PROJECT_IMPORT");
   if (imports) {
-    std::vector<std::string> argsSplit = cmExpandedList(*imports, false);
+    std::vector<std::string> argsSplit = imports.ExpandedList(false);
     for (auto& path : argsSplit) {
       if (!cmsys::SystemTools::FileIsFullPath(path)) {
         path = this->Makefile->GetCurrentSourceDirectory() + "/" + path;

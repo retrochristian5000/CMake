@@ -707,8 +707,8 @@ void cmNinjaNormalTargetGenerator::WriteDeviceLinkStatement(
     << this->GetTargetName() << "\n\n";
 
   if (this->Makefile->GetSafeDefinition("CMAKE_CUDA_COMPILER_ID") == "Clang") {
-    std::string architecturesStr =
-      this->GeneratorTarget->GetSafeProperty("CUDA_ARCHITECTURES");
+    cmProp architecturesStr =
+      this->GeneratorTarget->GetProperty("CUDA_ARCHITECTURES");
 
     if (cmIsOff(architecturesStr)) {
       this->Makefile->IssueMessage(MessageType::FATAL_ERROR,
@@ -718,7 +718,7 @@ void cmNinjaNormalTargetGenerator::WriteDeviceLinkStatement(
     }
 
     this->WriteDeviceLinkRules(config);
-    this->WriteDeviceLinkStatements(config, cmExpandedList(architecturesStr),
+    this->WriteDeviceLinkStatements(config, architecturesStr.ExpandedList(),
                                     targetOutputReal);
   } else {
     this->WriteNvidiaDeviceLinkStatement(config, fileConfig, targetOutputDir,

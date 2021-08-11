@@ -609,7 +609,7 @@ void cmComputeLinkInformation::AddRuntimeLinkLibrary(std::string const& lang)
   }
   if (cmProp runtimeLinkOptions = this->Makefile->GetDefinition(
         "CMAKE_" + lang + "_RUNTIME_LIBRARY_LINK_OPTIONS_" + runtimeLibrary)) {
-    std::vector<std::string> libsVec = cmExpandedList(*runtimeLinkOptions);
+    std::vector<std::string> libsVec = runtimeLinkOptions.ExpandedList();
     for (std::string const& i : libsVec) {
       if (!cm::contains(this->ImplicitLinkLibs, i)) {
         this->AddItem(i, nullptr);
@@ -624,7 +624,7 @@ void cmComputeLinkInformation::AddImplicitLinkInfo(std::string const& lang)
   // linker language.
   std::string libVar = cmStrCat("CMAKE_", lang, "_IMPLICIT_LINK_LIBRARIES");
   if (cmProp libs = this->Makefile->GetDefinition(libVar)) {
-    std::vector<std::string> libsVec = cmExpandedList(*libs);
+    std::vector<std::string> libsVec = libs.ExpandedList();
     for (std::string const& i : libsVec) {
       if (!cm::contains(this->ImplicitLinkLibs, i)) {
         this->AddItem(i, nullptr);
@@ -636,7 +636,7 @@ void cmComputeLinkInformation::AddImplicitLinkInfo(std::string const& lang)
   // implied by the linker language.
   std::string dirVar = cmStrCat("CMAKE_", lang, "_IMPLICIT_LINK_DIRECTORIES");
   if (cmProp dirs = this->Makefile->GetDefinition(dirVar)) {
-    std::vector<std::string> dirsVec = cmExpandedList(*dirs);
+    std::vector<std::string> dirsVec = dirs.ExpandedList();
     this->OrderLinkerSearchPath->AddLanguageDirectories(dirsVec);
   }
 }
@@ -901,14 +901,14 @@ void cmComputeLinkInformation::ComputeItemParserInfo()
   this->AddLinkExtension(mf->GetSafeDefinition("CMAKE_LINK_LIBRARY_SUFFIX"),
                          LinkUnknown);
   if (cmProp linkSuffixes = mf->GetDefinition("CMAKE_EXTRA_LINK_EXTENSIONS")) {
-    std::vector<std::string> linkSuffixVec = cmExpandedList(*linkSuffixes);
+    std::vector<std::string> linkSuffixVec = linkSuffixes.ExpandedList();
     for (std::string const& i : linkSuffixVec) {
       this->AddLinkExtension(i, LinkUnknown);
     }
   }
   if (cmProp sharedSuffixes =
         mf->GetDefinition("CMAKE_EXTRA_SHARED_LIBRARY_SUFFIXES")) {
-    std::vector<std::string> sharedSuffixVec = cmExpandedList(*sharedSuffixes);
+    std::vector<std::string> sharedSuffixVec = sharedSuffixes.ExpandedList();
     for (std::string const& i : sharedSuffixVec) {
       this->AddLinkExtension(i, LinkShared);
     }

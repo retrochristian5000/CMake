@@ -546,7 +546,7 @@ cmTarget::cmTarget(std::string const& name, cmStateEnums::TargetType type,
   if (globals) {
     const std::string genName = mf->GetGlobalGenerator()->GetName();
     if (cmHasLiteralPrefix(genName, "Visual Studio")) {
-      std::vector<std::string> props = cmExpandedList(*globals);
+      std::vector<std::string> props = globals.ExpandedList();
       const std::string vsGlobal = "VS_GLOBAL_";
       for (const std::string& i : props) {
         // split NAME=VALUE

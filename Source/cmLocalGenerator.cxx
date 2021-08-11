@@ -336,7 +336,7 @@ void cmLocalGenerator::GenerateTestFiles()
 
   cmProp testIncludeFiles = this->Makefile->GetProperty("TEST_INCLUDE_FILES");
   if (testIncludeFiles) {
-    std::vector<std::string> includesList = cmExpandedList(*testIncludeFiles);
+    std::vector<std::string> includesList = testIncludeFiles.ExpandedList();
     for (std::string const& i : includesList) {
       fout << "include(\"" << i << "\")\n";
     }
@@ -1045,7 +1045,7 @@ void cmLocalGenerator::AddCompileOptions(std::vector<BT<std::string>>& flags,
         std::string isJMCEnabled =
           cmGeneratorExpression::Evaluate(*jmcExprGen, this, config);
         if (cmIsOn(isJMCEnabled)) {
-          std::vector<std::string> optVec = cmExpandedList(*jmc);
+          std::vector<std::string> optVec = jmc.ExpandedList();
           std::string jmcFlags;
           this->AppendCompileOptions(jmcFlags, optVec);
           if (!jmcFlags.empty()) {
@@ -2201,7 +2201,7 @@ void cmLocalGenerator::AddCompilerRequirementFlag(
   if (!optionFlagDef.empty()) {
     cmProp opt = target->Target->GetMakefile()->GetDefinition(optionFlagDef);
     if (opt) {
-      std::vector<std::string> optVec = cmExpandedList(*opt);
+      std::vector<std::string> optVec = opt.ExpandedList();
       for (std::string const& i : optVec) {
         this->AppendFlagEscape(flags, i);
       }
@@ -2379,18 +2379,18 @@ void cmLocalGenerator::AddPositionIndependentFlags(std::string& flags,
                                                    std::string const& lang,
                                                    int targetType)
 {
-  std::string picFlags;
+  cmProp picFlags;
 
   if (targetType == cmStateEnums::EXECUTABLE) {
-    picFlags = this->Makefile->GetSafeDefinition(
+    picFlags = this->Makefile->GetDefinition(
       cmStrCat("CMAKE_", lang, "_COMPILE_OPTIONS_PIE"));
   }
-  if (picFlags.empty()) {
-    picFlags = this->Makefile->GetSafeDefinition(
+  if (picFlags.IsEmpty()) {
+    picFlags = this->Makefile->GetDefinition(
       cmStrCat("CMAKE_", lang, "_COMPILE_OPTIONS_PIC"));
   }
-  if (!picFlags.empty()) {
-    std::vector<std::string> options = cmExpandedList(picFlags);
+  if (!picFlags.IsEmpty()) {
+    std::vector<std::string> options = picFlags.ExpandedList();
     for (std::string const& o : options) {
       this->AppendFlagEscape(flags, o);
     }
@@ -3017,7 +3017,7 @@ void cmLocalGenerator::AppendIPOLinkerFlags(std::string& flags,
     return;
   }
 
-  std::vector<std::string> flagsList = cmExpandedList(*rawFlagsList);
+  std::vector<std::string> flagsList = rawFlagsList.ExpandedList();
   for (std::string const& o : flagsList) {
     this->AppendFlagEscape(flags, o);
   }
@@ -3047,12 +3047,12 @@ void cmLocalGenerator::AppendPositionIndependentLinkerFlags(
 
   std::string name = "CMAKE_" + lang + "_LINK_OPTIONS_" + mode;
 
-  auto pieFlags = this->Makefile->GetSafeDefinition(name);
-  if (pieFlags.empty()) {
+  cmProp pieFlags = this->Makefile->GetDefinition(name);
+  if (pieFlags.IsEmpty()) {
     return;
   }
 
-  std::vector<std::string> flagsList = cmExpandedList(pieFlags);
+  std::vector<std::string> flagsList = pieFlags.ExpandedList();
   for (const auto& flag : flagsList) {
     this->AppendFlagEscape(flags, flag);
   }
@@ -3277,7 +3277,7 @@ void cmLocalGenerator::AppendFeatureOptions(std::string& flags,
   cmProp optionList = this->Makefile->GetDefinition(
     cmStrCat("CMAKE_", lang, "_COMPILE_OPTIONS_", feature));
   if (optionList) {
-    std::vector<std::string> options = cmExpandedList(*optionList);
+    std::vector<std::string> options = optionList.ExpandedList();
     for (std::string const& o : options) {
       this->AppendFlagEscape(flags, o);
     }

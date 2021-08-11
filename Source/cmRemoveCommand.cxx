@@ -25,7 +25,7 @@ bool cmRemoveCommand(std::vector<std::string> const& args,
   }
 
   // expand the variable
-  std::vector<std::string> const varArgsExpanded = cmExpandedList(*cacheValue);
+  std::vector<std::string> const varArgsExpanded = cacheValue.ExpandedList();
 
   // expand the args
   // check for REMOVE(VAR v1 v2 ... vn)

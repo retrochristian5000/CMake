@@ -3035,7 +3035,7 @@ void cmTargetTraceDependencies::Trace()
 
     // Queue dependencies added explicitly by the user.
     if (cmProp additionalDeps = sf->GetProperty("OBJECT_DEPENDS")) {
-      std::vector<std::string> objDeps = cmExpandedList(*additionalDeps);
+      std::vector<std::string> objDeps = additionalDeps.ExpandedList();
       for (std::string& objDep : objDeps) {
         if (cmSystemTools::FileIsFullPath(objDep)) {
           objDep = cmSystemTools::CollapseFullPath(objDep);
@@ -4409,9 +4409,9 @@ std::vector<BT<std::string>> cmGeneratorTarget::GetLinkOptions(
 
   if (this->IsDeviceLink()) {
     // wrap host link options
-    const std::string wrapper(this->Makefile->GetSafeDefinition(
+    cmProp wrapper(this->Makefile->GetDefinition(
       "CMAKE_" + language + "_DEVICE_COMPILER_WRAPPER_FLAG"));
-    std::vector<std::string> wrapperFlag = cmExpandedList(wrapper);
+    std::vector<std::string> wrapperFlag = wrapper.ExpandedList();
     const std::string wrapperSep(this->Makefile->GetSafeDefinition(
       "CMAKE_" + language + "_DEVICE_COMPILER_WRAPPER_FLAG_SEP"));
     bool concatFlagAndArgs = true;
@@ -4462,11 +4462,11 @@ std::vector<BT<std::string>>& cmGeneratorTarget::ResolveLinkerWrapper(
   std::vector<BT<std::string>>& result, const std::string& language) const
 {
   // replace "LINKER:" prefixed elements by actual linker wrapper
-  const std::string wrapper(this->Makefile->GetSafeDefinition(
+  cmProp wrapper(this->Makefile->GetDefinition(
     "CMAKE_" + language +
     (this->IsDeviceLink() ? "_DEVICE_LINKER_WRAPPER_FLAG"
                           : "_LINKER_WRAPPER_FLAG")));
-  std::vector<std::string> wrapperFlag = cmExpandedList(wrapper);
+  std::vector<std::string> wrapperFlag = wrapper.ExpandedList();
   const std::string wrapperSep(this->Makefile->GetSafeDefinition(
     "CMAKE_" + language +
     (this->IsDeviceLink() ? "_DEVICE_LINKER_WRAPPER_FLAG_SEP"
@@ -4546,7 +4546,7 @@ std::vector<BT<std::string>> cmGeneratorTarget::GetStaticLibraryLinkOptions(
 
   EvaluatedTargetPropertyEntries entries;
   if (cmProp linkOptions = this->GetProperty("STATIC_LIBRARY_OPTIONS")) {
-    std::vector<std::string> options = cmExpandedList(*linkOptions);
+    std::vector<std::string> options = linkOptions.ExpandedList();
     for (const auto& option : options) {
       std::unique_ptr<TargetPropertyEntry> entry =
         CreateTargetPropertyEntry(option);
@@ -4697,7 +4697,7 @@ std::vector<BT<std::string>> cmGeneratorTarget::GetLinkDepends(
 
   EvaluatedTargetPropertyEntries entries;
   if (cmProp linkDepends = this->GetProperty("LINK_DEPENDS")) {
-    std::vector<std::string> depends = cmExpandedList(*linkDepends);
+    std::vector<std::string> depends = linkDepends.ExpandedList();
     for (const auto& depend : depends) {
       std::unique_ptr<TargetPropertyEntry> entry =
         CreateTargetPropertyEntry(depend);
@@ -5320,7 +5320,7 @@ void cmGeneratorTarget::ConstructSourceFileFlags() const
 
   // Process public headers to mark the source files.
   if (cmProp files = this->GetProperty("PUBLIC_HEADER")) {
-    std::vector<std::string> relFiles = cmExpandedList(*files);
+    std::vector<std::string> relFiles = files.ExpandedList();
     for (std::string const& relFile : relFiles) {
       if (cmSourceFile* sf = this->Makefile->GetSource(relFile)) {
         SourceFileFlags& flags = this->SourceFlagsMap[sf];
@@ -5333,7 +5333,7 @@ void cmGeneratorTarget::ConstructSourceFileFlags() const
   // Process private headers after public headers so that they take
   // precedence if a file is listed in both.
   if (cmProp files = this->GetProperty("PRIVATE_HEADER")) {
-    std::vector<std::string> relFiles = cmExpandedList(*files);
+    std::vector<std::string> relFiles = files.ExpandedList();
     for (std::string const& relFile : relFiles) {
       if (cmSourceFile* sf = this->Makefile->GetSource(relFile)) {
         SourceFileFlags& flags = this->SourceFlagsMap[sf];
@@ -5345,7 +5345,7 @@ void cmGeneratorTarget::ConstructSourceFileFlags() const
 
   // Mark sources listed as resources.
   if (cmProp files = this->GetProperty("RESOURCE")) {
-    std::vector<std::string> relFiles = cmExpandedList(*files);
+    std::vector<std::string> relFiles = files.ExpandedList();
     for (std::string const& relFile : relFiles) {
       if (cmSourceFile* sf = this->Makefile->GetSource(relFile)) {
         SourceFileFlags& flags = this->SourceFlagsMap[sf];
@@ -5487,7 +5487,7 @@ void checkPropertyConsistency(cmGeneratorTarget const* depender,
     return;
   }
 
-  std::vector<std::string> props = cmExpandedList(*prop);
+  std::vector<std::string> props = prop.ExpandedList();
   std::string pdir =
     cmStrCat(cmSystemTools::GetCMakeRoot(), "/Help/prop_tgt/");
 
@@ -7013,7 +7013,7 @@ std::vector<ValueType> computeImplicitLanguageTargets(
     currentTarget->GetRuntimeLinkLibrary(lang, config);
   if (cmProp runtimeLinkOptions = currentTarget->Makefile->GetDefinition(
         "CMAKE_" + lang + "_RUNTIME_LIBRARIES_" + runtimeLibrary)) {
-    std::vector<std::string> libsVec = cmExpandedList(*runtimeLinkOptions);
+    std::vector<std::string> libsVec = runtimeLinkOptions.ExpandedList();
     result.reserve(libsVec.size());
 
     for (std::string const& i : libsVec) {

@@ -1465,7 +1465,7 @@ void cmCTest::AddSiteProperties(cmXMLWriter& xml)
       ch->GetCMake()->GetState()->GetGlobalProperty("SubProjectLabels");
     if (labels) {
       xml.StartElement("Labels");
-      std::vector<std::string> args = cmExpandedList(*labels);
+      std::vector<std::string> args = labels.ExpandedList();
       for (std::string const& i : args) {
         xml.Element("Label", i);
       }

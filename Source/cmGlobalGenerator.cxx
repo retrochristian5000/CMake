@@ -1160,8 +1160,8 @@ void cmGlobalGenerator::SetLanguageEnabledMaps(const std::string& l,
 
   std::string ignoreExtensionsVar =
     std::string("CMAKE_") + std::string(l) + std::string("_IGNORE_EXTENSIONS");
-  std::string ignoreExts = mf->GetSafeDefinition(ignoreExtensionsVar);
-  std::vector<std::string> extensionList = cmExpandedList(ignoreExts);
+  cmProp ignoreExts = mf->GetDefinition(ignoreExtensionsVar);
+  std::vector<std::string> extensionList = ignoreExts.ExpandedList();
   for (std::string const& i : extensionList) {
     this->IgnoreExtensions[i] = true;
   }
@@ -1172,8 +1172,8 @@ void cmGlobalGenerator::FillExtensionToLanguageMap(const std::string& l,
 {
   std::string extensionsVar = std::string("CMAKE_") + std::string(l) +
     std::string("_SOURCE_FILE_EXTENSIONS");
-  const std::string& exts = mf->GetSafeDefinition(extensionsVar);
-  std::vector<std::string> extensionList = cmExpandedList(exts);
+  cmProp exts = mf->GetDefinition(extensionsVar);
+  std::vector<std::string> extensionList = exts.ExpandedList();
   for (std::string const& i : extensionList) {
     this->ExtensionToLanguage[i] = l;
   }
@@ -1765,10 +1765,9 @@ void cmGlobalGenerator::FinalizeTargetCompileInfo()
     for (std::string const& li : langs) {
       std::string const standardIncludesVar =
         "CMAKE_" + li + "_STANDARD_INCLUDE_DIRECTORIES";
-      std::string const& standardIncludesStr =
-        mf->GetSafeDefinition(standardIncludesVar);
+      cmProp standardIncludesStr = mf->GetDefinition(standardIncludesVar);
       std::vector<std::string> standardIncludesVec =
-        cmExpandedList(standardIncludesStr);
+        standardIncludesStr.ExpandedList();
       standardIncludesSet.insert(standardIncludesVec.begin(),
                                  standardIncludesVec.end());
     }

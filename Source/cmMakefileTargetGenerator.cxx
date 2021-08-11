@@ -1072,10 +1072,10 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
       }
       vars.Flags = flagsWithDeps.c_str();
 
-      const auto& extraCommands = this->Makefile->GetSafeDefinition(
+      cmProp extraCommands = this->Makefile->GetDefinition(
         cmStrCat("CMAKE_", lang, "_DEPENDS_EXTRA_COMMANDS"));
-      if (!extraCommands.empty()) {
-        auto commandList = cmExpandedList(extraCommands);
+      if (!extraCommands.IsEmpty()) {
+        auto commandList = extraCommands.ExpandedList();
         compileCommands.insert(compileCommands.end(), commandList.cbegin(),
                                commandList.cend());
       }
@@ -1177,7 +1177,7 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
       if (cmProp preprocessRule =
             this->Makefile->GetDefinition(preprocessRuleVar)) {
         std::vector<std::string> preprocessCommands =
-          cmExpandedList(*preprocessRule);
+          preprocessRule.ExpandedList();
 
         std::string shellObjI = this->LocalGenerator->ConvertToOutputFormat(
           objI, cmOutputConverter::SHELL);
@@ -1222,7 +1222,7 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
       if (cmProp assemblyRule =
             this->Makefile->GetDefinition(assemblyRuleVar)) {
         std::vector<std::string> assemblyCommands =
-          cmExpandedList(*assemblyRule);
+          assemblyRule.ExpandedList();
 
         std::string shellObjS = this->LocalGenerator->ConvertToOutputFormat(
           objS, cmOutputConverter::SHELL);
@@ -1498,8 +1498,8 @@ void cmMakefileTargetGenerator::WriteObjectDependRules(
 void cmMakefileTargetGenerator::WriteDeviceLinkRule(
   std::vector<std::string>& commands, const std::string& output)
 {
-  std::string architecturesStr =
-    this->GeneratorTarget->GetSafeProperty("CUDA_ARCHITECTURES");
+  cmProp architecturesStr =
+    this->GeneratorTarget->GetProperty("CUDA_ARCHITECTURES");
 
   if (cmIsOff(architecturesStr)) {
     this->Makefile->IssueMessage(MessageType::FATAL_ERROR,
@@ -1508,7 +1508,7 @@ void cmMakefileTargetGenerator::WriteDeviceLinkRule(
     return;
   }
 
-  std::vector<std::string> architectures = cmExpandedList(architecturesStr);
+  std::vector<std::string> architectures = architecturesStr.ExpandedList();
   std::string const& relPath =
     this->LocalGenerator->GetHomeRelativeOutputPath();
 

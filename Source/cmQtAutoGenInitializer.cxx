@@ -484,10 +484,9 @@ bool cmQtAutoGenInitializer::InitCustomTargets()
       this->AutogenTarget.DependOrigin =
         this->GenTarget->GetPropertyAsBool("AUTOGEN_ORIGIN_DEPENDS");
 
-      std::string const& deps =
-        this->GenTarget->GetSafeProperty("AUTOGEN_TARGET_DEPENDS");
-      if (!deps.empty()) {
-        for (std::string const& depName : cmExpandedList(deps)) {
+      cmProp deps = this->GenTarget->GetProperty("AUTOGEN_TARGET_DEPENDS");
+      if (!deps.IsEmpty()) {
+        for (std::string const& depName : deps.ExpandedList()) {
           // Allow target and file dependencies
           auto* depTarget = this->Makefile->FindTargetToUse(depName);
           if (depTarget) {
@@ -523,8 +522,9 @@ bool cmQtAutoGenInitializer::InitCustomTargets()
       this->GenTarget->GetProperty("AUTOMOC_MACRO_NAMES")
         .ExpandList(this->Moc.MacroNames);
       {
-        auto filterList = cmExpandedList(
-          this->GenTarget->GetSafeProperty("AUTOMOC_DEPEND_FILTERS"));
+        auto filterList =
+          this->GenTarget->GetProperty("AUTOMOC_DEPEND_FILTERS")
+            .ExpandedList();
         if ((filterList.size() % 2) != 0) {
           cmSystemTools::Error(
             cmStrCat("AutoMoc: AUTOMOC_DEPEND_FILTERS predefs size ",
@@ -675,11 +675,10 @@ bool cmQtAutoGenInitializer::InitUic()
 {
   // Uic search paths
   {
-    std::string const& usp =
-      this->GenTarget->GetSafeProperty("AUTOUIC_SEARCH_PATHS");
-    if (!usp.empty()) {
+    cmProp usp = this->GenTarget->GetProperty("AUTOUIC_SEARCH_PATHS");
+    if (!usp.IsEmpty()) {
       this->Uic.SearchPaths =
-        SearchPathSanitizer(this->Makefile)(cmExpandedList(usp));
+        SearchPathSanitizer(this->Makefile)(usp.ExpandedList());
     }
   }
   // Uic target options
@@ -948,12 +947,12 @@ bool cmQtAutoGenInitializer::InitScanFiles()
         // .ui file
         if (!skipUic) {
           // Check if the .ui file has uic options
-          std::string const uicOpts = sf->GetSafeProperty(kw.AUTOUIC_OPTIONS);
-          if (uicOpts.empty()) {
+          cmProp uicOpts = sf->GetProperty(kw.AUTOUIC_OPTIONS);
+          if (uicOpts.IsEmpty()) {
             this->Uic.UiFilesNoOptions.emplace_back(fullPath);
           } else {
             this->Uic.UiFilesWithOptions.emplace_back(fullPath,
-                                                      cmExpandedList(uicOpts));
+                                                      uicOpts.ExpandedList());
           }
         } else {
           // Register skipped .ui file
@@ -1043,7 +1042,7 @@ bool cmQtAutoGenInitializer::InitScanFiles()
     const bool modernQt = (this->QtVersion.Major >= 5);
     // Target rcc options
     std::vector<std::string> optionsTarget =
-      cmExpandedList(this->GenTarget->GetSafeProperty(kw.AUTORCC_OPTIONS));
+      this->GenTarget->GetProperty(kw.AUTORCC_OPTIONS).ExpandedList();
 
     // Check if file name is unique
     for (Qrc& qrc : this->Rcc.Qrcs) {

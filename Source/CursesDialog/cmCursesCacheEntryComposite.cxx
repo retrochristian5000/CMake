@@ -76,7 +76,7 @@ cmCursesCacheEntryComposite::cmCursesCacheEntryComposite(
       if (stringsProp) {
         auto ow =
           cm::make_unique<cmCursesOptionsWidget>(this->EntryWidth, 1, 1, 1);
-        for (std::string const& opt : cmExpandedList(*stringsProp)) {
+        for (std::string const& opt : stringsProp.ExpandedList()) {
           ow->AddOption(opt);
         }
         ow->SetOption(*value);

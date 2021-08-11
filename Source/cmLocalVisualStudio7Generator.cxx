@@ -1523,7 +1523,7 @@ cmLocalVisualStudio7GeneratorFCInfo::cmLocalVisualStudio7GeneratorFCInfo(
 
     // Check for extra object-file dependencies.
     if (cmProp deps = sf.GetProperty("OBJECT_DEPENDS")) {
-      std::vector<std::string> depends = cmExpandedList(*deps);
+      std::vector<std::string> depends = deps.ExpandedList();
       const char* sep = "";
       for (const std::string& d : depends) {
         fc.AdditionalDeps += sep;

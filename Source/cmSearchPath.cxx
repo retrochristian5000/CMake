@@ -79,7 +79,7 @@ void cmSearchPath::AddCMakePath(const std::string& variable)
 
   // Get a path from a CMake variable.
   if (cmProp value = this->FC->Makefile->GetDefinition(variable)) {
-    std::vector<std::string> expanded = cmExpandedList(*value);
+    std::vector<std::string> expanded = value.ExpandedList();
 
     for (std::string const& p : expanded) {
       this->AddPathInternal(
@@ -103,7 +103,7 @@ void cmSearchPath::AddCMakePrefixPath(const std::string& variable)
 
   // Get a path from a CMake variable.
   if (cmProp value = this->FC->Makefile->GetDefinition(variable)) {
-    std::vector<std::string> expanded = cmExpandedList(*value);
+    std::vector<std::string> expanded = value.ExpandedList();
 
     this->AddPrefixPaths(
       expanded, this->FC->Makefile->GetCurrentSourceDirectory().c_str());

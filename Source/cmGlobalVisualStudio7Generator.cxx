@@ -539,7 +539,7 @@ void cmGlobalVisualStudio7Generator::WriteSLNGlobalSections(
         }
         fout << "\tGlobalSection(" << name << ") = " << sectionType << "\n";
         cmProp p = root->GetMakefile()->GetProperty(it);
-        std::vector<std::string> keyValuePairs = cmExpandedList(p ? *p : "");
+        std::vector<std::string> keyValuePairs = p.ExpandedList();
         for (std::string const& itPair : keyValuePairs) {
           const std::string::size_type posEqual = itPair.find('=');
           if (posEqual != std::string::npos) {

@@ -222,7 +222,7 @@ void cmXCodeScheme::WriteLaunchAction(cmXMLWriter& xout,
 
   if (cmProp argList =
         this->Target->GetTarget()->GetProperty("XCODE_SCHEME_ARGUMENTS")) {
-    std::vector<std::string> arguments = cmExpandedList(*argList);
+    std::vector<std::string> arguments = argList.ExpandedList();
     if (!arguments.empty()) {
       xout.StartElement("CommandLineArguments");
 
@@ -242,7 +242,7 @@ void cmXCodeScheme::WriteLaunchAction(cmXMLWriter& xout,
 
   if (cmProp envList =
         this->Target->GetTarget()->GetProperty("XCODE_SCHEME_ENVIRONMENT")) {
-    std::vector<std::string> envs = cmExpandedList(*envList);
+    std::vector<std::string> envs = envList.ExpandedList();
     if (!envs.empty()) {
       xout.StartElement("EnvironmentVariables");
 

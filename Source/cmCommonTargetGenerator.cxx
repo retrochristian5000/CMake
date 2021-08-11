@@ -301,7 +301,7 @@ std::string cmCommonTargetGenerator::GetLinkerLauncher(
     this->GeneratorTarget->GetProperty(lang + "_LINKER_LAUNCHER");
   if (cmNonempty(launcherProp)) {
     // Convert ;-delimited list to single string
-    std::vector<std::string> args = cmExpandedList(*launcherProp, true);
+    std::vector<std::string> args = launcherProp.ExpandedList(true);
     if (!args.empty()) {
       args[0] = this->LocalCommonGenerator->ConvertToOutputFormat(
         args[0], cmOutputConverter::SHELL);

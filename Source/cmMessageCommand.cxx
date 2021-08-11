@@ -30,13 +30,13 @@ enum class CheckingType
 std::string IndentText(std::string text, cmMakefile& mf)
 {
   auto indent =
-    cmJoin(cmExpandedList(mf.GetSafeDefinition("CMAKE_MESSAGE_INDENT")), "");
+    cmJoin(mf.GetDefinition("CMAKE_MESSAGE_INDENT").ExpandedList(), "");
 
   const auto showContext = mf.GetCMakeInstance()->GetShowLogContext() ||
     mf.IsOn("CMAKE_MESSAGE_CONTEXT_SHOW");
   if (showContext) {
-    auto context = cmJoin(
-      cmExpandedList(mf.GetSafeDefinition("CMAKE_MESSAGE_CONTEXT")), ".");
+    auto context =
+      cmJoin(mf.GetDefinition("CMAKE_MESSAGE_CONTEXT").ExpandedList(), ".");
     if (!context.empty()) {
       indent.insert(0u, cmStrCat("["_s, context, "] "_s));
     }

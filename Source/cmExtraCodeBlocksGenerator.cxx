@@ -564,16 +564,16 @@ void cmExtraCodeBlocksGenerator::AppendTarget(
       cm::append(allIncludeDirs, includes);
     }
 
-    std::string systemIncludeDirs = makefile->GetSafeDefinition(
-      "CMAKE_EXTRA_GENERATOR_CXX_SYSTEM_INCLUDE_DIRS");
-    if (!systemIncludeDirs.empty()) {
-      cm::append(allIncludeDirs, cmExpandedList(systemIncludeDirs));
+    cmProp systemIncludeDirs =
+      makefile->GetDefinition("CMAKE_EXTRA_GENERATOR_CXX_SYSTEM_INCLUDE_DIRS");
+    if (!systemIncludeDirs.IsEmpty()) {
+      cm::append(allIncludeDirs, systemIncludeDirs.ExpandedList());
     }
 
-    systemIncludeDirs = makefile->GetSafeDefinition(
-      "CMAKE_EXTRA_GENERATOR_C_SYSTEM_INCLUDE_DIRS");
-    if (!systemIncludeDirs.empty()) {
-      cm::append(allIncludeDirs, cmExpandedList(systemIncludeDirs));
+    systemIncludeDirs =
+      makefile->GetDefinition("CMAKE_EXTRA_GENERATOR_C_SYSTEM_INCLUDE_DIRS");
+    if (!systemIncludeDirs.IsEmpty()) {
+      cm::append(allIncludeDirs, systemIncludeDirs.ExpandedList());
     }
 
     auto end = cmRemoveDuplicates(allIncludeDirs);

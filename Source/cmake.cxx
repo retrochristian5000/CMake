@@ -687,8 +687,8 @@ bool cmake::FindPackage(const std::vector<std::string>& args)
       printf("%s found.\n", packageName.c_str());
     }
   } else if (mode == "COMPILE"_s) {
-    std::string includes = mf->GetSafeDefinition("PACKAGE_INCLUDE_DIRS");
-    std::vector<std::string> includeDirs = cmExpandedList(includes);
+    cmProp includes = mf->GetDefinition("PACKAGE_INCLUDE_DIRS");
+    std::vector<std::string> includeDirs = includes.ExpandedList();
 
     this->GlobalGenerator->CreateGenerationObjects();
     const auto& lg = this->GlobalGenerator->LocalGenerators[0];
@@ -703,8 +703,8 @@ bool cmake::FindPackage(const std::vector<std::string>& args)
     cmTarget* tgt = mf->AddExecutable(targetName, srcs, true);
     tgt->SetProperty("LINKER_LANGUAGE", language);
 
-    std::string libs = mf->GetSafeDefinition("PACKAGE_LIBRARIES");
-    std::vector<std::string> libList = cmExpandedList(libs);
+    cmProp libs = mf->GetDefinition("PACKAGE_LIBRARIES");
+    std::vector<std::string> libList = libs.ExpandedList();
     for (std::string const& lib : libList) {
       tgt->AddLinkLibrary(*mf, lib, GENERAL_LibraryType);
     }
