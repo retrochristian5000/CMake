@@ -1491,7 +1491,7 @@ void cmMakefileTargetGenerator::WriteObjectDependRules(
   // shared between the object file and dependency scanning rule.
   depends.push_back(source.GetFullPath());
   if (cmProp objectDeps = source.GetProperty("OBJECT_DEPENDS")) {
-    cmExpandList(*objectDeps, depends);
+    objectDeps.ExpandList(depends);
   }
 }
 

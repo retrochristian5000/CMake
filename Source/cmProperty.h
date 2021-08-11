@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <iosfwd>
 #include <string>
+#include <vector>
 
 #include <cm/string_view>
 
@@ -144,6 +145,8 @@ public:
     return value == nullptr || *value == '\0';
   }
   static bool IsEmpty(cm::string_view value) noexcept { return value.empty(); }
+
+  void ExpandList(std::vector<std::string>&, bool emptyArgs = false) const;
 
 private:
   static std::string Empty;

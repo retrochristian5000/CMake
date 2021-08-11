@@ -290,7 +290,7 @@ void cmCustomCommandGenerator::FillEmulatorsWithArguments()
         continue;
       }
 
-      cmExpandList(*emulator_property, this->EmulatorsWithArguments[c]);
+      emulator_property.ExpandList(this->EmulatorsWithArguments[c]);
     }
   }
 }

@@ -805,7 +805,7 @@ void cmVisualStudio10TargetGenerator::WritePackageReferences(Elem& e0)
   std::vector<std::string> packageReferences;
   if (cmProp vsPackageReferences =
         this->GeneratorTarget->GetProperty("VS_PACKAGE_REFERENCES")) {
-    cmExpandList(*vsPackageReferences, packageReferences);
+    vsPackageReferences.ExpandList(packageReferences);
   }
   if (!packageReferences.empty()) {
     Elem e1(e0, "ItemGroup");
@@ -825,7 +825,7 @@ void cmVisualStudio10TargetGenerator::WriteDotNetReferences(Elem& e0)
   std::vector<std::string> references;
   if (cmProp vsDotNetReferences =
         this->GeneratorTarget->GetProperty("VS_DOTNET_REFERENCES")) {
-    cmExpandList(*vsDotNetReferences, references);
+    vsDotNetReferences.ExpandList(references);
   }
   cmPropertyMap const& props = this->GeneratorTarget->Target->GetProperties();
   for (auto const& i : props.GetList()) {
@@ -1099,7 +1099,7 @@ void cmVisualStudio10TargetGenerator::WriteWinRTReferences(Elem& e0)
   std::vector<std::string> references;
   if (cmProp vsWinRTReferences =
         this->GeneratorTarget->GetProperty("VS_WINRT_REFERENCES")) {
-    cmExpandList(*vsWinRTReferences, references);
+    vsWinRTReferences.ExpandList(references);
   }
 
   if (this->GlobalGenerator->TargetsWindowsPhone() &&
@@ -4320,7 +4320,7 @@ void cmVisualStudio10TargetGenerator::WriteSDKReferences(Elem& e0)
   std::unique_ptr<Elem> spe1;
   if (cmProp vsSDKReferences =
         this->GeneratorTarget->GetProperty("VS_SDK_REFERENCES")) {
-    cmExpandList(*vsSDKReferences, sdkReferences);
+    vsSDKReferences.ExpandList(sdkReferences);
     spe1 = cm::make_unique<Elem>(e0, "ItemGroup");
     for (std::string const& ri : sdkReferences) {
       Elem(*spe1, "SDKReference").Attribute("Include", ri);

@@ -241,7 +241,7 @@ void cmGlobalGenerator::ResolveLanguageCompiler(const std::string& lang,
   // Split compiler from arguments
   std::vector<std::string> cnameArgVec;
   if (cname && !cname->empty()) {
-    cmExpandList(*cname, cnameArgVec);
+    cname.ExpandList(cnameArgVec);
     cname = cmProp(cnameArgVec.front());
   }
 
@@ -3177,7 +3177,7 @@ void cmGlobalGenerator::WriteSummary(cmGeneratorTarget* target)
     // List the target-wide labels.  All sources in the target get
     // these labels.
     if (targetLabels) {
-      cmExpandList(*targetLabels, labels);
+      targetLabels.ExpandList(labels);
       if (!labels.empty()) {
         fout << "# Target labels\n";
         for (std::string const& l : labels) {
@@ -3192,11 +3192,11 @@ void cmGlobalGenerator::WriteSummary(cmGeneratorTarget* target)
     std::vector<std::string> cmakeDirectoryLabelsList;
 
     if (directoryLabels) {
-      cmExpandList(*directoryLabels, directoryLabelsList);
+      directoryLabels.ExpandList(directoryLabelsList);
     }
 
     if (cmakeDirectoryLabels) {
-      cmExpandList(*cmakeDirectoryLabels, cmakeDirectoryLabelsList);
+      cmakeDirectoryLabels.ExpandList(cmakeDirectoryLabelsList);
     }
 
     if (!directoryLabelsList.empty() || !cmakeDirectoryLabelsList.empty()) {
@@ -3231,7 +3231,7 @@ void cmGlobalGenerator::WriteSummary(cmGeneratorTarget* target)
       if (cmProp svalue = sf->GetProperty("LABELS")) {
         labels.clear();
         Json::Value& lj_source_labels = lj_source["labels"] = Json::arrayValue;
-        cmExpandList(*svalue, labels);
+        svalue.ExpandList(labels);
         for (std::string const& label : labels) {
           fout << " " << label << "\n";
           lj_source_labels.append(label);

@@ -2175,7 +2175,7 @@ bool cmTarget::GetMappedConfig(std::string const& desired_config, cmProp& loc,
   {
     std::string mapProp = cmStrCat("MAP_IMPORTED_CONFIG_", config_upper);
     if (cmProp mapValue = this->GetProperty(mapProp)) {
-      cmExpandList(*mapValue, mappedConfigs, true);
+      mapValue.ExpandList(mappedConfigs, true);
     }
   }
 
@@ -2257,7 +2257,7 @@ bool cmTarget::GetMappedConfig(std::string const& desired_config, cmProp& loc,
   if (!loc && !imp) {
     std::vector<std::string> availableConfigs;
     if (cmProp iconfigs = this->GetProperty("IMPORTED_CONFIGURATIONS")) {
-      cmExpandList(*iconfigs, availableConfigs);
+      iconfigs.ExpandList(availableConfigs);
     }
     for (auto aci = availableConfigs.begin();
          !loc && !imp && aci != availableConfigs.end(); ++aci) {

@@ -220,13 +220,13 @@ bool cmRuntimeDependencyArchive::GetGetRuntimeDependenciesCommand(
   const std::string& search, std::vector<std::string>& command) const
 {
   // First see if it was supplied by the user
-  std::string toolCommand = this->GetMakefile()->GetSafeDefinition(
+  cmProp toolCommand = this->GetMakefile()->GetDefinition(
     "CMAKE_GET_RUNTIME_DEPENDENCIES_COMMAND");
-  if (toolCommand.empty() && search == "objdump") {
-    toolCommand = this->GetMakefile()->GetSafeDefinition("CMAKE_OBJDUMP");
+  if (toolCommand.IsEmpty() && search == "objdump") {
+    toolCommand = this->GetMakefile()->GetDefinition("CMAKE_OBJDUMP");
   }
-  if (!toolCommand.empty()) {
-    cmExpandList(toolCommand, command);
+  if (!toolCommand.IsEmpty()) {
+    toolCommand.ExpandList(command);
     return true;
   }
 

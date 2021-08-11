@@ -1209,7 +1209,7 @@ void cmFindPackageCommand::AppendToFoundProperty(bool found)
   cmProp foundProp =
     this->Makefile->GetState()->GetGlobalProperty("PACKAGES_FOUND");
   if (cmNonempty(foundProp)) {
-    cmExpandList(*foundProp, foundContents, false);
+    foundProp.ExpandList(foundContents, false);
     auto nameIt =
       std::find(foundContents.begin(), foundContents.end(), this->Name);
     if (nameIt != foundContents.end()) {
@@ -1221,7 +1221,7 @@ void cmFindPackageCommand::AppendToFoundProperty(bool found)
   cmProp notFoundProp =
     this->Makefile->GetState()->GetGlobalProperty("PACKAGES_NOT_FOUND");
   if (cmNonempty(notFoundProp)) {
-    cmExpandList(*notFoundProp, notFoundContents, false);
+    notFoundProp.ExpandList(notFoundContents, false);
     auto nameIt =
       std::find(notFoundContents.begin(), notFoundContents.end(), this->Name);
     if (nameIt != notFoundContents.end()) {

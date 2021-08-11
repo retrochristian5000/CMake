@@ -1658,7 +1658,7 @@ static const struct TargetObjectsNode : public cmGeneratorExpressionNode
       cmProp imp = nullptr;
       std::string suffix;
       if (gt->Target->GetMappedConfig(context->Config, loc, imp, suffix)) {
-        cmExpandList(*loc, objects);
+        loc.ExpandList(objects);
       }
       context->HadContextSensitiveCondition = true;
     } else {

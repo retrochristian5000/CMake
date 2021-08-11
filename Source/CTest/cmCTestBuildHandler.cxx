@@ -251,12 +251,11 @@ void cmCTestBuildHandler::PopulateCustomVectors(cmMakefile* mf)
   // Record the user-specified custom warning rules.
   if (cmProp customWarningMatchers =
         mf->GetDefinition("CTEST_CUSTOM_WARNING_MATCH")) {
-    cmExpandList(*customWarningMatchers, this->ReallyCustomWarningMatches);
+    customWarningMatchers.ExpandList(this->ReallyCustomWarningMatches);
   }
   if (cmProp customWarningExceptions =
         mf->GetDefinition("CTEST_CUSTOM_WARNING_EXCEPTION")) {
-    cmExpandList(*customWarningExceptions,
-                 this->ReallyCustomWarningExceptions);
+    customWarningExceptions.ExpandList(this->ReallyCustomWarningExceptions);
   }
 }
 

@@ -517,11 +517,11 @@ bool cmQtAutoGenInitializer::InitCustomTargets()
       }
 
       // Options
-      cmExpandList(this->GenTarget->GetSafeProperty("AUTOMOC_MOC_OPTIONS"),
-                   this->Moc.Options);
+      this->GenTarget->GetProperty("AUTOMOC_MOC_OPTIONS")
+        .ExpandList(this->Moc.Options);
       // Filters
-      cmExpandList(this->GenTarget->GetSafeProperty("AUTOMOC_MACRO_NAMES"),
-                   this->Moc.MacroNames);
+      this->GenTarget->GetProperty("AUTOMOC_MACRO_NAMES")
+        .ExpandList(this->Moc.MacroNames);
       {
         auto filterList = cmExpandedList(
           this->GenTarget->GetSafeProperty("AUTOMOC_DEPEND_FILTERS"));
@@ -826,10 +826,9 @@ bool cmQtAutoGenInitializer::InitScanFiles()
           qrc.Generated = acs.Source->GetIsGenerated();
           // RCC options
           {
-            std::string const& opts =
-              acs.Source->GetSafeProperty(kw.AUTORCC_OPTIONS);
-            if (!opts.empty()) {
-              cmExpandList(opts, qrc.Options);
+            cmProp opts = acs.Source->GetProperty(kw.AUTORCC_OPTIONS);
+            if (!opts.IsEmpty()) {
+              opts.ExpandList(qrc.Options);
             }
           }
           this->Rcc.Qrcs.push_back(std::move(qrc));

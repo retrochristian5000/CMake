@@ -163,9 +163,9 @@ bool cmForEachFunctionBlocker::ReplayZipLists(
   for (auto const& var :
        cmMakeRange(this->Args).advance(this->IterationVarsCount)) {
     std::vector<std::string> items;
-    auto const& value = mf.GetSafeDefinition(var);
-    if (!value.empty()) {
-      cmExpandList(value, items, true);
+    cmProp value = mf.GetDefinition(var);
+    if (!value.IsEmpty()) {
+      value.ExpandList(items, true);
     }
     maxItems = std::max(maxItems, items.size());
     values.emplace_back(std::move(items));
@@ -342,9 +342,9 @@ bool HandleInMode(std::vector<std::string> const& args,
       fb->SetZipLists();
 
     } else if (doing == DoingLists) {
-      auto const& value = makefile.GetSafeDefinition(arg);
-      if (!value.empty()) {
-        cmExpandList(value, fb->Args, true);
+      cmProp value = makefile.GetDefinition(arg);
+      if (!value.IsEmpty()) {
+        value.ExpandList(fb->Args, true);
       }
 
     } else if (doing == DoingItems || doing == DoingZipLists) {

@@ -3172,7 +3172,7 @@ std::vector<std::string> cmake::GetDebugConfigs()
   if (cmProp config_list =
         this->State->GetGlobalProperty("DEBUG_CONFIGURATIONS")) {
     // Expand the specified list and convert to upper-case.
-    cmExpandList(*config_list, configs);
+    config_list.ExpandList(configs);
     std::transform(configs.begin(), configs.end(), configs.begin(),
                    cmSystemTools::UpperCase);
   }

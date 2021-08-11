@@ -111,3 +111,11 @@ std::ostream& operator<<(std::ostream& o, cmProp v)
   o << *v;
   return o;
 }
+
+void cmProp::ExpandList(std::vector<std::string>& argsOut,
+                        bool emptyArgs) const
+{
+  if (this->Value) {
+    cmExpandList(*this->Value, argsOut, emptyArgs);
+  }
+}

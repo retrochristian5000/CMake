@@ -2590,7 +2590,7 @@ bool cmMakefile::GetDefExpandList(const std::string& name,
   if (!def) {
     return false;
   }
-  cmExpandList(*def, out, emptyArgs);
+  def.ExpandList(out, emptyArgs);
   return true;
 }
 
@@ -4073,7 +4073,7 @@ void cmMakefile::AddCMakeDependFilesFromUser()
 {
   std::vector<std::string> deps;
   if (cmProp deps_str = this->GetProperty("CMAKE_CONFIGURE_DEPENDS")) {
-    cmExpandList(*deps_str, deps);
+    deps_str.ExpandList(deps);
   }
   for (std::string const& dep : deps) {
     if (cmSystemTools::FileIsFullPath(dep)) {

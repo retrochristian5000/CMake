@@ -2900,9 +2900,9 @@ void cmGlobalNinjaMultiGenerator::GetQtAutoGenConfigs(
 bool cmGlobalNinjaMultiGenerator::InspectConfigTypeVariables()
 {
   std::vector<std::string> configsVec;
-  cmExpandList(
-    this->Makefiles.front()->GetSafeDefinition("CMAKE_CONFIGURATION_TYPES"),
-    configsVec);
+  this->Makefiles.front()
+    ->GetDefinition("CMAKE_CONFIGURATION_TYPES")
+    .ExpandList(configsVec);
   if (configsVec.empty()) {
     configsVec.emplace_back();
   }
@@ -2924,9 +2924,9 @@ bool cmGlobalNinjaMultiGenerator::InspectConfigTypeVariables()
   }
 
   std::vector<std::string> crossConfigsVec;
-  cmExpandList(
-    this->Makefiles.front()->GetSafeDefinition("CMAKE_CROSS_CONFIGS"),
-    crossConfigsVec);
+  this->Makefiles.front()
+    ->GetDefinition("CMAKE_CROSS_CONFIGS")
+    .ExpandList(crossConfigsVec);
   auto crossConfigs = ListSubsetWithAll(configs, configs, crossConfigsVec);
   if (!crossConfigs) {
     std::ostringstream msg;

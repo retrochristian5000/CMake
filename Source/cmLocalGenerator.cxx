@@ -133,12 +133,12 @@ cmLocalGenerator::cmLocalGenerator(cmGlobalGenerator* gg, cmMakefile* makefile)
 
   if (cmProp appleArchSysroots =
         this->Makefile->GetDefinition("CMAKE_APPLE_ARCH_SYSROOTS")) {
-    std::string const& appleArchs =
-      this->Makefile->GetSafeDefinition("CMAKE_OSX_ARCHITECTURES");
+    cmProp appleArchs =
+      this->Makefile->GetDefinition("CMAKE_OSX_ARCHITECTURES");
     std::vector<std::string> archs;
     std::vector<std::string> sysroots;
-    cmExpandList(appleArchs, archs);
-    cmExpandList(*appleArchSysroots, sysroots, true);
+    appleArchs.ExpandList(archs);
+    appleArchSysroots.ExpandList(sysroots, true);
     if (archs.size() == sysroots.size()) {
       for (size_t i = 0; i < archs.size(); ++i) {
         this->AppleArchSysroots[archs[i]] = sysroots[i];
@@ -148,7 +148,7 @@ cmLocalGenerator::cmLocalGenerator(cmGlobalGenerator* gg, cmMakefile* makefile)
         cmStrCat("CMAKE_APPLE_ARCH_SYSROOTS:\n  ", *appleArchSysroots,
                  "\n"
                  "is not the same length as CMAKE_OSX_ARCHITECTURES:\n  ",
-                 appleArchs);
+                 *appleArchs);
       this->IssueMessage(MessageType::FATAL_ERROR, e);
     }
   }
@@ -1188,9 +1188,9 @@ std::vector<BT<std::string>> cmLocalGenerator::GetIncludeDirectoriesImplicit(
   // These are intended to simulate additional implicit include directories.
   std::vector<std::string> userStandardDirs;
   {
-    std::string const value = this->Makefile->GetSafeDefinition(
+    cmProp value = this->Makefile->GetDefinition(
       cmStrCat("CMAKE_", lang, "_STANDARD_INCLUDE_DIRECTORIES"));
-    cmExpandList(value, userStandardDirs);
+    value.ExpandList(userStandardDirs);
     for (std::string& usd : userStandardDirs) {
       cmSystemTools::ConvertToUnixSlashes(usd);
     }
@@ -4252,12 +4252,11 @@ void AddUtilityCommand(cmLocalGenerator& lg, const cmListFileBacktrace& lfbt,
 
 std::vector<std::string> ComputeISPCObjectSuffixes(cmGeneratorTarget* target)
 {
-  const std::string& targetProperty =
-    target->GetSafeProperty("ISPC_INSTRUCTION_SETS");
+  cmProp targetProperty = target->GetProperty("ISPC_INSTRUCTION_SETS");
   std::vector<std::string> ispcTargets;
 
   if (!cmIsOff(targetProperty)) {
-    cmExpandList(targetProperty, ispcTargets);
+    targetProperty.ExpandList(ispcTargets);
     for (auto& ispcTarget : ispcTargets) {
       // transform targets into the suffixes
       auto pos = ispcTarget.find('-');

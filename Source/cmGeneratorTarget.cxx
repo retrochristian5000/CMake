@@ -3242,7 +3242,7 @@ void cmGeneratorTarget::GetAppleArchs(const std::string& config,
     archs = this->GetProperty("OSX_ARCHITECTURES");
   }
   if (archs) {
-    cmExpandList(*archs, archVec);
+    archs.ExpandList(archVec);
   }
   if (archVec.empty()) {
     this->Makefile->GetDefExpandList("_CMAKE_APPLE_ARCHS_DEFAULT", archVec);
@@ -3275,9 +3275,9 @@ void cmGeneratorTarget::AddExplicitLanguageFlags(std::string& flags,
 
 void cmGeneratorTarget::AddCUDAArchitectureFlags(std::string& flags) const
 {
-  const std::string& property = this->GetSafeProperty("CUDA_ARCHITECTURES");
+  cmProp property = this->GetProperty("CUDA_ARCHITECTURES");
 
-  if (property.empty()) {
+  if (property.IsEmpty()) {
     switch (this->GetPolicyStatusCMP0104()) {
       case cmPolicies::WARN:
         if (!this->LocalGenerator->GetCMakeInstance()->GetIsInTryCompile()) {
@@ -3385,7 +3385,7 @@ void cmGeneratorTarget::AddCUDAArchitectureFlags(std::string& flags) const
 
 void cmGeneratorTarget::AddISPCTargetFlags(std::string& flags) const
 {
-  const std::string& property = this->GetSafeProperty("ISPC_INSTRUCTION_SETS");
+  cmProp property = this->GetProperty("ISPC_INSTRUCTION_SETS");
 
   // If ISPC_TARGET is false we don't add any architectures.
   if (cmIsOff(property)) {
@@ -3397,7 +3397,7 @@ void cmGeneratorTarget::AddISPCTargetFlags(std::string& flags) const
 
   if (compiler == "Intel") {
     std::vector<std::string> targets;
-    cmExpandList(property, targets);
+    property.ExpandList(targets);
     if (!targets.empty()) {
       flags += cmStrCat(" --target=", cmWrap("", targets, "", ","));
     }
@@ -3406,9 +3406,9 @@ void cmGeneratorTarget::AddISPCTargetFlags(std::string& flags) const
 
 void cmGeneratorTarget::AddHIPArchitectureFlags(std::string& flags) const
 {
-  const std::string& property = this->GetSafeProperty("HIP_ARCHITECTURES");
+  cmProp property = this->GetProperty("HIP_ARCHITECTURES");
 
-  if (property.empty()) {
+  if (property.IsEmpty()) {
     this->Makefile->IssueMessage(MessageType::FATAL_ERROR,
                                  "HIP_ARCHITECTURES is empty for target \"" +
                                    this->GetName() + "\".");
@@ -3420,7 +3420,7 @@ void cmGeneratorTarget::AddHIPArchitectureFlags(std::string& flags) const
   }
 
   std::vector<std::string> options;
-  cmExpandList(property, options);
+  property.ExpandList(options);
 
   for (std::string& option : options) {
     flags += " --offload-arch=" + option;
@@ -5374,7 +5374,7 @@ cmGeneratorTarget::GetCompatibleInterfaces(std::string const& config) const
 #define CM_READ_COMPATIBLE_INTERFACE(X, x)                                    \
   if (cmProp prop = li->GetProperty("COMPATIBLE_INTERFACE_" #X)) {            \
     std::vector<std::string> props;                                           \
-    cmExpandList(*prop, props);                                               \
+    prop.ExpandList(props);                                                   \
     compat.Props##x.insert(props.begin(), props.end());                       \
   }
       CM_READ_COMPATIBLE_INTERFACE(BOOL, Bool)

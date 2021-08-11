@@ -219,7 +219,7 @@ void cmFindCommon::RerootPaths(std::vector<std::string>& paths)
   // Construct the list of path roots with no trailing slashes.
   std::vector<std::string> roots;
   if (rootPath) {
-    cmExpandList(*rootPath, roots);
+    rootPath.ExpandList(roots);
   }
   if (sysrootCompile) {
     roots.emplace_back(*sysrootCompile);

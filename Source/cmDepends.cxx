@@ -32,7 +32,7 @@ bool cmDepends::Write(std::ostream& makeDepends, std::ostream& internalDepends)
     {
       std::string const srcLang = "CMAKE_DEPENDS_CHECK_" + this->Language;
       cmMakefile* mf = this->LocalGenerator->GetMakefile();
-      cmExpandList(mf->GetSafeDefinition(srcLang), pairs);
+      mf->GetDefinition(srcLang).ExpandList(pairs);
     }
     for (auto si = pairs.begin(); si != pairs.end();) {
       // Get the source and object file.
@@ -234,13 +234,13 @@ void cmDepends::SetIncludePathFromLanguage(const std::string& lang)
   cmMakefile* mf = this->LocalGenerator->GetMakefile();
   cmProp includePath = mf->GetDefinition(includePathVar);
   if (includePath) {
-    cmExpandList(*includePath, this->IncludePath);
+    includePath.ExpandList(this->IncludePath);
   } else {
     // Fallback to the old directory level variable if no per-target var:
     includePathVar = cmStrCat("CMAKE_", lang, "_INCLUDE_PATH");
     includePath = mf->GetDefinition(includePathVar);
     if (includePath) {
-      cmExpandList(*includePath, this->IncludePath);
+      includePath.ExpandList(this->IncludePath);
     }
   }
 }

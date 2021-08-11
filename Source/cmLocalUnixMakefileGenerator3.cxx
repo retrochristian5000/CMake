@@ -1962,11 +1962,11 @@ void cmLocalUnixMakefileGenerator3::WriteDependLanguageInfo(
     std::vector<std::string> transformRules;
     if (cmProp xform =
           this->Makefile->GetProperty("IMPLICIT_DEPENDS_INCLUDE_TRANSFORM")) {
-      cmExpandList(*xform, transformRules);
+      xform.ExpandList(transformRules);
     }
     if (cmProp xform =
           target->GetProperty("IMPLICIT_DEPENDS_INCLUDE_TRANSFORM")) {
-      cmExpandList(*xform, transformRules);
+      xform.ExpandList(transformRules);
     }
     if (!transformRules.empty()) {
       cmakefileStream << "\nset(CMAKE_INCLUDE_TRANSFORMS\n";
