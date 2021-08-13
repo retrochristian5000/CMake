@@ -401,7 +401,7 @@ bool cmStandardLevelResolver::CheckCompileFeaturesAvailable(
     return true;
   }
 
-  const char* features = this->CompileFeaturesAvailable(lang, error);
+  cmProp features = this->CompileFeaturesAvailable(lang, error);
   if (!features) {
     return false;
   }
@@ -479,7 +479,7 @@ bool cmStandardLevelResolver::CompileFeatureKnown(
   return false;
 }
 
-const char* cmStandardLevelResolver::CompileFeaturesAvailable(
+cmProp cmStandardLevelResolver::CompileFeaturesAvailable(
   const std::string& lang, std::string* error) const
 {
   if (!this->Makefile->GetGlobalGenerator()->GetLanguageEnabled(lang)) {
@@ -521,7 +521,7 @@ const char* cmStandardLevelResolver::CompileFeaturesAvailable(
     }
     return nullptr;
   }
-  return cmToCStr(featuresKnown);
+  return featuresKnown;
 }
 
 bool cmStandardLevelResolver::GetNewRequiredStandard(
