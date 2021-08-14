@@ -84,6 +84,11 @@ endmacro()
 
 macro(_pkgconfig_set var value)
   set(${var} ${value} CACHE INTERNAL "")
+  # module legacy behavior must be independent from CMP0126 policy
+  # remove any local variable xxx_FOUND
+  if ("${var}" MATCHES "_FOUND$")
+    unset(${var})
+  endif()
 endmacro()
 
 # Invokes pkgconfig, cleans up the result and sets variables
