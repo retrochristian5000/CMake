@@ -1,0 +1,21 @@
+include(RunCMake)
+
+unset(RunCMake_TEST_NO_CLEAN)
+
+function(run_FetchContent_pkgRedirects)
+  set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/CMAKE_FIND_PACKAGE_REDIRECTS_DIR-AlwaysEmptied-build)
+  run_cmake(CMAKE_FIND_PACKAGE_REDIRECTS_DIR-AlwaysEmptied-Setup)
+  set(RunCMake_TEST_NO_CLEAN 1)
+  run_cmake(CMAKE_FIND_PACKAGE_REDIRECTS_DIR-AlwaysEmptied)
+endfunction()
+
+run_cmake(CMAKE_FIND_PACKAGE_REDIRECTS_DIR-Exists)
+run_FetchContent_pkgRedirects()
+run_cmake(BadArgs_find_package)
+run_cmake(PreferFetchContent)
+run_cmake(Prefer_find_package)
+run_cmake(ProjectProvidesPackageConfigFiles)
+run_cmake(FETCHCONTENT_TRY_FIND_PACKAGE_MODE-ALWAYS)
+run_cmake(FETCHCONTENT_TRY_FIND_PACKAGE_MODE-NEVER)
+run_cmake(FETCHCONTENT_TRY_FIND_PACKAGE_MODE-OPT_IN)
+run_cmake(FETCHCONTENT_TRY_FIND_PACKAGE_MODE-BOGUS)
