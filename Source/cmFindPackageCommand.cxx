@@ -22,6 +22,7 @@
 #include "cmsys/String.h"
 
 #include "cmAlgorithms.h"
+#include "cmListFileCache.h"
 #include "cmMakefile.h"
 #include "cmMessageType.h"
 #include "cmPolicies.h"
@@ -42,6 +43,8 @@
 class cmExecutionStatus;
 class cmFileList;
 
+cmFindPackageCommand::PathLabel
+  cmFindPackageCommand::PathLabel::PackageRedirect("PACKAGE_REDIRECT");
 cmFindPackageCommand::PathLabel cmFindPackageCommand::PathLabel::UserRegistry(
   "PACKAGE_REGISTRY");
 cmFindPackageCommand::PathLabel cmFindPackageCommand::PathLabel::Builds(
@@ -109,8 +112,10 @@ void cmFindPackageCommand::AppendSearchPathGroups()
 {
   std::vector<cmFindCommon::PathLabel>* labels;
 
-  // Update the All group with new paths
+  // Update the All group with new paths. Note that package redirection must
+  // take precedence over everything else, so it has to be first in the array.
   labels = &this->PathGroupLabelMap[PathGroup::All];
+  labels->insert(labels->begin(), PathLabel::PackageRedirect);
   labels->insert(
     std::find(labels->begin(), labels->end(), PathLabel::CMakeSystem),
     PathLabel::UserRegistry);
@@ -121,6 +126,8 @@ void cmFindPackageCommand::AppendSearchPathGroups()
                  PathLabel::SystemRegistry);
 
   // Create the new path objects
+  this->LabeledPaths.insert(
+    std::make_pair(PathLabel::PackageRedirect, cmSearchPath(this)));
   this->LabeledPaths.insert(
     std::make_pair(PathLabel::UserRegistry, cmSearchPath(this)));
   this->LabeledPaths.insert(
@@ -542,9 +549,52 @@ bool cmFindPackageCommand::InitialPass(std::vector<std::string> const& args)
 
   this->SetModuleVariables(components);
 
+  // See if we have been told to delegate to FetchContent for population first.
+  // We have to check all names that find_package() may look for, but only need
+  // to invoke the override for the first one that matches.
+  auto overrideNames = this->Names;
+  if (overrideNames.empty()) {
+    overrideNames.push_back(this->Name);
+  }
+  bool forceConfigMode = false;
+  for (const auto& overrideName : overrideNames) {
+    const auto nameLower = cmSystemTools::LowerCase(overrideName);
+    const auto delegatePropName =
+      cmStrCat("_FetchContent_", nameLower, "_override_find_package");
+    cmProp delegateToFetchContentProp =
+      this->Makefile->GetState()->GetGlobalProperty(delegatePropName);
+    if (delegateToFetchContentProp.IsOn()) {
+      // If this property is set, then the FetchContent module has already been
+      // included at least once, so we know the FetchContent_MakeAvailable()
+      // command will be defined
+      cmListFileFunction func(
+        "FetchContent_MakeAvailable", 0,
+        { cmListFileArgument(overrideName, cmListFileArgument::Unquoted, 0) });
+      if (!this->Makefile->ExecuteCommand(func, this->Status)) {
+        return false;
+      }
+      // Any future find_package() calls for this package will by-pass this
+      // once-only delegation. Both this case now and all future find_package()
+      // calls for this package should load the redirected package config files
+      // that FetchContent will have just created, so we still need to fall
+      // through to the next block for that processing.
+      forceConfigMode = true;
+      this->UseConfigFiles = true;
+      this->UseFindModules = false;
+      this->Names.clear();
+      this->Names.emplace_back(overrideName); // Force finding this one
+      this->Variable = cmStrCat(this->Name, "_DIR");
+      this->SetConfigDirCacheVariable(
+        this->Makefile->GetSafeDefinition("CMAKE_FIND_PACKAGE_REDIRECTS_DIR"));
+      break;
+    }
+  }
+
   // See if there is a Find<PackageName>.cmake module.
   bool loadedPackage = false;
-  if (this->Makefile->IsOn("CMAKE_FIND_PACKAGE_PREFER_CONFIG")) {
+  if (forceConfigMode) {
+    loadedPackage = this->FindPackageUsingConfigMode();
+  } else if (this->Makefile->IsOn("CMAKE_FIND_PACKAGE_PREFER_CONFIG")) {
     if (this->UseConfigFiles && this->FindPackageUsingConfigMode()) {
       loadedPackage = true;
     } else {
@@ -1150,19 +1200,24 @@ bool cmFindPackageCommand::FindConfig()
   } else {
     init = this->Variable + "-NOTFOUND";
   }
+  // We force the value since we do not get here if it was already set.
+  this->SetConfigDirCacheVariable(init);
+
+  return found;
+}
+
+void cmFindPackageCommand::SetConfigDirCacheVariable(const std::string& value)
+{
   std::string help =
     cmStrCat("The directory containing a CMake configuration file for ",
              this->Name, '.');
-  // We force the value since we do not get here if it was already set.
-  this->Makefile->AddCacheDefinition(this->Variable, init, help.c_str(),
+  this->Makefile->AddCacheDefinition(this->Variable, value, help.c_str(),
                                      cmStateEnums::PATH, true);
   if (this->Makefile->GetPolicyStatus(cmPolicies::CMP0126) ==
         cmPolicies::NEW &&
       this->Makefile->IsNormalDefinitionSet(this->Variable)) {
-    this->Makefile->AddDefinition(this->Variable, init);
+    this->Makefile->AddDefinition(this->Variable, value);
   }
-
-  return found;
 }
 
 bool cmFindPackageCommand::FindPrefixedConfig()
@@ -1308,6 +1363,8 @@ inline std::size_t collectPathsForDebug(std::string& buffer,
 
 void cmFindPackageCommand::ComputePrefixes()
 {
+  this->FillPrefixesPackageRedirect();
+
   if (!this->NoDefaultPath) {
     if (!this->NoPackageRootPath) {
       this->FillPrefixesPackageRoot();
@@ -1339,6 +1396,23 @@ void cmFindPackageCommand::ComputePrefixes()
   this->FillPrefixesUserGuess();
 
   this->ComputeFinalPaths();
+}
+
+void cmFindPackageCommand::FillPrefixesPackageRedirect()
+{
+  cmSearchPath& paths = this->LabeledPaths[PathLabel::PackageRedirect];
+
+  const auto redirectDir =
+    this->Makefile->GetDefinition("CMAKE_FIND_PACKAGE_REDIRECTS_DIR");
+  if (redirectDir && !redirectDir->empty()) {
+    paths.AddPath(*redirectDir);
+  }
+  if (this->DebugMode) {
+    std::string debugBuffer =
+      "The internally managed CMAKE_FIND_PACKAGE_REDIRECTS_DIR.\n";
+    collectPathsForDebug(debugBuffer, paths);
+    this->DebugBuffer = cmStrCat(this->DebugBuffer, debugBuffer, "\n");
+  }
 }
 
 void cmFindPackageCommand::FillPrefixesPackageRoot()
