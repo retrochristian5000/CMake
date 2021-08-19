@@ -2178,6 +2178,21 @@ void cmGlobalNinjaGenerator::InitOutputPathPrefix()
     this->LocalGenerators[0]->GetMakefile()->GetSafeDefinition(
       "CMAKE_NINJA_OUTPUT_PATH_PREFIX");
   EnsureTrailingSlash(this->OutputPathPrefix);
+
+  const auto& lg = this->LocalGenerators[0];
+
+  auto StrippedOutputPathPrefix = this->OutputPathPrefix;
+  cmStripSuffixIfExists(StrippedOutputPathPrefix, '/');
+  cmStripSuffixIfExists(StrippedOutputPathPrefix, '\\');
+  if (!cmHasSuffix(lg->GetBinaryDirectory(), StrippedOutputPathPrefix)) {
+    std::ostringstream msg;
+    msg << "CMAKE_NINJA_OUTPUT_PATH_PREFIX (" << this->OutputPathPrefix
+        << ") must be a suffix of CMAKE_BINARY_DIR ("
+        << lg->GetBinaryDirectory() << ")";
+    this->GetCMakeInstance()->IssueMessage(MessageType::FATAL_ERROR,
+                                           msg.str());
+    return;
+  }
 }
 
 std::string cmGlobalNinjaGenerator::NinjaOutputPath(
