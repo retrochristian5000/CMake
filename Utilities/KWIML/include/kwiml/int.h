@@ -162,7 +162,11 @@ An includer may test the following macros after inclusion:
 #elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L /* C99 */
 # define KWIML_INT_HAVE_INTTYPES_H 1
 #elif defined(_MSC_VER) /* MSVC */
-# define KWIML_INT_NO_INTTYPES_H 1
+# if _MSC_VER >= 1800
+#  define KWIML_INT_HAVE_INTTYPES_H 1
+# else
+#  define KWIML_INT_NO_INTTYPES_H 1
+# endif
 #elif defined(__BORLANDC__) /* Borland */
 # define KWIML_INT_NO_INTTYPES_H 1
 #elif defined(__WATCOMC__) /* Watcom */
