@@ -874,16 +874,11 @@ public:
   bool CheckCMP0037(std::string const& targetName,
                     cmStateEnums::TargetType targetType) const;
 
-  cmStringRange GetIncludeDirectoriesEntries() const;
-  cmBacktraceRange GetIncludeDirectoriesBacktraces() const;
-  cmStringRange GetCompileOptionsEntries() const;
-  cmBacktraceRange GetCompileOptionsBacktraces() const;
-  cmStringRange GetCompileDefinitionsEntries() const;
-  cmBacktraceRange GetCompileDefinitionsBacktraces() const;
-  cmStringRange GetLinkOptionsEntries() const;
-  cmBacktraceRange GetLinkOptionsBacktraces() const;
-  cmStringRange GetLinkDirectoriesEntries() const;
-  cmBacktraceRange GetLinkDirectoriesBacktraces() const;
+  cmBTStringRange GetIncludeDirectoriesEntries() const;
+  cmBTStringRange GetCompileOptionsEntries() const;
+  cmBTStringRange GetCompileDefinitionsEntries() const;
+  cmBTStringRange GetLinkOptionsEntries() const;
+  cmBTStringRange GetLinkDirectoriesEntries() const;
 
   std::set<std::string> const& GetSystemIncludeDirectories() const
   {
