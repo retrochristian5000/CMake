@@ -142,6 +142,8 @@ struct StandardLevelComputer
     if (target->GetLanguageStandardRequired(this->Language)) {
       std::string option_flag = cmStrCat(
         "CMAKE_", this->Language, *standardProp, "_", type, "_COMPILE_OPTION");
+      std::printf("%s required prop=%s\n", target->GetName().c_str(),
+                  option_flag.c_str());
 
       cmProp opt = target->Target->GetMakefile()->GetDefinition(option_flag);
       if (!opt) {
@@ -158,10 +160,16 @@ struct StandardLevelComputer
       return option_flag;
     }
 
+    std::printf("%s standardProp=%s defaultStd=%s ext=%s defaultExt=%s\n",
+                target->GetName().c_str(), standardProp->c_str(),
+                defaultStd->c_str(), ext ? "true" : "false",
+                defaultExt ? "true" : "false");
     // If the request matches the compiler's defaults we don't need to add
     // anything.
     if (*standardProp == *defaultStd && ext == defaultExt) {
       if (cmp0127 == cmPolicies::NEW) {
+        std::printf("%s (*standardProp == *defaultStd && ext == defaultExt)\n",
+                    target->GetName().c_str());
         return std::string{};
       } else if (cmp0127 == cmPolicies::WARN &&
                  makefile->PolicyOptionalWarningEnabled(
@@ -203,8 +211,15 @@ struct StandardLevelComputer
 
     // If the standard requested is older than the compiler's default or the
     // extension mode doesn't match then we need to use a flag.
+    std::printf("%s stdIt=%zd defaultStdIt=%zd\n", target->GetName().c_str(),
+                stdIt - cm::cbegin(stds), defaultStdIt - cm::cbegin(stds));
     if (stdIt < defaultStdIt) {
       auto offset = std::distance(cm::cbegin(stds), stdIt);
+      std::printf("%s stdIt < defaultStdIt prop=%s\n",
+                  target->GetName().c_str(),
+                  cmStrCat("CMAKE_", this->Language, stdsStrings[offset], "_",
+                           type, "_COMPILE_OPTION")
+                    .c_str());
       return cmStrCat("CMAKE_", this->Language, stdsStrings[offset], "_", type,
                       "_COMPILE_OPTION");
     }
@@ -217,6 +232,7 @@ struct StandardLevelComputer
       std::string option_flag =
         cmStrCat("CMAKE_", this->Language, stdsStrings[offset], "_", type,
                  "_COMPILE_OPTION");
+      std::printf("%s %s\n", target->GetName().c_str(), option_flag.c_str());
       if (target->Target->GetMakefile()->GetDefinition(option_flag)) {
         return option_flag;
       }
