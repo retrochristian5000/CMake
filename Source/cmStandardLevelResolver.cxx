@@ -97,10 +97,24 @@ struct StandardLevelComputer
     std::string const type{ ext ? "EXTENSION" : "STANDARD" };
 
     cmProp standardProp = target->GetLanguageStandard(this->Language, config);
+    std::printf(
+      "%s standardProp=%s cmp0127=%s ext=%d, defaultExt=%d defaultStd=%s\n",
+      target->GetName().c_str(),
+      standardProp ? standardProp->c_str() : "unset",
+      (cmp0127 == cmPolicies::NEW)
+        ? "new"
+        : (cmp0127 == cmPolicies::WARN ? "warn" : "old"),
+      ext ? "true" : "false", defaultExt ? "true" : "false",
+      defaultStd->c_str());
     if (!standardProp) {
       if (cmp0127 == cmPolicies::NEW) {
         // Add extension flag if compiler's default doesn't match.
         if (ext != defaultExt) {
+          std::printf("%s unset cmp0127=new ext!=defaultExt prop=%s\n",
+                      target->GetName().c_str(),
+                      cmStrCat("CMAKE_", this->Language, *defaultStd, "_",
+                               type, "_COMPILE_OPTION")
+                        .c_str());
           return cmStrCat("CMAKE_", this->Language, *defaultStd, "_", type,
                           "_COMPILE_OPTION");
         }
@@ -129,16 +143,23 @@ struct StandardLevelComputer
         }
 
         if (ext) {
+          std::printf(
+            "%s unset cmp0127!=new ext %s\n", target->GetName().c_str(),
+            cmStrCat("CMAKE_", this->Language, "_EXTENSION_COMPILE_OPTION")
+              .c_str());
           return cmStrCat("CMAKE_", this->Language,
                           "_EXTENSION_COMPILE_OPTION");
         }
       }
+      std::printf("%s unset empty\n", target->GetName().c_str());
       return std::string{};
     }
 
     if (target->GetLanguageStandardRequired(this->Language)) {
       std::string option_flag = cmStrCat(
         "CMAKE_", this->Language, *standardProp, "_", type, "_COMPILE_OPTION");
+      std::printf("%s required prop=%s\n", target->GetName().c_str(),
+                  option_flag.c_str());
 
       cmProp opt = target->Target->GetMakefile()->GetDefinition(option_flag);
       if (!opt) {
@@ -155,10 +176,13 @@ struct StandardLevelComputer
       return option_flag;
     }
 
+    std::printf("%s past required\n");
     // If the request matches the compiler's defaults we don't need to add
     // anything.
     if (*standardProp == *defaultStd && ext == defaultExt) {
       if (cmp0127 == cmPolicies::NEW) {
+        std::printf("%s (*standardProp == *defaultStd && ext == defaultExt)\n",
+                    target->GetName().c_str());
         return std::string{};
       } else if (cmp0127 == cmPolicies::WARN &&
                  makefile->PolicyOptionalWarningEnabled(
@@ -200,8 +224,15 @@ struct StandardLevelComputer
 
     // If the standard requested is older than the compiler's default or the
     // extension mode doesn't match then we need to use a flag.
+    std::printf("%s stdIt=%zd defaultStdIt=%zd\n", target->GetName().c_str(),
+                stdIt - cm::cbegin(stds), defaultStdIt - cm::cbegin(stds));
     if (stdIt < defaultStdIt) {
       auto offset = std::distance(cm::cbegin(stds), stdIt);
+      std::printf("%s stdIt < defaultStdIt prop=%s\n",
+                  target->GetName().c_str(),
+                  cmStrCat("CMAKE_", this->Language, stdsStrings[offset], "_",
+                           type, "_COMPILE_OPTION")
+                    .c_str());
       return cmStrCat("CMAKE_", this->Language, stdsStrings[offset], "_", type,
                       "_COMPILE_OPTION");
     }
@@ -215,10 +246,14 @@ struct StandardLevelComputer
         cmStrCat("CMAKE_", this->Language, stdsStrings[offset], "_", type,
                  "_COMPILE_OPTION");
       if (target->Target->GetMakefile()->GetDefinition(option_flag)) {
+        std::printf(
+          "%s %s=\"%s\"\n", target->GetName().c_str(), option_flag.c_str(),
+          target->Target->GetMakefile()->GetDefinition(option_flag)->c_str());
         return option_flag;
       }
     }
 
+    std::printf("%s empty end\n", target->GetName().c_str());
     return std::string{};
   }
 
