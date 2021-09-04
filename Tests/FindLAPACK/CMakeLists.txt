@@ -1,3 +1,10 @@
+set(lapack_data_model lp64)
+
+set(CMake_TEST_FindLAPACK            "${CMake_TEST_FindLAPACK_${lapack_data_model}}")
+set(CMake_TEST_FindLAPACK_All        "${CMake_TEST_FindLAPACK_${lapack_data_model}_All}")
+set(CMake_TEST_FindLAPACK_STATIC     "${CMake_TEST_FindLAPACK_${lapack_data_model}_STATIC}")
+set(CMake_TEST_FindLAPACK_STATIC_All "${CMake_TEST_FindLAPACK_${lapack_data_model}_STATIC_All}")
+
 foreach(variant IN LISTS CMake_TEST_FindLAPACK)
   if(variant MATCHES "^([^.]+)\\.(.*)$")
     set(vendor "${CMAKE_MATCH_1}")
@@ -15,7 +22,7 @@ foreach(variant IN LISTS CMake_TEST_FindLAPACK)
     ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION>
     --build-and-test
     "${CMake_SOURCE_DIR}/Tests/FindLAPACK/Test"
-    "${CMake_BINARY_DIR}/Tests/FindLAPACK/Test_${variant}"
+    "${CMake_BINARY_DIR}/Tests/FindLAPACK/Test_${variant}_${lapack_data_model}"
     ${build_generator_args}
     --build-project TestFindLAPACK
     --build-options ${build_options} ${alt_compiler} ${EXPECT_All} -DBLA_VENDOR=${vendor}
@@ -40,7 +47,7 @@ foreach(variant IN LISTS CMake_TEST_FindLAPACK_STATIC)
     ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION>
     --build-and-test
     "${CMake_SOURCE_DIR}/Tests/FindLAPACK/Test"
-    "${CMake_BINARY_DIR}/Tests/FindLAPACK/Test_${variant}_Static"
+    "${CMake_BINARY_DIR}/Tests/FindLAPACK/Test_${variant}_${lapack_data_model}_Static"
     ${build_generator_args}
     --build-project TestFindLAPACK
     --build-options ${build_options} ${alt_compiler} ${EXPECT_All} -DBLA_VENDOR=${vendor} -DBLA_STATIC=ON
