@@ -1,3 +1,10 @@
+set(blas_data_model lp64)
+
+set(CMake_TEST_FindBLAS            "${CMake_TEST_FindBLAS_${blas_data_model}}")
+set(CMake_TEST_FindBLAS_All        "${CMake_TEST_FindBLAS_${blas_data_model}_All}")
+set(CMake_TEST_FindBLAS_STATIC     "${CMake_TEST_FindBLAS_${blas_data_model}_STATIC}")
+set(CMake_TEST_FindBLAS_STATIC_All "${CMake_TEST_FindBLAS_${blas_data_model}_STATIC_All}")
+
 foreach(variant IN LISTS CMake_TEST_FindBLAS)
   if(variant MATCHES "^([^.]+)\\.(.*)$")
     set(vendor "${CMAKE_MATCH_1}")
@@ -15,7 +22,7 @@ foreach(variant IN LISTS CMake_TEST_FindBLAS)
     ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION>
     --build-and-test
     "${CMake_SOURCE_DIR}/Tests/FindBLAS/Test"
-    "${CMake_BINARY_DIR}/Tests/FindBLAS/Test_${variant}"
+    "${CMake_BINARY_DIR}/Tests/FindBLAS/Test_${variant}_${blas_data_model}"
     ${build_generator_args}
     --build-project TestFindBLAS
     --build-options ${build_options} ${alt_compiler} ${EXPECT_All} -DBLA_VENDOR=${vendor}
@@ -40,7 +47,7 @@ foreach(variant IN LISTS CMake_TEST_FindBLAS_STATIC)
     ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION>
     --build-and-test
     "${CMake_SOURCE_DIR}/Tests/FindBLAS/Test"
-    "${CMake_BINARY_DIR}/Tests/FindBLAS/Test_${variant}_Static"
+    "${CMake_BINARY_DIR}/Tests/FindBLAS/Test_${variant}_${blas_data_model}_Static"
     ${build_generator_args}
     --build-project TestFindBLAS
     --build-options ${build_options} ${alt_compiler} ${EXPECT_All} -DBLA_VENDOR=${vendor} -DBLA_STATIC=ON
