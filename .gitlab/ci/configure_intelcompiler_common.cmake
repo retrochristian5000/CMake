@@ -6,5 +6,13 @@ set(CMake_TEST_FindLAPACK_lp64 "All;Intel10_64lp;Intel10_64lp.gcc" CACHE STRING 
 set(CMake_TEST_FindLAPACK_lp64_All "Intel10_64lp" CACHE STRING "")
 set(CMake_TEST_FindLAPACK_lp64_STATIC "All;Intel10_64lp;Intel10_64lp.gcc" CACHE STRING "")
 set(CMake_TEST_FindLAPACK_lp64_STATIC_All "Intel10_64lp" CACHE STRING "")
+set(CMake_TEST_FindBLAS_ilp64 "All;Intel10_64ilp;Intel10_64ilp.gcc" CACHE STRING "")
+set(CMake_TEST_FindBLAS_ilp64_All "Intel10_64ilp" CACHE STRING "")
+set(CMake_TEST_FindBLAS_ilp64_STATIC "All;Intel10_64ilp;Intel10_64ilp.gcc" CACHE STRING "")
+set(CMake_TEST_FindBLAS_ilp64_STATIC_All "Intel10_64ilp" CACHE STRING "")
+set(CMake_TEST_FindLAPACK_ilp64 "All;Intel10_64ilp;Intel10_64ilp.gcc" CACHE STRING "")
+set(CMake_TEST_FindLAPACK_ilp64_All "Intel10_64ilp" CACHE STRING "")
+set(CMake_TEST_FindLAPACK_ilp64_STATIC "All;Intel10_64ilp;Intel10_64ilp.gcc" CACHE STRING "")
+set(CMake_TEST_FindLAPACK_ilp64_STATIC_All "Intel10_64ilp" CACHE STRING "")
 
 include("${CMAKE_CURRENT_LIST_DIR}/configure_external_test.cmake")
