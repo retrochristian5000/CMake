@@ -1,3 +1,4 @@
+set(CMake_TEST_FindBLASLAPACK_LPMODES "lp64.4;ilp64.8" CACHE STRING "")
 set(CMake_TEST_FindBLAS_lp64 "All;Intel10_64lp;Intel10_64lp.gcc" CACHE STRING "")
 set(CMake_TEST_FindBLAS_lp64_All "Intel10_64lp" CACHE STRING "")
 set(CMake_TEST_FindBLAS_lp64_STATIC "All;Intel10_64lp;Intel10_64lp.gcc" CACHE STRING "")
