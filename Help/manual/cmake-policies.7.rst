@@ -51,6 +51,14 @@ The :variable:`CMAKE_MINIMUM_REQUIRED_VERSION` variable may also be used
 to determine whether to report an error on use of deprecated macros or
 functions.
 
+Policies Introduced by CMake 3.22
+=================================
+
+.. toctree::
+   :maxdepth: 1
+
+   CMP0127: <LANG>_EXTENSIONS is initialized to CMAKE_<LANG>_EXTENSIONS_DEFAULT, compiler extensions are correctly disabled or enabled when standard level is unset, standard-affecting flags are not added unless necessary. </policy/CMP0127>
+
 Policies Introduced by CMake 3.21
 =================================
 
