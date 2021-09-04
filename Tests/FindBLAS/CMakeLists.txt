@@ -1,4 +1,5 @@
 set(blas_data_model lp64)
+set(blas_sizeof_integer 4)
 
 set(CMake_TEST_FindBLAS            "${CMake_TEST_FindBLAS_${blas_data_model}}")
 set(CMake_TEST_FindBLAS_All        "${CMake_TEST_FindBLAS_${blas_data_model}_All}")
@@ -25,7 +26,7 @@ foreach(variant IN LISTS CMake_TEST_FindBLAS)
     "${CMake_BINARY_DIR}/Tests/FindBLAS/Test_${variant}_${blas_data_model}"
     ${build_generator_args}
     --build-project TestFindBLAS
-    --build-options ${build_options} ${alt_compiler} ${EXPECT_All} -DBLA_VENDOR=${vendor}
+    --build-options ${build_options} ${alt_compiler} ${EXPECT_All} -DBLA_VENDOR=${vendor} -DBLA_SIZEOF_INTEGER=${blas_sizeof_integer}
     --test-command ${CMAKE_CTEST_COMMAND} -V -C $<CONFIGURATION>
     )
 endforeach()
@@ -50,7 +51,7 @@ foreach(variant IN LISTS CMake_TEST_FindBLAS_STATIC)
     "${CMake_BINARY_DIR}/Tests/FindBLAS/Test_${variant}_${blas_data_model}_Static"
     ${build_generator_args}
     --build-project TestFindBLAS
-    --build-options ${build_options} ${alt_compiler} ${EXPECT_All} -DBLA_VENDOR=${vendor} -DBLA_STATIC=ON
+    --build-options ${build_options} ${alt_compiler} ${EXPECT_All} -DBLA_VENDOR=${vendor} -DBLA_SIZEOF_INTEGER=${blas_sizeof_integer} -DBLA_STATIC=ON
     --test-command ${CMAKE_CTEST_COMMAND} -V -C $<CONFIGURATION>
     )
 endforeach()
