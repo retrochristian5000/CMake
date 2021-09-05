@@ -8,6 +8,7 @@
 #include "cmGeneratedFileStream.h"
 #include "cmGlobalGenerator.h"
 #include "cmMakefile.h"
+#include "cmProperty.h"
 #include "cmSystemTools.h"
 #include "cmake.h"
 
@@ -94,7 +95,7 @@ int cmCPackCygwinSourceGenerator::PackageFiles()
   }
   std::string outerTarFile =
     cmStrCat(this->GetOption("CPACK_TEMPORARY_DIRECTORY"), '-');
-  const char* patch = this->GetOption("CPACK_CYGWIN_PATCH_NUMBER");
+  cmProp patch = this->GetOption("CPACK_CYGWIN_PATCH_NUMBER");
   if (!patch) {
     cmCPackLogger(cmCPackLog::LOG_WARNING,
                   "CPACK_CYGWIN_PATCH_NUMBER"
@@ -145,7 +146,7 @@ const char* cmCPackCygwinSourceGenerator::GetPackagingInstallPrefix()
 const char* cmCPackCygwinSourceGenerator::GetOutputExtension()
 {
   this->OutputExtension = "-";
-  const char* patch = this->GetOption("CPACK_CYGWIN_PATCH_NUMBER");
+  cmProp patch = this->GetOption("CPACK_CYGWIN_PATCH_NUMBER");
   if (!patch) {
     cmCPackLogger(cmCPackLog::LOG_WARNING,
                   "CPACK_CYGWIN_PATCH_NUMBER"
