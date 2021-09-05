@@ -120,7 +120,7 @@ void cmCPackNuGetGenerator::SetupGroupComponentVariables(bool ignoreGroup)
 
 void cmCPackNuGetGenerator::AddGeneratedPackageNames()
 {
-  const char* const files_list = this->GetOption("GEN_CPACK_OUTPUT_FILES");
+  cmProp const files_list = this->GetOption("GEN_CPACK_OUTPUT_FILES");
   if (!files_list) {
     cmCPackLogger(
       cmCPackLog::LOG_ERROR,

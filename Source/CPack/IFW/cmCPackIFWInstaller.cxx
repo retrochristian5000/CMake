@@ -12,6 +12,7 @@
 #include "cmCPackIFWRepository.h"
 #include "cmCPackLog.h" // IWYU pragma: keep
 #include "cmGeneratedFileStream.h"
+#include "cmProperty.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
 #include "cmXMLParser.h"
@@ -33,21 +34,19 @@ void cmCPackIFWInstaller::printSkippedOptionWarning(
 void cmCPackIFWInstaller::ConfigureFromOptions()
 {
   // Name;
-  if (const char* optIFW_PACKAGE_NAME =
-        this->GetOption("CPACK_IFW_PACKAGE_NAME")) {
+  if (cmProp optIFW_PACKAGE_NAME = this->GetOption("CPACK_IFW_PACKAGE_NAME")) {
     this->Name = optIFW_PACKAGE_NAME;
-  } else if (const char* optPACKAGE_NAME =
-               this->GetOption("CPACK_PACKAGE_NAME")) {
+  } else if (cmProp optPACKAGE_NAME = this->GetOption("CPACK_PACKAGE_NAME")) {
     this->Name = optPACKAGE_NAME;
   } else {
     this->Name = "Your package";
   }
 
   // Title;
-  if (const char* optIFW_PACKAGE_TITLE =
+  if (cmProp optIFW_PACKAGE_TITLE =
         this->GetOption("CPACK_IFW_PACKAGE_TITLE")) {
     this->Title = optIFW_PACKAGE_TITLE;
-  } else if (const char* optPACKAGE_DESCRIPTION_SUMMARY =
+  } else if (cmProp optPACKAGE_DESCRIPTION_SUMMARY =
                this->GetOption("CPACK_PACKAGE_DESCRIPTION_SUMMARY")) {
     this->Title = optPACKAGE_DESCRIPTION_SUMMARY;
   } else {
@@ -55,28 +54,28 @@ void cmCPackIFWInstaller::ConfigureFromOptions()
   }
 
   // Version;
-  if (const char* option = this->GetOption("CPACK_PACKAGE_VERSION")) {
+  if (cmProp option = this->GetOption("CPACK_PACKAGE_VERSION")) {
     this->Version = option;
   } else {
     this->Version = "1.0.0";
   }
 
   // Publisher
-  if (const char* optIFW_PACKAGE_PUBLISHER =
+  if (cmProp optIFW_PACKAGE_PUBLISHER =
         this->GetOption("CPACK_IFW_PACKAGE_PUBLISHER")) {
     this->Publisher = optIFW_PACKAGE_PUBLISHER;
-  } else if (const char* optPACKAGE_VENDOR =
+  } else if (cmProp optPACKAGE_VENDOR =
                this->GetOption("CPACK_PACKAGE_VENDOR")) {
     this->Publisher = optPACKAGE_VENDOR;
   }
 
   // ProductUrl
-  if (const char* option = this->GetOption("CPACK_IFW_PRODUCT_URL")) {
+  if (cmProp option = this->GetOption("CPACK_IFW_PRODUCT_URL")) {
     this->ProductUrl = option;
   }
 
   // ApplicationIcon
-  if (const char* option = this->GetOption("CPACK_IFW_PACKAGE_ICON")) {
+  if (cmProp option = this->GetOption("CPACK_IFW_PACKAGE_ICON")) {
     if (cmSystemTools::FileExists(option)) {
       this->InstallerApplicationIcon = option;
     } else {
@@ -85,7 +84,7 @@ void cmCPackIFWInstaller::ConfigureFromOptions()
   }
 
   // WindowIcon
-  if (const char* option = this->GetOption("CPACK_IFW_PACKAGE_WINDOW_ICON")) {
+  if (cmProp option = this->GetOption("CPACK_IFW_PACKAGE_WINDOW_ICON")) {
     if (cmSystemTools::FileExists(option)) {
       this->InstallerWindowIcon = option;
     } else {
@@ -103,7 +102,7 @@ void cmCPackIFWInstaller::ConfigureFromOptions()
   }
 
   // Logo
-  if (const char* option = this->GetOption("CPACK_IFW_PACKAGE_LOGO")) {
+  if (cmProp option = this->GetOption("CPACK_IFW_PACKAGE_LOGO")) {
     if (cmSystemTools::FileExists(option)) {
       this->Logo = option;
     } else {
@@ -112,7 +111,7 @@ void cmCPackIFWInstaller::ConfigureFromOptions()
   }
 
   // Watermark
-  if (const char* option = this->GetOption("CPACK_IFW_PACKAGE_WATERMARK")) {
+  if (cmProp option = this->GetOption("CPACK_IFW_PACKAGE_WATERMARK")) {
     if (cmSystemTools::FileExists(option)) {
       this->Watermark = option;
     } else {
@@ -121,7 +120,7 @@ void cmCPackIFWInstaller::ConfigureFromOptions()
   }
 
   // Banner
-  if (const char* option = this->GetOption("CPACK_IFW_PACKAGE_BANNER")) {
+  if (cmProp option = this->GetOption("CPACK_IFW_PACKAGE_BANNER")) {
     if (cmSystemTools::FileExists(option)) {
       this->Banner = option;
     } else {
@@ -130,7 +129,7 @@ void cmCPackIFWInstaller::ConfigureFromOptions()
   }
 
   // Background
-  if (const char* option = this->GetOption("CPACK_IFW_PACKAGE_BACKGROUND")) {
+  if (cmProp option = this->GetOption("CPACK_IFW_PACKAGE_BACKGROUND")) {
     if (cmSystemTools::FileExists(option)) {
       this->Background = option;
     } else {
@@ -139,7 +138,7 @@ void cmCPackIFWInstaller::ConfigureFromOptions()
   }
 
   // WizardStyle
-  if (const char* option = this->GetOption("CPACK_IFW_PACKAGE_WIZARD_STYLE")) {
+  if (cmProp option = this->GetOption("CPACK_IFW_PACKAGE_WIZARD_STYLE")) {
     // Setting the user value in any case
     this->WizardStyle = option;
     // Check known values
@@ -154,7 +153,7 @@ void cmCPackIFWInstaller::ConfigureFromOptions()
   }
 
   // StyleSheet
-  if (const char* option = this->GetOption("CPACK_IFW_PACKAGE_STYLE_SHEET")) {
+  if (cmProp option = this->GetOption("CPACK_IFW_PACKAGE_STYLE_SHEET")) {
     if (cmSystemTools::FileExists(option)) {
       this->StyleSheet = option;
     } else {
@@ -163,19 +162,19 @@ void cmCPackIFWInstaller::ConfigureFromOptions()
   }
 
   // WizardDefaultWidth
-  if (const char* option =
+  if (cmProp option =
         this->GetOption("CPACK_IFW_PACKAGE_WIZARD_DEFAULT_WIDTH")) {
     this->WizardDefaultWidth = option;
   }
 
   // WizardDefaultHeight
-  if (const char* option =
+  if (cmProp option =
         this->GetOption("CPACK_IFW_PACKAGE_WIZARD_DEFAULT_HEIGHT")) {
     this->WizardDefaultHeight = option;
   }
 
   // WizardShowPageList
-  if (const char* option =
+  if (cmProp option =
         this->GetOption("CPACK_IFW_PACKAGE_WIZARD_SHOW_PAGE_LIST")) {
     if (!this->IsVersionLess("4.0")) {
       if (this->IsSetToOff("CPACK_IFW_PACKAGE_WIZARD_SHOW_PAGE_LIST")) {
@@ -204,12 +203,12 @@ void cmCPackIFWInstaller::ConfigureFromOptions()
   }
 
   // TitleColor
-  if (const char* option = this->GetOption("CPACK_IFW_PACKAGE_TITLE_COLOR")) {
+  if (cmProp option = this->GetOption("CPACK_IFW_PACKAGE_TITLE_COLOR")) {
     this->TitleColor = option;
   }
 
   // Start menu
-  if (const char* optIFW_START_MENU_DIR =
+  if (cmProp optIFW_START_MENU_DIR =
         this->GetOption("CPACK_IFW_PACKAGE_START_MENU_DIRECTORY")) {
     this->StartMenuDir = optIFW_START_MENU_DIR;
   } else {
@@ -217,10 +216,10 @@ void cmCPackIFWInstaller::ConfigureFromOptions()
   }
 
   // Default target directory for installation
-  if (const char* optIFW_TARGET_DIRECTORY =
+  if (cmProp optIFW_TARGET_DIRECTORY =
         this->GetOption("CPACK_IFW_TARGET_DIRECTORY")) {
     this->TargetDir = optIFW_TARGET_DIRECTORY;
-  } else if (const char* optPACKAGE_INSTALL_DIRECTORY =
+  } else if (cmProp optPACKAGE_INSTALL_DIRECTORY =
                this->GetOption("CPACK_PACKAGE_INSTALL_DIRECTORY")) {
     this->TargetDir =
       cmStrCat("@ApplicationsDir@/", optPACKAGE_INSTALL_DIRECTORY);
@@ -229,19 +228,18 @@ void cmCPackIFWInstaller::ConfigureFromOptions()
   }
 
   // Default target directory for installation with administrator rights
-  if (const char* option =
-        this->GetOption("CPACK_IFW_ADMIN_TARGET_DIRECTORY")) {
+  if (cmProp option = this->GetOption("CPACK_IFW_ADMIN_TARGET_DIRECTORY")) {
     this->AdminTargetDir = option;
   }
 
   // Maintenance tool
-  if (const char* optIFW_MAINTENANCE_TOOL =
+  if (cmProp optIFW_MAINTENANCE_TOOL =
         this->GetOption("CPACK_IFW_PACKAGE_MAINTENANCE_TOOL_NAME")) {
     this->MaintenanceToolName = optIFW_MAINTENANCE_TOOL;
   }
 
   // Maintenance tool ini file
-  if (const char* optIFW_MAINTENANCE_TOOL_INI =
+  if (cmProp optIFW_MAINTENANCE_TOOL_INI =
         this->GetOption("CPACK_IFW_PACKAGE_MAINTENANCE_TOOL_INI_FILE")) {
     this->MaintenanceToolIniFile = optIFW_MAINTENANCE_TOOL_INI;
   }
@@ -265,13 +263,13 @@ void cmCPackIFWInstaller::ConfigureFromOptions()
   }
 
   // Control script
-  if (const char* optIFW_CONTROL_SCRIPT =
+  if (cmProp optIFW_CONTROL_SCRIPT =
         this->GetOption("CPACK_IFW_PACKAGE_CONTROL_SCRIPT")) {
     this->ControlScript = optIFW_CONTROL_SCRIPT;
   }
 
   // Resources
-  if (const char* optIFW_PACKAGE_RESOURCES =
+  if (cmProp optIFW_PACKAGE_RESOURCES =
         this->GetOption("CPACK_IFW_PACKAGE_RESOURCES")) {
     this->Resources.clear();
     cmExpandList(optIFW_PACKAGE_RESOURCES, this->Resources);
@@ -541,7 +539,7 @@ void cmCPackIFWInstaller::GeneratePackageFiles()
     package.Generator = this->Generator;
     package.Installer = this;
     // Check package group
-    if (const char* option = this->GetOption("CPACK_IFW_PACKAGE_GROUP")) {
+    if (cmProp option = this->GetOption("CPACK_IFW_PACKAGE_GROUP")) {
       package.ConfigureFromGroup(option);
       std::string forcedOption = "CPACK_IFW_COMPONENT_GROUP_" +
         cmsys::SystemTools::UpperCase(option) + "_FORCED_INSTALLATION";
