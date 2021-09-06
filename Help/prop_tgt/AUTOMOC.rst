@@ -6,7 +6,7 @@ Should the target be processed with auto-moc (for Qt projects).
 :prop_tgt:`AUTOMOC` is a boolean specifying whether CMake will handle the Qt
 ``moc`` preprocessor automatically, i.e.  without having to use the
 :module:`QT4_WRAP_CPP() <FindQt4>` or ``QT5_WRAP_CPP()`` macro.
-Currently Qt4 and Qt5 are supported.
+Currently, Qt versions 4 to 6 are supported.
 
 This property is initialized by the value of the :variable:`CMAKE_AUTOMOC`
 variable if it is set when a target is created.
