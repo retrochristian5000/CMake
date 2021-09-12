@@ -8,6 +8,7 @@
 #include "cmGeneratedFileStream.h"
 #include "cmGlobalGenerator.h"
 #include "cmMakefile.h"
+#include "cmProperty.h"
 #include "cmSystemTools.h"
 #include "cmake.h"
 
@@ -59,7 +60,7 @@ int cmCPackCygwinBinaryGenerator::PackageFiles()
 const char* cmCPackCygwinBinaryGenerator::GetOutputExtension()
 {
   this->OutputExtension = "-";
-  const char* patchNumber = this->GetOption("CPACK_CYGWIN_PATCH_NUMBER");
+  cmProp patchNumber = this->GetOption("CPACK_CYGWIN_PATCH_NUMBER");
   if (!patchNumber) {
     patchNumber = "1";
     cmCPackLogger(cmCPackLog::LOG_WARNING,
