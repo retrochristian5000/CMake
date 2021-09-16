@@ -940,8 +940,7 @@ void cmGlobalNinjaGenerator::EnableLanguage(
   if (clangGnuMode ||
       ((mf->GetSafeDefinition("CMAKE_C_SIMULATE_ID") != "MSVC") &&
        (mf->GetSafeDefinition("CMAKE_CXX_SIMULATE_ID") != "MSVC") &&
-       (mf->IsOn("CMAKE_COMPILER_IS_MINGW") ||
-        (mf->GetSafeDefinition("CMAKE_C_COMPILER_ID") == "GNU") ||
+       ((mf->GetSafeDefinition("CMAKE_C_COMPILER_ID") == "GNU") ||
         (mf->GetSafeDefinition("CMAKE_CXX_COMPILER_ID") == "GNU") ||
         (mf->GetSafeDefinition("CMAKE_C_COMPILER_ID") == "Clang") ||
         (mf->GetSafeDefinition("CMAKE_CXX_COMPILER_ID") == "Clang") ||
