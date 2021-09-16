@@ -38,6 +38,10 @@ static unsigned short const info_byte_order_little_endian[] = {
 
 #elif defined(__ELF__)
 #  define ABI_ID "ELF"
+#elif defined(__MINGW64__)
+#  define ABI_ID "MINGW64"
+#elif defined(__MINGW32__)
+#  define ABI_ID "MINGW32"
 #endif
 
 #if defined(ABI_ID)

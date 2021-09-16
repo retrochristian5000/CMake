@@ -35,6 +35,10 @@
 #endif
 #if defined(__ELF__)
         PRINT *, 'INFO:abi[ELF]'
+#elif defined(__MINGW64__)
+        PRINT *, 'INFO:abi[MINGW64]'
+#elif defined(__MINGW32__)
+        PRINT *, 'INFO:abi[MINGW32]'
 #endif
         PRINT *, 'ABI Detection'
       END
