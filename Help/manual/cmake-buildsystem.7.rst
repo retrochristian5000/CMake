@@ -808,83 +808,119 @@ target at a time.  The commands :command:`add_compile_definitions`,
 a similar function, but operate at directory scope instead of target
 scope for convenience.
 
+.. _`Build Configurations`:
+
 Build Configurations
 ====================
 
 Configurations determine specifications for a certain type of build, such
-as ``Release`` or ``Debug``.
-
-For proper handling configuration names must be treated as
-case-insensitive. This ensures that configurations can be specified by
-multiple conventions.
-
-For example, ``Release``, ``release`` and ``ReLeAsE`` are all valid names
-and represent one single configuration.
-
-Build configurations are handled differently depending on the
-:manual:`cmake-generators(7)` used by :manual:`cmake(1)`.
-
-For single-configuration generator such as :ref:`Makefile Generators` and
-:generator:`Ninja` configurations are set with
-:variable:`CMAKE_BUILD_TYPE`. Values are set once at generate-time.  For
-multi-configuration generators such as :generator:`Ninja Multi-Config`,
-Visual Studio or :generator:`Xcode` configurations are set with
-:variable:`CMAKE_CONFIGURATION_TYPES`.
-
-The configuration for multi-configuration generator are selected after
-generate-time, and the actual build configuration is not known until
-build-time.
-
-Therefore, code such as
+as ``Release`` or ``Debug``.  The way this is specified depends on the type
+of :manual:`generator <cmake-generators(7)>` being used.  For single
+configuration generators like  :ref:`Makefile Generators` and
+:generator:`Ninja`, the configuration is specified at configure time by the
+:variable:`CMAKE_BUILD_TYPE` variable. For multi-configuration generators
+like :ref:`Visual Studio <Visual Studio Generators>`, :generator:`Xcode`, and
+:generator:`Ninja Multi-Config`, the configuration is chosen by the user at
+build time and :variable:`CMAKE_BUILD_TYPE` is ignored.  In the
+multi-configuration case, the set of *available* configurations is specified
+at configure time by the :variable:`CMAKE_CONFIGURATION_TYPES` variable,
+but the actual configuration used cannot be known until the build stage.
+This difference is often misunderstood, leading to problematic code like the
+following:
 
 .. code-block:: cmake
 
-  string(TOLOWER ${CMAKE_BUILD_TYPE} _type)
-  if (_type STREQUAL debug)
+  # WARNING: This is wrong for multi-config generators because they don't use
+  #          and typically don't even set CMAKE_BUILD_TYPE
+  string(TOLOWER ${CMAKE_BUILD_TYPE} build_type)
+  if (build_type STREQUAL debug)
     target_compile_definitions(exe1 PRIVATE DEBUG_BUILD)
   endif()
 
-may appear to work for :ref:`Makefile Generators` and :generator:`Ninja`
-generators, but is not portable to multi-configuration generators.  Additionally,
-the :prop_tgt:`IMPORTED` configuration-mappings are not accounted for
-with code like this, so it should be avoided.
-
-Configuration determined build specifications may be conveniently set using
-the ``CONFIG`` generator expression
-:manual:`$<CONFIG:cfgs> <cmake-generator-expressions(7)>`.
+:manual:`Generator expressions <cmake-generator-expressions(7)>` should be
+used instead to handle configuration-specific logic correctly, regardless of
+the generator used.  For example:
 
 .. code-block:: cmake
 
+  # Works correctly for both single and multi-config generators
   target_compile_definitions(exe1 PRIVATE
-      $<$<CONFIG:Debug>:DEBUG_BUILD>
+    $<$<CONFIG:Debug>:DEBUG_BUILD>
   )
 
-The ``CONFIG`` parameter is compared case-insensitively with the configuration
-being built.  In the presence of :prop_tgt:`IMPORTED` targets, the content of
+In the presence of :prop_tgt:`IMPORTED` targets, the content of
 :prop_tgt:`MAP_IMPORTED_CONFIG_DEBUG <MAP_IMPORTED_CONFIG_<CONFIG>>` is also
-accounted for by this expression.
+accounted for by the above ``$<CONFIG:Debug>`` expression.
 
-CMake Configurations
---------------------
 
-* empty
+Case Sensitivity
+----------------
+
+:variable:`CMAKE_BUILD_TYPE` and :variable:`CMAKE_CONFIGURATION_TYPES` are
+just like other variables in that any string comparisons made with their
+values will be case-sensitive.  The ``$<CONFIG>`` generator expression also
+preserves the casing of the configuration as set by the user or CMake defaults.
+For example:
+
+.. code-block:: cmake
+
+  # NOTE: Don't use these patterns, they are for illustration purposes only.
+
+  set(CMAKE_BUILD_TYPE Debug)
+  if(CMAKE_BUILD_TYPE STREQUAL DEBUG)
+    # ... will never get here, "Debug" != "DEBUG"
+  endif()
+  add_custom_target(print_config ALL
+    # Prints "Config is Debug" in this single-config case
+    COMMAND ${CMAKE_COMMAND} -E echo "Config is $<CONFIG>"
+    VERBATIM
+  )
+
+  set(CMAKE_CONFIGURATION_TYPES Debug Release)
+  if(DEBUG IN_LIST CMAKE_CONFIGURATION_TYPES)
+    # ... will never get here, "Debug" != "DEBUG"
+  endif()
+
+In contrast, CMake treats the configuration type case-insensitively when
+using it internally in places that modify behavior based on the configuration.
+For example, the ``$<CONFIG:Debug>`` generator expression will evaluate to 1
+for a configuration of not only ``Debug``, but also ``DEBUG``, ``debug`` or
+even ``DeBuG``.  Therefore, you can specify configuration types in
+:variable:`CMAKE_BUILD_TYPE` and :variable:`CMAKE_CONFIGURATION_TYPES` with
+any mixture of upper and lowercase, although there are strong conventions
+(see the next section).  If you must test the value in string comparisons,
+always convert the value to upper or lowercase first and adjust the test
+accordingly.
+
+Default And Custom Configurations
+---------------------------------
+
+By default, CMake defines a number of standard configurations:
+
 * ``Debug``
 * ``Release``
 * ``RelWithDebInfo``
 * ``MinSizeRel``
 
+In multi-config generators, the :variable:`CMAKE_CONFIGURATION_TYPES` variable
+will be populated with (potentially a subset of) the above list by default,
+unless overridden by the project or user.  The actual configuration used is
+selected by the user at build time.
 
-Custom Configurations
----------------------
+For single-config generators, the configuration is specified with the
+:variable:`CMAKE_BUILD_TYPE` variable at configure time and cannot be changed
+at build time.  The default value will often be none of the above standard
+configurations and will instead be an empty string.  A common misunderstanding
+is that this is the same as ``Debug``, but that is not the case.  Users should
+always explicitly specify the build type instead to avoid this common problem.
 
-CMake configurations provide reasonable defaults on most platforms, but can
-be extended to provide other build types.
-
-Each configuration defines a set of build and linker flags for the language
-in use. Cache variables follow the convention
-:variable:`CMAKE_<LANG>_FLAGS_<CONFIG>`. Additional names can be provided,
-each with its own set of variables.
-
+The above standard configuration types provide reasonable behavior on most
+platforms, but they can be extended to provide other types.  Each configuration
+defines a set of compiler and linker flag variables for the language in use.
+These variables follow the convention :variable:`CMAKE_<LANG>_FLAGS_<CONFIG>`,
+where ``<CONFIG>`` is always the uppercase configuration name.  When defining
+a custom configuration type, make sure these variables are set appropriately,
+typically as cache variables.
 
 
 Pseudo Targets
