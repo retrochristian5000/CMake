@@ -57,6 +57,7 @@ Policies Introduced by CMake 3.22
 .. toctree::
    :maxdepth: 1
 
+   CMP0128: Standard initialization and flag logic fixed and improved. </policy/CMP0128>
    CMP0127: cmake_dependent_option() supports full Condition Syntax. </policy/CMP0127>
 
 Policies Introduced by CMake 3.21
