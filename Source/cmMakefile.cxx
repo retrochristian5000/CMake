@@ -818,6 +818,7 @@ void cmMakefile::EnforceDirectoryLevelRules() const
         // version.
         this->GetCMakeInstance()->IssueMessage(MessageType::AUTHOR_WARNING,
                                                msg.str(), this->Backtrace);
+        break;
       case cmPolicies::OLD:
         // OLD behavior is to use policy version 2.4 set in
         // cmListFileCache.
@@ -829,7 +830,7 @@ void cmMakefile::EnforceDirectoryLevelRules() const
         this->GetCMakeInstance()->IssueMessage(MessageType::FATAL_ERROR,
                                                msg.str(), this->Backtrace);
         cmSystemTools::SetFatalErrorOccured();
-        return;
+        break;
     }
   }
 }
@@ -1001,6 +1002,7 @@ cmTarget* cmMakefile::GetCustomCommandTarget(
       case cmPolicies::WARN:
         e << cmPolicies::GetPolicyWarning(cmPolicies::CMP0040) << "\n";
         issueMessage = true;
+        break;
       case cmPolicies::OLD:
         break;
       case cmPolicies::NEW:
@@ -1008,6 +1010,7 @@ cmTarget* cmMakefile::GetCustomCommandTarget(
       case cmPolicies::REQUIRED_ALWAYS:
         issueMessage = true;
         messageType = MessageType::FATAL_ERROR;
+        break;
     }
 
     if (issueMessage) {
@@ -1751,6 +1754,7 @@ void cmMakefile::ConfigureSubDirectory(cmMakefile* mf)
           << cmPolicies::GetPolicyWarning(cmPolicies::CMP0014);
         /* clang-format on */
         this->IssueMessage(MessageType::AUTHOR_WARNING, e.str());
+        break;
       case cmPolicies::OLD:
         // OLD behavior does not warn.
         break;
@@ -1761,6 +1765,7 @@ void cmMakefile::ConfigureSubDirectory(cmMakefile* mf)
       case cmPolicies::NEW:
         // NEW behavior prints the error.
         this->IssueMessage(MessageType::FATAL_ERROR, e.str());
+        break;
     }
     return;
   }
@@ -2781,6 +2786,7 @@ MessageType cmMakefile::ExpandVariablesInStringOld(
         case cmPolicies::REQUIRED_ALWAYS:
           error << "\n"
                 << cmPolicies::GetRequiredPolicyError(cmPolicies::CMP0010);
+          break;
         case cmPolicies::NEW:
           // NEW behavior is to report the error.
           break;
@@ -3078,8 +3084,8 @@ MessageType cmMakefile::ExpandVariablesInStringNew(
             break;
           }
         }
-      // Failed to find a valid @ expansion; treat it as literal.
-      /* FALLTHROUGH */
+        // Failed to find a valid @ expansion; treat it as literal.
+        CM_FALLTHROUGH;
       default: {
         if (!openstack.empty() &&
             !(isalnum(inc) || inc == '_' || inc == '/' || inc == '.' ||

@@ -1137,6 +1137,7 @@ bool cmGeneratorTarget::IsInBuildSystem() const
       if (!this->SourceEntries.empty()) {
         return true;
       }
+      break;
     case cmStateEnums::UNKNOWN_LIBRARY:
       break;
   }
@@ -2558,6 +2559,7 @@ public:
           } break;
           case cmPolicies::OLD:
             noMessage = true;
+            break;
           case cmPolicies::REQUIRED_IF_USED:
           case cmPolicies::REQUIRED_ALWAYS:
           case cmPolicies::NEW:
@@ -3565,6 +3567,7 @@ void processIncludeDirectories(cmGeneratorTarget const* tgt,
             } break;
             case cmPolicies::OLD:
               noMessage = true;
+              break;
             case cmPolicies::REQUIRED_IF_USED:
             case cmPolicies::REQUIRED_ALWAYS:
             case cmPolicies::NEW:
@@ -7432,7 +7435,7 @@ std::string cmGeneratorTarget::CheckCMP0004(std::string const& item) const
           << "\" which has leading or trailing whitespace.";
         cm->IssueMessage(MessageType::AUTHOR_WARNING, w.str(),
                          this->GetBacktrace());
-      }
+      } break;
       case cmPolicies::OLD:
         break;
       case cmPolicies::NEW: {
@@ -7670,6 +7673,7 @@ void cmGeneratorTarget::ComputeLinkImplementationLibraries(
             } break;
             case cmPolicies::OLD:
               noMessage = true;
+              break;
             case cmPolicies::REQUIRED_IF_USED:
             case cmPolicies::REQUIRED_ALWAYS:
             case cmPolicies::NEW:
