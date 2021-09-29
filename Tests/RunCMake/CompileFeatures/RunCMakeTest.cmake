@@ -140,8 +140,8 @@ function(test_lang lang ext)
 
   test_unset_standard()
   test_no_unnecessary_flag()
-  test_cmp0128_warn_match()
-  test_cmp0128_warn_unset()
+  #test_cmp0128_warn_match()
+  #test_cmp0128_warn_unset()
 endfunction()
 
 if(C_STANDARD_DEFAULT)

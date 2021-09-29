@@ -84,8 +84,7 @@ struct StandardLevelComputer
       return std::string{};
     }
 
-    cmPolicies::PolicyStatus const cmp0128{ makefile->GetPolicyStatus(
-      cmPolicies::CMP0128) };
+    cmPolicies::PolicyStatus const cmp0128{ cmPolicies::PolicyStatus::NEW };
     bool const defaultExt{ cmIsOn(*makefile->GetDefinition(
       cmStrCat("CMAKE_", this->Language, "_EXTENSIONS_DEFAULT"))) };
     bool ext = true;
