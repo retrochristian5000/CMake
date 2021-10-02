@@ -1281,6 +1281,24 @@ if(BLA_VENDOR STREQUAL "NVHPC" OR BLA_VENDOR STREQUAL "All")
       )
   endif()
 
+  # an additional check for NVHPC 2020
+  # which does not have differentiation
+  # between lp64 and ilp64 modes
+  if(NOT BLAS_LIBRARIES AND NOT _blas_sizeof_integer EQUAL 8)
+    set(_blas_nvhpc_lib "blas")
+
+    check_blas_libraries(
+      BLAS_LIBRARIES
+      BLAS
+      sgemm
+      ""
+      "${_blas_nvhpc_lib}"
+      ""
+      ""
+      ""
+      )
+  endif()
+
   unset(_blas_nvhpc_lib)
 endif()
 
