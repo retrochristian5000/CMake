@@ -95,7 +95,9 @@ struct StandardLevelComputer
     }
 
     if (cmValue extPropValue = target->GetLanguageExtensions(this->Language)) {
-      ext = cmIsOn(*extPropValue);
+      if (cmIsOff(*extPropValue)) {
+        ext = false;
+      }
     }
 
     std::string const type{ ext ? "EXTENSION" : "STANDARD" };
@@ -206,7 +208,7 @@ struct StandardLevelComputer
 
     // If the standard requested is older than the compiler's default or the
     // extension mode doesn't match then we need to use a flag.
-    if (stdIt < defaultStdIt) {
+    if (stdIt <= defaultStdIt) {
       auto offset = std::distance(cm::cbegin(stds), stdIt);
       return cmStrCat("CMAKE_", this->Language, stdsStrings[offset], "_", type,
                       "_COMPILE_OPTION");
