@@ -47,7 +47,7 @@ path from the main ``<file>`` to the compiler-specific files. For example:
      PREFIX ClimbingStats
      OUTPUT_FILES_VAR support_files
      OUTPUT_DIR compilers
-     COMPILERS GNU Clang MSVC Intel
+     COMPILERS LCC GNU Clang MSVC Intel
      FEATURES cxx_variadic_templates
    )
    install(FILES
@@ -130,7 +130,7 @@ feature:
    write_compiler_detection_header(
      FILE climbingstats_compiler_detection.h
      PREFIX ClimbingStats
-     COMPILERS GNU Clang AppleClang MSVC Intel
+     COMPILERS LCC GNU Clang AppleClang MSVC Intel
      FEATURES cxx_variadic_templates
    )
 
@@ -304,7 +304,7 @@ accepts parameters to control the content of the generated header file:
   write_compiler_detection_header(
     FILE "${CMAKE_CURRENT_BINARY_DIR}/foo_compiler_detection.h"
     PREFIX Foo
-    COMPILERS GNU
+    COMPILERS LCC GNU
     FEATURES
       cxx_variadic_templates
   )
@@ -346,7 +346,7 @@ influence all following targets:
   write_compiler_detection_header(
     FILE "${CMAKE_CURRENT_BINARY_DIR}/foo_compiler_detection.h"
     PREFIX Foo
-    COMPILERS GNU
+    COMPILERS LCC GNU
     FEATURES
       cxx_final cxx_override
   )
@@ -520,6 +520,7 @@ function(write_compiler_detection_header
   endif()
 
   set(compilers
+    LCC
     GNU
     Clang
     AppleClang
@@ -701,7 +702,7 @@ template<> struct ${prefix_arg}StaticAssert<true>{};
         string(APPEND file_content "
 #  if defined(${def_name}) && ${def_name}
 #    define ${def_value} alignas(X)
-#  elif ${prefix_arg}_COMPILER_IS_GNU || ${prefix_arg}_COMPILER_IS_Clang || ${prefix_arg}_COMPILER_IS_AppleClang
+#  elif ${prefix_arg}_COMPILER_IS_LCC || ${prefix_arg}_COMPILER_IS_GNU || ${prefix_arg}_COMPILER_IS_Clang || ${prefix_arg}_COMPILER_IS_AppleClang
 #    define ${def_value} __attribute__ ((__aligned__(X)))
 #  elif ${prefix_arg}_COMPILER_IS_MSVC
 #    define ${def_value} __declspec(align(X))
@@ -715,7 +716,7 @@ template<> struct ${prefix_arg}StaticAssert<true>{};
         string(APPEND file_content "
 #  if defined(${def_name}) && ${def_name}
 #    define ${def_value} alignof(X)
-#  elif ${prefix_arg}_COMPILER_IS_GNU || ${prefix_arg}_COMPILER_IS_Clang || ${prefix_arg}_COMPILER_IS_AppleClang
+#  elif ${prefix_arg}_COMPILER_IS_LCC || ${prefix_arg}_COMPILER_IS_GNU || ${prefix_arg}_COMPILER_IS_Clang || ${prefix_arg}_COMPILER_IS_AppleClang
 #    define ${def_value} __alignof__(X)
 #  elif ${prefix_arg}_COMPILER_IS_MSVC
 #    define ${def_value} __alignof(X)
@@ -741,7 +742,7 @@ template<> struct ${prefix_arg}StaticAssert<true>{};
         string(APPEND file_content "
 #  if defined(${def_name}) && ${def_name}
 #    define ${def_value} nullptr
-#  elif ${prefix_arg}_COMPILER_IS_GNU
+#  elif ${prefix_arg}_COMPILER_IS_LCC || ${prefix_arg}_COMPILER_IS_GNU
 #    define ${def_value} __null
 #  else
 #    define ${def_value} 0
@@ -753,7 +754,7 @@ template<> struct ${prefix_arg}StaticAssert<true>{};
         string(APPEND file_content "
 #  if defined(${def_name}) && ${def_name}
 #    define ${def_value} thread_local
-#  elif ${prefix_arg}_COMPILER_IS_GNU || ${prefix_arg}_COMPILER_IS_Clang || ${prefix_arg}_COMPILER_IS_AppleClang
+#  elif ${prefix_arg}_COMPILER_IS_LCC || ${prefix_arg}_COMPILER_IS_GNU || ${prefix_arg}_COMPILER_IS_Clang || ${prefix_arg}_COMPILER_IS_AppleClang
 #    define ${def_value} __thread
 #  elif ${prefix_arg}_COMPILER_IS_MSVC
 #    define ${def_value} __declspec(thread)
@@ -770,7 +771,7 @@ template<> struct ${prefix_arg}StaticAssert<true>{};
 #    if defined(${def_name}) && ${def_name}
 #      define ${def_value} [[deprecated]]
 #      define ${def_value}_MSG(MSG) [[deprecated(MSG)]]
-#    elif ${prefix_arg}_COMPILER_IS_GNU || ${prefix_arg}_COMPILER_IS_Clang
+#    elif ${prefix_arg}_COMPILER_IS_LCC || ${prefix_arg}_COMPILER_IS_GNU || ${prefix_arg}_COMPILER_IS_Clang
 #      define ${def_value} __attribute__((__deprecated__))
 #      define ${def_value}_MSG(MSG) __attribute__((__deprecated__(MSG)))
 #    elif ${prefix_arg}_COMPILER_IS_MSVC
@@ -797,7 +798,7 @@ template<> struct ${prefix_arg}StaticAssert<true>{};
         set(def_value "nullptr")
         string(APPEND file_content "
 #  if !(defined(${def_name}) && ${def_name})
-#    if ${prefix_arg}_COMPILER_IS_GNU
+#    if ${prefix_arg}_COMPILER_IS_LCC || ${prefix_arg}_COMPILER_IS_GNU
 #      define ${def_value} __null
 #    else
 #      define ${def_value} 0

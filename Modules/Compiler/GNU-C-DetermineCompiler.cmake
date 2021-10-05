@@ -1,5 +1,5 @@
 
-set(_compiler_id_pp_test "defined(__GNUC__)")
+set(_compiler_id_pp_test "defined(__GNUC__) && !defined(__LCC__)")
 
 set(_compiler_id_version_compute "
 # define @PREFIX@COMPILER_VERSION_MAJOR @MACRO_DEC@(__GNUC__)

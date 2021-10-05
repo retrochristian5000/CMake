@@ -12,7 +12,7 @@ get_property(c_known_features GLOBAL PROPERTY CMAKE_C_KNOWN_FEATURES)
 write_compiler_detection_header(
   FILE "${CMAKE_CURRENT_BINARY_DIR}/test_compiler_detection.h"
   PREFIX TEST
-  COMPILERS GNU Clang AppleClang MSVC SunPro Intel
+  COMPILERS LCC GNU Clang AppleClang MSVC SunPro Intel
   VERSION 3.1
   PROLOG "// something"
   EPILOG "// more"
@@ -25,7 +25,7 @@ write_compiler_detection_header(
   PREFIX MULTI
   OUTPUT_FILES_VAR multi_files
   OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/compiler_multi_files/compiler_support"
-  COMPILERS GNU Clang AppleClang MSVC SunPro Intel
+  COMPILERS LCC GNU Clang AppleClang MSVC SunPro Intel
   VERSION 3.1
   FEATURES
     ${cxx_known_features} ${c_known_features}
@@ -62,7 +62,7 @@ if (C_expected_features)
   string(REGEX REPLACE "^[0-9]+\\.([0-9]+)\\.[0-9]+.*" "\\1" COMPILER_VERSION_MINOR "${CMAKE_C_COMPILER_VERSION}")
   string(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.([0-9]+).*" "\\1" COMPILER_VERSION_PATCH "${CMAKE_C_COMPILER_VERSION}")
 
-  if (CMAKE_C_COMPILER_ID STREQUAL "GNU"
+  if (CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "LCC"
       OR (CMAKE_C_COMPILER_ID STREQUAL "Clang" AND NOT "x${CMAKE_CXX_SIMULATE_ID}" STREQUAL "xMSVC")
       OR CMAKE_C_COMPILER_ID STREQUAL "AppleClang"
       OR CMAKE_C_COMPILER_ID STREQUAL "Intel")
@@ -106,7 +106,7 @@ if (NOT CXX_expected_features)
   )
   add_executable(WriteCompilerDetectionHeader "${CMAKE_CURRENT_BINARY_DIR}/dummy.cpp")
 
-  if(UNIX OR NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  if(UNIX OR NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "LCC"))
     check_cxx_source_compiles("#include \"${CMAKE_CURRENT_BINARY_DIR}/test_compiler_detection.h\"\nint main() { return 0; }\n"
       file_include_works
     )
@@ -122,6 +122,7 @@ string(REGEX REPLACE "^[0-9]+\\.([0-9]+)\\.[0-9]+.*" "\\1" COMPILER_VERSION_MINO
 string(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.([0-9]+).*" "\\1" COMPILER_VERSION_PATCH "${CMAKE_CXX_COMPILER_VERSION}")
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+    OR CMAKE_CXX_COMPILER_ID STREQUAL "LCC"
     OR (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND NOT "x${CMAKE_CXX_SIMULATE_ID}" STREQUAL "xMSVC")
     OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"
     OR CMAKE_CXX_COMPILER_ID STREQUAL "SunPro"
@@ -210,7 +211,7 @@ endif()
 write_compiler_detection_header(
   FILE "${CMAKE_CURRENT_BINARY_DIR}/test_compiler_detection_bare_features.h"
   PREFIX TEST
-  COMPILERS GNU Clang AppleClang MSVC SunPro Intel
+  COMPILERS LCC GNU Clang AppleClang MSVC SunPro Intel
   VERSION 3.1
   BARE_FEATURES cxx_nullptr cxx_override cxx_noexcept cxx_final
 )

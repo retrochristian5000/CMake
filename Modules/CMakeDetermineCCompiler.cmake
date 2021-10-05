@@ -125,7 +125,7 @@ if(NOT CMAKE_C_COMPILER_ID_RUN)
   _cmake_find_compiler_sysroot(C)
 
   # Set old compiler and platform id variables.
-  if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+  if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "LCC")
     set(CMAKE_COMPILER_IS_GNUCC 1)
   endif()
 else()
@@ -160,7 +160,7 @@ endif ()
 # "arm-unknown-nto-qnx6" instead of the correct "arm-unknown-nto-qnx6.3.0-"
 if (NOT _CMAKE_TOOLCHAIN_PREFIX)
 
-  if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang|QCC")
+  if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang|QCC|LCC")
     get_filename_component(COMPILER_BASENAME "${CMAKE_C_COMPILER}" NAME)
     if (COMPILER_BASENAME MATCHES "^(.+-)?(clang|g?cc)(-cl)?(-[0-9]+(\\.[0-9]+)*)?(-[^.]+)?(\\.exe)?$")
       set(_CMAKE_TOOLCHAIN_PREFIX ${CMAKE_MATCH_1})

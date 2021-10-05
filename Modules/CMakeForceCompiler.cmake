@@ -79,8 +79,8 @@ macro(CMAKE_FORCE_C_COMPILER compiler id)
   set(CMAKE_C_COMPILER_ID ${id})
   set(CMAKE_C_COMPILER_FORCED TRUE)
 
-  # Set old compiler id variables.
-  if(CMAKE_C_COMPILER_ID MATCHES "GNU")
+  # Set old compiler id variables. LCC should be treated as GNUCC too in this case.
+  if(CMAKE_C_COMPILER_ID MATCHES "GNU" OR CMAKE_C_COMPILER_ID MATCHES "LCC")
     set(CMAKE_COMPILER_IS_GNUCC 1)
   endif()
 endmacro()
@@ -93,8 +93,8 @@ macro(CMAKE_FORCE_CXX_COMPILER compiler id)
   set(CMAKE_CXX_COMPILER_ID ${id})
   set(CMAKE_CXX_COMPILER_FORCED TRUE)
 
-  # Set old compiler id variables.
-  if("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
+  # Set old compiler id variables. LCC should be treated as GNUCXX too in this case.
+  if("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "LCC")
     set(CMAKE_COMPILER_IS_GNUCXX 1)
   endif()
 endmacro()
@@ -107,8 +107,8 @@ macro(CMAKE_FORCE_Fortran_COMPILER compiler id)
   set(CMAKE_Fortran_COMPILER_ID ${id})
   set(CMAKE_Fortran_COMPILER_FORCED TRUE)
 
-  # Set old compiler id variables.
-  if(CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
+  # Set old compiler id variables. LCC should be treated as GNUG77 too in this case.
+  if(CMAKE_Fortran_COMPILER_ID MATCHES "GNU" OR CMAKE_Fortran_COMPILER_ID MATCHES "LCC")
     set(CMAKE_COMPILER_IS_GNUG77 1)
   endif()
 endmacro()

@@ -1,5 +1,5 @@
 
-set(_compiler_id_pp_test "defined(__GNUC__) || defined(__GNUG__)")
+set(_compiler_id_pp_test "(defined(__GNUC__) || defined(__GNUG__)) && !defined(__LCC__)")
 
 set(_compiler_id_version_compute "
 # if defined(__GNUC__)
