@@ -2,7 +2,9 @@
    file Copyright.txt or https://cmake.org/licensing for details.  */
 #include "cmIncludeCommand.h"
 
+#include <map>
 #include <sstream>
+#include <utility>
 
 #include "cmExecutionStatus.h"
 #include "cmGlobalGenerator.h"
@@ -16,6 +18,12 @@
 bool cmIncludeCommand(std::vector<std::string> const& args,
                       cmExecutionStatus& status)
 {
+  static std::map<std::string, cmPolicies::PolicyID> DeprecatedModules;
+  if (DeprecatedModules.empty()) {
+    DeprecatedModules["Documentation"] = cmPolicies::CMP0106;
+    DeprecatedModules["WriteCompilerDetectionHeader"] = cmPolicies::CMP0120;
+  }
+
   if (args.empty() || args.size() > 4) {
     status.SetError("called with wrong number of arguments.  "
                     "include() only takes one file.");
@@ -65,9 +73,35 @@ bool cmIncludeCommand(std::vector<std::string> const& args,
   }
 
   if (!cmSystemTools::FileIsFullPath(fname)) {
+    bool system = false;
     // Not a path. Maybe module.
     std::string module = cmStrCat(fname, ".cmake");
-    std::string mfile = status.GetMakefile().GetModulesFile(module);
+    std::string mfile = status.GetMakefile().GetModulesFile(module, system);
+
+    if (system) {
+      auto ModulePolicy = DeprecatedModules.find(fname);
+      if (ModulePolicy != DeprecatedModules.end()) {
+        cmPolicies::PolicyStatus PolicyStatus =
+          status.GetMakefile().GetPolicyStatus(ModulePolicy->second);
+        switch (PolicyStatus) {
+          case cmPolicies::WARN: {
+            status.GetMakefile().IssueMessage(
+              MessageType::AUTHOR_WARNING,
+              cmStrCat(cmPolicies::GetPolicyWarning(ModulePolicy->second),
+                       "\n"));
+            CM_FALLTHROUGH;
+          }
+          case cmPolicies::OLD:
+            break;
+          case cmPolicies::REQUIRED_IF_USED:
+          case cmPolicies::REQUIRED_ALWAYS:
+          case cmPolicies::NEW:
+            mfile = "";
+            break;
+        }
+      }
+    }
+
     if (!mfile.empty()) {
       fname = mfile;
     }
@@ -86,6 +120,7 @@ bool cmIncludeCommand(std::vector<std::string> const& args,
       case cmPolicies::WARN:
         e << cmPolicies::GetPolicyWarning(cmPolicies::CMP0024) << "\n";
         modal = "should";
+        CM_FALLTHROUGH;
       case cmPolicies::OLD:
         break;
       case cmPolicies::REQUIRED_IF_USED:
@@ -113,11 +148,24 @@ bool cmIncludeCommand(std::vector<std::string> const& args,
 
   std::string listFile = cmSystemTools::CollapseFullPath(
     fname, status.GetMakefile().GetCurrentSourceDirectory());
-  if (optional && !cmSystemTools::FileExists(listFile)) {
+
+  const bool fileDoesnotExist = !cmSystemTools::FileExists(listFile);
+  const bool fileIsDirectory = cmSystemTools::FileIsDirectory(listFile);
+  if (fileDoesnotExist || fileIsDirectory) {
     if (!resultVarName.empty()) {
       status.GetMakefile().AddDefinition(resultVarName, "NOTFOUND");
     }
-    return true;
+    if (optional) {
+      return true;
+    }
+    if (fileDoesnotExist) {
+      status.SetError(cmStrCat("could not find requested file:\n  ", fname));
+      return false;
+    }
+    if (fileIsDirectory) {
+      status.SetError(cmStrCat("requested file is a directory:\n  ", fname));
+      return false;
+    }
   }
 
   bool readit =
@@ -130,9 +178,7 @@ bool cmIncludeCommand(std::vector<std::string> const& args,
   }
 
   if (!optional && !readit && !cmSystemTools::GetFatalErrorOccured()) {
-    std::string m = cmStrCat("could not find load file:\n"
-                             "  ",
-                             fname);
+    std::string m = cmStrCat("could not load requested file:\n  ", fname);
     status.SetError(m);
     return false;
   }

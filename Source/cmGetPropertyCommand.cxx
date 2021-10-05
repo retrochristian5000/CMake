@@ -2,6 +2,8 @@
    file Copyright.txt or https://cmake.org/licensing for details.  */
 #include "cmGetPropertyCommand.h"
 
+#include <cstddef>
+
 #include "cmExecutionStatus.h"
 #include "cmGlobalGenerator.h"
 #include "cmInstalledFile.h"
@@ -11,13 +13,14 @@
 #include "cmPolicies.h"
 #include "cmProperty.h"
 #include "cmPropertyDefinition.h"
+#include "cmSetPropertyCommand.h"
 #include "cmSourceFile.h"
 #include "cmState.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
 #include "cmTarget.h"
-#include "cmTargetPropertyComputer.h"
 #include "cmTest.h"
+#include "cmValue.h"
 #include "cmake.h"
 
 class cmMessenger;
@@ -32,10 +35,6 @@ enum OutType
   OutSet
 };
 
-// Implementation of result storage.
-bool StoreResult(OutType infoType, cmMakefile& makefile,
-                 const std::string& variable, const char* value);
-
 // Implementation of each property type.
 bool HandleGlobalMode(cmExecutionStatus& status, const std::string& name,
                       OutType infoType, const std::string& variable,
@@ -48,7 +47,9 @@ bool HandleTargetMode(cmExecutionStatus& status, const std::string& name,
                       const std::string& propertyName);
 bool HandleSourceMode(cmExecutionStatus& status, const std::string& name,
                       OutType infoType, const std::string& variable,
-                      const std::string& propertyName);
+                      const std::string& propertyName,
+                      cmMakefile& directory_makefile,
+                      bool source_file_paths_should_be_absolute);
 bool HandleTestMode(cmExecutionStatus& status, const std::string& name,
                     OutType infoType, const std::string& variable,
                     const std::string& propertyName);
@@ -77,6 +78,11 @@ bool cmGetPropertyCommand(std::vector<std::string> const& args,
 
   std::string name;
   std::string propertyName;
+
+  std::vector<std::string> source_file_directories;
+  std::vector<std::string> source_file_target_directories;
+  bool source_file_directory_option_enabled = false;
+  bool source_file_target_option_enabled = false;
 
   // Get the scope from which to get the property.
   cmProperty::ScopeType scope;
@@ -111,7 +117,9 @@ bool cmGetPropertyCommand(std::vector<std::string> const& args,
     DoingNone,
     DoingName,
     DoingProperty,
-    DoingType
+    DoingType,
+    DoingSourceDirectory,
+    DoingSourceTargetDirectory
   };
   Doing doing = DoingName;
   for (unsigned int i = 2; i < args.size(); ++i) {
@@ -132,6 +140,20 @@ bool cmGetPropertyCommand(std::vector<std::string> const& args,
     } else if (doing == DoingName) {
       doing = DoingNone;
       name = args[i];
+    } else if (doing == DoingNone && scope == cmProperty::SOURCE_FILE &&
+               args[i] == "DIRECTORY") {
+      doing = DoingSourceDirectory;
+      source_file_directory_option_enabled = true;
+    } else if (doing == DoingNone && scope == cmProperty::SOURCE_FILE &&
+               args[i] == "TARGET_DIRECTORY") {
+      doing = DoingSourceTargetDirectory;
+      source_file_target_option_enabled = true;
+    } else if (doing == DoingSourceDirectory) {
+      source_file_directories.push_back(args[i]);
+      doing = DoingNone;
+    } else if (doing == DoingSourceTargetDirectory) {
+      source_file_target_directories.push_back(args[i]);
+      doing = DoingNone;
     } else if (doing == DoingProperty) {
       doing = DoingNone;
       propertyName = args[i];
@@ -144,6 +166,16 @@ bool cmGetPropertyCommand(std::vector<std::string> const& args,
   // Make sure a property name was found.
   if (propertyName.empty()) {
     status.SetError("not given a PROPERTY <name> argument.");
+    return false;
+  }
+
+  std::vector<cmMakefile*> source_file_directory_makefiles;
+  bool file_scopes_handled =
+    SetPropertyCommand::HandleAndValidateSourceFileDirectoryScopes(
+      status, source_file_directory_option_enabled,
+      source_file_target_option_enabled, source_file_directories,
+      source_file_target_directories, source_file_directory_makefiles);
+  if (!file_scopes_handled) {
     return false;
   }
 
@@ -180,6 +212,11 @@ bool cmGetPropertyCommand(std::vector<std::string> const& args,
     }
   } else {
     // Dispatch property getting.
+    cmMakefile& directory_scope_mf = *(source_file_directory_makefiles[0]);
+    bool source_file_paths_should_be_absolute =
+      source_file_directory_option_enabled ||
+      source_file_target_option_enabled;
+
     switch (scope) {
       case cmProperty::GLOBAL:
         return HandleGlobalMode(status, name, infoType, variable,
@@ -191,8 +228,9 @@ bool cmGetPropertyCommand(std::vector<std::string> const& args,
         return HandleTargetMode(status, name, infoType, variable,
                                 propertyName);
       case cmProperty::SOURCE_FILE:
-        return HandleSourceMode(status, name, infoType, variable,
-                                propertyName);
+        return HandleSourceMode(status, name, infoType, variable, propertyName,
+                                directory_scope_mf,
+                                source_file_paths_should_be_absolute);
       case cmProperty::TEST:
         return HandleTestMode(status, name, infoType, variable, propertyName);
       case cmProperty::VARIABLE:
@@ -214,8 +252,10 @@ bool cmGetPropertyCommand(std::vector<std::string> const& args,
 
 namespace {
 
+// Implementation of result storage.
+template <typename ValueType>
 bool StoreResult(OutType infoType, cmMakefile& makefile,
-                 const std::string& variable, const char* value)
+                 const std::string& variable, ValueType value)
 {
   if (infoType == OutSet) {
     makefile.AddDefinition(variable, value ? "1" : "0");
@@ -229,6 +269,12 @@ bool StoreResult(OutType infoType, cmMakefile& makefile,
   }
   return true;
 }
+template <>
+bool StoreResult(OutType infoType, cmMakefile& makefile,
+                 const std::string& variable, std::nullptr_t value)
+{
+  return StoreResult(infoType, makefile, variable, cmValue(value));
+}
 
 bool HandleGlobalMode(cmExecutionStatus& status, const std::string& name,
                       OutType infoType, const std::string& variable,
@@ -241,9 +287,8 @@ bool HandleGlobalMode(cmExecutionStatus& status, const std::string& name,
 
   // Get the property.
   cmake* cm = status.GetMakefile().GetCMakeInstance();
-  cmProp p = cm->GetState()->GetGlobalProperty(propertyName);
   return StoreResult(infoType, status.GetMakefile(), variable,
-                     p ? p->c_str() : nullptr);
+                     cm->GetState()->GetGlobalProperty(propertyName));
 }
 
 bool HandleDirectoryMode(cmExecutionStatus& status, const std::string& name,
@@ -289,9 +334,8 @@ bool HandleDirectoryMode(cmExecutionStatus& status, const std::string& name,
   }
 
   // Get the property.
-  cmProp p = mf->GetProperty(propertyName);
   return StoreResult(infoType, status.GetMakefile(), variable,
-                     p ? p->c_str() : nullptr);
+                     mf->GetProperty(propertyName));
 }
 
 bool HandleTargetMode(cmExecutionStatus& status, const std::string& name,
@@ -304,25 +348,30 @@ bool HandleTargetMode(cmExecutionStatus& status, const std::string& name,
   }
 
   if (cmTarget* target = status.GetMakefile().FindTargetToUse(name)) {
-    if (propertyName == "ALIASED_TARGET") {
+    if (propertyName == "ALIASED_TARGET" || propertyName == "ALIAS_GLOBAL") {
       if (status.GetMakefile().IsAlias(name)) {
-        return StoreResult(infoType, status.GetMakefile(), variable,
-                           target->GetName().c_str());
+        if (propertyName == "ALIASED_TARGET") {
+
+          return StoreResult(infoType, status.GetMakefile(), variable,
+                             target->GetName().c_str());
+        }
+        if (propertyName == "ALIAS_GLOBAL") {
+          return StoreResult(
+            infoType, status.GetMakefile(), variable,
+            status.GetMakefile().GetGlobalGenerator()->IsAlias(name)
+              ? "TRUE"
+              : "FALSE");
+        }
       }
       return StoreResult(infoType, status.GetMakefile(), variable, nullptr);
     }
-    cmProp prop_cstr = nullptr;
     cmListFileBacktrace bt = status.GetMakefile().GetBacktrace();
     cmMessenger* messenger = status.GetMakefile().GetMessenger();
-    if (cmTargetPropertyComputer::PassesWhitelist(
-          target->GetType(), propertyName, messenger, bt)) {
-      prop_cstr = target->GetComputedProperty(propertyName, messenger, bt);
-      if (!prop_cstr) {
-        prop_cstr = target->GetProperty(propertyName);
-      }
+    cmValue prop = target->GetComputedProperty(propertyName, messenger, bt);
+    if (!prop) {
+      prop = target->GetProperty(propertyName);
     }
-    return StoreResult(infoType, status.GetMakefile(), variable,
-                       prop_cstr ? prop_cstr->c_str() : nullptr);
+    return StoreResult(infoType, status.GetMakefile(), variable, prop);
   }
   status.SetError(cmStrCat("could not find TARGET ", name,
                            ".  Perhaps it has not yet been created."));
@@ -331,7 +380,9 @@ bool HandleTargetMode(cmExecutionStatus& status, const std::string& name,
 
 bool HandleSourceMode(cmExecutionStatus& status, const std::string& name,
                       OutType infoType, const std::string& variable,
-                      const std::string& propertyName)
+                      const std::string& propertyName,
+                      cmMakefile& directory_makefile,
+                      const bool source_file_paths_should_be_absolute)
 {
   if (name.empty()) {
     status.SetError("not given name for SOURCE scope.");
@@ -339,12 +390,17 @@ bool HandleSourceMode(cmExecutionStatus& status, const std::string& name,
   }
 
   // Get the source file.
-  if (cmSourceFile* sf = status.GetMakefile().GetOrCreateSource(name)) {
+  const std::string source_file_absolute_path =
+    SetPropertyCommand::MakeSourceFilePathAbsoluteIfNeeded(
+      status, name, source_file_paths_should_be_absolute);
+  if (cmSourceFile* sf =
+        directory_makefile.GetOrCreateSource(source_file_absolute_path)) {
     return StoreResult(infoType, status.GetMakefile(), variable,
                        sf->GetPropertyForUser(propertyName));
   }
   status.SetError(
-    cmStrCat("given SOURCE name that could not be found or created: ", name));
+    cmStrCat("given SOURCE name that could not be found or created: ",
+             source_file_absolute_path));
   return false;
 }
 
@@ -390,13 +446,12 @@ bool HandleCacheMode(cmExecutionStatus& status, const std::string& name,
     return false;
   }
 
-  cmProp value = nullptr;
+  cmValue value = nullptr;
   if (status.GetMakefile().GetState()->GetCacheEntryValue(name)) {
     value = status.GetMakefile().GetState()->GetCacheEntryProperty(
       name, propertyName);
   }
-  StoreResult(infoType, status.GetMakefile(), variable,
-              value ? value->c_str() : nullptr);
+  StoreResult(infoType, status.GetMakefile(), variable, value);
   return true;
 }
 

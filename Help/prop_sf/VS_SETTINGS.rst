@@ -1,7 +1,14 @@
 VS_SETTINGS
 -----------
 
-Set any item metadata on a non-built file.
+.. versionadded:: 3.18
+
+Set any item metadata on a file.
+
+.. versionadded:: 3.22
+
+  This property is honored for all source file types.
+  Previously it worked only for non-built files.
 
 Takes a list of ``Key=Value`` pairs. Tells the Visual Studio generator to set
 ``Key`` to ``Value`` as item metadata on the file.
@@ -15,4 +22,4 @@ For example:
 will set ``Key`` to ``Value`` and ``Key2`` to ``Value2`` on the
 ``file.hlsl`` item as metadata.
 
-Generator expressions are supported.
+:manual:`Generator expressions <cmake-generator-expressions(7)>` are supported.

@@ -1,7 +1,6 @@
 /* Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
    file Copyright.txt or https://cmake.org/licensing for details.  */
-#ifndef cmTargetPropertyComputer_h
-#define cmTargetPropertyComputer_h
+#pragma once
 
 #include "cmConfigure.h" // IWYU pragma: keep
 
@@ -11,20 +10,19 @@
 #include "cmStateTypes.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
+#include "cmValue.h"
 
 class cmMessenger;
-
-using cmProp = const std::string*;
 
 class cmTargetPropertyComputer
 {
 public:
   template <typename Target>
-  static cmProp GetProperty(Target const* tgt, const std::string& prop,
-                            cmMessenger* messenger,
-                            cmListFileBacktrace const& context)
+  static cmValue GetProperty(Target const* tgt, const std::string& prop,
+                             cmMessenger* messenger,
+                             cmListFileBacktrace const& context)
   {
-    if (cmProp loc = GetLocation(tgt, prop, messenger, context)) {
+    if (cmValue loc = GetLocation(tgt, prop, messenger, context)) {
       return loc;
     }
     if (cmSystemTools::GetFatalErrorOccured()) {
@@ -35,12 +33,6 @@ public:
     }
     return nullptr;
   }
-
-  static bool WhiteListedInterfaceProperty(const std::string& prop);
-
-  static bool PassesWhitelist(cmStateEnums::TargetType tgtType,
-                              std::string const& prop, cmMessenger* messenger,
-                              cmListFileBacktrace const& context);
 
 private:
   static bool HandleLocationPropertyPolicy(std::string const& tgtName,
@@ -54,9 +46,9 @@ private:
                                             std::string const& config);
 
   template <typename Target>
-  static cmProp GetLocation(Target const* tgt, std::string const& prop,
-                            cmMessenger* messenger,
-                            cmListFileBacktrace const& context)
+  static cmValue GetLocation(Target const* tgt, std::string const& prop,
+                             cmMessenger* messenger,
+                             cmListFileBacktrace const& context)
 
   {
     // Watch for special "computed" properties that are dependent on
@@ -73,7 +65,7 @@ private:
                                           context)) {
           return nullptr;
         }
-        return &ComputeLocationForBuild(tgt);
+        return cmValue(ComputeLocationForBuild(tgt));
       }
 
       // Support "LOCATION_<CONFIG>".
@@ -84,7 +76,7 @@ private:
           return nullptr;
         }
         std::string configName = prop.substr(9);
-        return &ComputeLocation(tgt, configName);
+        return cmValue(ComputeLocation(tgt, configName));
       }
 
       // Support "<CONFIG>_LOCATION".
@@ -97,7 +89,7 @@ private:
                                             context)) {
             return nullptr;
           }
-          return &ComputeLocation(tgt, configName);
+          return cmValue(ComputeLocation(tgt, configName));
         }
       }
     }
@@ -105,8 +97,6 @@ private:
   }
 
   template <typename Target>
-  static cmProp GetSources(Target const* tgt, cmMessenger* messenger,
-                           cmListFileBacktrace const& context);
+  static cmValue GetSources(Target const* tgt, cmMessenger* messenger,
+                            cmListFileBacktrace const& context);
 };
-
-#endif

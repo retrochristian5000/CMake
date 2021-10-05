@@ -94,7 +94,7 @@ SET(CMAKE_REQUIRED_FLAGS)
 
 # Disable warnings to avoid changing 3rd party code.
 IF(CMAKE_C_COMPILER_ID MATCHES
-    "^(GNU|Clang|AppleClang|XLClang|XL|VisualAge|SunPro|HP|Intel)$")
+    "^(GNU|Clang|AppleClang|XLClang|XL|VisualAge|SunPro|HP|Intel|IntelLLVM|NVHPC)$")
   SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w")
 ELSEIF(CMAKE_C_COMPILER_ID STREQUAL "PathScale")
   SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -woffall")
@@ -171,32 +171,32 @@ IF (MSVC)
   # This is added into CMAKE_C_FLAGS when CMAKE_BUILD_TYPE is "Debug"
   # Enable level 4 C4062: The enumerate has no associated handler in a switch
   #                       statement and there is no default that can catch it.
-  SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /we4062")
+  SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /w14062")
   # Enable level 4 C4254: A larger bit field was assigned to a smaller bit
   #                       field.
-  SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /we4254")
+  SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /w14254")
   # Enable level 4 C4295: An array was initialized but the last character in
   #                       the array is not a null; accessing the array may
   #                       produce unexpected results.
-  SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /we4295")
+  SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /w14295")
   # Enable level 4 C4296: An unsigned variable was used in a comparison
   #                       operation with zero.
-  SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /we4296")
+  SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /w14296")
   # Enable level 4 C4389: An operation involved signed and unsigned variables.
   #                       This could result in a loss of data.
-  SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /we4389")
+  SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /w14389")
   # Enable level 4 C4505: The given function is local and not referenced in
   #                       the body of the module; therefore, the function is
   #                       dead code.
-  SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /we4505")
+  SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /w14505")
   # Enable level 4 C4514: The optimizer removed an inline function that is not
   #                       called.
-  SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /we4514")
+  SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /w14514")
   # Enable level 4 C4702: Unreachable code.
-  SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /we4702")
+  SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /w14702")
   # Enable level 4 C4706: The test value in a conditional expression was the
   #                       result of an assignment.
-  SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /we4706")
+  SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /w14706")
   # /Oi option enables built-in functions.
   SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /Oi")
   #################################################################
@@ -690,7 +690,6 @@ int main(void) { return EXT2_IOC_GETFLAGS; }" HAVE_WORKING_EXT2_IOC_GETFLAGS)
 
 LA_CHECK_INCLUDE_FILE("fcntl.h" HAVE_FCNTL_H)
 LA_CHECK_INCLUDE_FILE("grp.h" HAVE_GRP_H)
-LA_CHECK_INCLUDE_FILE("inttypes.h" HAVE_INTTYPES_H)
 LA_CHECK_INCLUDE_FILE("io.h" HAVE_IO_H)
 LA_CHECK_INCLUDE_FILE("langinfo.h" HAVE_LANGINFO_H)
 LA_CHECK_INCLUDE_FILE("limits.h" HAVE_LIMITS_H)
@@ -716,7 +715,6 @@ LA_CHECK_INCLUDE_FILE("regex.h" HAVE_REGEX_H)
 LA_CHECK_INCLUDE_FILE("signal.h" HAVE_SIGNAL_H)
 LA_CHECK_INCLUDE_FILE("spawn.h" HAVE_SPAWN_H)
 LA_CHECK_INCLUDE_FILE("stdarg.h" HAVE_STDARG_H)
-LA_CHECK_INCLUDE_FILE("stdint.h" HAVE_STDINT_H)
 LA_CHECK_INCLUDE_FILE("stdlib.h" HAVE_STDLIB_H)
 LA_CHECK_INCLUDE_FILE("string.h" HAVE_STRING_H)
 LA_CHECK_INCLUDE_FILE("strings.h" HAVE_STRINGS_H)
@@ -1406,6 +1404,7 @@ CHECK_FUNCTION_EXISTS_GLIBC(strchr HAVE_STRCHR)
 CHECK_FUNCTION_EXISTS_GLIBC(strdup HAVE_STRDUP)
 CHECK_FUNCTION_EXISTS_GLIBC(strerror HAVE_STRERROR)
 CHECK_FUNCTION_EXISTS_GLIBC(strncpy_s HAVE_STRNCPY_S)
+CHECK_FUNCTION_EXISTS_GLIBC(strnlen HAVE_STRNLEN)
 CHECK_FUNCTION_EXISTS_GLIBC(strrchr HAVE_STRRCHR)
 CHECK_FUNCTION_EXISTS_GLIBC(symlink HAVE_SYMLINK)
 CHECK_FUNCTION_EXISTS_GLIBC(timegm HAVE_TIMEGM)
@@ -1477,9 +1476,19 @@ CHECK_C_SOURCE_COMPILES(
   "#include <sys/sysmacros.h>\nint main() { return major(256); }"
   MAJOR_IN_SYSMACROS)
 
+IF(ENABLE_LZMA)
+CMAKE_PUSH_CHECK_STATE()
+SET(CMAKE_REQUIRED_LIBRARIES ${LIBLZMA_LIBRARIES})
+SET(CMAKE_REQUIRED_INCLUDES ${LIBLZMA_INCLUDE_DIR})
+
 CHECK_C_SOURCE_COMPILES(
   "#include <lzma.h>\n#if LZMA_VERSION < 50020000\n#error unsupported\n#endif\nint main(void){lzma_stream_encoder_mt(0, 0); return 0;}"
   HAVE_LZMA_STREAM_ENCODER_MT)
+
+CMAKE_POP_CHECK_STATE()
+ELSE()
+  SET(HAVE_LZMA_STREAM_ENCODER_MT 0)
+ENDIF(ENABLE_LZMA)
 
 IF(HAVE_STRERROR_R)
   SET(HAVE_DECL_STRERROR_R 1)
@@ -1488,27 +1497,9 @@ ENDIF(HAVE_STRERROR_R)
 #
 # Check defines
 #
-SET(headers "limits.h")
-IF(HAVE_STDINT_H)
-  LIST(APPEND headers "stdint.h")
-ENDIF(HAVE_STDINT_H)
-IF(HAVE_INTTYPES_H)
-  LIST(APPEND headers "inttypes.h")
-ENDIF(HAVE_INTTYPES_H)
 CHECK_SYMBOL_EXISTS(EFTYPE           "errno.h"    HAVE_EFTYPE)
 CHECK_SYMBOL_EXISTS(EILSEQ           "errno.h"    HAVE_EILSEQ)
 CHECK_SYMBOL_EXISTS(D_MD_ORDER       "langinfo.h" HAVE_D_MD_ORDER)
-CHECK_SYMBOL_EXISTS(INT32_MAX        "${headers}" HAVE_DECL_INT32_MAX)
-CHECK_SYMBOL_EXISTS(INT32_MIN        "${headers}" HAVE_DECL_INT32_MIN)
-CHECK_SYMBOL_EXISTS(INT64_MAX        "${headers}" HAVE_DECL_INT64_MAX)
-CHECK_SYMBOL_EXISTS(INT64_MIN        "${headers}" HAVE_DECL_INT64_MIN)
-CHECK_SYMBOL_EXISTS(INTMAX_MAX       "${headers}" HAVE_DECL_INTMAX_MAX)
-CHECK_SYMBOL_EXISTS(INTMAX_MIN       "${headers}" HAVE_DECL_INTMAX_MIN)
-CHECK_SYMBOL_EXISTS(UINT32_MAX       "${headers}" HAVE_DECL_UINT32_MAX)
-CHECK_SYMBOL_EXISTS(UINT64_MAX       "${headers}" HAVE_DECL_UINT64_MAX)
-CHECK_SYMBOL_EXISTS(UINTMAX_MAX      "${headers}" HAVE_DECL_UINTMAX_MAX)
-CHECK_SYMBOL_EXISTS(SIZE_MAX         "${headers}" HAVE_DECL_SIZE_MAX)
-CHECK_SYMBOL_EXISTS(SSIZE_MAX        "limits.h"   HAVE_DECL_SSIZE_MAX)
 
 #
 # Check struct members
@@ -1556,33 +1547,6 @@ ENDIF()
 #
 CHECK_STRUCT_HAS_MEMBER("struct tm" tm_sec
     "sys/types.h;sys/time.h;time.h" TIME_WITH_SYS_TIME)
-
-#
-# Check for integer types
-#
-#
-CHECK_TYPE_SIZE("short" SIZE_OF_SHORT)
-CHECK_TYPE_SIZE("int" SIZE_OF_INT)
-CHECK_TYPE_SIZE("long" SIZE_OF_LONG)
-CHECK_TYPE_SIZE("long long"     SIZE_OF_LONG_LONG)
-
-CHECK_TYPE_SIZE("unsigned short" SIZE_OF_UNSIGNED_SHORT)
-CHECK_TYPE_SIZE("unsigned" SIZE_OF_UNSIGNED)
-CHECK_TYPE_SIZE("unsigned long" SIZE_OF_UNSIGNED_LONG)
-CHECK_TYPE_SIZE("unsigned long long" SIZE_OF_UNSIGNED_LONG_LONG)
-
-CHECK_TYPE_SIZE("__int64" __INT64)
-CHECK_TYPE_SIZE("unsigned __int64" UNSIGNED___INT64)
-
-CHECK_TYPE_SIZE(int16_t INT16_T)
-CHECK_TYPE_SIZE(int32_t INT32_T)
-CHECK_TYPE_SIZE(int64_t INT64_T)
-CHECK_TYPE_SIZE(intmax_t INTMAX_T)
-CHECK_TYPE_SIZE(uint8_t UINT8_T)
-CHECK_TYPE_SIZE(uint16_t UINT16_T)
-CHECK_TYPE_SIZE(uint32_t UINT32_T)
-CHECK_TYPE_SIZE(uint64_t UINT64_T)
-CHECK_TYPE_SIZE(uintmax_t UINTMAX_T)
 
 CHECK_TYPE_SIZE(dev_t       DEV_T)
 IF(NOT HAVE_DEV_T)
@@ -1658,24 +1622,6 @@ IF(NOT HAVE_PID_T)
     MESSAGE(FATAL_ERROR "pid_t doesn't exist on this platform?")
   ENDIF(WIN32)
 ENDIF(NOT HAVE_PID_T)
-#
-CHECK_TYPE_SIZE(intptr_t   INTPTR_T)
-IF(NOT HAVE_INTPTR_T)
-  IF("${CMAKE_SIZEOF_VOID_P}" EQUAL 8)
-    SET(intptr_t "int64_t")
-  ELSE()
-    SET(intptr_t "int32_t")
-  ENDIF()
-ENDIF(NOT HAVE_INTPTR_T)
-#
-CHECK_TYPE_SIZE(uintptr_t   UINTPTR_T)
-IF(NOT HAVE_UINTPTR_T)
-  IF("${CMAKE_SIZEOF_VOID_P}" EQUAL 8)
-    SET(uintptr_t "uint64_t")
-  ELSE()
-    SET(uintptr_t "uint32_t")
-  ENDIF()
-ENDIF(NOT HAVE_UINTPTR_T)
 #
 CHECK_TYPE_SIZE(wchar_t     SIZEOF_WCHAR_T)
 IF(HAVE_SIZEOF_WCHAR_T)
@@ -2065,6 +2011,11 @@ INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/libarchive)
 IF(MSVC)
   ADD_DEFINITIONS(-D_CRT_SECURE_NO_DEPRECATE)
 ENDIF(MSVC)
+
+IF(APPLE)
+  # CC_MD5_Init() functions are deprecated on macOS 10.15, but we want to use them
+  ADD_DEFINITIONS(-Wno-deprecated-declarations)
+ENDIF(APPLE)
 
 IF(0) # CMake does not build libarchive's tests.
 IF(ENABLE_TEST)

@@ -39,7 +39,7 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_write_set_compression_xz.c 20110
 #endif
 #include <time.h>
 #ifdef HAVE_LZMA_H
-#include <cm_lzma.h>
+#include <cm3p/lzma.h>
 #endif
 
 #include "archive.h"
@@ -382,8 +382,12 @@ archive_compressor_xz_options(struct archive_write_filter *f,
 		    value[1] != '\0')
 			return (ARCHIVE_WARN);
 		data->compression_level = value[0] - '0';
+		if (data->compression_level > 9)
+			data->compression_level = 9;
+#ifdef _AIX
 		if (data->compression_level > 6)
 			data->compression_level = 6;
+#endif
 		return (ARCHIVE_OK);
 	} else if (strcmp(key, "threads") == 0) {
 		char *endptr;

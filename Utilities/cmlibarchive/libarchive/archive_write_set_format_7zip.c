@@ -31,13 +31,13 @@ __FBSDID("$FreeBSD$");
 #endif
 #include <stdlib.h>
 #ifdef HAVE_BZLIB_H
-#include <cm_bzlib.h>
+#include <cm3p/bzlib.h>
 #endif
 #if HAVE_LZMA_H
-#include <cm_lzma.h>
+#include <cm3p/lzma.h>
 #endif
 #ifdef HAVE_ZLIB_H
-#include <cm_zlib.h>
+#include <cm3p/zlib.h>
 #endif
 
 #include "archive.h"
@@ -1927,8 +1927,8 @@ compression_init_encoder_lzma(struct archive *a,
 		return (ARCHIVE_FATAL);
 	}
 	lzmafilters = (lzma_filter *)(strm+1);
-	if (level > 6)
-		level = 6;
+	if (level > 9)
+		level = 9;
 	if (lzma_lzma_preset(&lzma_opt, level)) {
 		free(strm);
 		lastrm->real_stream = NULL;

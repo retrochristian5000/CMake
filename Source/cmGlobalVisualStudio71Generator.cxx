@@ -19,8 +19,8 @@ void cmGlobalVisualStudio71Generator::WriteSLNFile(
   std::ostream& fout, cmLocalGenerator* root,
   std::vector<cmLocalGenerator*>& generators)
 {
-  std::vector<std::string> configs;
-  root->GetMakefile()->GetConfigurations(configs);
+  std::vector<std::string> configs =
+    root->GetMakefile()->GetGeneratorConfigs(cmMakefile::ExcludeEmptyConfig);
 
   // Write out the header for a SLN file
   this->WriteSLNHeader(fout);
@@ -91,7 +91,7 @@ void cmGlobalVisualStudio71Generator::WriteProject(std::ostream& fout,
                                                    cmGeneratorTarget const* t)
 {
   // check to see if this is a fortran build
-  const char* ext = ".vcproj";
+  std::string ext = ".vcproj";
   const char* project =
     "Project(\"{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}\") = \"";
   if (this->TargetIsFortranOnly(t)) {
@@ -102,9 +102,9 @@ void cmGlobalVisualStudio71Generator::WriteProject(std::ostream& fout,
     ext = ".csproj";
     project = "Project(\"{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}\") = \"";
   }
-  const char* targetExt = t->GetProperty("GENERATOR_FILE_NAME_EXT");
+  cmValue targetExt = t->GetProperty("GENERATOR_FILE_NAME_EXT");
   if (targetExt) {
-    ext = targetExt;
+    ext = *targetExt;
   }
 
   std::string guid = this->GetGUID(dspname);
@@ -157,11 +157,11 @@ void cmGlobalVisualStudio71Generator::WriteProjectDepends(
 // executables to the libraries it uses are also done here
 void cmGlobalVisualStudio71Generator::WriteExternalProject(
   std::ostream& fout, const std::string& name, const std::string& location,
-  const char* typeGuid,
-  const std::set<BT<std::pair<std::string, bool>>>& depends)
+  cmValue typeGuid, const std::set<BT<std::pair<std::string, bool>>>& depends)
 {
   fout << "Project(\"{"
-       << (typeGuid ? typeGuid : this->ExternalProjectType(location))
+       << (typeGuid ? typeGuid
+                    : std::string(this->ExternalProjectType(location)))
        << "}\") = \"" << name << "\", \""
        << this->ConvertToSolutionPath(location) << "\", \"{"
        << this->GetGUID(name) << "}\"\n";
@@ -198,9 +198,9 @@ void cmGlobalVisualStudio71Generator::WriteProjectConfigurations(
     std::vector<std::string> mapConfig;
     const char* dstConfig = i.c_str();
     if (target.GetProperty("EXTERNAL_MSPROJECT")) {
-      if (const char* m = target.GetProperty("MAP_IMPORTED_CONFIG_" +
-                                             cmSystemTools::UpperCase(i))) {
-        cmExpandList(m, mapConfig);
+      if (cmValue m = target.GetProperty("MAP_IMPORTED_CONFIG_" +
+                                         cmSystemTools::UpperCase(i))) {
+        cmExpandList(*m, mapConfig);
         if (!mapConfig.empty()) {
           dstConfig = mapConfig[0].c_str();
         }

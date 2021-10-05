@@ -14,6 +14,18 @@
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
 
+namespace {
+bool IsMissingSystemDylib(std::string const& path)
+{
+  // Starting on macOS 11, the dynamic loader has a builtin cache of
+  // system-provided dylib files that do not exist on the filesystem.
+  // Tell our caller that these are expected to be missing.
+  return ((cmHasLiteralPrefix(path, "/System/Library/") ||
+           cmHasLiteralPrefix(path, "/usr/lib/")) &&
+          !cmSystemTools::PathExists(path));
+}
+}
+
 cmBinUtilsMacOSMachOLinker::cmBinUtilsMacOSMachOLinker(
   cmRuntimeDependencyArchive* archive)
   : cmBinUtilsLinker(archive)
@@ -53,18 +65,18 @@ bool cmBinUtilsMacOSMachOLinker::ScanDependencies(
   if (!executableFile.empty()) {
     executablePath = cmSystemTools::GetFilenamePath(executableFile);
   }
-  return this->ScanDependencies(file, executablePath);
-}
-
-bool cmBinUtilsMacOSMachOLinker::ScanDependencies(
-  std::string const& file, std::string const& executablePath)
-{
   std::vector<std::string> libs;
   std::vector<std::string> rpaths;
   if (!this->Tool->GetFileInfo(file, libs, rpaths)) {
     return false;
   }
+  return this->ScanDependencies(file, libs, rpaths, executablePath);
+}
 
+bool cmBinUtilsMacOSMachOLinker::ScanDependencies(
+  std::string const& file, std::vector<std::string> const& libs,
+  std::vector<std::string> const& rpaths, std::string const& executablePath)
+{
   std::string loaderPath = cmSystemTools::GetFilenamePath(file);
   return this->GetFileDependencies(libs, executablePath, loaderPath, rpaths);
 }
@@ -82,11 +94,18 @@ bool cmBinUtilsMacOSMachOLinker::GetFileDependencies(
         return false;
       }
       if (resolved) {
-        if (!this->Archive->IsPostExcluded(path)) {
+        if (!this->Archive->IsPostExcluded(path) &&
+            !IsMissingSystemDylib(path)) {
           auto filename = cmSystemTools::GetFilenameName(path);
           bool unique;
-          this->Archive->AddResolvedPath(filename, path, unique);
-          if (unique && !this->ScanDependencies(path, executablePath)) {
+          std::vector<std::string> libs;
+          std::vector<std::string> depRpaths;
+          if (!this->Tool->GetFileInfo(path, libs, depRpaths)) {
+            return false;
+          }
+          this->Archive->AddResolvedPath(filename, path, unique, depRpaths);
+          if (unique &&
+              !this->ScanDependencies(path, libs, depRpaths, executablePath)) {
             return false;
           }
         }

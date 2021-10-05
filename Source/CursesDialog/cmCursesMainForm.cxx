@@ -21,6 +21,7 @@
 #include "cmStateTypes.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
+#include "cmValue.h"
 #include "cmVersion.h"
 #include "cmake.h"
 
@@ -161,7 +162,7 @@ void cmCursesMainForm::RePost()
     // If normal mode, count only non-advanced entries
     this->NumberOfVisibleEntries = 0;
     for (cmCursesCacheEntryComposite& entry : this->Entries) {
-      cmProp existingValue =
+      cmValue existingValue =
         this->CMakeInstance->GetState()->GetCacheEntryValue(entry.GetValue());
       bool advanced =
         this->CMakeInstance->GetState()->GetCacheEntryPropertyAsBool(
@@ -182,7 +183,7 @@ void cmCursesMainForm::RePost()
 
   // Assign fields
   for (cmCursesCacheEntryComposite& entry : this->Entries) {
-    cmProp existingValue =
+    cmValue existingValue =
       this->CMakeInstance->GetState()->GetCacheEntryValue(entry.GetValue());
     bool advanced =
       this->CMakeInstance->GetState()->GetCacheEntryPropertyAsBool(
@@ -241,7 +242,7 @@ void cmCursesMainForm::Render(int left, int top, int width, int height)
     // If normal, display only non-advanced entries
     this->NumberOfVisibleEntries = 0;
     for (cmCursesCacheEntryComposite& entry : this->Entries) {
-      cmProp existingValue =
+      cmValue existingValue =
         this->CMakeInstance->GetState()->GetCacheEntryValue(entry.GetValue());
       bool advanced =
         this->CMakeInstance->GetState()->GetCacheEntryPropertyAsBool(
@@ -259,7 +260,7 @@ void cmCursesMainForm::Render(int left, int top, int width, int height)
     bool isNewPage;
     int i = 0;
     for (cmCursesCacheEntryComposite& entry : this->Entries) {
-      cmProp existingValue =
+      cmValue existingValue =
         this->CMakeInstance->GetState()->GetCacheEntryValue(entry.GetValue());
       bool advanced =
         this->CMakeInstance->GetState()->GetCacheEntryPropertyAsBool(
@@ -404,10 +405,10 @@ void cmCursesMainForm::UpdateStatusBar(cm::optional<std::string> message)
 
     // Get the help string of the current entry
     // and add it to the help string
-    auto cmakeState = this->CMakeInstance->GetState();
-    cmProp existingValue = cmakeState->GetCacheEntryValue(labelValue);
+    auto* cmakeState = this->CMakeInstance->GetState();
+    cmValue existingValue = cmakeState->GetCacheEntryValue(labelValue);
     if (existingValue) {
-      cmProp help =
+      cmValue help =
         cmakeState->GetCacheEntryProperty(labelValue, "HELPSTRING");
       if (help) {
         bar += *help;
@@ -617,7 +618,7 @@ void cmCursesMainForm::FillCacheManagerFromUI()
 {
   for (cmCursesCacheEntryComposite& entry : this->Entries) {
     const std::string& cacheKey = entry.Key;
-    cmProp existingValue =
+    cmValue existingValue =
       this->CMakeInstance->GetState()->GetCacheEntryValue(cacheKey);
     if (existingValue) {
       std::string oldValue = *existingValue;
@@ -803,9 +804,9 @@ void cmCursesMainForm::HandleInput()
         cmCursesWidget* lbl = reinterpret_cast<cmCursesWidget*>(
           field_userptr(this->Fields[findex - 2]));
         const char* curField = lbl->GetValue();
-        cmProp helpString = nullptr;
+        cmValue helpString = nullptr;
 
-        cmProp existingValue =
+        cmValue existingValue =
           this->CMakeInstance->GetState()->GetCacheEntryValue(curField);
         if (existingValue) {
           helpString = this->CMakeInstance->GetState()->GetCacheEntryProperty(
@@ -853,11 +854,7 @@ void cmCursesMainForm::HandleInput()
       }
       // switch advanced on/off
       else if (key == 't') {
-        if (this->AdvancedMode) {
-          this->AdvancedMode = false;
-        } else {
-          this->AdvancedMode = true;
-        }
+        this->AdvancedMode = !this->AdvancedMode;
         getmaxyx(stdscr, y, x);
         this->RePost();
         this->Render(1, 1, x, y);
@@ -1003,7 +1000,7 @@ void cmCursesMainForm::DisplayOutputs(std::string const& newOutput)
   getmaxyx(stdscr, yi, xi);
 
   if (CurrentForm != this->LogForm.get()) {
-    auto newLogForm = new cmCursesLongMessageForm(
+    auto* newLogForm = new cmCursesLongMessageForm(
       this->Outputs, this->LastProgress.c_str(),
       cmCursesLongMessageForm::ScrollBehavior::ScrollDown);
     CurrentForm = newLogForm;

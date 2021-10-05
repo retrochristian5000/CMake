@@ -75,6 +75,7 @@ void cmVisualStudioGeneratorOptions::FixExceptionHandlingDefault()
     case cmGlobalVisualStudioGenerator::VS14:
     case cmGlobalVisualStudioGenerator::VS15:
     case cmGlobalVisualStudioGenerator::VS16:
+    case cmGlobalVisualStudioGenerator::VS17:
       // by default VS puts <ExceptionHandling></ExceptionHandling> empty
       // for a project, to make our projects look the same put a new line
       // and space over for the closing </ExceptionHandling> as the default
@@ -149,35 +150,6 @@ bool cmVisualStudioGeneratorOptions::UsingSBCS() const
     }
   }
   return false;
-}
-
-void cmVisualStudioGeneratorOptions::FixCudaRuntime(cmGeneratorTarget* target)
-{
-  std::map<std::string, FlagValue>::const_iterator i =
-    this->FlagMap.find("CudaRuntime");
-  if (i == this->FlagMap.end()) {
-    // User didn't provide am override so get the property value
-    const char* runtimeLibraryValue =
-      target->GetProperty("CUDA_RUNTIME_LIBRARY");
-    if (runtimeLibraryValue) {
-      std::string cudaRuntime =
-        cmSystemTools::UpperCase(cmGeneratorExpression::Evaluate(
-          runtimeLibraryValue, this->LocalGenerator, this->Configuration,
-          target));
-      if (cudaRuntime == "STATIC") {
-        this->AddFlag("CudaRuntime", "Static");
-      }
-      if (cudaRuntime == "SHARED") {
-        this->AddFlag("CudaRuntime", "Shared");
-      }
-      if (cudaRuntime == "NONE") {
-        this->AddFlag("CudaRuntime", "None");
-      }
-    } else {
-      // nvcc default is static
-      this->AddFlag("CudaRuntime", "Static");
-    }
-  }
 }
 
 void cmVisualStudioGeneratorOptions::FixCudaCodeGeneration()
@@ -447,7 +419,9 @@ void cmVisualStudioGeneratorOptions::OutputPreprocessorDefinitions(
   }
 
   std::ostringstream oss;
-  const char* sep = "";
+  if (this->Version >= cmGlobalVisualStudioGenerator::VS10) {
+    oss << "%(" << tag << ")";
+  }
   std::vector<std::string>::const_iterator de =
     cmRemoveDuplicates(this->Defines);
   for (std::string const& di : cmMakeRange(this->Defines.cbegin(), de)) {
@@ -466,11 +440,7 @@ void cmVisualStudioGeneratorOptions::OutputPreprocessorDefinitions(
       }
     }
     // Store the flag in the project file.
-    oss << sep << define;
-    sep = ";";
-  }
-  if (this->Version >= cmGlobalVisualStudioGenerator::VS10) {
-    oss << ";%(" << tag << ")";
+    oss << ';' << define;
   }
 
   this->OutputFlag(fout, indent, tag, oss.str());

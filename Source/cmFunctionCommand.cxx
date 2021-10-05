@@ -7,8 +7,7 @@
 #include <cm/memory>
 #include <cm/string_view>
 #include <cmext/algorithm>
-
-#include "cm_static_string_view.hxx"
+#include <cmext/string_view>
 
 #include "cmExecutionStatus.h"
 #include "cmFunctionBlocker.h"
@@ -148,8 +147,7 @@ bool cmFunctionFunctionBlocker::ArgumentsMatch(cmListFileFunction const& lff,
                                                cmMakefile& mf) const
 {
   std::vector<std::string> expandedArguments;
-  mf.ExpandArguments(lff.Arguments, expandedArguments,
-                     this->GetStartingContext().FilePath.c_str());
+  mf.ExpandArguments(lff.Arguments(), expandedArguments);
   return expandedArguments.empty() ||
     expandedArguments.front() == this->Args.front();
 }
@@ -165,8 +163,11 @@ bool cmFunctionFunctionBlocker::Replay(
   f.FilePath = this->GetStartingContext().FilePath;
   f.Line = this->GetStartingContext().Line;
   mf.RecordPolicies(f.Policies);
-  mf.GetState()->AddScriptedCommand(this->Args.front(), std::move(f));
-  return true;
+  return mf.GetState()->AddScriptedCommand(
+    this->Args.front(),
+    BT<cmState::Command>(std::move(f),
+                         mf.GetBacktrace().Push(this->GetStartingContext())),
+    mf);
 }
 
 } // anonymous namespace

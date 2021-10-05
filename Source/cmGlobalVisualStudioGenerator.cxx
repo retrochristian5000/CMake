@@ -104,6 +104,8 @@ const char* cmGlobalVisualStudioGenerator::GetIDEVersion() const
       return "15.0";
     case cmGlobalVisualStudioGenerator::VS16:
       return "16.0";
+    case cmGlobalVisualStudioGenerator::VS17:
+      return "17.0";
   }
   return "";
 }
@@ -112,6 +114,7 @@ void cmGlobalVisualStudioGenerator::WriteSLNHeader(std::ostream& fout)
 {
   char utf8bom[] = { char(0xEF), char(0xBB), char(0xBF) };
   fout.write(utf8bom, 3);
+  fout << '\n';
 
   switch (this->Version) {
     case cmGlobalVisualStudioGenerator::VS9:
@@ -166,7 +169,16 @@ void cmGlobalVisualStudioGenerator::WriteSLNHeader(std::ostream& fout)
       if (this->ExpressEdition) {
         fout << "# Visual Studio Express 16 for Windows Desktop\n";
       } else {
-        fout << "# Visual Studio 16\n";
+        fout << "# Visual Studio Version 16\n";
+      }
+      break;
+    case cmGlobalVisualStudioGenerator::VS17:
+      // Visual Studio 17 writes .sln format 12.00
+      fout << "Microsoft Visual Studio Solution File, Format Version 12.00\n";
+      if (this->ExpressEdition) {
+        fout << "# Visual Studio Express 17 for Windows Desktop\n";
+      } else {
+        fout << "# Visual Studio Version 17\n";
       }
       break;
   }
@@ -199,7 +211,7 @@ void cmGlobalVisualStudioGenerator::AddExtraIDETargets()
       // considered always out of date.
       cmTarget* allBuild = gen[0]->AddUtilityCommand(
         "ALL_BUILD", true, no_working_dir, no_byproducts, no_depends,
-        no_commands, false, "Build all projects");
+        no_commands, cmPolicies::NEW, false, "Build all projects");
 
       gen[0]->AddGeneratorTarget(
         cm::make_unique<cmGeneratorTarget>(allBuild, gen[0]));
@@ -367,7 +379,7 @@ cmGlobalVisualStudioGenerator::GetTargetLinkClosure(cmGeneratorTarget* target)
 void cmGlobalVisualStudioGenerator::FollowLinkDepends(
   const cmGeneratorTarget* target, std::set<const cmGeneratorTarget*>& linked)
 {
-  if (target->GetType() == cmStateEnums::INTERFACE_LIBRARY) {
+  if (!target->IsInBuildSystem()) {
     return;
   }
   if (linked.insert(target).second &&
@@ -507,8 +519,8 @@ std::string cmGlobalVisualStudioGenerator::GetUtilityDepend(
 std::string cmGlobalVisualStudioGenerator::GetStartupProjectName(
   cmLocalGenerator const* root) const
 {
-  cmProp n = root->GetMakefile()->GetProperty("VS_STARTUP_PROJECT");
-  if (n && !n->empty()) {
+  cmValue n = root->GetMakefile()->GetProperty("VS_STARTUP_PROJECT");
+  if (cmNonempty(n)) {
     std::string startup = *n;
     if (this->FindTarget(startup)) {
       return startup;
@@ -808,9 +820,9 @@ bool cmGlobalVisualStudioGenerator::TargetIsFortranOnly(
   // This allows the project to control the language choice in
   // a target with none of its own sources, e.g. when also using
   // object libraries.
-  const char* linkLang = gt->GetProperty("LINKER_LANGUAGE");
-  if (linkLang && *linkLang) {
-    languages.insert(linkLang);
+  cmValue linkLang = gt->GetProperty("LINKER_LANGUAGE");
+  if (cmNonempty(linkLang)) {
+    languages.insert(*linkLang);
   }
 
   // Intel Fortran .vfproj files do support the resource compiler.

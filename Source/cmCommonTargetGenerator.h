@@ -1,13 +1,14 @@
 /* Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
    file Copyright.txt or https://cmake.org/licensing for details.  */
-#ifndef cmCommonTargetGenerator_h
-#define cmCommonTargetGenerator_h
+#pragma once
 
 #include "cmConfigure.h" // IWYU pragma: keep
 
 #include <map>
 #include <string>
 #include <vector>
+
+#include "cmValue.h"
 
 class cmGeneratorTarget;
 class cmGlobalCommonGenerator;
@@ -29,8 +30,7 @@ public:
 
 protected:
   // Feature query methods.
-  const char* GetFeature(const std::string& feature,
-                         const std::string& config);
+  cmValue GetFeature(const std::string& feature, const std::string& config);
 
   // Helper to add flag for windows .def file.
   void AddModuleDefinitionFlag(cmLinkLineComputer* linkLineComputer,
@@ -41,9 +41,13 @@ protected:
   cmLocalCommonGenerator* LocalCommonGenerator;
   cmGlobalCommonGenerator* GlobalCommonGenerator;
   std::vector<std::string> ConfigNames;
+  bool UseLWYU = false;
 
   void AppendFortranFormatFlags(std::string& flags,
                                 cmSourceFile const& source);
+
+  void AppendFortranPreprocessFlags(std::string& flags,
+                                    cmSourceFile const& source);
 
   virtual void AddIncludeFlags(std::string& flags, std::string const& lang,
                                const std::string& config) = 0;
@@ -62,6 +66,8 @@ protected:
     const std::string& config) const;
   std::string ComputeTargetCompilePDB(const std::string& config) const;
 
+  std::string GetLinkerLauncher(const std::string& config);
+
 private:
   using ByLanguageMap = std::map<std::string, std::string>;
   struct ByConfig
@@ -72,5 +78,3 @@ private:
   };
   std::map<std::string, ByConfig> Configs;
 };
-
-#endif

@@ -258,6 +258,18 @@ bool cmVSSetupAPIHelper::GetVSInstanceInfo(std::string& vsInstallLocation)
   return isInstalled;
 }
 
+bool cmVSSetupAPIHelper::GetVSInstanceVersion(std::string& vsInstanceVersion)
+{
+  vsInstanceVersion.clear();
+  bool isInstalled = this->EnumerateAndChooseVSInstance();
+
+  if (isInstalled) {
+    vsInstanceVersion = cmsys::Encoding::ToNarrow(chosenInstanceInfo.Version);
+  }
+
+  return isInstalled;
+}
+
 bool cmVSSetupAPIHelper::GetVCToolsetVersion(std::string& vsToolsetVersion)
 {
   vsToolsetVersion.clear();

@@ -11,11 +11,11 @@ Community
 
 CMake is maintained and supported by `Kitware`_ and developed in
 collaboration with a productive community of contributors.
-Please subscribe and post to the `CMake Developers List`_ to raise
+Please post to the ``Development`` category of the `CMake Forum`_ to raise
 discussion of development topics.
 
 .. _`Kitware`: http://www.kitware.com/cmake
-.. _`CMake Developers List`: https://cmake.org/mailman/listinfo/cmake-developers
+.. _`CMake Forum`: https://discourse.cmake.org
 
 Patches
 =======
@@ -38,7 +38,7 @@ To contribute patches:
 #. Push the topic branch to a personal repository fork on GitLab.
 #. Create a GitLab Merge Request targeting the upstream ``master`` branch
    (even if the change is intended for merge to the ``release`` branch).
-   Check the box labelled "Allow commits from members who can merge to the
+   Check the box labeled "Allow commits from members who can merge to the
    target branch".  This will allow maintainers to make minor edits on your
    behalf.
 

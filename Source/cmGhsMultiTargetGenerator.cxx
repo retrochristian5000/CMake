@@ -14,7 +14,7 @@
 #include "cmGeneratedFileStream.h"
 #include "cmGeneratorTarget.h"
 #include "cmGlobalGhsMultiGenerator.h"
-#include "cmLinkLineComputer.h"
+#include "cmLinkLineComputer.h" // IWYU pragma: keep
 #include "cmLocalGenerator.h"
 #include "cmLocalGhsMultiGenerator.h"
 #include "cmMakefile.h"
@@ -28,6 +28,7 @@
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
 #include "cmTarget.h"
+#include "cmValue.h"
 
 cmGhsMultiTargetGenerator::cmGhsMultiTargetGenerator(cmGeneratorTarget* target)
   : GeneratorTarget(target)
@@ -42,9 +43,9 @@ cmGhsMultiTargetGenerator::cmGhsMultiTargetGenerator(cmGeneratorTarget* target)
 #endif
 {
   // Store the configuration name that is being used
-  if (const char* config = this->Makefile->GetDefinition("CMAKE_BUILD_TYPE")) {
+  if (cmValue config = this->Makefile->GetDefinition("CMAKE_BUILD_TYPE")) {
     // Use the build type given by the user.
-    this->ConfigName = config;
+    this->ConfigName = *config;
   } else {
     // No configuration type given.
     this->ConfigName.clear();
@@ -61,7 +62,7 @@ void cmGhsMultiTargetGenerator::Generate()
       // Get the name of the executable to generate.
       this->TargetNameReal =
         this->GeneratorTarget->GetExecutableNames(this->ConfigName).Real;
-      if (cmGhsMultiTargetGenerator::DetermineIfIntegrityApp()) {
+      if (this->cmGhsMultiTargetGenerator::DetermineIfIntegrityApp()) {
         this->TagType = GhsMultiGpj::INTERGRITY_APPLICATION;
       } else {
         this->TagType = GhsMultiGpj::PROGRAM;
@@ -158,13 +159,11 @@ void cmGhsMultiTargetGenerator::WriteTargetSpecifics(std::ostream& fout,
                                                      const std::string& config)
 {
   std::string outpath;
-  std::string rootpath = this->LocalGenerator->GetCurrentBinaryDirectory();
 
   if (this->TagType != GhsMultiGpj::SUBPROJECT) {
     // set target binary file destination
     outpath = this->GeneratorTarget->GetDirectory(config);
-    outpath =
-      this->LocalGenerator->MaybeConvertToRelativePath(rootpath, outpath);
+    outpath = this->LocalGenerator->MaybeRelativeToCurBinDir(outpath);
     /* clang-format off */
     fout << "    :binDirRelative=\"" << outpath << "\"\n"
             "    -o \"" << this->TargetNameReal << "\"\n";
@@ -355,7 +354,7 @@ void cmGhsMultiTargetGenerator::WriteBuildEventsHelper(
     } else {
       fout << fname << "\n    :outputName=\"" << fname << ".rule\"\n";
     }
-    for (auto& byp : ccg.GetByproducts()) {
+    for (const auto& byp : ccg.GetByproducts()) {
       fout << "    :extraOutputFile=\"" << byp << "\"\n";
     }
   }
@@ -368,7 +367,6 @@ void cmGhsMultiTargetGenerator::WriteCustomCommandsHelper(
 
   // if the command specified a working directory use it.
   std::string dir = this->LocalGenerator->GetCurrentBinaryDirectory();
-  std::string currentBinDir = dir;
   std::string workingDir = ccg.GetWorkingDirectory();
   if (!workingDir.empty()) {
     dir = workingDir;
@@ -378,7 +376,7 @@ void cmGhsMultiTargetGenerator::WriteCustomCommandsHelper(
 #ifdef _WIN32
   std::string check_error = "if %errorlevel% neq 0 exit /b %errorlevel%";
 #else
-  std::string check_error = "if [[ $? -ne 0 ]]; then exit 1; fi";
+  std::string check_error = "if [ $? -ne 0 ]; then exit 1; fi";
 #endif
 
 #ifdef _WIN32
@@ -426,8 +424,7 @@ void cmGhsMultiTargetGenerator::WriteCustomCommandsHelper(
       // working directory will be the start-output directory.
       bool had_slash = cmd.find('/') != std::string::npos;
       if (workingDir.empty()) {
-        cmd =
-          this->LocalGenerator->MaybeConvertToRelativePath(currentBinDir, cmd);
+        cmd = this->LocalGenerator->MaybeRelativeToCurBinDir(cmd);
       }
       bool has_slash = cmd.find('/') != std::string::npos;
       if (had_slash && !has_slash) {
@@ -456,7 +453,7 @@ void cmGhsMultiTargetGenerator::WriteSourceProperty(
   std::ostream& fout, const cmSourceFile* sf, std::string const& propName,
   std::string const& propFlag)
 {
-  cmProp prop = sf->GetProperty(propName);
+  cmValue prop = sf->GetProperty(propName);
   if (prop) {
     std::vector<std::string> list = cmExpandedList(*prop);
     for (const std::string& p : list) {
@@ -527,7 +524,7 @@ void cmGhsMultiTargetGenerator::WriteSources(std::ostream& fout_proj)
     }
   }
 
-  for (auto& n : groupNames) {
+  for (const auto& n : groupNames) {
     groupFilesList[i] = n;
     i += 1;
   }
@@ -551,7 +548,7 @@ void cmGhsMultiTargetGenerator::WriteSources(std::ostream& fout_proj)
     std::ostream* fout;
     bool useProjectFile =
       cmIsOn(this->GeneratorTarget->GetProperty("GHS_NO_SOURCE_GROUP_FILE")) ||
-      cmIsOn(this->Makefile->GetDefinition("CMAKE_GHS_NO_SOURCE_GROUP_FILE"));
+      this->Makefile->IsOn("CMAKE_GHS_NO_SOURCE_GROUP_FILE");
     if (useProjectFile || sg.empty()) {
       fout = &fout_proj;
     } else {
@@ -630,7 +627,7 @@ void cmGhsMultiTargetGenerator::WriteSources(std::ostream& fout_proj)
       }
     } else {
       std::vector<cmSourceFile const*> customCommands;
-      if (ComputeCustomCommandOrder(customCommands)) {
+      if (this->ComputeCustomCommandOrder(customCommands)) {
         std::string message = "The custom commands for target [" +
           this->GeneratorTarget->GetName() + "] had a cycle.\n";
         cmSystemTools::Error(message);
@@ -690,14 +687,14 @@ void cmGhsMultiTargetGenerator::WriteCustomCommandLine(
    * the outputs is manually deleted.
    */
   bool specifyExtra = true;
-  for (auto& out : ccg.GetOutputs()) {
+  for (const auto& out : ccg.GetOutputs()) {
     fout << fname << '\n';
     fout << "    :outputName=\"" << out << "\"\n";
     if (specifyExtra) {
-      for (auto& byp : ccg.GetByproducts()) {
+      for (const auto& byp : ccg.GetByproducts()) {
         fout << "    :extraOutputFile=\"" << byp << "\"\n";
       }
-      for (auto& dep : ccg.GetDepends()) {
+      for (const auto& dep : ccg.GetDepends()) {
         fout << "    :depends=\"" << dep << "\"\n";
       }
       specifyExtra = false;
@@ -708,8 +705,8 @@ void cmGhsMultiTargetGenerator::WriteCustomCommandLine(
 void cmGhsMultiTargetGenerator::WriteObjectLangOverride(
   std::ostream& fout, const cmSourceFile* sourceFile)
 {
-  cmProp rawLangProp = sourceFile->GetProperty("LANGUAGE");
-  if (nullptr != rawLangProp) {
+  cmValue rawLangProp = sourceFile->GetProperty("LANGUAGE");
+  if (rawLangProp) {
     std::string sourceLangProp(*rawLangProp);
     std::string const& extension = sourceFile->GetExtension();
     if ("CXX" == sourceLangProp && ("c" == extension || "C" == extension)) {
@@ -720,18 +717,15 @@ void cmGhsMultiTargetGenerator::WriteObjectLangOverride(
 
 bool cmGhsMultiTargetGenerator::DetermineIfIntegrityApp()
 {
-  const char* p = this->GeneratorTarget->GetProperty("ghs_integrity_app");
-  if (p) {
-    return cmIsOn(this->GeneratorTarget->GetProperty("ghs_integrity_app"));
+  if (cmValue p = this->GeneratorTarget->GetProperty("ghs_integrity_app")) {
+    return cmIsOn(*p);
   }
   std::vector<cmSourceFile*> sources;
   this->GeneratorTarget->GetSourceFiles(sources, this->ConfigName);
-  for (const cmSourceFile* sf : sources) {
-    if ("int" == sf->GetExtension()) {
-      return true;
-    }
-  }
-  return false;
+  return std::any_of(sources.begin(), sources.end(),
+                     [](cmSourceFile const* sf) -> bool {
+                       return "int" == sf->GetExtension();
+                     });
 }
 
 bool cmGhsMultiTargetGenerator::ComputeCustomCommandOrder(
@@ -745,7 +739,7 @@ bool cmGhsMultiTargetGenerator::ComputeCustomCommandOrder(
   this->GeneratorTarget->GetCustomCommands(customCommands, this->ConfigName);
 
   for (cmSourceFile const* si : customCommands) {
-    bool r = VisitCustomCommand(temp, perm, order, si);
+    bool r = this->VisitCustomCommand(temp, perm, order, si);
     if (r) {
       return r;
     }
@@ -761,10 +755,10 @@ bool cmGhsMultiTargetGenerator::VisitCustomCommand(
   if (perm.find(si) == perm.end()) {
     /* set temporary mark; check if revisit*/
     if (temp.insert(si).second) {
-      for (auto& di : si->GetCustomCommand()->GetDepends()) {
-        cmSourceFile const* sf = this->GeneratorTarget->GetLocalGenerator()
-                                   ->GetMakefile()
-                                   ->GetSourceFileWithOutput(di);
+      for (const auto& di : si->GetCustomCommand()->GetDepends()) {
+        cmSourceFile const* sf =
+          this->GeneratorTarget->GetLocalGenerator()->GetSourceFileWithOutput(
+            di);
         /* if sf exists then visit */
         if (sf && this->VisitCustomCommand(temp, perm, order, sf)) {
           return true;

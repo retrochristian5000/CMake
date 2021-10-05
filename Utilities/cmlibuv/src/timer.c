@@ -51,12 +51,7 @@ static int timer_less_than(const struct heap_node* ha,
   /* Compare start_id when both have the same timeout. start_id is
    * allocated with loop->timer_counter in uv_timer_start().
    */
-  if (a->start_id < b->start_id)
-    return 1;
-  if (b->start_id < a->start_id)
-    return 0;
-
-  return 0;
+  return a->start_id < b->start_id;
 }
 
 
@@ -132,6 +127,14 @@ void uv_timer_set_repeat(uv_timer_t* handle, uint64_t repeat) {
 
 uint64_t uv_timer_get_repeat(const uv_timer_t* handle) {
   return handle->repeat;
+}
+
+
+uint64_t uv_timer_get_due_in(const uv_timer_t* handle) {
+  if (handle->loop->time >= handle->timeout)
+    return 0;
+
+  return handle->timeout - handle->loop->time;
 }
 
 

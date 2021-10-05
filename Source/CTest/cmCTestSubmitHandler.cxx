@@ -9,9 +9,9 @@
 
 #include <cmext/algorithm>
 
-#include "cm_curl.h"
-#include "cm_jsoncpp_reader.h"
-#include "cm_jsoncpp_value.h"
+#include <cm3p/curl/curl.h>
+#include <cm3p/json/reader.h>
+#include <cm3p/json/value.h>
 
 #include "cmAlgorithms.h"
 #include "cmCTest.h"
@@ -24,6 +24,7 @@
 #include "cmState.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
+#include "cmValue.h"
 #include "cmXMLParser.h"
 #include "cmake.h"
 
@@ -260,7 +261,7 @@ bool cmCTestSubmitHandler::SubmitUsingHTTP(
         cmCTestScriptHandler* ch = this->CTest->GetScriptHandler();
         cmake* cm = ch->GetCMake();
         if (cm) {
-          cmProp subproject = cm->GetState()->GetGlobalProperty("SubProject");
+          cmValue subproject = cm->GetState()->GetGlobalProperty("SubProject");
           if (subproject) {
             upload_as += "&subproject=";
             upload_as += ctest_curl.Escape(*subproject);
@@ -356,12 +357,8 @@ bool cmCTestSubmitHandler::SubmitUsingHTTP(
       // If curl failed for any reason, or checksum fails, wait and retry
       //
       if (res != CURLE_OK || this->HasErrors) {
-        std::string retryDelay = this->GetOption("RetryDelay") == nullptr
-          ? ""
-          : this->GetOption("RetryDelay");
-        std::string retryCount = this->GetOption("RetryCount") == nullptr
-          ? ""
-          : this->GetOption("RetryCount");
+        std::string retryDelay = *this->GetOption("RetryDelay");
+        std::string retryCount = *this->GetOption("RetryCount");
 
         auto delay = cmDuration(
           retryDelay.empty()
@@ -521,12 +518,8 @@ int cmCTestSubmitHandler::HandleCDashUploadFile(std::string const& file,
   bool internalTest = cmIsOn(this->GetOption("InternalTest"));
 
   // Get RETRY_COUNT and RETRY_DELAY values if they were set.
-  std::string retryDelayString = this->GetOption("RetryDelay") == nullptr
-    ? ""
-    : this->GetOption("RetryDelay");
-  std::string retryCountString = this->GetOption("RetryCount") == nullptr
-    ? ""
-    : this->GetOption("RetryCount");
+  std::string retryDelayString = *this->GetOption("RetryDelay");
+  std::string retryCountString = *this->GetOption("RetryCount");
   auto retryDelay = std::chrono::seconds(0);
   if (!retryDelayString.empty()) {
     unsigned long retryDelayValue = 0;
@@ -555,7 +548,7 @@ int cmCTestSubmitHandler::HandleCDashUploadFile(std::string const& file,
   // a "&subproject=subprojectname" to the first POST.
   cmCTestScriptHandler* ch = this->CTest->GetScriptHandler();
   cmake* cm = ch->GetCMake();
-  cmProp subproject = cm->GetState()->GetGlobalProperty("SubProject");
+  cmValue subproject = cm->GetState()->GetGlobalProperty("SubProject");
   // TODO: Encode values for a URL instead of trusting caller.
   std::ostringstream str;
   if (subproject) {
@@ -715,8 +708,8 @@ int cmCTestSubmitHandler::HandleCDashUploadFile(std::string const& file,
 
 int cmCTestSubmitHandler::ProcessHandler()
 {
-  const char* cdashUploadFile = this->GetOption("CDashUploadFile");
-  const char* cdashUploadType = this->GetOption("CDashUploadType");
+  cmValue cdashUploadFile = this->GetOption("CDashUploadFile");
+  cmValue cdashUploadType = this->GetOption("CDashUploadType");
   if (cdashUploadFile && cdashUploadType) {
     return this->HandleCDashUploadFile(cdashUploadFile, cdashUploadType);
   }
@@ -796,13 +789,14 @@ int cmCTestSubmitHandler::ProcessHandler()
         gfile = gfile.substr(glen);
         cmCTestOptionalLog(this->CTest, DEBUG,
                            "Glob file: " << gfile << std::endl, this->Quiet);
-        this->CTest->AddSubmitFile(cmCTest::PartCoverage, gfile.c_str());
+        this->CTest->AddSubmitFile(cmCTest::PartCoverage, gfile);
       }
     } else {
       cmCTestLog(this->CTest, ERROR_MESSAGE, "Problem globbing" << std::endl);
     }
   }
   this->CTest->AddIfExists(cmCTest::PartMemCheck, "DynamicAnalysis.xml");
+  this->CTest->AddIfExists(cmCTest::PartMemCheck, "DynamicAnalysis-Test.xml");
   this->CTest->AddIfExists(cmCTest::PartMemCheck, "Purify.xml");
   this->CTest->AddIfExists(cmCTest::PartNotes, "Notes.xml");
   this->CTest->AddIfExists(cmCTest::PartUpload, "Upload.xml");

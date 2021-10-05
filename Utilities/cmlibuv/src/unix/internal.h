@@ -62,9 +62,7 @@
 # include <AvailabilityMacros.h>
 #endif
 
-#if defined(_POSIX_PATH_MAX)
-# define UV__PATH_MAX _POSIX_PATH_MAX
-#elif defined(PATH_MAX)
+#if defined(PATH_MAX)
 # define UV__PATH_MAX PATH_MAX
 #else
 # define UV__PATH_MAX 8192
@@ -116,10 +114,8 @@ int uv__pthread_sigmask(int how, const sigset_t* set, sigset_t* oset);
 #if defined(__clang__) ||                                                     \
     defined(__GNUC__) ||                                                      \
     defined(__INTEL_COMPILER)
-# define UV_DESTRUCTOR(declaration) __attribute__((destructor)) declaration
 # define UV_UNUSED(declaration)     __attribute__((unused)) declaration
 #else
-# define UV_DESTRUCTOR(declaration) declaration
 # define UV_UNUSED(declaration)     declaration
 #endif
 
@@ -280,6 +276,7 @@ void uv__udp_finish_close(uv_udp_t* handle);
 uv_handle_type uv__handle_type(int fd);
 FILE* uv__open_file(const char* path);
 int uv__getpwuid_r(uv_passwd_t* pwd);
+int uv__search_path(const char* prog, char* buf, size_t* buflen);
 
 /* random */
 int uv__random_devurandom(void* buf, size_t buflen);
@@ -347,15 +344,8 @@ struct uv__mmsghdr {
   unsigned int msg_len;
 };
 
-int uv__recvmmsg(int fd,
-                 struct uv__mmsghdr* mmsg,
-                 unsigned int vlen,
-                 unsigned int flags,
-                 struct timespec* timeout);
-int uv__sendmmsg(int fd,
-                 struct uv__mmsghdr* mmsg,
-                 unsigned int vlen,
-                 unsigned int flags);
+int uv__recvmmsg(int fd, struct uv__mmsghdr* mmsg, unsigned int vlen);
+int uv__sendmmsg(int fd, struct uv__mmsghdr* mmsg, unsigned int vlen);
 #else
 #define HAVE_MMSG 0
 #endif

@@ -5,12 +5,13 @@
 #include <sstream>
 
 #include "cmExecutionStatus.h"
+#include "cmGlobalGenerator.h"
 #include "cmListFileCache.h"
 #include "cmMakefile.h"
 #include "cmMessageType.h"
 #include "cmPolicies.h"
 #include "cmTarget.h"
-#include "cmTargetPropertyComputer.h"
+#include "cmValue.h"
 
 class cmMessenger;
 
@@ -28,21 +29,25 @@ bool cmGetTargetPropertyCommand(std::vector<std::string> const& args,
   cmMakefile& mf = status.GetMakefile();
 
   if (cmTarget* tgt = mf.FindTargetToUse(targetName)) {
-    if (args[2] == "ALIASED_TARGET") {
+    if (args[2] == "ALIASED_TARGET" || args[2] == "ALIAS_GLOBAL") {
       if (mf.IsAlias(targetName)) {
-        prop = tgt->GetName();
         prop_exists = true;
+        if (args[2] == "ALIASED_TARGET") {
+
+          prop = tgt->GetName();
+        }
+        if (args[2] == "ALIAS_GLOBAL") {
+          prop =
+            mf.GetGlobalGenerator()->IsAlias(targetName) ? "TRUE" : "FALSE";
+        }
       }
     } else if (!args[2].empty()) {
-      cmProp prop_cstr = nullptr;
+      cmValue prop_cstr = nullptr;
       cmListFileBacktrace bt = mf.GetBacktrace();
       cmMessenger* messenger = mf.GetMessenger();
-      if (cmTargetPropertyComputer::PassesWhitelist(tgt->GetType(), args[2],
-                                                    messenger, bt)) {
-        prop_cstr = tgt->GetComputedProperty(args[2], messenger, bt);
-        if (!prop_cstr) {
-          prop_cstr = tgt->GetProperty(args[2]);
-        }
+      prop_cstr = tgt->GetComputedProperty(args[2], messenger, bt);
+      if (!prop_cstr) {
+        prop_cstr = tgt->GetProperty(args[2]);
       }
       if (prop_cstr) {
         prop = *prop_cstr;
@@ -57,6 +62,7 @@ bool cmGetTargetPropertyCommand(std::vector<std::string> const& args,
       case cmPolicies::WARN:
         issueMessage = true;
         e << cmPolicies::GetPolicyWarning(cmPolicies::CMP0045) << "\n";
+        CM_FALLTHROUGH;
       case cmPolicies::OLD:
         break;
       case cmPolicies::REQUIRED_IF_USED:
@@ -64,6 +70,7 @@ bool cmGetTargetPropertyCommand(std::vector<std::string> const& args,
       case cmPolicies::NEW:
         issueMessage = true;
         messageType = MessageType::FATAL_ERROR;
+        break;
     }
     if (issueMessage) {
       e << "get_target_property() called with non-existent target \""

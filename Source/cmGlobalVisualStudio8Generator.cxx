@@ -108,9 +108,9 @@ bool cmGlobalVisualStudio8Generator::AddCheckTarget()
   std::vector<std::string> no_byproducts;
   std::vector<std::string> no_depends;
   cmCustomCommandLines no_commands;
-  cmTarget* tgt = lg.AddUtilityCommand(CMAKE_CHECK_BUILD_SYSTEM_TARGET, false,
-                                       no_working_directory, no_byproducts,
-                                       no_depends, no_commands);
+  cmTarget* tgt = lg.AddUtilityCommand(
+    CMAKE_CHECK_BUILD_SYSTEM_TARGET, false, no_working_directory,
+    no_byproducts, no_depends, no_commands, cmPolicies::NEW);
 
   auto ptr = cm::make_unique<cmGeneratorTarget>(tgt, &lg);
   auto gt = ptr.get();
@@ -160,10 +160,11 @@ bool cmGlobalVisualStudio8Generator::AddCheckTarget()
       std::vector<std::string> byproducts;
       byproducts.push_back(cm->GetGlobVerifyStamp());
 
-      lg.AddCustomCommandToTarget(
-        CMAKE_CHECK_BUILD_SYSTEM_TARGET, byproducts, no_depends,
-        verifyCommandLines, cmCustomCommandType::PRE_BUILD,
-        "Checking File Globs", no_working_directory, stdPipesUTF8);
+      lg.AddCustomCommandToTarget(CMAKE_CHECK_BUILD_SYSTEM_TARGET, byproducts,
+                                  no_depends, verifyCommandLines,
+                                  cmCustomCommandType::PRE_BUILD,
+                                  "Checking File Globs", no_working_directory,
+                                  cmPolicies::NEW, stdPipesUTF8);
 
       // Ensure ZERO_CHECK always runs in Visual Studio using MSBuild,
       // otherwise the prebuild command will not be run.
@@ -195,8 +196,8 @@ bool cmGlobalVisualStudio8Generator::AddCheckTarget()
     if (cmSourceFile* file = lg.AddCustomCommandToOutput(
           stamps, no_byproducts, listFiles, no_main_dependency,
           no_implicit_depends, commandLines, "Checking Build System",
-          no_working_directory, true, false, false, false, "", "",
-          stdPipesUTF8)) {
+          no_working_directory, cmPolicies::NEW, true, false, false, false, "",
+          "", stdPipesUTF8)) {
       gt->AddSource(file->ResolveFullPath());
     } else {
       cmSystemTools::Error("Error adding rule for " + stamps[0]);
@@ -244,9 +245,9 @@ void cmGlobalVisualStudio8Generator::WriteProjectConfigurations(
     std::vector<std::string> mapConfig;
     const char* dstConfig = i.c_str();
     if (target.GetProperty("EXTERNAL_MSPROJECT")) {
-      if (const char* m = target.GetProperty("MAP_IMPORTED_CONFIG_" +
-                                             cmSystemTools::UpperCase(i))) {
-        cmExpandList(m, mapConfig);
+      if (cmValue m = target.GetProperty("MAP_IMPORTED_CONFIG_" +
+                                         cmSystemTools::UpperCase(i))) {
+        cmExpandList(*m, mapConfig);
         if (!mapConfig.empty()) {
           dstConfig = mapConfig[0].c_str();
         }
@@ -286,15 +287,15 @@ bool cmGlobalVisualStudio8Generator::NeedsDeploy(
     return false;
   }
 
-  if (const char* prop = target.GetProperty("VS_SOLUTION_DEPLOY")) {
+  if (cmValue prop = target.GetProperty("VS_SOLUTION_DEPLOY")) {
     // If set, it dictates behavior
     return cmIsOn(
-      cmGeneratorExpression::Evaluate(prop, target.LocalGenerator, config));
+      cmGeneratorExpression::Evaluate(*prop, target.LocalGenerator, config));
   }
 
   // To be deprecated, disable deployment even if target supports it.
-  if (const char* prop = target.GetProperty("VS_NO_SOLUTION_DEPLOY")) {
-    if (cmIsOn(cmGeneratorExpression::Evaluate(prop, target.LocalGenerator,
+  if (cmValue prop = target.GetProperty("VS_NO_SOLUTION_DEPLOY")) {
+    if (cmIsOn(cmGeneratorExpression::Evaluate(*prop, target.LocalGenerator,
                                                config))) {
       // If true, always disable deployment
       return false;
@@ -325,7 +326,7 @@ void cmGlobalVisualStudio8Generator::WriteProjectDepends(
   TargetDependSet const& unordered = this->GetTargetDirectDepends(gt);
   OrderedTargetDependSet depends(unordered, std::string());
   for (cmTargetDepend const& i : depends) {
-    if (i->GetType() == cmStateEnums::INTERFACE_LIBRARY) {
+    if (!i->IsInBuildSystem()) {
       continue;
     }
     std::string guid = this->GetGUID(i->GetName());
@@ -341,7 +342,7 @@ bool cmGlobalVisualStudio8Generator::NeedLinkLibraryDependencies(
     if (cmGeneratorTarget* depTarget =
           target->GetLocalGenerator()->FindGeneratorTargetToUse(
             ui.Value.first)) {
-      if (depTarget->GetType() != cmStateEnums::INTERFACE_LIBRARY &&
+      if (depTarget->IsInBuildSystem() &&
           depTarget->GetProperty("EXTERNAL_MSPROJECT")) {
         // This utility dependency names an external .vcproj target.
         // We use LinkLibraryDependencies="true" to link to it without
@@ -369,6 +370,7 @@ static cmVS7FlagTable cmVS8ExtraFlagTable[] = {
     cmVS7FlagTable::UserValueIgnored | cmVS7FlagTable::Continue },
   { "PrecompiledHeaderThrough", "Yu", "Precompiled Header Name", "",
     cmVS7FlagTable::UserValueRequired },
+  { "UsePrecompiledHeader", "Y-", "Don't use precompiled header", "0", 0 },
   // There is no YX option in the VS8 IDE.
 
   // Exception handling mode.  If no entries match, it will be FALSE.

@@ -46,13 +46,13 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_util.c 201098 2009-12-28 02:58:1
 #include <wincrypt.h>
 #endif
 #ifdef HAVE_ZLIB_H
-#include <cm_zlib.h>
+#include <cm3p/zlib.h>
 #endif
 #ifdef HAVE_LZMA_H
-#include <cm_lzma.h>
+#include <cm3p/lzma.h>
 #endif
 #ifdef HAVE_BZLIB_H
-#include <cm_bzlib.h>
+#include <cm3p/bzlib.h>
 #endif
 #ifdef HAVE_LZ4_H
 #include <lz4.h>
@@ -365,6 +365,7 @@ __archive_mktempx(const char *tmpdir, wchar_t *template)
 		}
 		fd = _open_osfhandle((intptr_t)h, _O_BINARY | _O_RDWR);
 		if (fd == -1) {
+			la_dosmaperr(GetLastError());
 			CloseHandle(h);
 			goto exit_tmpfile;
 		} else
@@ -432,6 +433,11 @@ __archive_mktemp(const char *tmpdir)
 		if (temp_name.s[temp_name.length-1] != '/')
 			archive_strappend_char(&temp_name, '/');
 	}
+#ifdef O_TMPFILE
+	fd = open(temp_name.s, O_RDWR|O_CLOEXEC|O_TMPFILE|O_EXCL, 0600); 
+	if(fd >= 0)
+		goto exit_tmpfile;
+#endif
 	archive_strcat(&temp_name, "libarchive_XXXXXX");
 	fd = mkstemp(temp_name.s);
 	if (fd < 0)

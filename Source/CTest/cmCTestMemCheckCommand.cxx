@@ -2,7 +2,7 @@
    file Copyright.txt or https://cmake.org/licensing for details.  */
 #include "cmCTestMemCheckCommand.h"
 
-#include "cm_static_string_view.hxx"
+#include <cmext/string_view>
 
 #include "cmCTest.h"
 #include "cmCTestMemCheckHandler.h"
@@ -14,7 +14,7 @@ void cmCTestMemCheckCommand::BindArguments()
   this->Bind("DEFECT_COUNT"_s, this->DefectCount);
 }
 
-cmCTestGenericHandler* cmCTestMemCheckCommand::InitializeActualHandler()
+cmCTestTestHandler* cmCTestMemCheckCommand::InitializeActualHandler()
 {
   cmCTestMemCheckHandler* handler = this->CTest->GetMemCheckHandler();
   handler->Initialize();

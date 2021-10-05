@@ -5,6 +5,8 @@
 GoogleTest
 ----------
 
+.. versionadded:: 3.9
+
 This module defines functions to help use the Google Test infrastructure.  Two
 mechanisms for adding tests are provided. :command:`gtest_add_tests` has been
 around for some time, originally via ``find_package(GTest)``.
@@ -99,6 +101,8 @@ same as the Google Test name (i.e. ``suite.testcase``); see also
     with the list of discovered test cases.  This allows the caller to do
     things like manipulate test properties of the discovered tests.
 
+  Usage example:
+
   .. code-block:: cmake
 
     include(GoogleTest)
@@ -147,6 +151,7 @@ same as the Google Test name (i.e. ``suite.testcase``); see also
                          [WORKING_DIRECTORY dir]
                          [TEST_PREFIX prefix]
                          [TEST_SUFFIX suffix]
+                         [TEST_FILTER expr]
                          [NO_PRETTY_TYPES] [NO_PRETTY_VALUES]
                          [PROPERTIES name1 value1...]
                          [TEST_LIST var]
@@ -155,7 +160,9 @@ same as the Google Test name (i.e. ``suite.testcase``); see also
                          [DISCOVERY_MODE <POST_BUILD|PRE_TEST>]
     )
 
-  ``gtest_discover_tests`` sets up a post-build command on the test executable
+  .. versionadded:: 3.10
+
+  ``gtest_discover_tests()`` sets up a post-build command on the test executable
   that generates the list of tests by parsing the output from running the test
   with the ``--gtest_list_tests`` argument.  Compared to the source parsing
   approach of :command:`gtest_add_tests`, this ensures that the full list of
@@ -198,6 +205,12 @@ same as the Google Test name (i.e. ``suite.testcase``); see also
     every discovered test case.  Both ``TEST_PREFIX`` and ``TEST_SUFFIX`` may
     be specified.
 
+  ``TEST_FILTER expr``
+    .. versionadded:: 3.22
+
+    Filter expression to pass to ``--gtest_filter`` argument during test
+    discovery.
+
   ``NO_PRETTY_TYPES``
     By default, the type index of type-parameterized tests is replaced by the
     actual type name in the CTest test name.  If this behavior is undesirable
@@ -212,7 +225,7 @@ same as the Google Test name (i.e. ``suite.testcase``); see also
 
   ``PROPERTIES name1 value1...``
     Specifies additional properties to be set on all tests discovered by this
-    invocation of ``gtest_discover_tests``.
+    invocation of ``gtest_discover_tests()``.
 
   ``TEST_LIST var``
     Make the list of tests available in the variable ``var``, rather than the
@@ -221,6 +234,8 @@ same as the Google Test name (i.e. ``suite.testcase``); see also
     Note that this variable is only available in CTest.
 
   ``DISCOVERY_TIMEOUT num``
+    .. versionadded:: 3.10.3
+
     Specifies how long (in seconds) CMake will wait for the test to enumerate
     available tests.  If the test takes longer than this, discovery (and your
     build) will fail.  Most test executables will enumerate their tests very
@@ -239,6 +254,8 @@ same as the Google Test name (i.e. ``suite.testcase``); see also
       and 3.10.2 has not been preserved.
 
   ``XML_OUTPUT_DIR dir``
+    .. versionadded:: 3.18
+
     If specified, the parameter is passed along with ``--gtest_output=xml:``
     to test executable. The actual file name is the same as the test target,
     including prefix and suffix. This should be used instead of
@@ -246,7 +263,9 @@ same as the Google Test name (i.e. ``suite.testcase``); see also
     XML result output when using parallel test execution.
 
   ``DISCOVERY_MODE``
-    Provides greater control over when ``gtest_discover_tests``performs test
+    .. versionadded:: 3.18
+
+    Provides greater control over when ``gtest_discover_tests()`` performs test
     discovery. By default, ``POST_BUILD`` sets up a post-build command
     to perform test discovery at build time. In certain scenarios, like
     cross-compiling, this ``POST_BUILD`` behavior is not desirable.
@@ -257,7 +276,7 @@ same as the Google Test name (i.e. ``suite.testcase``); see also
 
     ``DISCOVERY_MODE`` defaults to the value of the
     ``CMAKE_GTEST_DISCOVER_TESTS_DISCOVERY_MODE`` variable if it is not
-    passed when calling ``gtest_discover_tests``. This provides a mechanism
+    passed when calling ``gtest_discover_tests()``. This provides a mechanism
     for globally selecting a preferred test discovery behavior without having
     to modify each call site.
 
@@ -399,7 +418,7 @@ function(gtest_discover_tests TARGET)
     ""
     "NO_PRETTY_TYPES;NO_PRETTY_VALUES"
     "TEST_PREFIX;TEST_SUFFIX;WORKING_DIRECTORY;TEST_LIST;DISCOVERY_TIMEOUT;XML_OUTPUT_DIR;DISCOVERY_MODE"
-    "EXTRA_ARGS;PROPERTIES"
+    "EXTRA_ARGS;PROPERTIES;TEST_FILTER"
     ${ARGN}
   )
 
@@ -463,6 +482,7 @@ function(gtest_discover_tests TARGET)
               -D "TEST_PROPERTIES=${_PROPERTIES}"
               -D "TEST_PREFIX=${_TEST_PREFIX}"
               -D "TEST_SUFFIX=${_TEST_SUFFIX}"
+              -D "TEST_FILTER=${_TEST_FILTER}"
               -D "NO_PRETTY_TYPES=${_NO_PRETTY_TYPES}"
               -D "NO_PRETTY_VALUES=${_NO_PRETTY_VALUES}"
               -D "TEST_LIST=${_TEST_LIST}"
@@ -492,8 +512,9 @@ function(gtest_discover_tests TARGET)
 
     string(CONCAT ctest_include_content
       "if(EXISTS \"$<TARGET_FILE:${TARGET}>\")"                                    "\n"
-      "  if(\"$<TARGET_FILE:${TARGET}>\" IS_NEWER_THAN \"${ctest_tests_file}\")"   "\n"
-      "    include(GoogleTestAddTests)"                                            "\n"
+      "  if(NOT EXISTS \"${ctest_tests_file}\" OR"                                 "\n"
+      "     NOT \"${ctest_tests_file}\" IS_NEWER_THAN \"$<TARGET_FILE:${TARGET}>\")" "\n"
+      "    include(\"${_GOOGLETEST_DISCOVER_TESTS_SCRIPT}\")"                      "\n"
       "    gtest_discover_tests_impl("                                             "\n"
       "      TEST_EXECUTABLE"        " [==[" "$<TARGET_FILE:${TARGET}>"   "]==]"   "\n"
       "      TEST_EXECUTOR"          " [==[" "${crosscompiling_emulator}" "]==]"   "\n"
@@ -502,6 +523,7 @@ function(gtest_discover_tests TARGET)
       "      TEST_PROPERTIES"        " [==[" "${_PROPERTIES}"             "]==]"   "\n"
       "      TEST_PREFIX"            " [==[" "${_TEST_PREFIX}"            "]==]"   "\n"
       "      TEST_SUFFIX"            " [==[" "${_TEST_SUFFIX}"            "]==]"   "\n"
+      "      TEST_FILTER"            " [==[" "${_TEST_FILTER}"            "]==]"   "\n"
       "      NO_PRETTY_TYPES"        " [==[" "${_NO_PRETTY_TYPES}"        "]==]"   "\n"
       "      NO_PRETTY_VALUES"       " [==[" "${_NO_PRETTY_VALUES}"       "]==]"   "\n"
       "      TEST_LIST"              " [==[" "${_TEST_LIST}"              "]==]"   "\n"
@@ -527,7 +549,7 @@ function(gtest_discover_tests TARGET)
     endif()
 
   else()
-    message(SEND_ERROR "Unknown DISCOVERY_MODE: ${_DISCOVERY_MODE}")
+    message(FATAL_ERROR "Unknown DISCOVERY_MODE: ${_DISCOVERY_MODE}")
   endif()
 
   # Add discovered tests to directory TEST_INCLUDE_FILES
