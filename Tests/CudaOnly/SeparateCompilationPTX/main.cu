@@ -5,10 +5,8 @@
 
 #include "embedded_objs.h"
 
-int main(int argc, char** argv)
+int main()
 {
-  (void)argc;
-  (void)argv;
 
   CUmodule module;
 
@@ -16,8 +14,7 @@ int main(int argc, char** argv)
   int count = 0;
   cuDeviceGetCount(&count);
   if (count == 0) {
-    std::cerr << "Failed to retrieve the number of CUDA enabled devices"
-              << std::endl;
+    std::cerr << "No CUDA devices found\n";
     return 1;
   }
 

@@ -894,7 +894,6 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
     this->LocalGenerator->CreateRulePlaceholderExpander());
 
   // Construct the compile rules.
-
   {
     std::string cudaCompileMode;
     if (lang == "CUDA") {
@@ -918,9 +917,8 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
     }
 
     std::vector<std::string> compileCommands;
-    const std::string cmdVar = "CMAKE_" + lang + "_COMPILE_OBJECT";
     const std::string& compileRule =
-      this->Makefile->GetRequiredDefinition(cmdVar);
+      this->Makefile->GetRequiredDefinition("CMAKE_" + lang + "_COMPILE_OBJECT");
     cmExpandList(compileRule, compileCommands);
 
     if (this->GeneratorTarget->GetPropertyAsBool("EXPORT_COMPILE_COMMANDS") &&
