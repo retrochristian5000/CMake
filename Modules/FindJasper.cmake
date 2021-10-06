@@ -10,8 +10,8 @@ Find the Jasper JPEG2000 library.
 IMPORTED Targets
 ^^^^^^^^^^^^^^^^
 
-This module defines :prop_tgt:`IMPORTED` target ``JASPER::Jasper``, if
-Jasper library has been found.
+``Jasper::Jasper``
+  This module defines :prop_tgt:`IMPORTED` target ``JASPER::Jasper``, if found.
 
 Result Variables
 ^^^^^^^^^^^^^^^^
@@ -19,14 +19,26 @@ Result Variables
 This module defines the following variables:
 
 ::
+  ``JASPER_FOUND``
+    system has Jasper
+  ``JASPER_INCLUDE_DIR``
+    the Jasper include directory
+  ``JASPER_LIBRARIES``
+    the libraries needed to use Jasper
+  ``JASPER_VERSION_STRING``
+    the version of Jasper found
 
-  JASPER_INCLUDE_DIR - the Jasper include directory
-  JASPER_LIBRARIES - the libraries needed to use Jasper
-  JASPER_FOUND - system has Jasper
+Cache variables
+^^^^^^^^^^^^^^^
 
-::
+The following cache variables may also be set:
 
-  JASPER_VERSION_STRING - the version of Jasper found
+  ``JASPER_INCLUDE_DIRS``
+    where to find jasper/jasper.h, etc.
+  ``JASPER_LIBRARY_RELEASE``
+    where to find the Jasper library (optimized).
+  ``JASPER_LIBARRY_DEBUG``
+    where to find the Jasper library (debug).
 
 #]=======================================================================]
 
@@ -53,14 +65,28 @@ find_package_handle_standard_args(Jasper
                                   VERSION_VAR JASPER_VERSION_STRING)
 mark_as_advanced(JASPER_INCLUDE_DIR)
 
-if (JASPER_FOUND)
+if(JASPER_FOUND)
     set(JASPER_LIBRARIES ${JASPER_LIBRARIES} ${JPEG_LIBRARIES})
     set(JASPER_INCLUDE_DIRS ${JASPER_INCLUDE_DIR})
-    if (NOT TARGET JASPER::Jasper)
-        add_library(JASPER::Jasper UNKNOWN IMPORTED)
-        set_target_properties(JASPER::Jasper PROPERTIES
-                              INTERFACE_INCLUDE_DIRECTORIES "${JASPER_INCLUDE_DIR}"
-                              IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-                              IMPORTED_LOCATION "${JASPER_LIBRARIES}")
+    if(NOT TARGET Jasper::Jasper)
+        add_library(Jasper::Jasper UNKNOWN IMPORTED)
+        if(JASPER_INCLUDE_DIRS)
+            set_target_properties(Jasper::Jasper PROPERTIES
+             INTERFACE_INCLUDE_DIRECTORIES "${JASPER_INCLUDE_DIRS}")
+        endif()
+        if(EXISTS "${JASPER_LIBRARY_RELEASE}")
+            set_property(TARGET Jasper::Jasper APPEND PROPERTY
+              IMPORTED CONFIGURATION RELEASE)
+            set_target_properties(Jasper::Jasper PROPERTIES
+              IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "C"
+              IMPORTED_LOCATION "${JASPER_LIBRARY_RELEASE}")
+        endif()
+        if(EXISTS "${JASPER_LIBRARY_DEBUG}")
+            set_property(TARGET Jasper::Jasper APPEND PROPERTY
+              IMPORTED CONFIGURATION DEBUG)
+            set_target_properties(Jasper::Jasper PROPERTIES
+              IMPORTED_LINK_INTERFACE_LANGUAGES_DEBUG "C"
+              IMPORTED_LOCATION "${JASPER_LIBRARY_DEBUG}")
+        endif()
     endif ()
 endif ()
