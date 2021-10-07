@@ -112,6 +112,13 @@ function(test_fortran_c_interface_module)
   add_executable(maincxx maincxx.c)
   target_link_libraries(maincxx mycxx)
 
+  # LCC needs to explicitly link liblfortran, if compile and link are different languages.
+  if(CMAKE_Fortran_COMPILER_ID STREQUAL "LCC")
+    target_link_libraries(mainc "-llfortran")
+    target_link_libraries(maincxx "-llfortran")
+    target_link_libraries(mainc_use_obj "-llfortran")
+  endif()
+
   # print out some stuff to help debug on machines via cdash
   file(READ "${CMAKE_CURRENT_BINARY_DIR}/foo.h" fooh)
   message("foo.h contents:\n${fooh}")

@@ -20,6 +20,11 @@ add_library(VerifyFortran STATIC VerifyFortran.f)
 add_executable(VerifyFortranC main.c VerifyC.c ${VerifyCXX})
 target_link_libraries(VerifyFortranC VerifyFortran)
 
+# LCC needs to explicitly link liblfortran, if compile and link are different languages.
+if(CMAKE_Fortran_COMPILER_ID STREQUAL "LCC")
+  target_link_libraries(VerifyFortranC "-llfortran")
+endif()
+
 if(NOT VERIFY_CXX)
   # The entry point (main) is defined in C; link with the C compiler.
   set_property(TARGET VerifyFortranC PROPERTY LINKER_LANGUAGE C)
