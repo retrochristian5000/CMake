@@ -275,6 +275,20 @@ void cmCPackIFWInstaller::ConfigureFromOptions()
     this->Resources.clear();
     cmExpandList(optIFW_PACKAGE_RESOURCES, this->Resources);
   }
+
+  // Run program, run program arguments, and run program description
+  if (cmValue program = this->GetOption("CPACK_IFW_PACKAGE_RUN_PROGRAM")) {
+    this->RunProgram = *program;
+  }
+  if (cmValue arguments =
+        this->GetOption("CPACK_IFW_PACKAGE_RUN_PROGRAM_ARGUMENTS")) {
+    this->RunProgramArguments.clear();
+    cmExpandList(arguments, this->RunProgramArguments);
+  }
+  if (cmValue description =
+        this->GetOption("CPACK_IFW_PACKAGE_RUN_PROGRAM_DESCRIPTION")) {
+    this->RunProgramDescription = *description;
+  }
 }
 
 /** \class cmCPackIFWResourcesParser
@@ -483,6 +497,22 @@ void cmCPackIFWInstaller::GenerateInstallerFile()
 
   if (!this->RemoveTargetDir.empty()) {
     xout.Element("RemoveTargetDir", this->RemoveTargetDir);
+  }
+
+  if (!this->IsVersionLess("4.0")) {
+    if (!this->RunProgram.empty()) {
+      xout.Element("RunProgram", this->RunProgram);
+    }
+    if (!this->RunProgramArguments.empty()) {
+      xout.StartElement("RunProgramArguments");
+      for (const auto& arg; this->RunProgramArguments) {
+        xout.Element("Argument", arg);
+      }
+      xout.EndElement();
+    }
+    if (!this->RunProgramDescription.empty()) {
+      xout.Element("RunProgramDescription", this->RunProgramDescription);
+    }
   }
 
   // Different allows
