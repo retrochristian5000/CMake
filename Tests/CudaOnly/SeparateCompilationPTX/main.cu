@@ -1,4 +1,3 @@
-
 #include <iostream>
 
 #include <cuda.h>
@@ -7,7 +6,6 @@
 
 int main()
 {
-
   CUmodule module;
 
   cuInit(0);
@@ -25,6 +23,4 @@ int main()
     return 1;
   }
   std::cout << module << std::endl;
-
-  return 0;
 }
