@@ -909,7 +909,6 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
         const std::string& ptxFlag =
           this->Makefile->GetRequiredDefinition("_CMAKE_CUDA_PTX_FLAG");
         cudaCompileMode = cmStrCat(cudaCompileMode, ptxFlag);
-
       } else {
         const std::string& wholeFlag =
           this->Makefile->GetRequiredDefinition("_CMAKE_CUDA_WHOLE_FLAG");
