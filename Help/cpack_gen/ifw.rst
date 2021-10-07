@@ -248,6 +248,28 @@ Package
  By default is ``OFF`` or used value
  from ``CPACK_DOWNLOAD_ALL`` if set
 
+.. variable:: CPACK_IFW_PACKAGE_RUN_PROGRAM
+
+ .. versionadded:: 3.22
+
+ Command executed after the installer is done if the user accepts the action.
+ Provide the full path to the application.
+
+.. variable:: CPACK_IFW_PACKAGE_RUN_PROGRAM_ARGUMENTS
+
+ .. versionadded:: 3.22
+
+ List of arguments passed to the program specified in
+ :variable:`CPACK_IFW_PACKAGE_RUN_PROGRAM`.
+
+.. variable:: CPACK_IFW_PACKAGE_RUN_PROGRAM_DESCRIPTION
+
+ .. versionadded:: 3.22
+
+ Text shown next to the check box for running the program after the
+ installation. If :variable:`CPACK_IFW_PACKAGE_RUN_PROGRAM` is set but no
+ description provided, the UI will display ``Run <Name> now``. instead.
+
 Components
 """"""""""
 
