@@ -796,6 +796,7 @@ int cmCTestBuildHandler::RunMakeCommand(const std::string& command,
   cmsysProcess* cp = cmsysProcess_New();
   cmsysProcess_SetCommand(cp, argv.data());
   cmsysProcess_SetWorkingDirectory(cp, dir);
+  cmsysProcess_SetLocale(cp, "C");
   cmsysProcess_SetOption(cp, cmsysProcess_Option_HideWindow, 1);
   cmsysProcess_SetTimeout(cp, timeout);
   cmsysProcess_Execute(cp);

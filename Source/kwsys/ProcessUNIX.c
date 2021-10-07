@@ -245,6 +245,9 @@ struct kwsysProcess_s
   /* The working directory for the process. */
   char* WorkingDirectory;
 
+  /* Locale name for the process. */
+  char* Locale;
+
   /* Whether to create the child as a detached process.  */
   int OptionDetach;
 
@@ -361,6 +364,7 @@ void kwsysProcess_Delete(kwsysProcess* cp)
   /* Free memory.  */
   kwsysProcess_SetCommand(cp, 0);
   kwsysProcess_SetWorkingDirectory(cp, 0);
+  kwsysProcess_SetLocale(cp, 0);
   kwsysProcess_SetPipeFile(cp, kwsysProcess_Pipe_STDIN, 0);
   kwsysProcess_SetPipeFile(cp, kwsysProcess_Pipe_STDOUT, 0);
   kwsysProcess_SetPipeFile(cp, kwsysProcess_Pipe_STDERR, 0);
@@ -503,6 +507,30 @@ int kwsysProcess_SetWorkingDirectory(kwsysProcess* cp, const char* dir)
   if (dir) {
     cp->WorkingDirectory = strdup(dir);
     if (!cp->WorkingDirectory) {
+      return 0;
+    }
+  }
+  return 1;
+}
+
+int kwsysProcess_SetLocale(kwsysProcess* cp, const char* locale)
+{
+  if (!cp) {
+    return 0;
+  }
+  if (cp->Locale == locale) {
+    return 1;
+  }
+  if (cp->Locale && locale && strcmp(cp->Locale, locale) == 0) {
+    return 1;
+  }
+  if (cp->Locale) {
+    free(cp->Locale);
+    cp->Locale = 0;
+  }
+  if (locale) {
+    cp->Locale = strdup(locale);
+    if (!cp->Locale) {
       return 0;
     }
   }
@@ -1805,6 +1833,10 @@ static int kwsysProcessCreate(kwsysProcess* cp, int prIndex,
       kwsysProcessChildErrorExit(si->ErrorPipe[1]);
     }
 #endif
+    /* Create/adjust the locale environment variable */
+    if (cp->Locale) {
+      setenv("LC_ALL", cp->Locale, 1);
+    }
 
     /* Execute the real process.  If successful, this does not return.  */
     execvp(cp->Commands[prIndex][0], cp->Commands[prIndex]);

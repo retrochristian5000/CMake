@@ -194,6 +194,7 @@ function(run_BuildDir)
   file(REMOVE_RECURSE "${RunCMake_TEST_BINARY_DIR}")
   file(MAKE_DIRECTORY "${RunCMake_TEST_BINARY_DIR}")
 
+  set(ENV{LC_ALL} "C")
   run_cmake(BuildDir)
   run_cmake_command(BuildDir--build ${CMAKE_COMMAND} -E chdir ..
     ${CMAKE_COMMAND} --build BuildDir-build --target CustomTarget)

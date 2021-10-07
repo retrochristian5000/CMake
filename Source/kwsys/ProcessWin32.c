@@ -685,6 +685,11 @@ int kwsysProcess_SetWorkingDirectory(kwsysProcess* cp, const char* dir)
   return 1;
 }
 
+int kwsysProcess_SetLocale(kwsysProcess* cp, const char* locale)
+{
+  return 1;
+}
+
 int kwsysProcess_SetPipeFile(kwsysProcess* cp, int pipe, const char* file)
 {
   char** pfile;

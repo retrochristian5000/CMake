@@ -23,6 +23,7 @@
 #  define kwsysProcess_SetTimeout kwsys_ns(Process_SetTimeout)
 #  define kwsysProcess_SetWorkingDirectory                                    \
     kwsys_ns(Process_SetWorkingDirectory)
+#  define kwsysProcess_SetLocale kwsys_ns(Process_SetLocale)
 #  define kwsysProcess_SetPipeFile kwsys_ns(Process_SetPipeFile)
 #  define kwsysProcess_SetPipeNative kwsys_ns(Process_SetPipeNative)
 #  define kwsysProcess_SetPipeShared kwsys_ns(Process_SetPipeShared)
@@ -146,6 +147,15 @@ kwsysEXPORT void kwsysProcess_SetTimeout(kwsysProcess* cp, double timeout);
  */
 kwsysEXPORT int kwsysProcess_SetWorkingDirectory(kwsysProcess* cp,
                                                  const char* dir);
+
+/**
+ * Set the locale identifier for the child process. The same thing
+ * as setting LC_ALL environment variable. NULL value means don't
+ * set locale at process start. Has no meaning on Windows.
+ * Returns 1 for success and 0 for failure.
+ */
+kwsysEXPORT int kwsysProcess_SetLocale(kwsysProcess* cp,
+                                       const char* locale);
 
 /**
  * Set the name of a file to be attached to the given pipe.  Returns 1
@@ -491,6 +501,7 @@ kwsysEXPORT void kwsysProcess_ResetStartTime(kwsysProcess* cp);
 #    undef kwsysProcess_AddCommand
 #    undef kwsysProcess_SetTimeout
 #    undef kwsysProcess_SetWorkingDirectory
+#    undef kwsysProcess_SetLocale
 #    undef kwsysProcess_SetPipeFile
 #    undef kwsysProcess_SetPipeNative
 #    undef kwsysProcess_SetPipeShared
