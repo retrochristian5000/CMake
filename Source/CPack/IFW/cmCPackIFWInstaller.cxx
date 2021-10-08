@@ -518,11 +518,10 @@ void cmCPackIFWInstaller::GenerateInstallerFile()
   // Product images (copy to config dir)
   if (!this->IsVersionLess("4.0") && !this->ProductImages.empty()) {
     xout.StartElement("ProductImages");
-    for (size_t i = 0; i < this->ProductImages.size(); i++) {
-      std::string src = this->ProductImages[i];
-      std::string name = cmSystemTools::GetFilenameName(src);
-      std::string dst = this->Directory + "/config/" + name;
-      cmsys::SystemTools::CopyFileIfDifferent(src, dst);
+    for (auto const& srcImg : this->ProductImages) {
+      std::string name = cmSystemTools::GetFilenameName(srcImg);
+      std::string dstImg = this->Directory + "/config/" + name;
+      cmsys::SystemTools::CopyFileIfDifferent(srcImg, dstImg);
       xout.Element("Image", name);
     }
     xout.EndElement();
