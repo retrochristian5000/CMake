@@ -668,7 +668,11 @@ if(BUILD_TESTING)
 
   ADD_TEST_MACRO(Module.FindDependency FindDependency)
 
-  ADD_TEST_MACRO(Module.WriteCompilerDetectionHeader WriteCompilerDetectionHeader)
+  # Avoid testing WriteCompilerDetectionHeader if compiler is LCC: it is outdated
+  # and no new compilers are to be supported by this.
+  if (NOT CMAKE_CXX_COMPILER_ID MATCHES "LCC")
+    ADD_TEST_MACRO(Module.WriteCompilerDetectionHeader WriteCompilerDetectionHeader)
+  endif()
 
   if (APPLE OR CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "LCC")
     include(CheckCXXCompilerFlag)
