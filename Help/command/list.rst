@@ -161,8 +161,8 @@ Inserts elements to the list to the specified location.
 .. versionadded:: 3.15
 
 If no variable name is given, removes exactly one element. Otherwise,
-assign the last element's value to the given variable and removes it,
-up to the last variable name given.
+assign the last N element's values to the given variables and then remove
+the N last values from ``<list>``.
 
 .. _POP_FRONT:
 
@@ -173,8 +173,8 @@ up to the last variable name given.
 .. versionadded:: 3.15
 
 If no variable name is given, removes exactly one element. Otherwise,
-assign the first element's value to the given variable and removes it,
-up to the last variable name given.
+assign the first N element's value to the given variable and then remove
+the first N values from ``<list>``.
 
 .. _PREPEND:
 
