@@ -373,8 +373,15 @@ void cmGlobalVisualStudio7Generator::WriteTargetConfigurations(
         this->IsPartOfDefaultBuild(configs, projectTargets, target);
       cmValue vcprojName = target->GetProperty("GENERATOR_FILE_NAME");
       if (vcprojName) {
+        std::string mapping = "";
+
+        // Map always .NET SDK projects to the Any CPU profile name
+        if (target->IsDotNetSdkTarget() &&
+            !this->IsReservedTarget(target->GetName())) {
+          mapping = "Any CPU";
+        }
         this->WriteProjectConfigurations(fout, *vcprojName, *target, configs,
-                                         configsPartOfDefaultBuild);
+                                         configsPartOfDefaultBuild, mapping);
       }
     }
   }

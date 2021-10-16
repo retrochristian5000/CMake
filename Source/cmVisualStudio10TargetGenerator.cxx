@@ -402,6 +402,174 @@ void cmVisualStudio10TargetGenerator::Generate()
   const std::string PathToProjectFile = path;
   BuildFileStream.SetCopyIfDifferent(true);
 
+  if (this->Managed && this->GeneratorTarget->IsDotNetSdkTarget() &&
+      this->GlobalGenerator->GetVersion() >=
+        cmGlobalVisualStudioGenerator::VS16) {
+    this->WriteSdkStyleProjectFile(BuildFileStream);
+  } else {
+    this->WriteClassisMsBuildProjectFile(BuildFileStream);
+  }
+
+  if (BuildFileStream.Close()) {
+    this->GlobalGenerator->FileReplacedDuringGenerate(PathToProjectFile);
+  }
+
+  // The groups are stored in a separate file for VS 10
+  this->WriteGroups();
+}
+
+void cmVisualStudio10TargetGenerator::WriteSdkStyleProjectFile(
+  cmGeneratedFileStream& BuildFileStream)
+{
+  if (!this->Managed || !this->GeneratorTarget->IsDotNetSdkTarget()) {
+    std::string message = "The target \"" + this->GeneratorTarget->GetName() +
+      "\" is not eligible for .Net SDK style project.";
+    this->Makefile->IssueMessage(MessageType::INTERNAL_ERROR, message);
+  }
+
+  // Write the encoding header into the file
+  char magic[] = { char(0xEF), char(0xBB), char(0xBF) };
+  BuildFileStream.write(magic, 3);
+  {
+    Elem e0(BuildFileStream, "Project");
+    e0.Attribute("Sdk", *this->GeneratorTarget->GetProperty("DOTNET_SDK"));
+
+    {
+      Elem e1(e0, "PropertyGroup");
+      e1.Element("ProjectGuid", "{" + this->GUID + "}");
+
+      cmValue vsProjectTypes =
+        this->GeneratorTarget->GetProperty("VS_GLOBAL_PROJECT_TYPES");
+      if (vsProjectTypes) {
+        const char* tagName = "ProjectTypeGuids";
+        e1.Element(tagName, *vsProjectTypes);
+      }
+
+      cmValue vsProjectName =
+        this->GeneratorTarget->GetProperty("VS_SCC_PROJECTNAME");
+      cmValue vsLocalPath =
+        this->GeneratorTarget->GetProperty("VS_SCC_LOCALPATH");
+      cmValue vsProvider =
+        this->GeneratorTarget->GetProperty("VS_SCC_PROVIDER");
+
+      if (vsProjectName && vsLocalPath && vsProvider) {
+        e1.Element("SccProjectName", *vsProjectName);
+        e1.Element("SccLocalPath", *vsLocalPath);
+        e1.Element("SccProvider", *vsProvider);
+
+        cmValue vsAuxPath =
+          this->GeneratorTarget->GetProperty("VS_SCC_AUXPATH");
+        if (vsAuxPath) {
+          e1.Element("SccAuxPath", *vsAuxPath);
+        }
+      }
+
+      cmValue vsGlobalKeyword =
+        this->GeneratorTarget->GetProperty("VS_GLOBAL_KEYWORD");
+      if (vsGlobalKeyword) {
+        e1.Element("Keyword", *vsGlobalKeyword);
+      }
+
+      cmValue vsGlobalRootNamespace =
+        this->GeneratorTarget->GetProperty("VS_GLOBAL_ROOTNAMESPACE");
+      if (vsGlobalRootNamespace) {
+        e1.Element("RootNamespace", *vsGlobalRootNamespace);
+      }
+
+      cmValue projLabel = this->GeneratorTarget->GetProperty("PROJECT_LABEL");
+      e1.Element("ProjectName", projLabel ? projLabel : this->Name);
+      {
+        cmValue targetFramework =
+          this->GeneratorTarget->GetProperty("DOTNET_TARGET_FRAMEWORK");
+        if (targetFramework) {
+          if (targetFramework->find(';') != std::string::npos) {
+            e1.Element("TargetFrameworks", *targetFramework);
+          } else {
+            e1.Element("TargetFramework", *targetFramework);
+          }
+        } else {
+          e1.Element("TargetFramework", "net5.0");
+        }
+      }
+      e1.Element("EnableDefaultItems", "false");
+
+      // Disable the project upgrade prompt that is displayed the first time a
+      // project using an older toolset version is opened in a newer version of
+      // the IDE (respected by VS 2013 and above).
+      if (this->GlobalGenerator->GetVersion() >=
+          cmGlobalVisualStudioGenerator::VS12) {
+        e1.Element("VCProjectUpgraderObjectName", "NoUpgrade");
+      }
+
+      std::vector<std::string> keys = this->GeneratorTarget->GetPropertyKeys();
+      for (std::string const& keyIt : keys) {
+        static const cm::string_view prefix = "VS_GLOBAL_";
+        if (!cmHasPrefix(keyIt, prefix))
+          continue;
+        cm::string_view globalKey =
+          cm::string_view(keyIt).substr(prefix.length());
+        // Skip invalid or separately-handled properties.
+        if (globalKey.empty() || globalKey == "PROJECT_TYPES" ||
+            globalKey == "ROOTNAMESPACE" || globalKey == "KEYWORD") {
+          continue;
+        }
+        cmValue value = this->GeneratorTarget->GetProperty(keyIt);
+        if (!value)
+          continue;
+        e1.Element(globalKey, *value);
+      }
+
+      if (this->Managed) {
+        if (this->LocalGenerator->GetVersion() >=
+            cmGlobalVisualStudioGenerator::VS17) {
+          e1.Element("ManagedAssembly", "true");
+        }
+        std::string outputType;
+        switch (this->GeneratorTarget->GetType()) {
+          case cmStateEnums::OBJECT_LIBRARY:
+          case cmStateEnums::STATIC_LIBRARY:
+          case cmStateEnums::SHARED_LIBRARY:
+            outputType = "Library";
+            break;
+          case cmStateEnums::MODULE_LIBRARY:
+            outputType = "Module";
+            break;
+          case cmStateEnums::EXECUTABLE: {
+            auto const win32 =
+              this->GeneratorTarget->GetSafeProperty("WIN32_EXECUTABLE");
+            if (win32.find("$<") != std::string::npos) {
+              this->Makefile->IssueMessage(
+                MessageType::FATAL_ERROR,
+                cmStrCat(
+                  "Target \"", this->GeneratorTarget->GetName(),
+                  "\" has a generator expression in its WIN32_EXECUTABLE "
+                  "property. This is not supported on managed executables."));
+              return;
+            }
+            outputType = "Exe";
+          } break;
+          case cmStateEnums::UTILITY:
+          case cmStateEnums::INTERFACE_LIBRARY:
+          case cmStateEnums::GLOBAL_TARGET:
+            outputType = "Utility";
+            break;
+          case cmStateEnums::UNKNOWN_LIBRARY:
+            break;
+        }
+        e1.Element("OutputType", outputType);
+      }
+    }
+
+    this->WriteDotNetDocumentationFile(e0);
+    this->WriteAllSources(e0);
+    this->WritePackageReferences(e0);
+    this->WriteProjectReferences(e0);
+  }
+}
+
+void cmVisualStudio10TargetGenerator::WriteClassisMsBuildProjectFile(
+  cmGeneratedFileStream& BuildFileStream)
+{
   // Write the encoding header into the file
   char magic[] = { char(0xEF), char(0xBB), char(0xBF) };
   BuildFileStream.write(magic, 3);
@@ -445,6 +613,12 @@ void cmVisualStudio10TargetGenerator::Generate()
           this->GlobalGenerator->GetPlatformToolsetHostArchitecture()) {
       Elem e1(e0, "PropertyGroup");
       e1.Element("PreferredToolArchitecture", hostArch);
+    }
+
+    std::string_view TargetName{ this->GeneratorTarget->Target->GetName() };
+    if (TargetName == "ALL_BUILD" || TargetName == "ZERO_CHECK") {
+      Elem e1(e0, "PropertyGroup");
+      e1.Element("ResolveNugetPackages", "false");
     }
 
     if (this->ProjectType != VsProjectType::csproj) {
@@ -839,13 +1013,6 @@ void cmVisualStudio10TargetGenerator::Generate()
       }
     }
   }
-
-  if (BuildFileStream.Close()) {
-    this->GlobalGenerator->FileReplacedDuringGenerate(PathToProjectFile);
-  }
-
-  // The groups are stored in a separate file for VS 10
-  this->WriteGroups();
 }
 
 void cmVisualStudio10TargetGenerator::WritePackageReferences(Elem& e0)
@@ -870,6 +1037,10 @@ void cmVisualStudio10TargetGenerator::WritePackageReferences(Elem& e0)
 
 void cmVisualStudio10TargetGenerator::WriteDotNetReferences(Elem& e0)
 {
+  if (this->GeneratorTarget->IsDotNetSdkTarget()) {
+    return;
+  }
+
   std::vector<std::string> references;
   if (cmValue vsDotNetReferences =
         this->GeneratorTarget->GetProperty("VS_DOTNET_REFERENCES")) {
@@ -4299,12 +4470,18 @@ void cmVisualStudio10TargetGenerator::WriteProjectReferences(Elem& e0)
   using OrderedTargetDependSet =
     cmGlobalVisualStudioGenerator::OrderedTargetDependSet;
   OrderedTargetDependSet depends(unordered, CMAKE_CHECK_BUILD_SYSTEM_TARGET);
+
+  if (this->GeneratorTarget->IsDotNetSdkTarget() && depends.empty()) {
+    return;
+  }
+
   Elem e1(e0, "ItemGroup");
   e1.SetHasElements();
   for (cmGeneratorTarget const* dt : depends) {
     if (!dt->IsInBuildSystem()) {
       continue;
     }
+
     // skip fortran targets as they can not be processed by MSBuild
     // the only reference will be in the .sln file
     if (this->GlobalGenerator->TargetIsFortranOnly(dt)) {
