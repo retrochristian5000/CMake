@@ -527,6 +527,7 @@ cmTarget::cmTarget(std::string const& name, cmStateEnums::TargetType type,
   }
 
   if (this->impl->TargetType <= cmStateEnums::GLOBAL_TARGET) {
+    initProp("DOTNET_SDK");
     initProp("DOTNET_TARGET_FRAMEWORK");
     initProp("DOTNET_TARGET_FRAMEWORK_VERSION");
   }
