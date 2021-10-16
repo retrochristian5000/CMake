@@ -7549,6 +7549,11 @@ bool cmGeneratorTarget::IsCSharpOnly() const
   return languages.size() == 1 && languages.count("CSharp") > 0;
 }
 
+bool cmGeneratorTarget::IsDotNetSdkTarget() const
+{
+  return GetPolicyStatusCMP0129() == cmPolicies::NEW;
+}
+
 void cmGeneratorTarget::ComputeLinkImplementationLanguages(
   const std::string& config, cmOptionalLinkImplementation& impl) const
 {

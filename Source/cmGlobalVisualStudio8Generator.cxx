@@ -215,7 +215,8 @@ void cmGlobalVisualStudio8Generator::AddExtraIDETargets()
       const auto& tgts = this->LocalGenerators[i]->GetGeneratorTargets();
       // All targets depend on the build-system check target.
       for (const auto& ti : tgts) {
-        if (ti->GetName() != CMAKE_CHECK_BUILD_SYSTEM_TARGET) {
+        if (ti->GetName() != CMAKE_CHECK_BUILD_SYSTEM_TARGET &&
+            !ti->IsDotNetSdkTarget()) {
           ti->Target->AddUtility(CMAKE_CHECK_BUILD_SYSTEM_TARGET, false);
         }
       }

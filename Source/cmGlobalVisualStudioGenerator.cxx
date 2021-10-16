@@ -227,7 +227,7 @@ void cmGlobalVisualStudioGenerator::AddExtraIDETargets()
       for (cmLocalGenerator const* i : gen) {
         for (const auto& tgt : i->GetGeneratorTargets()) {
           if (tgt->GetType() == cmStateEnums::GLOBAL_TARGET ||
-              tgt->IsImported()) {
+              tgt->IsImported() || tgt->IsDotNetSdkTarget()) {
             continue;
           }
           if (!this->IsExcluded(gen[0], tgt.get())) {

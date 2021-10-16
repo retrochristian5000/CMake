@@ -222,6 +222,11 @@ private:
   std::string const Platform;
   std::string const Name;
   std::string const GUID;
+
+  // .Net SDK-stype project variable and helper functions
+  void WriteClassisMsBuildProjectFile(cmGeneratedFileStream& buildFileStream);
+  void WriteSdkStyleProjectFile(cmGeneratedFileStream& buildFileStream);
+
   bool MSTools;
   bool Managed;
   bool NsightTegra;
