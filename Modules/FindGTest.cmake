@@ -31,7 +31,10 @@ Imported targets
   automatically
 ``GTest::Main``
   The Google Test ``gtest_main`` library, if found
-
+``GTest::gmock``
+  The Google Mock ``gmock`` library, if found
+``GTest::gmock_main``
+  The Google Mock ``gmock_main`` library, if found
 
 Result variables
 ^^^^^^^^^^^^^^^^
@@ -42,6 +45,8 @@ This module will set the following variables in your project:
   Found the Google Testing framework
 ``GTEST_INCLUDE_DIRS``
   the directory containing the Google Test headers
+``GMOCK_INCLUDE_DIRS``
+  the directory containing the Google Mock headers
 
 The library variables below are set as normal variables.  These
 contain debug/optimized keywords when a debugging library is found.
@@ -53,6 +58,13 @@ contain debug/optimized keywords when a debugging library is found.
   The Google Test ``gtest_main`` library
 ``GTEST_BOTH_LIBRARIES``
   Both ``gtest`` and ``gtest_main``
+``GMOCK_LIBRARIES``
+  The Google Mock ``gmock`` library; note it also requires linking
+  with an appropriate thread library
+``GMOCK_MAIN_LIBRARIES``
+  The Google Tck ``gmock_main`` library
+``GMOCK_BOTH_LIBRARIES``
+  Both ``gmock`` and ``gmock_main``
 
 Cache variables
 ^^^^^^^^^^^^^^^
@@ -238,6 +250,13 @@ find_path(GTEST_INCLUDE_DIR gtest/gtest.h
 )
 mark_as_advanced(GTEST_INCLUDE_DIR)
 
+find_path(GMOCK_INCLUDE_DIR gmock/gmock.h
+    HINTS
+        $ENV{GTEST_ROOT}/include
+        ${GTEST_ROOT}/include
+)
+mark_as_advanced(GMOCK_INCLUDE_DIR)
+
 if(MSVC AND GTEST_MSVC_SEARCH STREQUAL "MD")
     # The provided /MD project files for Google Test add -md suffixes to the
     # library names.
@@ -245,19 +264,31 @@ if(MSVC AND GTEST_MSVC_SEARCH STREQUAL "MD")
     __gtest_find_library(GTEST_LIBRARY_DEBUG      gtest-mdd gtestd)
     __gtest_find_library(GTEST_MAIN_LIBRARY       gtest_main-md  gtest_main)
     __gtest_find_library(GTEST_MAIN_LIBRARY_DEBUG gtest_main-mdd gtest_maind)
+    __gtest_find_library(GMOCK_LIBRARY            gmock-md  gmock)
+    __gtest_find_library(GMOCK_LIBRARY_DEBUG      gmock-mdd gmockd)
+    __gtest_find_library(GMOCK_MAIN_LIBRARY       gmock_main-md  gmock_main)
+    __gtest_find_library(GMOCK_MAIN_LIBRARY_DEBUG gmock_main-mdd gmock_maind)
 else()
     __gtest_find_library(GTEST_LIBRARY            gtest)
     __gtest_find_library(GTEST_LIBRARY_DEBUG      gtestd)
     __gtest_find_library(GTEST_MAIN_LIBRARY       gtest_main)
     __gtest_find_library(GTEST_MAIN_LIBRARY_DEBUG gtest_maind)
+    __gtest_find_library(GMOCK_LIBRARY            gmock)
+    __gtest_find_library(GMOCK_LIBRARY_DEBUG      gmockd)
+    __gtest_find_library(GMOCK_MAIN_LIBRARY       gmock_main)
+    __gtest_find_library(GMOCK_MAIN_LIBRARY_DEBUG gmock_maind)
 endif()
 
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(GTest DEFAULT_MSG GTEST_LIBRARY GTEST_INCLUDE_DIR GTEST_MAIN_LIBRARY)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(GTest DEFAULT_MSG GTEST_LIBRARY GTEST_INCLUDE_DIR GTEST_MAIN_LIBRARY GMOCK_LIBRARY GMOCK_MAIN_LIBRARY)
 
 if(GTest_FOUND)
     set(GTEST_INCLUDE_DIRS ${GTEST_INCLUDE_DIR})
     __gtest_append_debugs(GTEST_LIBRARIES      GTEST_LIBRARY)
     __gtest_append_debugs(GTEST_MAIN_LIBRARIES GTEST_MAIN_LIBRARY)
+    set(GTEST_BOTH_LIBRARIES ${GTEST_LIBRARIES} ${GTEST_MAIN_LIBRARIES})
+    __gtest_append_debugs(GMOCK_LIBRARIES      GMOCK_LIBRARY)
+    __gtest_append_debugs(GMOCK_MAIN_LIBRARIES GMOCK_MAIN_LIBRARY)
+    set(GMOCK_BOTH_LIBRARIES ${GMOCK_LIBRARIES} ${GMOCK_MAIN_LIBRARIES})
 
     find_package(Threads QUIET)
 
@@ -291,4 +322,32 @@ if(GTest_FOUND)
     endif()
 
     __gtest_define_backwards_compatible_library_targets()
+    if(NOT TARGET GTest::gmock)
+        __GTEST_determine_library_type(GMOCK_LIBRARY)
+        add_library(GTest::gmock ${GMOCK_LIBRARY_TYPE} IMPORTED)
+        if(TARGET Threads::Threads)
+            set_target_properties(GTest::gmock PROPERTIES
+                INTERFACE_LINK_LIBRARIES Threads::Threads)
+        endif()
+        if(GMOCK_LIBRARY_TYPE STREQUAL "SHARED")
+            set_target_properties(GTest::gmock PROPERTIES
+                INTERFACE_COMPILE_DEFINITIONS "GMOCK_LINKED_AS_SHARED_LIBRARY=1")
+        endif()
+        if(GMOCK_INCLUDE_DIRS)
+            set_target_properties(GTest::gmock PROPERTIES
+                INTERFACE_INCLUDE_DIRECTORIES "${GMOCK_INCLUDE_DIRS}")
+        endif()
+        __GTEST_import_library(GTest::gmock GMOCK_LIBRARY "")
+        __GTEST_import_library(GTest::gmock GMOCK_LIBRARY "RELEASE")
+        __GTEST_import_library(GTest::gmock GMOCK_LIBRARY "DEBUG")
+    endif()
+    if(NOT TARGET GTest::gmock_main)
+        __GTEST_determine_library_type(GMOCK_MAIN_LIBRARY)
+        add_library(GTest::gmock_main ${GMOCK_MAIN_LIBRARY_TYPE} IMPORTED)
+        set_target_properties(GTest::gmock_main PROPERTIES
+            INTERFACE_LINK_LIBRARIES "GTest::gmock")
+        __GTEST_import_library(GTest::gmock_main GMOCK_MAIN_LIBRARY "")
+        __GTEST_import_library(GTest::gmock_main GMOCK_MAIN_LIBRARY "RELEASE")
+        __GTEST_import_library(GTest::gmock_main GMOCK_MAIN_LIBRARY "DEBUG")
+    endif()
 endif()
