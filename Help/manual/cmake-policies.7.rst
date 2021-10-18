@@ -58,6 +58,7 @@ Policies Introduced by CMake 3.24
 .. toctree::
    :maxdepth: 1
 
+   CMP0133: Watcom runtime library flags are selected by an abstraction. </policy/CMP0133>
    CMP0132: Do not set compiler environment variables on first run. </policy/CMP0132>
    CMP0131: LINK_LIBRARIES supports the LINK_ONLY generator expression. </policy/CMP0131>
    CMP0130: while() diagnoses condition evaluation errors. </policy/CMP0130>
