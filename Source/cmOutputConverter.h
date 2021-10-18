@@ -94,7 +94,8 @@ public:
                              bool forEcho = false, bool useWatcomQuote = false,
                              bool unescapeNinjaConfiguration = false) const;
 
-  static std::string EscapeForCMake(cm::string_view str);
+  static std::string EscapeForCMake(cm::string_view str,
+                                    bool wrapQuotes = true);
 
   /** Compute an escaped version of the given argument for use in a
       windows shell.  */
