@@ -3,6 +3,10 @@ cmake_minimum_required(VERSION 2.8.12)
 
 project(target_compile_options)
 
+if(POLICY CMP0129)
+  cmake_policy(SET CMP0129 NEW)
+endif()
+
 add_executable(target_compile_options
   "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp"
 )

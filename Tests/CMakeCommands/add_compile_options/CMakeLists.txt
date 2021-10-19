@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 2.8.12)
 
 project(add_compile_options)
 
+if(POLICY CMP0129)
+  cmake_policy(SET CMP0129 NEW)
+endif()
+
 add_compile_options(-DTEST_OPTION)
 
 add_executable(add_compile_options main.cpp)

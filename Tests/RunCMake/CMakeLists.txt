@@ -3,6 +3,10 @@
 # Note that the _isMultiConfig variable is set in the parent directory's
 # CMakeLists.txt (slightly complex logic to support CMake versions before 3.9)
 
+if(POLICY CMP0129)
+  cmake_policy(SET CMP0129 NEW)
+endif()
+
 macro(add_RunCMake_test test)
   set(TEST_ARGS ${ARGN})
   if ("${ARGV1}" STREQUAL "TEST_DIR")
@@ -927,4 +931,8 @@ endif()
 
 if(WIN32)
   add_RunCMake_test(Win32GenEx)
+endif()
+
+if("${CMAKE_C_COMPILER_ID}" STREQUAL "LCC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "LCC" OR "${CMAKE_Fortran_COMPILER_ID}" STREQUAL "LCC")
+  add_RunCMake_test("CMP0129")
 endif()

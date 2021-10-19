@@ -2,6 +2,10 @@
 include(GenerateExportHeader)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+if(POLICY CMP0129)
+  cmake_policy(SET CMP0129 NEW)
+endif()
+
 cmake_policy(SET CMP0022 NEW)
 add_library(cmp0022lib SHARED cmp0022lib.cpp)
 generate_export_header(cmp0022lib)

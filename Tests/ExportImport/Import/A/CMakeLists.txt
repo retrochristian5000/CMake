@@ -1,3 +1,7 @@
+if(POLICY CMP0129)
+  cmake_policy(SET CMP0129 NEW)
+endif()
+
 # Prepare imported targets that the exported project itself imported.
 add_library(SubDirLinkAImported IMPORTED INTERFACE)
 target_compile_definitions(SubDirLinkAImported INTERFACE DEF_SubDirLinkAImportedForImport)

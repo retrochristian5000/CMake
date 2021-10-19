@@ -1,3 +1,7 @@
+if(POLICY CMP0129)
+  cmake_policy(SET CMP0129 NEW)
+endif()
+
 include(RunCMake)
 
 if (CMAKE_C_COMPILER_ID MATCHES "Clang|GNU|LCC")

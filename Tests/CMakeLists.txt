@@ -1,5 +1,10 @@
 # a macro for tests that have a simple format where the name matches the
 # directory and project
+
+if(POLICY CMP0129)
+  cmake_policy(SET CMP0129 NEW)
+endif()
+
 macro(ADD_TEST_MACRO NAME)
   if(${ARGC} GREATER 1)
     set(_test_command --test-command ${ARGN})

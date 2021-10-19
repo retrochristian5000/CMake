@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 2.8.12)
 project(CheckCXXCompilerFlag)
 
+if(POLICY CMP0129)
+  cmake_policy(SET CMP0129 NEW)
+endif()
+
 message(STATUS "CTEST_FULL_OUTPUT (Avoid ctest truncation of output)")
 set(CMAKE_VERBOSE_MAKEFILE 1)
 

@@ -1,3 +1,7 @@
+if(POLICY CMP0129)
+  cmake_policy(SET CMP0129 NEW)
+endif()
+
 include(RunCMake)
 
 function(run_CMP0119 status)

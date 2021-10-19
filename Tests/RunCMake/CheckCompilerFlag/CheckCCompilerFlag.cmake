@@ -1,3 +1,6 @@
+if(POLICY CMP0129)
+  cmake_policy(SET CMP0129 NEW)
+endif()
 
 enable_language (C)
 include(CheckCompilerFlag)

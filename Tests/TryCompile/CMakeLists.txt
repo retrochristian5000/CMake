@@ -1,6 +1,10 @@
 cmake_minimum_required (VERSION 2.8.12)
 project(TryCompile)
 
+if(POLICY CMP0129)
+  cmake_policy(SET CMP0129 NEW)
+endif()
+
 macro(TEST_ASSERT value msg)
   if (NOT ${value})
     message (SEND_ERROR "Assertion failure:" ${msg} )

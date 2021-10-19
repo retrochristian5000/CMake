@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 2.8.4.20110303 FATAL_ERROR)
 project(LinkStatic C)
 
+if(POLICY CMP0129)
+  cmake_policy(SET CMP0129 NEW)
+endif()
+
 if(NOT CMAKE_C_COMPILER_ID MATCHES "GNU|LCC")
   message(FATAL_ERROR "This test works only with the GNU or LCC compiler!")
 endif()

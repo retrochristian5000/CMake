@@ -1,6 +1,10 @@
 cmake_minimum_required (VERSION 2.7.20090711)
 project(Export C CXX)
 
+if(POLICY CMP0129)
+  cmake_policy(SET CMP0129 NEW)
+endif()
+
 # Pretend that RelWithDebInfo should link to debug libraries to test
 # the DEBUG_CONFIGURATIONS property.
 set_property(GLOBAL PROPERTY DEBUG_CONFIGURATIONS Debug RelWithDebInfo)
