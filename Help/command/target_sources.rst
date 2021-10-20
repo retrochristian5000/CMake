@@ -22,6 +22,17 @@ The named ``<target>`` must have been created by a command such as
   source directory (i.e. :variable:`CMAKE_CURRENT_SOURCE_DIR`).
   See policy :policy:`CMP0076`.
 
+  A path that begins with a generator expression is left unmodified.
+  When a target's :prop_tgt:`SOURCE_DIR` property differs from
+  :variable:`CMAKE_CURRENT_SOURCE_DIR`, use absolute paths in generator
+  expressions to ensure the sources are correctly assigned to the target.
+
+  .. code-block:: cmake
+
+    # this generator expression uses absolute paths
+    # to assign a source to its target
+    target_sources(MyTarget "$<1:${CMAKE_CURRENT_SOURCE_DIR}/file.ext>")
+
 .. versionadded:: 3.20
   ``<target>`` can be a custom target.
 
