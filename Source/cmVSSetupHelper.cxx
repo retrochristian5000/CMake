@@ -164,19 +164,6 @@ bool cmVSSetupAPIHelper::GetVSInstanceInfo(
     return false;
   }
 
-  ULONGLONG ullVersion = 0;
-  SmartBSTR bstrVersion;
-  if (FAILED(pInstance->GetInstallationVersion(&bstrVersion))) {
-    return false;
-  } else {
-    vsInstanceInfo.Version = std::wstring(bstrVersion);
-    if (FAILED(setupHelper->ParseVersion(bstrVersion, &ullVersion))) {
-      vsInstanceInfo.ullVersion = 0;
-    } else {
-      vsInstanceInfo.ullVersion = ullVersion;
-    }
-  }
-
   // Reboot may have been required before the installation path was created.
   SmartBSTR bstrInstallationPath;
   if ((eLocal & state) == eLocal) {
@@ -316,7 +303,6 @@ bool cmVSSetupAPIHelper::EnumerateAndChooseVSInstance()
     chosenInstanceInfo.Version =
       std::wstring(envVSVersion.begin(), envVSVersion.end());
     chosenInstanceInfo.VCToolsetVersion = envVSVersion;
-    chosenInstanceInfo.ullVersion = std::stoi(envVSVersion);
     chosenInstanceInfo.IsWin10SDKInstalled = true;
     chosenInstanceInfo.IsWin81SDKInstalled = !envWindowsSdkDir81.empty();
     return true;
