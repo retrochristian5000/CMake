@@ -2,8 +2,13 @@
    file Copyright.txt or https://cmake.org/licensing for details.  */
 #include "cmVSSetupHelper.h"
 
+#include <utility>
+
+#include <cm/optional>
+
 #include "cmsys/Encoding.hxx"
 #include "cmsys/FStream.hxx"
+#include "cmsys/RegularExpression.hxx"
 
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
@@ -47,6 +52,10 @@ const CLSID CLSID_SetupConfiguration = {
 #endif
 
 namespace {
+const char* Win10SDKComponentNarrow =
+  "Microsoft.VisualStudio.Component.Windows10SDK";
+const char* Win81SDKComponentNarrow =
+  "Microsoft.VisualStudio.Component.Windows81SDK";
 const WCHAR* Win10SDKComponent =
   L"Microsoft.VisualStudio.Component.Windows10SDK";
 const WCHAR* Win81SDKComponent =
@@ -379,6 +388,12 @@ bool cmVSSetupAPIHelper::EnumerateAndChooseVSInstance()
     }
   }
 
+  if (!this->SpecifiedVSInstallLocation.empty()) {
+    // The VS Installer does not know about the specified location.
+    // Check for one directly on disk.
+    return this->LoadSpecifiedVSInstanceFromDisk();
+  }
+
   if (vecVSInstances.size() > 0) {
     isVSInstanceExists = true;
     int index = ChooseVSInstance(vecVSInstances);
@@ -439,6 +454,50 @@ int cmVSSetupAPIHelper::ChooseVSInstance(
   }
 
   return chosenIndex;
+}
+
+bool cmVSSetupAPIHelper::LoadSpecifiedVSInstanceFromDisk()
+{
+  // Parse information about the installation from 'devenv.isolation.ini'.
+  // This is sufficient to support portable copies of installations produced
+  // by the VS Installer.
+  //
+  // FIXME: This file does not come with copies created by 'vs_buildtools.exe'
+  // command-line installations.  How else can we get this information?
+  std::string ini = cmStrCat(this->SpecifiedVSInstallLocation,
+                             "/Common7/IDE/devenv.isolation.ini");
+  cmsys::RegularExpression installationVersionRegex(
+    "InstallationVersion=([0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)");
+  cmsys::RegularExpression installationPackagesRegex(
+    "InstallationPackages=(.*)");
+  cmsys::ifstream fin(ini.c_str());
+  std::string line;
+  cm::optional<std::string> installationVersion;
+  cm::optional<std::string> installationPackages;
+  while (cmSystemTools::GetLineFromStream(fin, line)) {
+    if (installationVersionRegex.find(line)) {
+      installationVersion = installationVersionRegex.match(1);
+    } else if (installationPackagesRegex.find(line)) {
+      installationPackages = installationPackagesRegex.match(1);
+    }
+  }
+  if (!installationVersion) {
+    return false;
+  }
+  VSInstanceInfo vsInstanceInfo;
+  vsInstanceInfo.VSInstallLocation = this->SpecifiedVSInstallLocation;
+  vsInstanceInfo.Version = *installationVersion;
+  if (!LoadVSInstanceVCToolsetVersion(vsInstanceInfo)) {
+    return false;
+  }
+  if (installationPackages) {
+    vsInstanceInfo.IsWin10SDKInstalled =
+      installationPackages->find(Win10SDKComponentNarrow) != std::string::npos;
+    vsInstanceInfo.IsWin81SDKInstalled =
+      installationPackages->find(Win81SDKComponentNarrow) != std::string::npos;
+  }
+  chosenInstanceInfo = std::move(vsInstanceInfo);
+  return true;
 }
 
 bool cmVSSetupAPIHelper::Initialize()

@@ -24,4 +24,10 @@ Instance specification is supported only on specific generators:
   this specifies the absolute path to the VS installation directory
   of the selected VS instance.
 
+  .. versionadded:: 3.23
+
+    A portable VS instance may be specified, so long as it comes
+    with a :file:`Common7/IDE/devenv.isolation.ini` file.
+    Previously instances had to be known to the Visual Studio Installer tool.
+
 See native build system documentation for allowed instance values.
