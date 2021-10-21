@@ -54,9 +54,7 @@ const WCHAR* ComponentType = L"Component";
 
 std::string VSInstanceInfo::GetInstallLocation() const
 {
-  std::string loc = cmsys::Encoding::ToNarrow(this->VSInstallLocation);
-  cmSystemTools::ConvertToUnixSlashes(loc);
-  return loc;
+  return this->VSInstallLocation;
 }
 
 cmVSSetupAPIHelper::cmVSSetupAPIHelper(unsigned int version)
@@ -163,7 +161,9 @@ bool cmVSSetupAPIHelper::GetVSInstanceInfo(
     if (FAILED(pInstance->GetInstallationPath(&bstrInstallationPath))) {
       return false;
     } else {
-      vsInstanceInfo.VSInstallLocation = std::wstring(bstrInstallationPath);
+      vsInstanceInfo.VSInstallLocation =
+        cmsys::Encoding::ToNarrow(std::wstring(bstrInstallationPath));
+      cmSystemTools::ConvertToUnixSlashes(vsInstanceInfo.VSInstallLocation);
     }
   }
 
@@ -244,7 +244,7 @@ bool cmVSSetupAPIHelper::GetVSInstanceVersion(std::string& vsInstanceVersion)
   bool isInstalled = this->EnumerateAndChooseVSInstance();
 
   if (isInstalled) {
-    vsInstanceVersion = cmsys::Encoding::ToNarrow(chosenInstanceInfo.Version);
+    vsInstanceVersion = chosenInstanceInfo.Version;
   }
 
   return isInstalled;
@@ -278,7 +278,7 @@ bool cmVSSetupAPIHelper::IsEWDKEnabled()
 bool cmVSSetupAPIHelper::EnumerateAndChooseVSInstance()
 {
   bool isVSInstanceExists = false;
-  if (chosenInstanceInfo.VSInstallLocation.compare(L"") != 0) {
+  if (chosenInstanceInfo.VSInstallLocation.compare("") != 0) {
     return true;
   }
 
@@ -291,10 +291,8 @@ bool cmVSSetupAPIHelper::EnumerateAndChooseVSInstance()
     if (envVSVersion.empty() || envVsInstallDir.empty())
       return false;
 
-    chosenInstanceInfo.VSInstallLocation =
-      std::wstring(envVsInstallDir.begin(), envVsInstallDir.end());
-    chosenInstanceInfo.Version =
-      std::wstring(envVSVersion.begin(), envVSVersion.end());
+    chosenInstanceInfo.VSInstallLocation = envVsInstallDir;
+    chosenInstanceInfo.Version = envVSVersion;
     chosenInstanceInfo.VCToolsetVersion = envVSVersion;
     chosenInstanceInfo.IsWin10SDKInstalled = true;
     chosenInstanceInfo.IsWin81SDKInstalled = !envWindowsSdkDir81.empty();
@@ -322,7 +320,7 @@ bool cmVSSetupAPIHelper::EnumerateAndChooseVSInstance()
     return false;
   }
 
-  std::wstring const wantVersion = std::to_wstring(this->Version) + L'.';
+  std::string const wantVersion = std::to_string(this->Version) + '.';
 
   SmartCOMPtr<ISetupInstance> instance;
   while (SUCCEEDED(enumInstances->Next(1, &instance, NULL)) && instance) {
