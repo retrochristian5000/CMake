@@ -166,7 +166,7 @@ cmCTestP4::User cmCTestP4::GetUserData(const std::string& username)
     // The user should now be added to the map. Search again.
     it = this->Users.find(username);
     if (it == this->Users.end()) {
-      return cmCTestP4::User();
+      return {};
     }
   }
 
