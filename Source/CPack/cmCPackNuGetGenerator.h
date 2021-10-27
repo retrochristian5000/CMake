@@ -17,11 +17,13 @@ public:
   static bool CanGenerate() { return true; }
 
 protected:
-  bool SupportsComponentInstallation() const override;
+  [[nodiscard]] bool SupportsComponentInstallation() const override;
   int PackageFiles() override;
 
   const char* GetOutputExtension() override { return ".nupkg"; }
-  bool SupportsAbsoluteDestination() const override { return false; }
+  [[nodiscard]] bool SupportsAbsoluteDestination() const override {
+    return false;
+  }
   /**
    * The method used to prepare variables when component
    * install is used.

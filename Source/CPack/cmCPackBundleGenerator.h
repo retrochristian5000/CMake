@@ -28,7 +28,7 @@ protected:
   int ConstructBundle();
   int SignBundle(const std::string& src_dir);
   int PackageFiles() override;
-  bool SupportsComponentInstallation() const override;
+  [[nodiscard]] bool SupportsComponentInstallation() const override;
 
   std::string InstallPrefix;
 };

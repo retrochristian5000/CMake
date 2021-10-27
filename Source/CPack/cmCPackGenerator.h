@@ -96,12 +96,12 @@ public:
     this->SetOptionIfNotSet(op, cmValue(value));
   }
   void SetOptionIfNotSet(const std::string& op, cmValue value);
-  cmValue GetOption(const std::string& op) const;
-  std::vector<std::string> GetOptions() const;
-  bool IsSet(const std::string& name) const;
-  bool IsOn(const std::string& name) const;
-  bool IsSetToOff(const std::string& op) const;
-  bool IsSetToEmpty(const std::string& op) const;
+  [[nodiscard]] cmValue GetOption(const std::string& op) const;
+  [[nodiscard]] std::vector<std::string> GetOptions() const;
+  [[nodiscard]] bool IsSet(const std::string& name) const;
+  [[nodiscard]] bool IsOn(const std::string& name) const;
+  [[nodiscard]] bool IsSetToOff(const std::string& op) const;
+  [[nodiscard]] bool IsSetToEmpty(const std::string& op) const;
 
   //! Set the logger
   void SetLogger(cmCPackLog* log) { this->Logger = log; }
@@ -125,7 +125,8 @@ protected:
 
   int CleanTemporaryDirectory();
 
-  cmInstalledFile const* GetInstalledFile(std::string const& name) const;
+  [[nodiscard]] cmInstalledFile const* GetInstalledFile(
+    std::string const& name) const;
 
   virtual const char* GetOutputExtension() { return ".cpack"; }
   virtual const char* GetOutputPostfix() { return nullptr; }
@@ -231,7 +232,7 @@ protected:
    * have to override it in order change this.
    * @return CPackSetDestdirSupport
    */
-  virtual enum CPackSetDestdirSupport SupportsSetDestdir() const;
+  [[nodiscard]] virtual enum CPackSetDestdirSupport SupportsSetDestdir() const;
 
   /**
    * Does the CPack generator support absolute path
@@ -240,7 +241,7 @@ protected:
    * have to override it in order change this.
    * @return true if supported false otherwise
    */
-  virtual bool SupportsAbsoluteDestination() const;
+  [[nodiscard]] virtual bool SupportsAbsoluteDestination() const;
 
   /**
    * Does the CPack generator support component installation?.
@@ -249,14 +250,14 @@ protected:
    * method return true.
    * @return true if supported, false otherwise
    */
-  virtual bool SupportsComponentInstallation() const;
+  [[nodiscard]] virtual bool SupportsComponentInstallation() const;
   /**
    * Does the currently running generator want a component installation.
    * The generator may support component installation but he may
    * be requiring monolithic install using CPACK_MONOLITHIC_INSTALL.
    * @return true if component installation is supported and wanted.
    */
-  virtual bool WantsComponentInstallation() const;
+  [[nodiscard]] virtual bool WantsComponentInstallation() const;
   virtual cmCPackInstallationType* GetInstallationType(
     const std::string& projectName, const std::string& name);
   virtual cmCPackComponent* GetComponent(const std::string& projectName,

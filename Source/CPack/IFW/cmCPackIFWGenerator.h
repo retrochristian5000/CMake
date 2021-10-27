@@ -30,8 +30,6 @@ public:
 
   using PackagesMap = std::map<std::string, cmCPackIFWPackage>;
   using RepositoriesMap = std::map<std::string, cmCPackIFWRepository>;
-  using ComponentsMap = std::map<std::string, cmCPackComponent>;
-  using ComponentGoupsMap = std::map<std::string, cmCPackComponentGroup>;
   using DependenceMap =
     std::map<std::string, cmCPackIFWPackage::DependenceStruct>;
 
@@ -94,15 +92,15 @@ protected:
   cmCPackComponentGroup* GetComponentGroup(
     const std::string& projectName, const std::string& groupName) override;
 
-  enum cmCPackGenerator::CPackSetDestdirSupport SupportsSetDestdir()
-    const override;
-  bool SupportsAbsoluteDestination() const override;
-  bool SupportsComponentInstallation() const override;
+  [[nodiscard]] enum cmCPackGenerator::CPackSetDestdirSupport
+  SupportsSetDestdir() const override;
+  [[nodiscard]] bool SupportsAbsoluteDestination() const override;
+  [[nodiscard]] bool SupportsComponentInstallation() const override;
 
 protected:
   // Methods
 
-  bool IsOnePackage() const;
+  [[nodiscard]] bool IsOnePackage() const;
 
   std::string GetRootPackageName();
 
@@ -152,8 +150,8 @@ private:
   std::string ExecutableSuffix;
   std::string OutputExtension;
 
-  bool OnlineOnly;
-  bool ResolveDuplicateNames;
+  bool OnlineOnly{};
+  bool ResolveDuplicateNames{};
   std::vector<std::string> PkgsDirsVector;
   std::vector<std::string> RepoDirsVector;
 };

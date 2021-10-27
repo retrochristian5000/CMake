@@ -32,9 +32,9 @@ public:
 #ifdef __APPLE__
     // on MacOS enable CPackRPM iff rpmbuild is found
     std::vector<std::string> locations;
-    locations.push_back("/sw/bin");        // Fink
-    locations.push_back("/opt/local/bin"); // MacPorts
-    return cmSystemTools::FindProgram("rpmbuild") != "" ? true : false;
+    locations.emplace_back("/sw/bin");        // Fink
+    locations.emplace_back("/opt/local/bin"); // MacPorts
+    return !cmSystemTools::FindProgram("rpmbuild").empty();
 #else
     // legacy behavior on other systems
     return true;
@@ -61,7 +61,7 @@ protected:
    */
   int PackageComponentsAllInOne(const std::string& compInstDirName);
   const char* GetOutputExtension() override { return ".rpm"; }
-  bool SupportsComponentInstallation() const override;
+  [[nodiscard]] bool SupportsComponentInstallation() const override;
   std::string GetComponentInstallDirNameSuffix(
     const std::string& componentName) override;
 

@@ -28,10 +28,10 @@ public:
 public:
   // Internal implementation
 
-  cmValue GetOption(const std::string& op) const;
-  bool IsOn(const std::string& op) const;
-  bool IsSetToOff(const std::string& op) const;
-  bool IsSetToEmpty(const std::string& op) const;
+  [[nodiscard]] cmValue GetOption(const std::string& op) const;
+  [[nodiscard]] bool IsOn(const std::string& op) const;
+  [[nodiscard]] bool IsSetToOff(const std::string& op) const;
+  [[nodiscard]] bool IsSetToEmpty(const std::string& op) const;
 
   /**
    * Compare \a version with QtIFW framework version
@@ -41,7 +41,7 @@ public:
   /**
    * Compare \a version with QtIFW framework version
    */
-  bool IsVersionGreater(const char* version) const;
+  [[maybe_unused]] bool IsVersionGreater(const char* version) const;
 
   /**
    * Compare \a version with QtIFW framework version

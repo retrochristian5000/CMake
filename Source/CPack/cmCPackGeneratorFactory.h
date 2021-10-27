@@ -32,14 +32,14 @@ public:
   void SetLogger(cmCPackLog* logger) { this->Logger = logger; }
 
   using DescriptionsMap = std::map<std::string, std::string>;
-  const DescriptionsMap& GetGeneratorsList() const
-  {
+  [[nodiscard]] const DescriptionsMap& GetGeneratorsList() const {
     return this->GeneratorDescriptions;
   }
 
-private:
-  using t_GeneratorCreatorsMap = std::map<std::string, CreateGeneratorCall*>;
+  private
+    : using t_GeneratorCreatorsMap =
+        std::map<std::string, CreateGeneratorCall*>;
   t_GeneratorCreatorsMap GeneratorCreators;
   DescriptionsMap GeneratorDescriptions;
-  cmCPackLog* Logger;
+  cmCPackLog* Logger{};
 };

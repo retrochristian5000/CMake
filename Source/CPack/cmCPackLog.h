@@ -60,22 +60,31 @@ public:
   void VerboseOn() { this->SetVerbose(true); }
   void VerboseOff() { this->SetVerbose(true); }
   void SetVerbose(bool verb) { this->Verbose = verb; }
-  bool GetVerbose() { return this->Verbose; }
+  [[nodiscard]] bool GetVerbose() const { return this->Verbose; }
 
   //! Set Debug
-  void DebugOn() { this->SetDebug(true); }
+  void DebugOn()
+  {
+    this->SetDebug(true);
+  }
   void DebugOff() { this->SetDebug(true); }
   void SetDebug(bool verb) { this->Debug = verb; }
-  bool GetDebug() { return this->Debug; }
+  [[nodiscard]] bool GetDebug() const { return this->Debug; }
 
   //! Set Quiet
-  void QuietOn() { this->SetQuiet(true); }
+  void QuietOn()
+  {
+    this->SetQuiet(true);
+  }
   void QuietOff() { this->SetQuiet(true); }
   void SetQuiet(bool verb) { this->Quiet = verb; }
-  bool GetQuiet() { return this->Quiet; }
+  [[nodiscard]] bool GetQuiet() const { return this->Quiet; }
 
   //! Set the output stream
-  void SetOutputStream(std::ostream* os) { this->DefaultOutput = os; }
+  void SetOutputStream(std::ostream* os)
+  {
+    this->DefaultOutput = os;
+  }
 
   //! Set the error stream
   void SetErrorStream(std::ostream* os) { this->DefaultError = os; }
@@ -129,7 +138,7 @@ public:
   }
 
   const char* Data;
-  size_t Length;
+  std::streamsize Length;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const cmCPackLogWrite& c)

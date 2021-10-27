@@ -46,7 +46,6 @@ protected:
 
 private:
   using id_map_t = std::map<std::string, std::string>;
-  using ambiguity_map_t = std::map<std::string, size_t>;
   using extension_set_t = std::set<std::string>;
   using xmlns_map_t = std::map<std::string, std::string>;
 

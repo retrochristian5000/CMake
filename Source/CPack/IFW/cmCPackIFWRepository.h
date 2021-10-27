@@ -70,7 +70,7 @@ public:
 public:
   // Internal implementation
 
-  bool IsValid() const;
+  [[nodiscard]] bool IsValid() const;
 
   bool ConfigureFromOptions();
 

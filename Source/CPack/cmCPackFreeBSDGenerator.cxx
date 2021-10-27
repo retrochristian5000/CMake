@@ -22,9 +22,8 @@
 #include <sys/stat.h>
 
 cmCPackFreeBSDGenerator::cmCPackFreeBSDGenerator()
-  : cmCPackArchiveGenerator(cmArchiveWrite::CompressXZ, "paxr", ".txz")
-{
-}
+  : cmCPackArchiveGenerator(cmArchiveWrite::CompressXZ, "paxr", ".txz") =
+      default;
 
 int cmCPackFreeBSDGenerator::InitializeInternal()
 {
@@ -205,7 +204,7 @@ std::string cmCPackFreeBSDGenerator::var_lookup(const char* var_name)
 {
   cmValue pv = this->GetOption(var_name);
   if (!pv) {
-    return std::string();
+    return {};
   }
   return *pv;
 }

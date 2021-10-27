@@ -44,12 +44,12 @@ public:
   struct DependenceStruct
   {
     DependenceStruct();
-    DependenceStruct(const std::string& dependence);
+    explicit DependenceStruct(const std::string& dependence);
 
     std::string Name;
     CompareStruct Compare;
 
-    std::string NameWithCompare() const;
+    [[nodiscard]] std::string NameWithCompare() const;
 
     bool operator<(const DependenceStruct& other) const
     {

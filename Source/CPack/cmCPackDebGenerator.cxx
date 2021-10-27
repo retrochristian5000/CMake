@@ -39,15 +39,15 @@ public:
                cmValue controlExtra, bool permissionStrctPolicy,
                std::vector<std::string> packageFiles);
 
-  bool generate() const;
+  [[nodiscard]] bool generate() const;
 
 private:
   void generateDebianBinaryFile() const;
   void generateControlFile() const;
-  bool generateDataTar() const;
-  std::string generateMD5File() const;
-  bool generateControlTar(std::string const& md5Filename) const;
-  bool generateDeb() const;
+  [[nodiscard]] bool generateDataTar() const;
+  [[nodiscard]] std::string generateMD5File() const;
+  [[nodiscard]] bool generateControlTar(std::string const& md5Filename) const;
+  [[nodiscard]] bool generateDeb() const;
 
   cmCPackLog* Logger;
   const std::string OutputName;
@@ -203,7 +203,7 @@ bool DebGenerator::generateDataTar() const
 
   // uid/gid should be the one of the root user, and this root user has
   // always uid/gid equal to 0.
-  data_tar.SetUIDAndGID(0u, 0u);
+  data_tar.SetUIDAndGID(0U, 0U);
   data_tar.SetUNAMEAndGNAME("root", "root");
 
   // now add all directories which have to be compressed
@@ -902,7 +902,7 @@ std::string cmCPackDebGenerator::GetComponentInstallDirNameSuffix(
   }
 
   if (this->componentPackageMethod == ONE_PACKAGE) {
-    return std::string("ALL_COMPONENTS_IN_ONE");
+    return { "ALL_COMPONENTS_IN_ONE" };
   }
   // We have to find the name of the COMPONENT GROUP
   // the current COMPONENT belongs to.

@@ -34,15 +34,7 @@ public:
 class cmCPackComponent
 {
 public:
-  cmCPackComponent()
-    : Group(nullptr)
-    , IsRequired(true)
-    , IsHidden(false)
-    , IsDisabledByDefault(false)
-    , IsDownloaded(false)
-    , TotalSize(0)
-  {
-  }
+  cmCPackComponent() = default;
 
   /// The name of the component (used to reference the component).
   std::string Name;
@@ -51,21 +43,21 @@ public:
   std::string DisplayName;
 
   /// The component group that contains this component (if any).
-  cmCPackComponentGroup* Group;
+  cmCPackComponentGroup* Group = nullptr;
 
   /// Whether this component group must always be installed.
-  bool IsRequired : 1;
+  bool IsRequired : 1 = true;
 
   /// Whether this component group is hidden. A hidden component group
   /// is always installed. However, it may still be shown to the user.
-  bool IsHidden : 1;
+  bool IsHidden : 1 = false;
 
   /// Whether this component defaults to "disabled".
-  bool IsDisabledByDefault : 1;
+  bool IsDisabledByDefault : 1 = false;
 
   /// Whether this component should be downloaded on-the-fly. If false,
   /// the component will be a part of the installation package.
-  bool IsDownloaded : 1;
+  bool IsDownloaded : 1 = false;
 
   /// A description of this component.
   std::string Description;
@@ -103,7 +95,7 @@ public:
   unsigned long GetInstalledSizeInKbytes(const std::string& installDir) const;
 
 private:
-  mutable unsigned long TotalSize;
+  mutable unsigned long TotalSize = 0;
 };
 
 /** \class cmCPackComponentGroup
@@ -112,10 +104,7 @@ private:
 class cmCPackComponentGroup
 {
 public:
-  cmCPackComponentGroup()
-    : ParentGroup(nullptr)
-  {
-  }
+  cmCPackComponentGroup() = default;
 
   /// The name of the group (used to reference the group).
   std::string Name;
@@ -127,16 +116,16 @@ public:
   std::string Description;
 
   /// Whether the name of the component will be shown in bold.
-  bool IsBold : 1;
+  bool IsBold : 1 = false;
 
   /// Whether the section should be expanded by default
-  bool IsExpandedByDefault : 1;
+  bool IsExpandedByDefault : 1 = false;
 
   /// The components within this group.
   std::vector<cmCPackComponent*> Components;
 
   /// The parent group of this component group (if any).
-  cmCPackComponentGroup* ParentGroup;
+  cmCPackComponentGroup* ParentGroup = nullptr;
 
   /// The subgroups of this group.
   std::vector<cmCPackComponentGroup*> Subgroups;
