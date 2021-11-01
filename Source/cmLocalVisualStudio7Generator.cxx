@@ -6,6 +6,7 @@
 
 #include <cm/memory>
 #include <cmext/algorithm>
+#include <cmext/string_view>
 
 #include <windows.h>
 
@@ -20,6 +21,7 @@
 #include "cmGlobalVisualStudio7Generator.h"
 #include "cmMakefile.h"
 #include "cmMessageType.h"
+#include "cmRange.h"
 #include "cmSourceFile.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
@@ -35,8 +37,10 @@ public:
     : LocalGenerator(e)
   {
   }
+  using Options = cmVS7GeneratorOptions;
   using ItemVector = cmComputeLinkInformation::ItemVector;
-  void OutputLibraries(std::ostream& fout, ItemVector const& libs);
+  void OutputLibraries(std::ostream& fout, Options& linkOptions,
+                       ItemVector const& libs);
   void OutputObjects(std::ostream& fout, cmGeneratorTarget* t,
                      std::string const& config, const char* isep = 0);
 
@@ -1053,7 +1057,7 @@ void cmLocalVisualStudio7Generator::OutputBuildTool(
         this->Internal->OutputObjects(fout, target, configName, " ");
       }
       fout << " ";
-      this->Internal->OutputLibraries(fout, cli.GetItems());
+      this->Internal->OutputLibraries(fout, linkOptions, cli.GetItems());
       fout << "\"\n";
       temp =
         cmStrCat(target->GetDirectory(configName), '/', targetNames.Output);
@@ -1130,7 +1134,7 @@ void cmLocalVisualStudio7Generator::OutputBuildTool(
         this->Internal->OutputObjects(fout, target, configName, " ");
       }
       fout << " ";
-      this->Internal->OutputLibraries(fout, cli.GetItems());
+      this->Internal->OutputLibraries(fout, linkOptions, cli.GetItems());
       fout << "\"\n";
       temp =
         cmStrCat(target->GetDirectory(configName), '/', targetNames.Output);
@@ -1252,17 +1256,34 @@ void cmLocalVisualStudio7Generator::WriteTargetVersionAttribute(
 }
 
 void cmLocalVisualStudio7GeneratorInternals::OutputLibraries(
-  std::ostream& fout, ItemVector const& libs)
+  std::ostream& fout, Options& linkOptions, ItemVector const& libs)
 {
+  std::vector<std::string> featureFlags;
+
   cmLocalVisualStudio7Generator* lg = this->LocalGenerator;
   for (auto const& lib : libs) {
     if (lib.IsPath == cmComputeLinkInformation::ItemIsPath::Yes) {
       std::string rel = lg->MaybeRelativeToCurBinDir(lib.Value.Value);
-      fout << lg->ConvertToXMLOutputPath(rel) << " ";
+      if (lib.HasFeature()) {
+        rel = this->LocalGenerator->ConvertToOutputFormat(
+          rel, cmOutputConverter::SHELL);
+        featureFlags.emplace_back(lib.GetFormattedItem(rel).Value);
+      } else {
+        fout << lg->ConvertToXMLOutputPath(rel) << " ";
+      }
     } else if (!lib.Target ||
                lib.Target->GetType() != cmStateEnums::INTERFACE_LIBRARY) {
-      fout << lib.Value.Value << " ";
+      if (lib.HasFeature()) {
+        featureFlags.emplace_back(lib.Value.Value);
+      } else {
+        fout << lib.Value.Value << " ";
+      }
     }
+  }
+
+  if (!featureFlags.empty()) {
+    linkOptions.Parse(
+      cmJoin(cmRange(featureFlags.cbegin(), featureFlags.cend()), " "_s));
   }
 }
 
