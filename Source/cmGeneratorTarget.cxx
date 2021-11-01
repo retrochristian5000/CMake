@@ -4638,7 +4638,8 @@ std::vector<BT<std::string>> cmGeneratorTarget::GetLinkOptions(
 }
 
 std::vector<BT<std::string>>& cmGeneratorTarget::ResolveLinkerWrapper(
-  std::vector<BT<std::string>>& result, const std::string& language) const
+  std::vector<BT<std::string>>& result, const std::string& language,
+  bool joinItems) const
 {
   // replace "LINKER:" prefixed elements by actual linker wrapper
   const std::string wrapper(this->Makefile->GetSafeDefinition(
@@ -4697,7 +4698,14 @@ std::vector<BT<std::string>>& cmGeneratorTarget::ResolveLinkerWrapper(
 
     std::vector<BT<std::string>> options = wrapOptions(
       linkerOptions, bt, wrapperFlag, wrapperSep, concatFlagAndArgs);
-    result.insert(entry, options.begin(), options.end());
+    if (joinItems) {
+      result.insert(entry,
+                    cmJoin(cmRange<decltype(options.cbegin())>(
+                             options.cbegin(), options.cend()),
+                           " "_s));
+    } else {
+      result.insert(entry, options.begin(), options.end());
+    }
   }
   return result;
 }
