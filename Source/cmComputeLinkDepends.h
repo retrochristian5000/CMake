@@ -51,6 +51,16 @@ public:
     bool IsSharedDep = false;
     bool IsFlag = false;
     bool IsObject = false;
+    // The following members are for the management of group of items specified
+    // through genex $<LINK_LIBRARY:...>
+    enum class GroupState
+    {
+      No,
+      Start,
+      Stop
+    };
+    GroupState IsGroup = GroupState::No;
+    std::string Feature;
   };
 
   using EntryVector = std::vector<LinkEntry>;
@@ -71,9 +81,9 @@ private:
   std::string Config;
   EntryVector FinalLinkEntries;
 
-  std::map<cmLinkItem, int>::iterator AllocateLinkEntry(
+  std::pair<std::map<cmLinkItem, int>::iterator, bool> AllocateLinkEntry(
     cmLinkItem const& item);
-  int AddLinkEntry(cmLinkItem const& item);
+  std::pair<int, bool> AddLinkEntry(cmLinkItem const& item);
   void AddLinkObject(cmLinkItem const& item);
   void AddVarLinkEntries(int depender_index, const char* value);
   void AddDirectLinkEntries();
@@ -131,7 +141,7 @@ private:
   void DisplayConstraintGraph();
 
   // Ordering algorithm.
-  void OrderLinkEntires();
+  void OrderLinkEntries();
   std::vector<char> ComponentVisited;
   std::vector<int> ComponentOrder;
 
