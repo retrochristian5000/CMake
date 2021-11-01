@@ -2519,7 +2519,7 @@ void cmVisualStudio10TargetGenerator::WriteAllSources(Elem& e0)
           // Visual Studio versions prior to 2017 15.8 do not know about unity
           // builds, thus we exclude the files already part of unity sources.
           if (!si.Source->GetPropertyAsBool("SKIP_UNITY_BUILD_INCLUSION")) {
-            exclude_configs = all_configs;
+            exclude_configs = si.Configs;
           }
         }
       }
@@ -3653,7 +3653,8 @@ bool cmVisualStudio10TargetGenerator::ComputeCudaLinkOptions(
           this->LocalGenerator->MaybeRelativeToCurBinDir(l.Value.Value);
         ConvertToWindowsSlash(path);
         if (!cmVS10IsTargetsFile(l.Value.Value)) {
-          libVec.push_back(path);
+          libVec.push_back(l.HasFeature() ? l.GetFormattedItem(path).Value
+                                          : path);
         }
       } else {
         libVec.push_back(l.Value.Value);
@@ -4291,7 +4292,8 @@ void cmVisualStudio10TargetGenerator::AddLibraries(
       if (cmVS10IsTargetsFile(l.Value.Value)) {
         vsTargetVec.push_back(path);
       } else {
-        libVec.push_back(path);
+        libVec.push_back(l.HasFeature() ? l.GetFormattedItem(path).Value
+                                        : path);
       }
     } else if (!l.Target ||
                l.Target->GetType() != cmStateEnums::INTERFACE_LIBRARY) {
