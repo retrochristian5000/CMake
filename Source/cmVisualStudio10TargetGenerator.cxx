@@ -10,6 +10,7 @@
 #include <cm/string_view>
 #include <cm/vector>
 #include <cmext/algorithm>
+#include <cmext/string_view>
 
 #include "windows.h"
 
@@ -24,6 +25,7 @@
 #include "cmLinkLineDeviceComputer.h"
 #include "cmLocalVisualStudio10Generator.h"
 #include "cmMakefile.h"
+#include "cmRange.h"
 #include "cmSourceFile.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
@@ -3411,6 +3413,7 @@ bool cmVisualStudio10TargetGenerator::ComputeCudaLinkOptions(
     // cmLinkLineDeviceComputer
     cmComputeLinkInformation& cli = *pcli;
     std::vector<std::string> libVec;
+    std::vector<std::string> featureFlags;
     const auto& libs = cli.GetItems();
     for (cmComputeLinkInformation::Item const& l : libs) {
 
@@ -3451,14 +3454,24 @@ bool cmVisualStudio10TargetGenerator::ComputeCudaLinkOptions(
           this->LocalGenerator->MaybeRelativeToCurBinDir(l.Value.Value);
         ConvertToWindowsSlash(path);
         if (!cmVS10IsTargetsFile(l.Value.Value)) {
-          libVec.push_back(path);
+          if (l.HasFeature()) {
+            featureFlags.emplace_back(l.GetFormattedItem(path).Value);
+          } else {
+            libVec.push_back(path);
+          }
         }
       } else {
-        libVec.push_back(l.Value.Value);
+        if (l.HasFeature()) {
+          featureFlags.emplace_back(l.Value.Value);
+        } else {
+          libVec.push_back(l.Value.Value);
+        }
       }
     }
 
     cudaLinkOptions.AddFlag("AdditionalDependencies", libVec);
+    cudaLinkOptions.Parse(
+      cmJoin(cmRange(featureFlags.cbegin(), featureFlags.cend()), " "_s));
   }
 
   this->CudaLinkOptions[configName] = std::move(pOptions);
@@ -4027,8 +4040,9 @@ void cmVisualStudio10TargetGenerator::AddLibraries(
   const cmComputeLinkInformation& cli, const std::string& linkLanguage,
   const std::string& config)
 {
-  std::vector<std::string> libVec;
-  std::vector<std::string> vsTargetVec;
+  std::vector<std::string> libraries;
+  std::vector<std::string> vsTargets;
+  std::vector<std::string> featureFlags;
 
   using ItemVector = cmComputeLinkInformation::ItemVector;
   ItemVector const& libs = cli.GetItems();
@@ -4078,25 +4092,38 @@ void cmVisualStudio10TargetGenerator::AddLibraries(
         this->LocalGenerator->MaybeRelativeToCurBinDir(l.Value.Value);
       ConvertToWindowsSlash(path);
       if (cmVS10IsTargetsFile(l.Value.Value)) {
-        vsTargetVec.push_back(path);
+        vsTargets.push_back(path);
       } else {
-        libVec.push_back(path);
+        if (l.HasFeature()) {
+          featureFlags.emplace_back(l.GetFormattedItem(path).Value);
+        } else {
+          libraries.push_back(path);
+        }
       }
     } else if (!l.Target ||
                l.Target->GetType() != cmStateEnums::INTERFACE_LIBRARY) {
-      libVec.push_back(l.Value.Value);
+      if (l.HasFeature()) {
+        featureFlags.emplace_back(l.Value.Value);
+      } else {
+        libraries.push_back(l.Value.Value);
+      }
     }
   }
 
   std::string standardLibs =
     cmStrCat("CMAKE_", linkLanguage, "_STANDARD_LIBRARIES");
   std::string const& stdLibs = this->Makefile->GetDefinition(standardLibs);
-  cmSystemTools::ParseWindowsCommandLine(stdLibs.c_str(), libVec);
-  this->LinkOptions[config]->AddFlag("AdditionalDependencies", libVec);
+  cmSystemTools::ParseWindowsCommandLine(stdLibs.c_str(), libraries);
+  this->LinkOptions[config]->AddFlag("AdditionalDependencies", libraries);
 
   // Populate TargetsFileAndConfigsVec
-  for (std::string const& ti : vsTargetVec) {
+  for (std::string const& ti : vsTargets) {
     this->AddTargetsFileAndConfigPair(ti, config);
+  }
+
+  if (!featureFlags.empty()) {
+    this->LinkOptions[config]->Parse(
+      cmJoin(cmRange(featureFlags.cbegin(), featureFlags.cend()), " "_s));
   }
 }
 

@@ -1,0 +1,51 @@
+
+enable_language(C)
+
+set(CMAKE_VERBOSE_MAKEFILE TRUE)
+set(CMAKE_C_USE_RESPONSE_FILE_FOR_LIBRARIES FALSE)
+
+add_library(base1 SHARED base.c)
+add_library(base2 SHARED base.c)
+
+set(CMAKE_C_LINK_USING_FEAT1 "--LIBFLAG<LIBRARY>")
+set(CMAKE_C_LINK_USING_FEAT1_SUPPORTED TRUE)
+
+set(CMAKE_C_LINK_USING_FEAT2 "--PREFIXGROUP" "--LIBGROUP<LIBRARY>" "--SUFFIXGROUP")
+set(CMAKE_C_LINK_USING_FEAT2_SUPPORTED TRUE)
+
+set(CMAKE_C_LINK_USING_FEAT3 "--PREFIXGROUP" "" "--SUFFIXGROUP")
+set(CMAKE_C_LINK_USING_FEAT3_SUPPORTED TRUE)
+
+set(CMAKE_C_LINK_USING_FEAT4 "")
+set(CMAKE_C_LINK_USING_FEAT4_SUPPORTED TRUE)
+
+
+add_library(LinkLibrary_simple SHARED lib.c)
+target_link_libraries(LinkLibrary_simple PRIVATE $<LINK_LIBRARY:FEAT1,base1>)
+
+add_library(LinkLibrary_group1 SHARED lib.c)
+target_link_libraries(LinkLibrary_group1 PRIVATE $<LINK_LIBRARY:FEAT1,base1,base2>)
+
+add_library(LinkLibrary_group2 SHARED lib.c)
+target_link_libraries(LinkLibrary_group2 PRIVATE $<LINK_LIBRARY:FEAT2,base1,base2>)
+
+add_library(LinkLibrary_nested_feature1 SHARED lib.c)
+target_link_libraries(LinkLibrary_nested_feature1 PRIVATE $<LINK_LIBRARY:FEAT1,base1,$<LINK_LIBRARY:FEAT1,base2>>)
+
+add_library(LinkLibrary_nested_feature2 SHARED lib.c)
+target_link_libraries(LinkLibrary_nested_feature2 PRIVATE $<LINK_LIBRARY:FEAT2,base1,$<LINK_LIBRARY:FEAT2,base2>>)
+
+add_library(LinkLibrary_link_items1 SHARED lib.c)
+target_link_libraries(LinkLibrary_link_items1 PRIVATE $<LINK_LIBRARY:FEAT3,base1,other>)
+
+add_library(LinkLibrary_link_items2 SHARED lib.c)
+target_link_libraries(LinkLibrary_link_items2 PRIVATE $<LINK_LIBRARY:FEAT2,base1,other>)
+
+add_library(base3 SHARED base.c)
+target_link_libraries(base3 PRIVATE $<LINK_LIBRARY:FEAT4,base1>)
+add_library(LinkLibrary_mix_features1 SHARED lib.c)
+target_link_libraries(LinkLibrary_mix_features1 PRIVATE $<LINK_LIBRARY:FEAT2,base1,base3>)
+
+target_link_libraries(base3 INTERFACE $<LINK_LIBRARY:FEAT2,base1>)
+add_library(LinkLibrary_mix_features2 SHARED lib.c)
+target_link_libraries(LinkLibrary_mix_features2 PRIVATE $<LINK_LIBRARY:FEAT2,base1,base3>)

@@ -1,0 +1,4 @@
+
+if (NOT actual_stdout MATCHES "[/-]-PREFIXGROUP +[/-]-LIBGROUP.*${CMAKE_SHARED_LIBRARY_PREFIX}base1${CMAKE_SHARED_LIBRARY_SUFFIX} +[/-]-LIBGROUPother +[/-]-SUFFIXGROUP")
+  set (RunCMake_TEST_FAILED "Not found expected '--PREFIXGROUP --LIBGROUP<base1> --LIBGROUP<other> --SUFFIXGROUP'.")
+endif()
