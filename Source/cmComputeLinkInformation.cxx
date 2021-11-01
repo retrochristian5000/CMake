@@ -344,6 +344,24 @@ cmComputeLinkInformation::cmComputeLinkInformation(
     this->LinkWithRuntimePath = this->Makefile->IsOn(var);
   }
 
+  // Define some Feature descriptors to handle standard library and object link
+  if (!this->GetLibLinkFileFlag().empty()) {
+    this->FeatureDescriptors.emplace(
+      "__CMAKE_LINK_LIBRARY",
+      FeatureDescriptor{ cmStrCat(this->GetLibLinkFileFlag(), "<LIBRARY>") });
+  }
+  if (!this->GetObjLinkFileFlag().empty()) {
+    this->FeatureDescriptors.emplace(
+      "__CMAKE_LINK_OBJECT",
+      FeatureDescriptor{ cmStrCat(this->GetObjLinkFileFlag(), "<LIBRARY>") });
+  }
+  if (!this->LoaderFlag->empty()) {
+    // Define a Feature descriptor for the link of an executable with exports
+    this->FeatureDescriptors.emplace(
+      "__CMAKE_LINK_EXECUTABLE",
+      FeatureDescriptor{ cmStrCat(this->LoaderFlag, "<LIBRARY>") });
+  }
+
   // Check the platform policy for missing soname case.
   this->NoSONameUsesPath =
     this->Makefile->IsOn("CMAKE_PLATFORM_USES_PATH_WHEN_NO_SONAME");
@@ -516,6 +534,12 @@ bool cmComputeLinkInformation::Compute()
 
   // Add the link line items.
   for (cmComputeLinkDepends::LinkEntry const& linkEntry : linkEntries) {
+    if (!linkEntry.Feature.empty()) {
+      if (!this->AddLinkFeature(linkEntry.Feature)) {
+        continue;
+      }
+    }
+
     if (linkEntry.IsSharedDep) {
       this->AddSharedDepItem(linkEntry);
     } else {
@@ -573,6 +597,146 @@ bool cmComputeLinkInformation::Compute()
   }
 
   return true;
+}
+
+bool cmComputeLinkInformation::AddLinkFeature(std::string const& feature)
+{
+  auto it = this->FeatureDescriptors.find(feature);
+  if (it != this->FeatureDescriptors.end()) {
+    return it->second.Supported;
+  }
+
+  cmValue featureSupported = this->Makefile->GetDefinition(cmStrCat(
+    "CMAKE_", this->LinkLanguage, "_LINK_USING_", feature, "_SUPPORTED"));
+  if (!featureSupported.IsOn()) {
+    this->FeatureDescriptors.emplace(feature, FeatureDescriptor{});
+
+    this->CMakeInstance->IssueMessage(
+      MessageType::FATAL_ERROR,
+      cmStrCat(
+        "Feature '", feature,
+        "', specified through generator-expression '$<LINK_LIBRARY>' to "
+        "link target '",
+        this->Target->GetName(), "', is not supported for the link language '",
+        this->LinkLanguage, "'."),
+      this->Target->GetBacktrace());
+
+    return false;
+  }
+
+  cmValue langFeature = this->Makefile->GetDefinition(
+    cmStrCat("CMAKE_", this->LinkLanguage, "_LINK_USING_", feature));
+  if (!langFeature) {
+    this->FeatureDescriptors.emplace(feature, FeatureDescriptor{});
+
+    this->CMakeInstance->IssueMessage(
+      MessageType::FATAL_ERROR,
+      cmStrCat(
+        "Feature '", feature,
+        "', specified through generator-expression '$<LINK_LIBRARY>' to "
+        "link target '",
+        this->Target->GetName(), "', is not defined for the link language '",
+        this->LinkLanguage, "'."),
+      this->Target->GetBacktrace());
+
+    return false;
+  }
+
+  auto items =
+    cmExpandListWithBacktrace(langFeature, this->Target->GetBacktrace(), true);
+  // replace LINKER: pattern
+  this->Target->ResolveLinkerWrapper(items, this->LinkLanguage, true);
+
+  if ((items.size() == 1 && !items.front().Value.empty() &&
+       items.front().Value.find("<LIBRARY>") == std::string::npos) ||
+      (items.size() == 3 && !items[1].Value.empty() &&
+       items[1].Value.find("<LIBRARY>") == std::string::npos)) {
+    this->FeatureDescriptors.emplace(feature, FeatureDescriptor{});
+    this->CMakeInstance->IssueMessage(
+      MessageType::FATAL_ERROR,
+      cmStrCat("Feature '", feature, "', specified by variable 'CMAKE_",
+               this->LinkLanguage, "_LINK_USING_", feature,
+               "', is malformed (\"<LIBRARY>\" pattern is missing) and "
+               "cannot be used to link target '",
+               this->Target->GetName(), "'."),
+      this->Target->GetBacktrace());
+
+    return false;
+  }
+
+  if (items.size() == 1) {
+    this->FeatureDescriptors.emplace(feature,
+                                     FeatureDescriptor{ items.front().Value });
+  } else if (items.size() == 3) {
+    this->FeatureDescriptors.emplace(
+      feature,
+      FeatureDescriptor{ items[0].Value, items[1].Value, items[2].Value });
+  } else {
+    this->FeatureDescriptors.emplace(feature, FeatureDescriptor{});
+    this->CMakeInstance->IssueMessage(
+      MessageType::FATAL_ERROR,
+      cmStrCat("Feature '", feature, "', specified by variable 'CMAKE_",
+               this->LinkLanguage, "_LINK_USING_", feature,
+               "', is malformed (wrong number of elements) and cannot be "
+               "used to link target '",
+               this->Target->GetName(), "'."),
+      this->Target->GetBacktrace());
+
+    return false;
+  }
+
+  return true;
+}
+
+cmComputeLinkInformation::FeatureDescriptor const&
+cmComputeLinkInformation::GetLinkFeature(std::string const& feature) const
+{
+  return this->FeatureDescriptors.find(feature)->second;
+}
+cmComputeLinkInformation::FeatureDescriptor const*
+cmComputeLinkInformation::FindLinkFeature(std::string const& feature) const
+{
+  auto it = this->FeatureDescriptors.find(feature);
+  if (it == this->FeatureDescriptors.end()) {
+    return nullptr;
+  }
+
+  return &it->second;
+}
+
+cmComputeLinkInformation::FeatureDescriptor::FeatureDescriptor(
+  std::string itemFormat)
+  : Supported(true)
+  , ItemFormat(std::move(itemFormat))
+  , Index(ItemFormat.find("<LIBRARY>"))
+{
+}
+cmComputeLinkInformation::FeatureDescriptor::FeatureDescriptor(
+  std::string prefix, std::string itemFormat, std::string suffix)
+  : Supported(true)
+  , Prefix(std::move(prefix))
+  , ItemFormat(std::move(itemFormat))
+  , Suffix(std::move(suffix))
+  , Index(ItemFormat.find("<LIBRARY>"))
+{
+}
+
+std::string cmComputeLinkInformation::FeatureDescriptor::GetDecoratedItem(
+  std::string const& item) const
+{
+  if (this->Index == std::string::npos) {
+    return item;
+  }
+  // replace <LIBRARY> pattern
+  return std::string{ this->ItemFormat }.replace(this->Index, 9, item);
+}
+std::string cmComputeLinkInformation::FeatureDescriptor::GetDecoratedItem(
+  std::string const& item, std::string const& defaultValue) const
+{
+  if (this->Index == std::string::npos) {
+    return defaultValue;
+  }
+  return this->GetDecoratedItem(item);
 }
 
 void cmComputeLinkInformation::AddImplicitLinkInfo()
@@ -657,23 +821,21 @@ void cmComputeLinkInformation::AddItem(LinkEntry const& entry)
     if (impexe && this->LoaderFlag) {
       // This link item is an executable that may provide symbols
       // used by this target.  A special flag is needed on this
-      // platform.  Add it now.
-      std::string linkItem = this->LoaderFlag;
+      // platform.  Add it now using a special feature.
       cmStateEnums::ArtifactType artifact = tgt->HasImportLibrary(config)
         ? cmStateEnums::ImportLibraryArtifact
         : cmStateEnums::RuntimeBinaryArtifact;
-
       std::string exe = tgt->GetFullPath(config, artifact, true);
-      linkItem += exe;
-      this->Items.emplace_back(BT<std::string>(linkItem, item.Backtrace),
-                               ItemIsPath::Yes, ItemIsObject::No, tgt);
+      this->Items.emplace_back(
+        BT<std::string>(exe, item.Backtrace), ItemIsPath::Yes, tgt,
+        this->FindLinkFeature(entry.Feature.empty() ? "__CMAKE_LINK_EXECUTABLE"
+                                                    : entry.Feature));
       this->Depends.push_back(std::move(exe));
     } else if (tgt->GetType() == cmStateEnums::INTERFACE_LIBRARY) {
-      // Add the interface library as an item so it can be considered as part
-      // of COMPATIBLE_INTERFACE_ enforcement.  The generators will ignore
-      // this for the actual link line.
-      this->Items.emplace_back(std::string(), ItemIsPath::No, ItemIsObject::No,
-                               tgt);
+      // Add the interface library as an item so it can be considered as
+      // part of COMPATIBLE_INTERFACE_ enforcement.  The generators will
+      // ignore this for the actual link line.
+      this->Items.emplace_back(std::string(), ItemIsPath::No, tgt);
 
       // Also add the item the interface specifies to be used in its place.
       std::string const& libName = tgt->GetImportedLibName(config);
@@ -1014,7 +1176,8 @@ std::string cmComputeLinkInformation::CreateExtensionRegex(
   // Finish the list.
   libext += ")";
 
-  // Add an optional OpenBSD-style version or major.minor.version component.
+  // Add an optional OpenBSD-style version or major.minor.version
+  // component.
   if (this->OpenBSD || type == LinkShared) {
     libext += "(\\.[0-9]+)*";
   }
@@ -1098,7 +1261,10 @@ void cmComputeLinkInformation::AddTargetItem(LinkEntry const& entry)
   }
 
   // Now add the full path to the library.
-  this->Items.emplace_back(item, ItemIsPath::Yes, ItemIsObject::No, target);
+  this->Items.emplace_back(item, ItemIsPath::Yes, target,
+                           this->FindLinkFeature(entry.Feature.empty()
+                                                   ? "__CMAKE_LINK_LIBRARY"
+                                                   : entry.Feature));
 }
 
 void cmComputeLinkInformation::AddFullItem(LinkEntry const& entry)
@@ -1154,9 +1320,12 @@ void cmComputeLinkInformation::AddFullItem(LinkEntry const& entry)
   }
 
   // Now add the full path to the library.
-  this->Items.emplace_back(item, ItemIsPath::Yes,
-                           entry.IsObject ? ItemIsObject::Yes
-                                          : ItemIsObject::No);
+  this->Items.emplace_back(
+    item, ItemIsPath::Yes, nullptr,
+    this->FindLinkFeature(
+      entry.Feature.empty()
+        ? (entry.IsObject ? "__CMAKE_LINK_OBJECT" : "__CMAKE_LINK_LIBRARY")
+        : entry.Feature));
 }
 
 bool cmComputeLinkInformation::CheckImplicitDirItem(LinkEntry const& entry)
@@ -1221,8 +1390,6 @@ bool cmComputeLinkInformation::CheckImplicitDirItem(LinkEntry const& entry)
   return true;
 }
 
-// void cmComputeLinkInformation::AddUserItem(BT<std::string> const& item,
-//                                            bool pathNotKnown)
 void cmComputeLinkInformation::AddUserItem(LinkEntry const& entry,
                                            bool pathNotKnown)
 {
@@ -1236,8 +1403,24 @@ void cmComputeLinkInformation::AddUserItem(LinkEntry const& entry,
 
   BT<std::string> const& item = entry.Item;
 
-  // Pass flags through untouched.
+  if (entry.IsGroup == LinkEntry::GroupState::Start) {
+    auto const& featDesc = this->GetLinkFeature(entry.Feature);
+    if (!featDesc.Prefix.empty()) {
+      this->Items.emplace_back(
+        BT<std::string>{ featDesc.Prefix, item.Backtrace }, ItemIsPath::No);
+    }
+    return;
+  }
+  if (entry.IsGroup == LinkEntry::GroupState::Stop) {
+    auto const& featDesc = this->GetLinkFeature(entry.Feature);
+    if (!featDesc.Suffix.empty()) {
+      this->Items.emplace_back(
+        BT<std::string>{ featDesc.Suffix, item.Backtrace }, ItemIsPath::No);
+    }
+    return;
+  }
   if (item.Value[0] == '-' || item.Value[0] == '$' || item.Value[0] == '`') {
+    // Pass flags through untouched.
     // if this is a -l option then we might need to warn about
     // CMP0003 so put it in OldUserFlagItems, if it is not a -l
     // or -Wl,-l (-framework -pthread), then allow it without a
@@ -1322,9 +1505,18 @@ void cmComputeLinkInformation::AddUserItem(LinkEntry const& entry,
   }
 
   // Create an option to ask the linker to search for the library.
-  std::string out = cmStrCat(this->LibLinkFlag, lib, this->LibLinkSuffix);
-  this->Items.emplace_back(BT<std::string>(out, item.Backtrace),
-                           ItemIsPath::No);
+  auto out = cmStrCat(this->LibLinkFlag, lib, this->LibLinkSuffix);
+
+  if (!entry.Feature.empty()) {
+    auto const& feature = this->GetLinkFeature(entry.Feature);
+    this->Items.emplace_back(
+      BT<std::string>(feature.GetDecoratedItem(item.Value, out),
+                      item.Backtrace),
+      ItemIsPath::No);
+  } else {
+    this->Items.emplace_back(BT<std::string>(out, item.Backtrace),
+                             ItemIsPath::No);
+  }
 
   // Here we could try to find the library the linker will find and
   // add a runtime information entry for it.  It would probably not be
@@ -1785,7 +1977,8 @@ void cmComputeLinkInformation::GetRPath(std::vector<std::string>& runtimeDirs,
     !this->Makefile->IsOn("CMAKE_SKIP_INSTALL_RPATH") &&
     this->Target->GetPropertyAsBool("INSTALL_RPATH_USE_LINK_PATH");
 
-  // Select whether to use $ORIGIN in RPATHs for artifacts in the build tree.
+  // Select whether to use $ORIGIN in RPATHs for artifacts in the build
+  // tree.
   std::string const& originToken = this->Makefile->GetSafeDefinition(
     "CMAKE_SHARED_LIBRARY_RPATH_ORIGIN_TOKEN");
   std::string targetOutputDir = this->Target->GetDirectory(this->Config);
@@ -1804,8 +1997,8 @@ void cmComputeLinkInformation::GetRPath(std::vector<std::string>& runtimeDirs,
     // Add directories explicitly specified by user
     std::string build_rpath;
     if (this->Target->GetBuildRPATH(this->Config, build_rpath)) {
-      // This will not resolve entries to use $ORIGIN, the user is expected to
-      // do that if necessary.
+      // This will not resolve entries to use $ORIGIN, the user is expected
+      // to do that if necessary.
       cmCLI_ExpandListUnique(build_rpath, runtimeDirs, emitted);
     }
   }
@@ -1836,8 +2029,8 @@ void cmComputeLinkInformation::GetRPath(std::vector<std::string>& runtimeDirs,
           d = cmStrCat(installPrefix, '/', d);
           cmSystemTools::ConvertToUnixSlashes(d);
         } else if (use_relative_build_rpath) {
-          // If expansion of the $ORIGIN token is supported and permitted per
-          // policy, use relative paths in the RPATH.
+          // If expansion of the $ORIGIN token is supported and permitted
+          // per policy, use relative paths in the RPATH.
           if (cmSystemTools::ComparePath(d, topBinaryDir) ||
               cmSystemTools::IsSubDirectory(d, topBinaryDir)) {
             d = cmSystemTools::RelativePath(targetOutputDir, d);
