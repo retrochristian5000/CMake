@@ -5,6 +5,7 @@
 #include "cmConfigure.h" // IWYU pragma: keep
 
 #include <iosfwd>
+#include <map>
 #include <memory>
 #include <set>
 #include <string>
@@ -28,6 +29,9 @@ class cmake;
  */
 class cmComputeLinkInformation
 {
+private:
+  class FeatureDescriptor;
+
 public:
   cmComputeLinkInformation(cmGeneratorTarget const* target,
                            const std::string& config);
@@ -43,28 +47,33 @@ public:
     Yes,
   };
 
-  enum class ItemIsObject
-  {
-    No,
-    Yes,
-  };
-
   struct Item
   {
-    Item() = default;
     Item(BT<std::string> v, ItemIsPath isPath,
-         ItemIsObject isObject = ItemIsObject::No,
-         cmGeneratorTarget const* target = nullptr)
+         cmGeneratorTarget const* target = nullptr,
+         FeatureDescriptor const* feature = nullptr)
       : Value(std::move(v))
       , IsPath(isPath)
-      , IsObject(isObject)
       , Target(target)
+      , Feature(feature)
     {
     }
     BT<std::string> Value;
-    ItemIsPath IsPath = ItemIsPath::Yes;
-    ItemIsObject IsObject = ItemIsObject::No;
+    ItemIsPath IsPath = ItemIsPath::No;
     cmGeneratorTarget const* Target = nullptr;
+
+    bool HasFeature() const { return this->Feature != nullptr; }
+
+    BT<std::string> GetFormattedItem(std::string const& path) const
+    {
+      return { (this->Feature != nullptr)
+                 ? this->Feature->GetDecoratedItem(path)
+                 : path,
+               Value.Backtrace };
+    }
+
+  private:
+    FeatureDescriptor const* Feature = nullptr;
   };
   using ItemVector = std::vector<Item>;
   void AppendValues(std::string& result, std::vector<BT<std::string>>& values);
@@ -237,4 +246,27 @@ private:
   void AddLibraryRuntimeInfo(std::string const& fullPath,
                              const cmGeneratorTarget* target);
   void AddLibraryRuntimeInfo(std::string const& fullPath);
+
+  class FeatureDescriptor
+  {
+  public:
+    FeatureDescriptor() = default;
+    FeatureDescriptor(std::string name, std::string itemFormat);
+    FeatureDescriptor(std::string name, std::string prefix,
+                      std::string itemFormat, std::string suffix);
+
+    const std::string Name;
+    const bool Supported = false;
+    const std::string Prefix;
+    const std::string ItemFormat;
+    const std::string Suffix;
+    std::string GetDecoratedItem(std::string const& library) const;
+    std::string GetDecoratedItem(std::string const& library,
+                                 std::string const& linkItem,
+                                 std::string const& defaultValue) const;
+  };
+  std::map<std::string, FeatureDescriptor> FeatureDescriptors;
+  bool AddLinkFeature(std::string const& feature);
+  FeatureDescriptor const& GetLinkFeature(std::string const& feature) const;
+  FeatureDescriptor const* FindLinkFeature(std::string const& feature) const;
 };
