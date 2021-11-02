@@ -956,19 +956,6 @@ private:
   cmListFileBacktrace& Backtrace;
   cmListFileBacktrace Previous;
 };
-
-cm::optional<std::string> MakeOptionalString(const char* str)
-{
-  if (str) {
-    return str;
-  }
-  return cm::nullopt;
-}
-
-const char* GetCStrOrNull(const cm::optional<std::string>& str)
-{
-  return str ? str->c_str() : nullptr;
-}
 }
 
 bool cmMakefile::ValidateCustomCommand(
@@ -1076,20 +1063,30 @@ cmTarget* cmMakefile::AddCustomCommandToTarget(
 
   auto cmp0116 = this->GetPolicyStatus(cmPolicies::CMP0116);
 
-  // Strings could be moved into the callback function with C++14.
-  cm::optional<std::string> commentStr = MakeOptionalString(comment);
-  cm::optional<std::string> workingStr = MakeOptionalString(workingDir);
+  auto cc = cm::make_unique<cmCustomCommand>();
+  cc->SetByproducts(byproducts);
+  cc->SetDepends(depends);
+  cc->SetCommandLines(commandLines);
+  cc->SetComment(comment);
+  cc->SetWorkingDirectory(workingDir);
+  cc->SetEscapeOldStyle(escapeOldStyle);
+  cc->SetUsesTerminal(uses_terminal);
+  cc->SetDepfile(depfile);
+  cc->SetJobPool(job_pool);
+  cc->SetCommandExpandLists(command_expand_lists);
+  cc->SetStdPipesUTF8(stdPipesUTF8);
+  cc->SetCMP0116Status(cmp0116);
+
+  auto* rawcc = cc.release();
 
   // Dispatch command creation to allow generator expressions in outputs.
-  this->AddGeneratorAction(
-    [=](cmLocalGenerator& lg, const cmListFileBacktrace& lfbt) {
-      BacktraceGuard guard(this->Backtrace, lfbt);
-      detail::AddCustomCommandToTarget(
-        lg, lfbt, cmCommandOrigin::Project, t, byproducts, depends,
-        commandLines, type, GetCStrOrNull(commentStr),
-        GetCStrOrNull(workingStr), escapeOldStyle, uses_terminal, depfile,
-        job_pool, command_expand_lists, stdPipesUTF8, cmp0116);
-    });
+  this->AddGeneratorAction([=](cmLocalGenerator& lg,
+                               const cmListFileBacktrace& lfbt) {
+    BacktraceGuard guard(this->Backtrace, lfbt);
+    rawcc->SetBacktrace(lfbt);
+    detail::AddCustomCommandToTarget(lg, cmCommandOrigin::Project, t, type,
+                                     std::unique_ptr<cmCustomCommand>(rawcc));
+  });
 
   return t;
 }
@@ -1137,20 +1134,32 @@ void cmMakefile::AddCustomCommandToOutput(
 
   auto cmp0116 = this->GetPolicyStatus(cmPolicies::CMP0116);
 
-  // Strings could be moved into the callback function with C++14.
-  cm::optional<std::string> commentStr = MakeOptionalString(comment);
-  cm::optional<std::string> workingStr = MakeOptionalString(workingDir);
+  auto cc = cm::make_unique<cmCustomCommand>();
+  cc->SetOutputs(outputs);
+  cc->SetByproducts(byproducts);
+  cc->SetDepends(depends);
+  cc->SetImplicitDepends(implicit_depends);
+  cc->SetCommandLines(commandLines);
+  cc->SetComment(comment);
+  cc->SetWorkingDirectory(workingDir);
+  cc->SetEscapeOldStyle(escapeOldStyle);
+  cc->SetUsesTerminal(uses_terminal);
+  cc->SetCommandExpandLists(command_expand_lists);
+  cc->SetDepfile(depfile);
+  cc->SetJobPool(job_pool);
+  cc->SetStdPipesUTF8(stdPipesUTF8);
+  cc->SetCMP0116Status(cmp0116);
+
+  auto* rawcc = cc.release();
 
   // Dispatch command creation to allow generator expressions in outputs.
   this->AddGeneratorAction(
     [=](cmLocalGenerator& lg, const cmListFileBacktrace& lfbt) {
       BacktraceGuard guard(this->Backtrace, lfbt);
+      rawcc->SetBacktrace(lfbt);
       cmSourceFile* sf = detail::AddCustomCommandToOutput(
-        lg, lfbt, cmCommandOrigin::Project, outputs, byproducts, depends,
-        main_dependency, implicit_depends, commandLines,
-        GetCStrOrNull(commentStr), GetCStrOrNull(workingStr), replace,
-        escapeOldStyle, uses_terminal, command_expand_lists, depfile, job_pool,
-        stdPipesUTF8, cmp0116);
+        lg, cmCommandOrigin::Project, main_dependency,
+        std::unique_ptr<cmCustomCommand>(rawcc), replace);
       if (callback && sf) {
         callback(sf);
       }
@@ -1258,19 +1267,28 @@ cmTarget* cmMakefile::AddUtilityCommand(
 
   auto cmp0116 = this->GetPolicyStatus(cmPolicies::CMP0116);
 
-  // Strings could be moved into the callback function with C++14.
-  cm::optional<std::string> commentStr = MakeOptionalString(comment);
-  cm::optional<std::string> workingStr = MakeOptionalString(workingDir);
+  auto cc = cm::make_unique<cmCustomCommand>();
+  cc->SetWorkingDirectory(workingDir);
+  cc->SetByproducts(byproducts);
+  cc->SetDepends(depends);
+  cc->SetCommandLines(commandLines);
+  cc->SetEscapeOldStyle(escapeOldStyle);
+  cc->SetComment(comment);
+  cc->SetUsesTerminal(uses_terminal);
+  cc->SetCommandExpandLists(command_expand_lists);
+  cc->SetJobPool(job_pool);
+  cc->SetStdPipesUTF8(stdPipesUTF8);
+  cc->SetCMP0116Status(cmp0116);
+
+  auto* rawcc = cc.release();
 
   // Dispatch command creation to allow generator expressions in outputs.
   this->AddGeneratorAction(
     [=](cmLocalGenerator& lg, const cmListFileBacktrace& lfbt) {
       BacktraceGuard guard(this->Backtrace, lfbt);
-      detail::AddUtilityCommand(
-        lg, lfbt, cmCommandOrigin::Project, target, GetCStrOrNull(workingStr),
-        byproducts, depends, commandLines, escapeOldStyle,
-        GetCStrOrNull(commentStr), uses_terminal, command_expand_lists,
-        job_pool, stdPipesUTF8, cmp0116);
+      rawcc->SetBacktrace(lfbt);
+      detail::AddUtilityCommand(lg, cmCommandOrigin::Project, target,
+                                std::unique_ptr<cmCustomCommand>(rawcc));
     });
 
   return target;
