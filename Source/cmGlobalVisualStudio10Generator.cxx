@@ -1265,6 +1265,10 @@ std::string cmGlobalVisualStudio10Generator::Encoding()
 
 const char* cmGlobalVisualStudio10Generator::GetToolsVersion() const
 {
+  if (this->TargetsWindowsCE() &&
+      this->Version <= cmGlobalVisualStudioGenerator::VS12) {
+    return "4.0";
+  }
   switch (this->Version) {
     case cmGlobalVisualStudioGenerator::VS9:
     case cmGlobalVisualStudioGenerator::VS10:
