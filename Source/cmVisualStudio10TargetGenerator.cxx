@@ -385,13 +385,7 @@ void cmVisualStudio10TargetGenerator::Generate()
   {
     Elem e0(BuildFileStream, "Project");
     e0.Attribute("DefaultTargets", "Build");
-    const char* toolsVersion = this->GlobalGenerator->GetToolsVersion();
-    if (this->GlobalGenerator->GetVersion() ==
-          cmGlobalVisualStudioGenerator::VS12 &&
-        this->GlobalGenerator->TargetsWindowsCE()) {
-      toolsVersion = "4.0";
-    }
-    e0.Attribute("ToolsVersion", toolsVersion);
+    e0.Attribute("ToolsVersion", this->GlobalGenerator->GetToolsVersion());
     e0.Attribute("xmlns",
                  "http://schemas.microsoft.com/developer/msbuild/2003");
 
@@ -509,12 +503,9 @@ void cmVisualStudio10TargetGenerator::Generate()
               "DOTNET_TARGET_FRAMEWORK_VERSION");
           }
           std::string targetFrameworkVersion = p;
-          if (targetFrameworkVersion.empty() && this->ProjectType == csproj &&
-              this->GlobalGenerator->TargetsWindowsCE() &&
-              this->GlobalGenerator->GetVersion() ==
-                cmGlobalVisualStudioGenerator::VS12) {
-            // VS12 .NETCF default to .NET framework 3.9
-            targetFrameworkVersion = "v3.9";
+          if (targetFrameworkVersion.empty() && this->ProjectType == csproj) {
+            targetFrameworkVersion =
+              this->GlobalGenerator->GetTargetFrameworkVersion();
           }
           if (!targetFrameworkVersion.empty()) {
             e1.Element("TargetFrameworkVersion", targetFrameworkVersion);

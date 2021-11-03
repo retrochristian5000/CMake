@@ -24,6 +24,8 @@ public:
 
   bool SetGeneratorPlatform(std::string const& p, cmMakefile* mf) override;
 
+  std::string const& GetTargetFrameworkVersion() const;
+
   /**
    * Override Configure and Generate to add the build-system check
    * target.
@@ -76,4 +78,6 @@ protected:
 
   std::string Name;
   std::string WindowsCEVersion;
+
+  std::string DefaultTargetFrameworkVersion;
 };
