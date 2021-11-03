@@ -401,6 +401,10 @@ cmGlobalVisualStudioVersionedGenerator::cmGlobalVisualStudioVersionedGenerator(
     this->DefaultPlatformName = VSHostPlatformName();
     this->DefaultPlatformToolsetHostArchitecture = VSHostArchitecture();
   }
+  if (this->Version >= cmGlobalVisualStudioGenerator::VS17) {
+    // Versions older than this are no longer installed by VS.
+    this->DefaultTargetFrameworkVersion = "v4.5.2";
+  }
 }
 
 bool cmGlobalVisualStudioVersionedGenerator::MatchesGeneratorName(
