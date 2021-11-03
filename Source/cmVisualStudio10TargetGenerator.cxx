@@ -503,12 +503,9 @@ void cmVisualStudio10TargetGenerator::Generate()
               "DOTNET_TARGET_FRAMEWORK_VERSION");
           }
           std::string targetFrameworkVersion = p;
-          if (targetFrameworkVersion.empty() && this->ProjectType == csproj &&
-              this->GlobalGenerator->TargetsWindowsCE() &&
-              this->GlobalGenerator->GetVersion() ==
-                cmGlobalVisualStudioGenerator::VS12) {
-            // VS12 .NETCF default to .NET framework 3.9
-            targetFrameworkVersion = "v3.9";
+          if (targetFrameworkVersion.empty() && this->ProjectType == csproj) {
+            targetFrameworkVersion =
+              this->GlobalGenerator->GetTargetFrameworkVersion();
           }
           if (!targetFrameworkVersion.empty()) {
             e1.Element("TargetFrameworkVersion", targetFrameworkVersion);
