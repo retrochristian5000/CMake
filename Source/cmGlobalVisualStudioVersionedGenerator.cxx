@@ -401,6 +401,11 @@ cmGlobalVisualStudioVersionedGenerator::cmGlobalVisualStudioVersionedGenerator(
     this->DefaultPlatformName = VSHostPlatformName();
     this->DefaultPlatformToolsetHostArchitecture = VSHostArchitecture();
   }
+  if (this->Version >= cmGlobalVisualStudioGenerator::VS17) {
+    // FIXME: How do we detect available framework versions?
+    // Use a version installed by VS 2022 without a separate component.
+    this->DefaultTargetFrameworkVersion = "v4.7.2";
+  }
 }
 
 bool cmGlobalVisualStudioVersionedGenerator::MatchesGeneratorName(
