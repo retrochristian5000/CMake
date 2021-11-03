@@ -4,6 +4,8 @@
 
 #include "cmGlobalVisualStudio71Generator.h"
 
+#include <cm/optional>
+
 /** \class cmGlobalVisualStudio8Generator
  * \brief Write a Unix makefiles.
  *
@@ -23,6 +25,10 @@ public:
   virtual void AddPlatformDefinitions(cmMakefile* mf);
 
   bool SetGeneratorPlatform(std::string const& p, cmMakefile* mf) override;
+
+  cm::optional<std::string> const& GetTargetFrameworkVersion() const;
+  cm::optional<std::string> const& GetTargetFrameworkIdentifier() const;
+  cm::optional<std::string> const& GetTargetFrameworkTargetsVersion() const;
 
   /**
    * Override Configure and Generate to add the build-system check
@@ -76,4 +82,8 @@ protected:
 
   std::string Name;
   std::string WindowsCEVersion;
+
+  cm::optional<std::string> DefaultTargetFrameworkVersion;
+  cm::optional<std::string> DefaultTargetFrameworkIdentifier;
+  cm::optional<std::string> DefaultTargetFrameworkTargetsVersion;
 };
