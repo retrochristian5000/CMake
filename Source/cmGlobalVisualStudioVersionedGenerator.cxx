@@ -401,6 +401,10 @@ cmGlobalVisualStudioVersionedGenerator::cmGlobalVisualStudioVersionedGenerator(
     this->DefaultPlatformName = VSHostPlatformName();
     this->DefaultPlatformToolsetHostArchitecture = VSHostArchitecture();
   }
+  if (this->Version >= cmGlobalVisualStudioGenerator::VS17) {
+    // Versions older than 4.6.2 are EOL after 2022-04-26.
+    this->DefaultTargetFrameworkVersion = "v4.6.2";
+  }
 }
 
 bool cmGlobalVisualStudioVersionedGenerator::MatchesGeneratorName(
