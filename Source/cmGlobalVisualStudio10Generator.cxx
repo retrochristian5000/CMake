@@ -580,6 +580,11 @@ bool cmGlobalVisualStudio10Generator::InitializeWindowsCE(cmMakefile* mf)
 
   this->DefaultPlatformToolset = this->SelectWindowsCEToolset();
 
+  if (this->GetVersion() == cmGlobalVisualStudioGenerator::VS12) {
+    // VS 12 .NETCF defaults to .NET framework 3.9 for Windows CE.
+    this->DefaultTargetFrameworkVersion = "v3.9";
+  }
+
   return true;
 }
 
