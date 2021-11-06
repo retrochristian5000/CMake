@@ -304,7 +304,7 @@ Variables that Describe the System
    /variable/CMAKE_SYSTEM_PROCESSOR
    /variable/CMAKE_SYSTEM_VERSION
    /variable/CYGWIN
-   /variable/GHS-MULTI
+   /variable/GHSMULTI
    /variable/IOS
    /variable/MINGW
    /variable/MSVC
