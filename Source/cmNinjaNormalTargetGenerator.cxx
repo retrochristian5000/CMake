@@ -855,14 +855,13 @@ void cmNinjaNormalTargetGenerator::WriteNvidiaDeviceLinkStatement(
   vars["TARGET_FILE"] =
     localGen.ConvertToOutputFormat(output, cmOutputConverter::SHELL);
 
-  std::unique_ptr<cmLinkLineComputer> linkLineComputer(
-    new cmNinjaLinkLineDeviceComputer(
+  cmNinjaLinkLineDeviceComputer linkLineComputer(
       this->GetLocalGenerator(),
       this->GetLocalGenerator()->GetStateSnapshot().GetDirectory(),
-      globalGen));
-  linkLineComputer->SetUseNinjaMulti(globalGen->IsMultiConfig());
+      globalGen);
+  linkLineComputer.SetUseNinjaMulti(globalGen->IsMultiConfig());
 
-  localGen.GetDeviceLinkFlags(linkLineComputer.get(), config,
+  localGen.GetDeviceLinkFlags(linkLineComputer, config,
                               vars["LINK_LIBRARIES"], vars["LINK_FLAGS"],
                               frameworkPath, linkPath, genTarget);
 
