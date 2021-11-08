@@ -6,7 +6,8 @@ CMP0128
 When this policy is set to ``NEW``:
 
 * :prop_tgt:`<LANG>_EXTENSIONS` is initialized to
-  :variable:`CMAKE_<LANG>_EXTENSIONS_DEFAULT`.
+  :variable:`CMAKE_<LANG>_EXTENSIONS` if it is set, falling back to
+  :variable:`CMAKE_<LANG>_EXTENSIONS_DEFAULT` otherwise.
 
 * Extensions are correctly disabled/enabled if :prop_tgt:`<LANG>_STANDARD` is
   unset.
@@ -16,7 +17,9 @@ When this policy is set to ``NEW``:
 
 The ``OLD`` behavior:
 
-* Initializes :prop_tgt:`<LANG>_EXTENSIONS` to ``ON``.
+* Initializes :prop_tgt:`<LANG>_EXTENSIONS` to
+  :variable:`CMAKE_<LANG>_EXTENSIONS` if it is set, falling back to ``ON``
+  otherwise.
 
 * Always adds a flag if :prop_tgt:`<LANG>_STANDARD` is set and
   :prop_tgt:`<LANG>_STANDARD_REQUIRED` is ``OFF``.
