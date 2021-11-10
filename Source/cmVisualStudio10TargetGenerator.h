@@ -167,8 +167,7 @@ private:
   void WriteApplicationTypeSettings(Elem& e1);
   void OutputSourceSpecificFlags(Elem& e2, cmSourceFile const* source);
   void AddLibraries(const cmComputeLinkInformation& cli,
-                    std::vector<std::string>& libVec,
-                    std::vector<std::string>& vsTargetVec,
+                    const std::string& linkLanguage,
                     const std::string& config);
   void AddTargetsFileAndConfigPair(std::string const& targetsFile,
                                    std::string const& config);
