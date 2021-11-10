@@ -20,6 +20,7 @@
 #include "cmMessageType.h"
 #include "cmOutputConverter.h"
 #include "cmPolicies.h"
+#include "cmRange.h"
 #include "cmStateSnapshot.h"
 #include "cmValue.h"
 
@@ -657,6 +658,11 @@ private:
                          const std::string& ReuseFrom,
                          cmGeneratorTarget* reuseTarget,
                          std::vector<std::string> const& extensions);
+
+  std::string WriteUnitySource(
+    cmGeneratorTarget* target,
+    cmRange<std::vector<cmSourceFile*>::const_iterator> sources,
+    cmValue beforeInclude, cmValue afterInclude, std::string filename) const;
   void IncludeFileInUnitySources(cmGeneratedFileStream& unity_file,
                                  std::string const& sf_full_path,
                                  cmValue beforeInclude, cmValue afterInclude,
