@@ -128,6 +128,9 @@ if (CMake_SCCACHE_HELP)
       endforeach ()
     endif ()
   endforeach ()
+
+  # Disable `/MP` flags.
+  set(CMake_MSVC_PARALLEL OFF)
 endif ()
 
 # Allow per-translation-unit parallel builds when using MSVC
