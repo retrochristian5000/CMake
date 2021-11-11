@@ -136,3 +136,19 @@ OFF to disable /MP completely." )
     endif()
   endif()
 endif()
+
+# Options which are available to help out with `sccache` usage.
+option(CMake_SCCACHE_HELP "Make adjustments to improve sccache behaviors" OFF)
+mark_as_advanced(CMake_SCCACHE_HELP)
+if (CMake_SCCACHE_HELP)
+  # MSVC support.
+  foreach (lang IN ITEMS C CXX)
+    if (CMAKE_${lang}_COMPILER_ID STREQUAL "MSVC")
+      foreach (build_type IN ITEMS DEBUG RELEASE RELWITHDEBINFO)
+        # The `/Zi` flag is incompatible with `sccache` because the separate
+        # `.pdb` files are not cached.
+        string(REPLACE "/Zi" "/Z7" "CMAKE_${lang}_FLAGS_${build_type}" "${CMAKE_${lang}_FLAGS_${build_type}}")
+      endforeach ()
+    endif ()
+  endif ()
+endif ()
