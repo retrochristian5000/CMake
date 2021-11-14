@@ -167,7 +167,7 @@ bool cmGeneratorExpressionDAGChecker::EvaluatingLinkExpression() const
   cm::string_view property(this->Top()->Property);
 
   return property == "LINK_DIRECTORIES"_s || property == "LINK_OPTIONS"_s ||
-    property == "LINK_DEPENDS"_s;
+    property == "LINK_DEPENDS"_s || property == "OVERRIDE_LINK_LIBRARY"_s;
 }
 
 bool cmGeneratorExpressionDAGChecker::EvaluatingLinkOptionsExpression() const
