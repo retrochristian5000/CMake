@@ -14,6 +14,8 @@
 #include <cm/string_view>
 
 #include "cmComputeComponentGraph.h"
+#include "cmGeneratorExpression.h"
+#include "cmGeneratorExpressionDAGChecker.h"
 #include "cmGeneratorTarget.h"
 #include "cmGlobalGenerator.h"
 #include "cmListFileCache.h"
@@ -188,7 +190,8 @@ inline std::string ExtractFeature(std::string const& item)
 }
 
 cmComputeLinkDepends::cmComputeLinkDepends(const cmGeneratorTarget* target,
-                                           const std::string& config)
+                                           const std::string& config,
+                                           const std::string& linkLanguage)
 {
   // Store context information.
   this->Target = target;
@@ -196,6 +199,25 @@ cmComputeLinkDepends::cmComputeLinkDepends(const cmGeneratorTarget* target,
   this->GlobalGenerator =
     this->Target->GetLocalGenerator()->GetGlobalGenerator();
   this->CMakeInstance = this->GlobalGenerator->GetCMakeInstance();
+
+  if (cmValue overrideLinkLibrary =
+        this->Target->GetProperty("OVERRIDE_LINK_LIBRARY")) {
+    cmGeneratorExpressionDAGChecker dag{ target->GetBacktrace(), target,
+                                         "OVERRIDE_LINK_LIBRARY", nullptr,
+                                         nullptr };
+    auto overrideValue = cmGeneratorExpression::Evaluate(
+      overrideLinkLibrary, target->GetLocalGenerator(), config, target, &dag,
+      target, linkLanguage);
+
+    auto overrideList = cmTokenize(overrideValue, ","_s);
+    if (overrideList.size() >= 2) {
+      auto const& feature = overrideList.front();
+      for_each(overrideList.cbegin() + 1, overrideList.cend(),
+               [this, &feature](std::string const& item) {
+                 this->OverrideItemFeatures.emplace(item, feature);
+               });
+    }
+  }
 
   // The configuration being linked.
   this->HasConfig = !config.empty();
@@ -283,8 +305,8 @@ cmComputeLinkDepends::Compute()
         it = this->FinalLinkOrder.erase(it);
         continue;
       }
-      feature = &e.Feature;
-    }
+        feature = &e.Feature;
+      }
     it += 1;
   }
 
@@ -296,8 +318,8 @@ cmComputeLinkDepends::Compute()
   for (int i : cmReverseRange(this->FinalLinkOrder)) {
     LinkEntry const& e = this->EntryList[i];
     if (e.IsGroup == LinkEntry::GroupState::Start) {
-      this->FinalLinkEntries.push_back(e);
-      in_group = false;
+        this->FinalLinkEntries.push_back(e);
+        in_group = false;
       continue;
     }
     cmGeneratorTarget const* t = e.Target;
@@ -604,6 +626,7 @@ void cmComputeLinkDepends::AddLinkEntries(int depender_index,
   // Track inferred dependency sets implied by this list.
   std::map<int, DependSet> dependSets;
   int group_index = -1;
+  static int uuid = 0;
 
   // Loop over the libraries linked directly by the depender.
   for (T const& l : libs) {
@@ -618,8 +641,55 @@ void cmComputeLinkDepends::AddLinkEntries(int depender_index,
       continue;
     }
 
+    auto it = this->OverrideItemFeatures.find(item.AsStr());
+    if (it != this->OverrideItemFeatures.end()) {
+      int override_group = group_index;
+      auto const& feature = it->second;
+      auto overrideItem = cmLinkItem{ cmStrCat(LL_BEGIN, feature, ':',
+                                               std::to_string(uuid++), '>'),
+                                      false, item.Backtrace };
+
+      // handle LINK_LIBRARY override
+      if (group_index == -1 ||
+          this->EntryList[group_index].Feature != feature) {
+        //// add an item for new group start
+        override_group = -1;
+        this->ProcessLinkEntry(depender_index, overrideItem, override_group,
+                               dependSets);
+      }
+
+      // insert the item
+      this->ProcessLinkEntry(depender_index, item, override_group, dependSets);
+
+      if (group_index != -1 &&
+          this->EntryList[group_index].Feature != feature) {
+        // start a new group to continue processing of the previous group
+        cmLinkItem groupItem = { cmStrCat(LL_BEGIN,
+                                          this->EntryList[group_index].Feature,
+                                          ':', std::to_string(uuid++), '>'),
+                                 false,
+                                 this->EntryList[group_index].Item.Backtrace };
+        group_index = -1;
+        this->ProcessLinkEntry(depender_index, groupItem, group_index,
+                               dependSets);
+      }
+    } else {
+      this->ProcessLinkEntry(depender_index, item, group_index, dependSets);
+    }
+  }
+
+  // Store the inferred dependency sets discovered for this list.
+  for (auto const& dependSet : dependSets) {
+    this->InferredDependSets[dependSet.first].push_back(dependSet.second);
+  }
+}
+
+void cmComputeLinkDepends::ProcessLinkEntry(
+  int depender_index, cmLinkItem const& item, int& group_index,
+  std::map<int, DependSet>& dependSets)
+{
     // Add a link entry for this item.
-    auto ale = this->AddLinkEntry(item);
+  auto ale = this->AddLinkEntry(item);
     int dependee_index = ale.first;
     LinkEntry& entry = this->EntryList[dependee_index];
     if (entry.IsGroup == LinkEntry::GroupState::Start) {
@@ -655,7 +725,7 @@ void cmComputeLinkDepends::AddLinkEntries(int depender_index,
                    "', has already occurred ",
                    (entry.Feature.empty()
                       ? "without any feature"
-                      : cmStrCat("with the feature '", entry.Feature, '\'')),
+                    : cmStrCat("with the feature '", entry.Feature, '\'')),
                    ", which is not allowed."),
           this->Target->GetBacktrace());
       }
@@ -688,12 +758,6 @@ void cmComputeLinkDepends::AddLinkEntries(int depender_index,
       // Make sure an entry exists to hold the set for the item.
       dependSets[dependee_index];
     }
-  }
-
-  // Store the inferred dependency sets discovered for this list.
-  for (auto const& dependSet : dependSets) {
-    this->InferredDependSets[dependSet.first].push_back(dependSet.second);
-  }
 }
 
 void cmComputeLinkDepends::AddLinkObjects(std::vector<cmLinkItem> const& objs)
