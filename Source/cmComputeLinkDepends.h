@@ -30,7 +30,8 @@ class cmComputeLinkDepends
 {
 public:
   cmComputeLinkDepends(cmGeneratorTarget const* target,
-                       const std::string& config);
+                       const std::string& config,
+                       const std::string& linkLanguage);
   ~cmComputeLinkDepends();
 
   cmComputeLinkDepends(const cmComputeLinkDepends&) = delete;
@@ -80,17 +81,7 @@ private:
   cmake* CMakeInstance;
   std::string Config;
   EntryVector FinalLinkEntries;
-
-  std::pair<std::map<cmLinkItem, int>::iterator, bool> AllocateLinkEntry(
-    cmLinkItem const& item);
-  std::pair<int, bool> AddLinkEntry(cmLinkItem const& item);
-  void AddLinkObject(cmLinkItem const& item);
-  void AddVarLinkEntries(int depender_index, const char* value);
-  void AddDirectLinkEntries();
-  template <typename T>
-  void AddLinkEntries(int depender_index, std::vector<T> const& libs);
-  void AddLinkObjects(std::vector<cmLinkItem> const& objs);
-  cmLinkItem ResolveLinkItem(int depender_index, const std::string& name);
+  std::map<std::string, std::string> OverrideItemFeatures;
 
   // One entry for each unique item.
   std::vector<LinkEntry> EntryList;
@@ -168,6 +159,21 @@ private:
   PendingComponent& MakePendingComponent(unsigned int component);
   int ComputeComponentCount(NodeList const& nl);
   void DisplayFinalEntries();
+
+  // Entries processing
+  std::pair<std::map<cmLinkItem, int>::iterator, bool> AllocateLinkEntry(
+    cmLinkItem const& item);
+  std::pair<int, bool> AddLinkEntry(cmLinkItem const& item);
+  void AddLinkObject(cmLinkItem const& item);
+  void AddVarLinkEntries(int depender_index, const char* value);
+  void AddDirectLinkEntries();
+  void ProcessLinkEntry(int depender_index, cmLinkItem const& item,
+                        int& group_index,
+                        std::map<int, DependSet>& dependSets);
+  template <typename T>
+  void AddLinkEntries(int depender_index, std::vector<T> const& libs);
+  void AddLinkObjects(std::vector<cmLinkItem> const& objs);
+  cmLinkItem ResolveLinkItem(int depender_index, const std::string& name);
 
   // Record of the original link line.
   std::vector<int> OriginalEntries;
