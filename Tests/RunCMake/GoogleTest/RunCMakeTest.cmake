@@ -153,6 +153,46 @@ function(run_GoogleTest_discovery_timeout DISCOVERY_MODE)
   )
 endfunction()
 
+function(run_GoogleTest_discovery_arg_change DISCOVERY_MODE)
+  # Use a single build tree for a few tests without cleaning.
+  set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/GoogleTest-discovery-arg-change)
+  set(RunCMake_TEST_NO_CLEAN 1)
+  file(REMOVE_RECURSE "${RunCMake_TEST_BINARY_DIR}")
+  file(MAKE_DIRECTORY "${RunCMake_TEST_BINARY_DIR}")
+
+  run_cmake_with_options(GoogleTestDiscoveryArgChange
+    -DCMAKE_GTEST_DISCOVER_TESTS_DISCOVERY_MODE=${DISCOVERY_MODE}
+    -DTEST_FILTER=basic
+  )
+  run_cmake_command(GoogleTest-discovery-arg-change-build
+    ${CMAKE_COMMAND}
+    --build .
+    --config Release
+    --target fake_gtest
+  )
+  run_cmake_command(GoogleTest-discovery-arg-change-basic
+    ${CMAKE_CTEST_COMMAND}
+    -C Release
+    -N
+  )
+  execute_process(COMMAND ${CMAKE_COMMAND} -E sleep 1) # handle 1s resolution
+  run_cmake_with_options(GoogleTestDiscoveryArgChange
+    -DCMAKE_GTEST_DISCOVER_TESTS_DISCOVERY_MODE=${DISCOVERY_MODE}
+    -DTEST_FILTER=typed
+  )
+  run_cmake_command(GoogleTest-discovery-arg-change-build
+    ${CMAKE_COMMAND}
+    --build .
+    --config Release
+    --target fake_gtest
+  )
+  run_cmake_command(GoogleTest-discovery-arg-change-typed
+    ${CMAKE_CTEST_COMMAND}
+    -C Release
+    -N
+  )
+endfunction()
+
 function(run_GoogleTest_discovery_multi_config)
   # Use a single build tree for a few tests without cleaning.
   set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/GoogleTest-discovery-multi-config)
@@ -195,6 +235,7 @@ foreach(DISCOVERY_MODE POST_BUILD PRE_TEST)
   run_GoogleTestXML(${DISCOVERY_MODE})
   message("Testing ${DISCOVERY_MODE} discovery mode via DISCOVERY_MODE option...")
   run_GoogleTest_discovery_timeout(${DISCOVERY_MODE})
+  run_GoogleTest_discovery_arg_change(${DISCOVERY_MODE})
 endforeach()
 
 if(RunCMake_GENERATOR_IS_MULTI_CONFIG)
