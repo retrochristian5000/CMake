@@ -49,3 +49,12 @@ target_link_libraries(LinkLibrary_mix_features1 PRIVATE $<LINK_LIBRARY:FEAT2,bas
 target_link_libraries(base3 INTERFACE $<LINK_LIBRARY:FEAT2,base1>)
 add_library(LinkLibrary_mix_features2 SHARED lib.c)
 target_link_libraries(LinkLibrary_mix_features2 PRIVATE $<LINK_LIBRARY:FEAT2,base1,base3>)
+
+# testing OVERRIDE_LINK_LIBRARY property
+add_library(LinkLibrary_override_features1 SHARED lib.c)
+target_link_libraries(LinkLibrary_override_features1 PRIVATE $<LINK_LIBRARY:FEAT1,base1,base3>)
+set_property(TARGET LinkLibrary_override_features1 PROPERTY OVERRIDE_LINK_LIBRARY "FEAT1,base1")
+
+add_library(LinkLibrary_override_features2 SHARED lib.c)
+target_link_libraries(LinkLibrary_override_features2 PRIVATE $<LINK_LIBRARY:FEAT1,base1,base3>)
+set_property(TARGET LinkLibrary_override_features2 PROPERTY OVERRIDE_LINK_LIBRARY "FEAT2,base1")

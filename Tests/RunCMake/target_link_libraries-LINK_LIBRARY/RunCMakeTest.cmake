@@ -29,6 +29,8 @@ if (RunCMake_GENERATOR MATCHES "Makefiles|Ninja|Visual Studio|Xcode"
   run_cmake_target(LINK_LIBRARY link-items2 LinkLibrary_link_items2)
   run_cmake_target(LINK_LIBRARY mix-features1 LinkLibrary_mix_features1)
   run_cmake_target(LINK_LIBRARY mix-features2 LinkLibrary_mix_features2)
+  run_cmake_target(LINK_LIBRARY override-features1 LinkLibrary_override_features1)
+  run_cmake_target(LINK_LIBRARY override-features2 LinkLibrary_override_features2)
 
   unset(RunCMake_TEST_OPTIONS)
   unset(RunCMake_TEST_OUTPUT_MERGE)

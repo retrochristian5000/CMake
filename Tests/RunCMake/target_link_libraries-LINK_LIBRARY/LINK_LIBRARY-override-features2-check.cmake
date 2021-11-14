@@ -1,0 +1,4 @@
+
+if (NOT actual_stdout MATCHES "[/-]-LIBFLAG.*${CMAKE_SHARED_LIBRARY_PREFIX}base3${CMAKE_SHARED_LIBRARY_SUFFIX} +[/-]-LIBFLAG.*${CMAKE_SHARED_LIBRARY_PREFIX}base1${CMAKE_SHARED_LIBRARY_SUFFIX}")
+  set (RunCMake_TEST_FAILED "Not found expected '--LIBFLAG<base3> ----LIBFLAG<base1>'.")
+endif()
