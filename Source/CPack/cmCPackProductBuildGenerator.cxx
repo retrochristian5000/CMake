@@ -204,8 +204,13 @@ bool cmCPackProductBuildGenerator::GenerateComponentPackage(
   // The command that will be used to run ProductBuild
   std::ostringstream pkgCmd;
 
-  std::string pkgId = cmStrCat("com.", this->GetOption("CPACK_PACKAGE_VENDOR"),
-                               '.', this->GetOption("CPACK_PACKAGE_NAME"));
+  std::string pkgId;
+  if (cmValue n = this->GetOption("CPACK_PRODUCTBUILD_IDENTIFIER")) {
+    pkgId = n;
+  } else {
+    pkgId = cmStrCat("com.", this->GetOption("CPACK_PACKAGE_VENDOR"), '.',
+                     this->GetOption("CPACK_PACKAGE_NAME"));
+  }
   if (component) {
     pkgId += '.';
     pkgId += component->Name;
