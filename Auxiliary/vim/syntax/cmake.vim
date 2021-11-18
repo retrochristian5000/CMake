@@ -705,6 +705,7 @@ syn keyword cmakeVariable contained
             \ CMAKE_COLOR_MAKEFILE
             \ CMAKE_COMMAND
             \ CMAKE_COMPILER_2005
+            \ CMAKE_COMPILER_COLOR_DIAGNOSTICS
             \ CMAKE_COMPILER_IS_GNUCC
             \ CMAKE_COMPILER_IS_GNUCXX
             \ CMAKE_COMPILER_IS_GNUG77
