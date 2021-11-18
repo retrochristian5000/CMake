@@ -925,6 +925,13 @@ if(CUDAToolkit_FOUND)
     _CUDAToolkit_find_and_add_import_lib(${cuda_lib}_static DEPS culibos)
   endforeach()
 
+  if(CUDAToolkit_VERSION VERSION_GREATER 11.2.1)
+    # cusparse depends on cuBLAS
+    # https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html#cusolver-11.2.2
+    _CUDAToolkit_find_and_add_import_lib(cusparse DEPS cublas cublas)
+    _CUDAToolkit_find_and_add_import_lib(cusparse_static DEPS cublas_static)
+  endif()
+
   # cuFFTW depends on cuFFT
   _CUDAToolkit_find_and_add_import_lib(cufftw DEPS cufft)
   _CUDAToolkit_find_and_add_import_lib(cufftw DEPS cufft_static)
