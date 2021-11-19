@@ -30,7 +30,8 @@ class cmComputeLinkDepends
 {
 public:
   cmComputeLinkDepends(cmGeneratorTarget const* target,
-                       const std::string& config);
+                       const std::string& config,
+                       const std::string& linkLanguage);
   ~cmComputeLinkDepends();
 
   cmComputeLinkDepends(const cmComputeLinkDepends&) = delete;
@@ -46,6 +47,8 @@ public:
     {
     }
 
+    static const std::string STD;
+
     BT<std::string> Item;
     cmGeneratorTarget const* Target = nullptr;
     bool IsSharedDep = false;
@@ -53,7 +56,7 @@ public:
     bool IsObject = false;
     // The following member is for the management of items specified
     // through genex $<LINK_LIBRARY:...>
-    std::string Feature;
+    std::string Feature = std::string(STD);
   };
 
   using EntryVector = std::vector<LinkEntry>;
@@ -73,6 +76,10 @@ private:
   cmake* CMakeInstance;
   std::string Config;
   EntryVector FinalLinkEntries;
+  std::map<std::string, std::string> LinkLibraryOverride;
+
+  std::string const& GetCurrentFeature(
+    std::string const& item, std::string const& defaultFeature) const;
 
   std::pair<std::map<cmLinkItem, int>::iterator, bool> AllocateLinkEntry(
     cmLinkItem const& item);

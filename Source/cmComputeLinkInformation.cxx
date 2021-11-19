@@ -431,6 +431,10 @@ cmComputeLinkInformation::cmComputeLinkInformation(
 
 cmComputeLinkInformation::~cmComputeLinkInformation() = default;
 
+namespace {
+const std::string& STD = cmComputeLinkDepends::LinkEntry::STD;
+}
+
 void cmComputeLinkInformation::AppendValues(
   std::string& result, std::vector<BT<std::string>>& values)
 {
@@ -532,7 +536,7 @@ bool cmComputeLinkInformation::Compute()
   }
 
   // Compute the ordered link line items.
-  cmComputeLinkDepends cld(this->Target, this->Config);
+  cmComputeLinkDepends cld(this->Target, this->Config, this->LinkLanguage);
   cld.SetOldLinkDirMode(this->OldLinkDirMode);
   cmComputeLinkDepends::EntryVector const& linkEntries = cld.Compute();
   FeatureDescriptor const* currentFeature = nullptr;
@@ -551,7 +555,7 @@ bool cmComputeLinkInformation::Compute()
       currentFeature = nullptr;
     }
 
-    if (!linkEntry.Feature.empty() &&
+    if (linkEntry.Feature != STD &&
         (currentFeature == nullptr ||
          linkEntry.Feature != currentFeature->Name)) {
       if (!this->AddLinkFeature(linkEntry.Feature)) {
@@ -989,8 +993,8 @@ void cmComputeLinkInformation::AddItem(LinkEntry const& entry)
       std::string exe = tgt->GetFullPath(config, artifact, true);
       this->Items.emplace_back(
         BT<std::string>(exe, item.Backtrace), ItemIsPath::Yes, tgt,
-        this->FindLinkFeature(entry.Feature.empty() ? "__CMAKE_LINK_EXECUTABLE"
-                                                    : entry.Feature));
+        this->FindLinkFeature(entry.Feature == STD ? "__CMAKE_LINK_EXECUTABLE"
+                                                   : entry.Feature));
       this->Depends.push_back(std::move(exe));
     } else if (tgt->GetType() == cmStateEnums::INTERFACE_LIBRARY) {
       // Add the interface library as an item so it can be considered as part
@@ -1422,7 +1426,7 @@ void cmComputeLinkInformation::AddTargetItem(LinkEntry const& entry)
 
   // Now add the full path to the library.
   this->Items.emplace_back(item, ItemIsPath::Yes, target,
-                           this->FindLinkFeature(entry.Feature.empty()
+                           this->FindLinkFeature(entry.Feature == STD
                                                    ? "__CMAKE_LINK_LIBRARY"
                                                    : entry.Feature));
 }
@@ -1483,7 +1487,7 @@ void cmComputeLinkInformation::AddFullItem(LinkEntry const& entry)
   this->Items.emplace_back(
     item, ItemIsPath::Yes, nullptr,
     this->FindLinkFeature(
-      entry.Feature.empty()
+      entry.Feature == STD
         ? (entry.IsObject ? "__CMAKE_LINK_OBJECT" : "__CMAKE_LINK_LIBRARY")
         : entry.Feature));
 }
@@ -1651,7 +1655,7 @@ void cmComputeLinkInformation::AddUserItem(LinkEntry const& entry,
   // Create an option to ask the linker to search for the library.
   auto out = cmStrCat(this->LibLinkFlag, lib, this->LibLinkSuffix);
 
-  if (!entry.Feature.empty()) {
+  if (entry.Feature != STD) {
     auto const& feature = this->GetLinkFeature(entry.Feature);
     this->Items.emplace_back(
       BT<std::string>(
