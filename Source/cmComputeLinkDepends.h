@@ -30,7 +30,8 @@ class cmComputeLinkDepends
 {
 public:
   cmComputeLinkDepends(cmGeneratorTarget const* target,
-                       const std::string& config);
+                       const std::string& config,
+                       const std::string& linkLanguage);
   ~cmComputeLinkDepends();
 
   cmComputeLinkDepends(const cmComputeLinkDepends&) = delete;
@@ -73,6 +74,10 @@ private:
   cmake* CMakeInstance;
   std::string Config;
   EntryVector FinalLinkEntries;
+  std::map<std::string, std::string> LinkLibraryOverride;
+
+  std::string const& GetCurrentFeature(
+    std::string const& item, std::string const& defaultFeature) const;
 
   std::pair<std::map<cmLinkItem, int>::iterator, bool> AllocateLinkEntry(
     cmLinkItem const& item);
