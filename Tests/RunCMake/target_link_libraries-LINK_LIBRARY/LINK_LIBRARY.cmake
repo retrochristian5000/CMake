@@ -1,4 +1,3 @@
-
 enable_language(C)
 
 set(CMAKE_VERBOSE_MAKEFILE TRUE)
@@ -73,3 +72,16 @@ target_link_libraries(LinkLibrary_mix_features2 PRIVATE $<LINK_LIBRARY:FEAT2,bas
 target_link_libraries(base3 INTERFACE other1)
 add_library(LinkLibrary_mix_features3 SHARED lib.c)
 target_link_libraries(LinkLibrary_mix_features3 PRIVATE base2 $<LINK_LIBRARY:FEAT2,base1,base3> other2)
+
+# testing LINK_LIBRARY_OVERRIDE property
+add_library(LinkLibrary_override_features1 SHARED lib.c)
+target_link_libraries(LinkLibrary_override_features1 PRIVATE $<LINK_LIBRARY:FEAT1,base1,base3>)
+set_property(TARGET LinkLibrary_override_features1 PROPERTY LINK_LIBRARY_OVERRIDE "FEAT1,base1")
+
+add_library(LinkLibrary_override_features2 SHARED lib.c)
+target_link_libraries(LinkLibrary_override_features2 PRIVATE $<LINK_LIBRARY:FEAT1,base1,base3>)
+set_property(TARGET LinkLibrary_override_features2 PROPERTY LINK_LIBRARY_OVERRIDE "FEAT2,base1,other1")
+
+add_library(LinkLibrary_override_with_std SHARED lib.c)
+target_link_libraries(LinkLibrary_override_with_std PRIVATE $<LINK_LIBRARY:FEAT1,base1,base3>)
+set_property(TARGET LinkLibrary_override_with_std PROPERTY LINK_LIBRARY_OVERRIDE "STD,base1,other1")
