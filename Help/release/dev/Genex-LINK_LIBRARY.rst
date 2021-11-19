@@ -5,4 +5,6 @@ Genex-LINK_LIBRARY
   libraries are specified during the link step. The variables
   :variable:`CMAKE_<LANG>_LINK_USING_<FEATURE>` and
   :variable:`CMAKE_LINK_USING_<FEATURE>` are used to define features usable by
-  the :genex:`LINK_LIBRARY` generator expression.
+  the :genex:`LINK_LIBRARY` generator expression. Moreover, the
+  :prop_tgt:`LINK_LIBRARY_OVERRIDE` target property is available to resolve
+  incompatible features.

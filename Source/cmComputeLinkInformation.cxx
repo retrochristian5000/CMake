@@ -532,7 +532,7 @@ bool cmComputeLinkInformation::Compute()
   }
 
   // Compute the ordered link line items.
-  cmComputeLinkDepends cld(this->Target, this->Config);
+  cmComputeLinkDepends cld(this->Target, this->Config, this->LinkLanguage);
   cld.SetOldLinkDirMode(this->OldLinkDirMode);
   cmComputeLinkDepends::EntryVector const& linkEntries = cld.Compute();
   FeatureDescriptor const* currentFeature = nullptr;
