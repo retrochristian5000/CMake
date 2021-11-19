@@ -16,3 +16,8 @@ run_cmake(compatible-features)
 run_cmake(incompatible-features)
 run_cmake(nested-compatible-features)
 run_cmake(nested-incompatible-features)
+
+# testing target property OVERRIDE_LINK_LIBRARY
+run_cmake(override-features1)
+run_cmake(override-features2)
+run_cmake(override-features3)

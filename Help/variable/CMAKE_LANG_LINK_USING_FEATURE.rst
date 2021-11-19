@@ -86,3 +86,5 @@ not repeated for each library.
 In case of ``Clang``, the pattern ``<LINK_ITEM>`` is used because we need to
 specify the library as defined by the user, not the name computed by ``CMake``
 (in that case ``external``).
+
+.. include:: LINK_LIBRARY_PREDEFINED_FEATURES.txt

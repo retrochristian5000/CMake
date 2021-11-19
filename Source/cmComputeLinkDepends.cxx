@@ -14,6 +14,8 @@
 #include <cmext/string_view>
 
 #include "cmComputeComponentGraph.h"
+#include "cmGeneratorExpression.h"
+#include "cmGeneratorExpressionDAGChecker.h"
 #include "cmGeneratorTarget.h"
 #include "cmGlobalGenerator.h"
 #include "cmListFileCache.h"
@@ -188,7 +190,8 @@ inline std::string ExtractFeature(std::string const& item)
 }
 
 cmComputeLinkDepends::cmComputeLinkDepends(const cmGeneratorTarget* target,
-                                           const std::string& config)
+                                           const std::string& config,
+                                           const std::string& linkLanguage)
 {
   // Store context information.
   this->Target = target;
@@ -196,6 +199,25 @@ cmComputeLinkDepends::cmComputeLinkDepends(const cmGeneratorTarget* target,
   this->GlobalGenerator =
     this->Target->GetLocalGenerator()->GetGlobalGenerator();
   this->CMakeInstance = this->GlobalGenerator->GetCMakeInstance();
+
+  if (cmValue overrideLinkLibrary =
+        this->Target->GetProperty("OVERRIDE_LINK_LIBRARY")) {
+    cmGeneratorExpressionDAGChecker dag{ target->GetBacktrace(), target,
+                                         "OVERRIDE_LINK_LIBRARY", nullptr,
+                                         nullptr };
+    auto overrideValue = cmGeneratorExpression::Evaluate(
+      overrideLinkLibrary, target->GetLocalGenerator(), config, target, &dag,
+      target, linkLanguage);
+
+    auto overrideList = cmTokenize(overrideValue, ","_s);
+    if (overrideList.size() >= 2) {
+      auto const& feature = overrideList.front();
+      for_each(overrideList.cbegin() + 1, overrideList.cend(),
+               [this, &feature](std::string const& item) {
+                 this->OverrideItemFeatures.emplace(item, feature);
+               });
+    }
+  }
 
   // The configuration being linked.
   this->HasConfig = !config.empty();
@@ -292,6 +314,13 @@ cmComputeLinkDepends::Compute()
   }
 
   return this->FinalLinkEntries;
+}
+
+std::string const& cmComputeLinkDepends::GetCurrentFeature(
+  std::string const& item, std::string const& defaultFeature) const
+{
+  auto it = this->OverrideItemFeatures.find(item);
+  return it == this->OverrideItemFeatures.end() ? defaultFeature : it->second;
 }
 
 std::pair<std::map<cmLinkItem, int>::iterator, bool>
@@ -576,7 +605,9 @@ void cmComputeLinkDepends::AddLinkEntries(int depender_index,
     auto ale = this->AddLinkEntry(item);
     int dependee_index = ale.first;
     LinkEntry& entry = this->EntryList[dependee_index];
-    if (!feature.empty()) {
+    auto const& itemFeature =
+      this->GetCurrentFeature(entry.Item.Value, feature);
+    if (!itemFeature.empty()) {
       if (ale.second) {
         // current item not yet defined
         if (entry.Target != nullptr &&
@@ -587,18 +618,18 @@ void cmComputeLinkDepends::AddLinkEntries(int depender_index,
             cmStrCat("The OBJECT library '", entry.Item.Value,
                      "', specified as part of a generator-expression "
                      "'$",
-                     LL_BEGIN, feature, ">', will ignore this feature."),
+                     LL_BEGIN, itemFeature, ">', will ignore this feature."),
             this->Target->GetBacktrace());
         } else {
-          entry.Feature = feature;
+          entry.Feature = itemFeature;
         }
-      } else if (entry.Feature != feature) {
+      } else if (entry.Feature != itemFeature) {
         // incompatibles features occurred
         this->CMakeInstance->IssueMessage(
           MessageType::FATAL_ERROR,
           cmStrCat("Impossible to link target '", this->Target->GetName(),
                    "' because the link item '", entry.Item.Value,
-                   "', specified with the feature '", feature,
+                   "', specified with the feature '", itemFeature,
                    "', has already occurred ",
                    (entry.Feature.empty()
                       ? "without any feature"

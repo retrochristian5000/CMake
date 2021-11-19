@@ -1,0 +1,10 @@
+Predefined Features
+^^^^^^^^^^^^^^^^^^^
+
+``CMake`` pre-defines some features of general interest.
+
+Features available in all environments
+""""""""""""""""""""""""""""""""""""""
+
+* ``STD``: This feature enables standard link expression. This is mainly useful
+  with :prop_tgt:`OVERRIDE_LINK_LIBRARY` target property. 

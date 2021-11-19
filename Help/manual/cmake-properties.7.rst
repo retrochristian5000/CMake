@@ -334,6 +334,7 @@ Properties on Targets
    /prop_tgt/OSX_ARCHITECTURES_CONFIG
    /prop_tgt/OUTPUT_NAME
    /prop_tgt/OUTPUT_NAME_CONFIG
+   /prop_tgt/OVERRIDE_LINK_LIBRARY
    /prop_tgt/PCH_WARN_INVALID
    /prop_tgt/PCH_INSTANTIATE_TEMPLATES
    /prop_tgt/PDB_NAME

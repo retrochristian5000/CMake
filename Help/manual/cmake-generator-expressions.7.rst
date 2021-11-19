@@ -538,6 +538,9 @@ Variable Queries
     target_link_libraries(lib3 PRIVATE lib1 lib2)
     # an error will be raised here because lib1 has two different features
 
+  To resolve such incompatibilities, the :prop_tgt:`OVERRIDE_LINK_LIBRARY`
+  target property can be used.
+
   .. note::
 
     This expression does not guarantee that the list of specified libraries
