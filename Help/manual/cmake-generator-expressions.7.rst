@@ -514,6 +514,9 @@ Variable Queries
   :variable:`CMAKE_<LANG>_LINK_USING_<FEATURE>_SUPPORTED` is false,
   by :variable:`CMAKE_LINK_USING_<FEATURE>` variable.
 
+  .. include:: ../variable/LINK_LIBRARY_PREDEFINED_FEATURES.txt
+    :start-line: 3
+
   This expression can only be used to specify link libraries (i.e. part of
   :command:`link_libraries` or :command:`target_link_libraries` commands and
   :prop_tgt:`LINK_LIBRARIES` or :prop_tgt:`INTERFACE_LINK_LIBRARIES` target
@@ -538,6 +541,9 @@ Variable Queries
     add_library(lib3 ...)
     target_link_libraries(lib3 PRIVATE lib1 lib2)
     # an error will be raised here because lib1 has two different features
+
+  To resolve such incompatibilities, the :prop_tgt:`LINK_LIBRARY_OVERRIDE`
+  target property can be used.
 
   .. note::
 
