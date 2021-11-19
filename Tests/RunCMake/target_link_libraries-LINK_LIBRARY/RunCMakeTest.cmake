@@ -40,6 +40,14 @@ if (RunCMake_GENERATOR MATCHES "Makefiles|Ninja|Visual Studio|Xcode"
   run_cmake_target(LINK_LIBRARY mix-features2 LinkLibrary_mix_features2)
   run_cmake_target(LINK_LIBRARY mix-features3 LinkLibrary_mix_features3)
 
+# testing target property LINK_LIBRARY_OVERRIDE
+  run_cmake_target(LINK_LIBRARY override-features1 LinkLibrary_override_features1)
+  run_cmake_target(LINK_LIBRARY override-features2 LinkLibrary_override_features2)
+  run_cmake_target(LINK_LIBRARY override-with-STD LinkLibrary_override_with_std)
+# testing target property LINK_LIBRARY_OVERRIDE_<LIBRARY>
+  run_cmake_target(LINK_LIBRARY override-features3 LinkLibrary_override_features3)
+  run_cmake_target(LINK_LIBRARY override-features4 LinkLibrary_override_features4)
+
   unset(RunCMake_TEST_OPTIONS)
   unset(RunCMake_TEST_OUTPUT_MERGE)
 

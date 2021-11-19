@@ -21,3 +21,5 @@ for the linker language, the variable
 :variable:`CMAKE_<LANG>_LINK_USING_<FEATURE>_SUPPORTED` is false.
 
 .. include:: CMAKE_LINK_USING_FEATURE.txt
+
+.. include:: LINK_LIBRARY_PREDEFINED_FEATURES.txt

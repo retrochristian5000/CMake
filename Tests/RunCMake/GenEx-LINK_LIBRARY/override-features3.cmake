@@ -1,0 +1,7 @@
+
+include(incompatible-features1.cmake)
+
+set(CMAKE_C_LINK_USING_FEAT3_SUPPORTED TRUE)
+set(CMAKE_C_LINK_USING_FEAT3 "<LIBRARY>")
+
+set_property(TARGET lib PROPERTY LINK_LIBRARY_OVERRIDE "FEAT3,dep1")
