@@ -120,3 +120,5 @@ library specified by path and by name. This constraint by be solved by using
 
 ``CMake`` will generate the following link expression:
 ``-weak_library /path/to/lib -Xlinker -weak-lexternal``
+
+.. include:: LINK_LIBRARY_PREDEFINED_FEATURES.txt

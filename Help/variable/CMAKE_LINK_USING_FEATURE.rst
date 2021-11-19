@@ -16,3 +16,5 @@ for the linker language, the variable
 
 See :variable:`CMAKE_<LANG>_LINK_USING_<FEATURE>` for a detailed description of
 its usage and capabilities.
+
+.. include:: LINK_LIBRARY_PREDEFINED_FEATURES.txt
