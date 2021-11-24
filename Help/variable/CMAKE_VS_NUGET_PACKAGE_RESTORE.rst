@@ -1,5 +1,5 @@
 CMAKE_VS_NUGET_PACKAGE_RESTORE
-----------------------
+------------------------------
 
 .. versionadded:: 3.23
 
