@@ -1179,6 +1179,20 @@ cmGlobalVisualStudio10Generator::GenerateBuildCommand(
         }
       }
       makeCommand.Add(std::move(targetProject));
+
+      // Invoke restore target, unless it has been explicitly disabled.
+      bool restorePackages = true;
+      if (cmValue cached = this->CMakeInstance->GetState()->GetCacheEntryValue(
+            "CMAKE_VS_NUGET_PACKAGE_RESTORE")) {
+        restorePackages = cached.IsOn();
+      }
+      if (restorePackages) {
+        if (this->Version >= VS16) {
+          makeCommand.Add("/restore");
+        } else {
+          makeCommand.Add("/t:Restore");
+        }
+      }
     }
     std::string configArg = "/p:Configuration=";
     if (!config.empty()) {
