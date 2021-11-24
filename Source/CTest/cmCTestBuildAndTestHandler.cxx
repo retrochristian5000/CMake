@@ -263,10 +263,13 @@ int cmCTestBuildAndTestHandler::RunCMakeAndTest(std::string* outstring)
     if (!config) {
       config = "Debug";
     }
+
+    cmBuildOptions buildOptions(!this->BuildNoClean, false,
+                                PackageResolveMode::Disable);
     int retVal = cm.GetGlobalGenerator()->Build(
       cmake::NO_BUILD_PARALLEL_LEVEL, this->SourceDir, this->BinaryDir,
       this->BuildProject, { tar }, output, this->BuildMakeProgram, config,
-      !this->BuildNoClean, false, false, remainingTime);
+      buildOptions, false, remainingTime);
     out << output;
     // if the build failed then return
     if (retVal) {

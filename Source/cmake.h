@@ -17,6 +17,7 @@
 
 #include <cm/string_view>
 
+#include "cmBuildOptions.h"
 #include "cmGeneratedFileStream.h"
 #include "cmInstalledFile.h"
 #include "cmListFileCache.h"
@@ -583,8 +584,8 @@ public:
   //! run the --build option
   int Build(int jobs, std::string dir, std::vector<std::string> targets,
             std::string config, std::vector<std::string> nativeOptions,
-            bool clean, bool verbose, const std::string& presetName,
-            bool listPresets);
+            cmBuildOptions& buildOptions, bool verbose,
+            const std::string& presetName, bool listPresets);
 
   //! run the --open option
   bool Open(const std::string& dir, bool dryRun);
