@@ -1178,7 +1178,41 @@ cmGlobalVisualStudio10Generator::GenerateBuildCommand(
           cmSystemTools::ConvertToUnixSlashes(targetProject);
         }
       }
-      makeCommand.Add(std::move(targetProject));
+      makeCommand.Add(targetProject);
+
+      // Invoke restore target, unless it has been explicitly disabled.
+      bool restorePackages = true;
+      if (this->Version < VS15) {
+        // Package restore is only supported starting from Visual Studio 2017.
+        restorePackages = false;
+      } else if (cmValue cached =
+                   this->CMakeInstance->GetState()->GetCacheEntryValue(
+                     "CMAKE_VS_NUGET_PACKAGE_RESTORE")) {
+        restorePackages = cached.IsOn();
+      }
+      if (restorePackages) {
+        if (this->IsMsBuildRestoreSupported()) {
+          // Does not hurt to have this in, since it will no-op, if there are
+          // no package references.
+          makeCommand.Add("/restore");
+        } else {
+          // We need an additional call to msbuild, so check if we do have any
+          // package references in the first place.
+          bool requiresRestore = false;
+          if (cmValue cached =
+                this->CMakeInstance->GetState()->GetCacheEntryValue(
+                  tname + "_REQUIRES_VS_PACKAGE_RESTORE")) {
+            requiresRestore = cached.IsOn();
+          }
+          if (requiresRestore) {
+            GeneratedMakeCommand restoreCommand;
+            restoreCommand.Add(makeProgramSelected);
+            restoreCommand.Add(targetProject);
+            restoreCommand.Add("/t:Restore");
+            makeCommands.emplace_back(restoreCommand);
+          }
+        }
+      }
     }
     std::string configArg = "/p:Configuration=";
     if (!config.empty()) {
@@ -1557,6 +1591,18 @@ cmIDEFlagTable const* cmGlobalVisualStudio10Generator::GetMasmFlagTable() const
 cmIDEFlagTable const* cmGlobalVisualStudio10Generator::GetNasmFlagTable() const
 {
   return LoadFlagTable(std::string(), this->DefaultNasmFlagTableName, "NASM");
+}
+
+bool cmGlobalVisualStudio10Generator::IsMsBuildRestoreSupported() const
+{
+  if (this->Version >= VS16) {
+    return true;
+  }
+
+  static std::string const vsVer15_7_5 = "15.7.27703.2042";
+  cm::optional<std::string> vsVer = this->GetVSInstanceVersion();
+  return (vsVer &&
+          cmSystemTools::VersionCompareGreaterEq(*vsVer, vsVer15_7_5));
 }
 
 std::string cmGlobalVisualStudio10Generator::GetClFlagTableName() const

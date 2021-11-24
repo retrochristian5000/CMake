@@ -196,6 +196,9 @@ private:
   std::string GetCSharpSourceLink(cmSourceFile const* source);
 
   void WriteStdOutEncodingUtf8(Elem& e1);
+  bool GetPackageReferences(const cmGeneratorTarget* target,
+                            std::vector<std::string>& packageReferences) const;
+  void UpdateCache();
 
 private:
   friend class cmVS10GeneratorOptions;
