@@ -357,6 +357,8 @@ set(SRCS
   cmLocalCommonGenerator.h
   cmLocalGenerator.cxx
   cmLocalGenerator.h
+  cmPlaceholderExpander.cxx
+  cmPlaceholderExpander.h
   cmRulePlaceholderExpander.cxx
   cmRulePlaceholderExpander.h
   cmLocalUnixMakefileGenerator3.cxx
