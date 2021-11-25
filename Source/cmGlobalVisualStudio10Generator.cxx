@@ -1190,7 +1190,11 @@ cmGlobalVisualStudio10Generator::GenerateBuildCommand(
         if (this->Version >= VS16) {
           makeCommand.Add("/restore");
         } else {
-          makeCommand.Add("/t:Restore");
+          GeneratedMakeCommand restoreCommand;
+          restoreCommand.Add(makeProgramSelected);
+          restoreCommand.Add(std::move(cmStrCat(tname, ".vcxproj")));
+          restoreCommand.Add("/t:Restore");
+          makeCommands.emplace_back(restoreCommand);
         }
       }
     }
