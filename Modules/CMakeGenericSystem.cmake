@@ -54,6 +54,18 @@ if(CMAKE_GENERATOR MATCHES "Make")
   endif()
 endif()
 
+if(CMAKE_GENERATOR MATCHES "Ninja")
+  # Enable colored compiler diagnostics for Ninja generators by default
+  set(CMAKE_COMPILER_COLOR_DIAGNOSTICS ON CACHE BOOL "Enable/disable colored diagnostics for compilers.")
+endif()
+
+if(CMAKE_COLOR_DIAGNOSTICS)
+  set(CMAKE_COMPILER_COLOR_DIAGNOSTICS ON CACHE BOOL "Enable/disable colored diagnostics for compilers." FORCE)
+  if(CMAKE_GENERATOR MATCHES "Make")
+    set(CMAKE_COLOR_MAKEFILE ON CACHE BOOL "Enable/Disable color output during build." FORCE)
+  endif()
+endif()
+
 if(NOT DEFINED CMAKE_EXPORT_COMPILE_COMMANDS AND CMAKE_GENERATOR MATCHES "Ninja|Unix Makefiles")
   set(CMAKE_EXPORT_COMPILE_COMMANDS "$ENV{CMAKE_EXPORT_COMPILE_COMMANDS}"
     CACHE BOOL "Enable/Disable output of compile commands during generation."
