@@ -1614,6 +1614,7 @@ std::vector<BT<std::string>> cmLocalGenerator::GetTargetCompileFlags(
 
   this->AddCMP0018Flags(compileFlags, target, lang, config);
   this->AddVisibilityPresetFlags(compileFlags, target, lang);
+  this->AddColorDiagnosticsFlags(compileFlags, lang);
   this->AppendFlags(compileFlags, mf->GetDefineFlags());
   this->AppendFlags(compileFlags,
                     this->GetFrameworkFlags(lang, config, target));
@@ -2355,6 +2356,28 @@ void cmLocalGenerator::AddPositionIndependentFlags(std::string& flags,
     std::vector<std::string> options = cmExpandedList(picFlags);
     for (std::string const& o : options) {
       this->AppendFlagEscape(flags, o);
+    }
+  }
+}
+
+void cmLocalGenerator::AddColorDiagnosticsFlags(std::string& flags,
+                                                const std::string& lang)
+{
+  if (this->Makefile->IsSet("CMAKE_COMPILER_COLOR_DIAGNOSTICS")) {
+    std::string colorFlagName;
+    if (this->Makefile->IsOn("CMAKE_COMPILER_COLOR_DIAGNOSTICS")) {
+      colorFlagName =
+        cmStrCat("CMAKE_", lang, "_COMPILE_OPTIONS_COLOR_DIAGNOSTICS");
+    } else {
+      colorFlagName =
+        cmStrCat("CMAKE_", lang, "_COMPILE_OPTIONS_COLOR_DIAGNOSTICS_OFF");
+    }
+
+    std::vector<std::string> options;
+    this->Makefile->GetDefExpandList(colorFlagName, options);
+
+    for (std::string const& option : options) {
+      this->AppendFlagEscape(flags, option);
     }
   }
 }
