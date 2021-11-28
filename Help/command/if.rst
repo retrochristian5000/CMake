@@ -59,9 +59,11 @@ Basic Expressions
  constants, it is treated as a variable or string and the following
  signature is used.
 
-``if(<variable|string>)``
+``if(<variable>)``
  True if given a variable that is defined to a value that is not a false
- constant.  False otherwise.  (Note macro arguments are not variables.)
+ constant.  False otherwise.  Note that macro arguments are not variables.
+ Environment variables also cannot be tested this way, e.g.
+ ``if(ENV{some_var})`` will always evaluate to false.
 
 Logic Operators
 """""""""""""""
