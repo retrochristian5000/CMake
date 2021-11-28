@@ -241,6 +241,8 @@ static std::string computeProjectFileExtension(cmGeneratorTarget const* t)
   res = ".vcxproj";
   if (t->IsCSharpOnly()) {
     res = ".csproj";
+  } else if (t->Target->IsAllBuildTarget()) {
+    res = ".proj";
   }
   return res;
 }
@@ -338,6 +340,11 @@ std::ostream& cmVisualStudio10TargetGenerator::Elem::WriteString(
 
 void cmVisualStudio10TargetGenerator::Generate()
 {
+  if (this->GeneratorTarget->Target->IsAllBuildTarget()) {
+    this->GenerateAllBuildProject();
+    return;
+  }
+
   const std::string ProjectFileExtension =
     computeProjectFileExtension(this->GeneratorTarget);
   if (ProjectFileExtension == ".vcxproj") {
@@ -406,6 +413,7 @@ void cmVisualStudio10TargetGenerator::Generate()
   BuildFileStream.write(magic, 3);
   BuildFileStream << "<?xml version=\"1.0\" encoding=\""
                   << this->GlobalGenerator->Encoding() << "\"?>";
+
   {
     Elem e0(BuildFileStream, "Project");
     e0.Attribute("DefaultTargets", "Build");
@@ -844,6 +852,123 @@ void cmVisualStudio10TargetGenerator::Generate()
 
   // The groups are stored in a separate file for VS 10
   this->WriteGroups();
+}
+
+void cmVisualStudio10TargetGenerator::GenerateAllBuildProject()
+{
+  const std::string ProjectFileExtension =
+    computeProjectFileExtension(this->GeneratorTarget);
+
+  // Tell the global generator the name of the project file
+  this->GeneratorTarget->Target->SetProperty("GENERATOR_FILE_NAME",
+                                             this->Name);
+  this->GeneratorTarget->Target->SetProperty("GENERATOR_FILE_NAME_EXT",
+                                             ProjectFileExtension);
+
+  std::string path =
+    cmStrCat(this->LocalGenerator->GetCurrentBinaryDirectory(), '/',
+             this->Name, ProjectFileExtension);
+  cmGeneratedFileStream BuildFileStream(path);
+  const std::string PathToProjectFile = path;
+  BuildFileStream.SetCopyIfDifferent(true);
+
+  // Write the encoding header into the file
+  char magic[] = { char(0xEF), char(0xBB), char(0xBF) };
+  BuildFileStream.write(magic, 3);
+  BuildFileStream << "<?xml version=\"1.0\" encoding=\""
+                  << this->GlobalGenerator->Encoding() << "\"?>";
+
+  {
+    Elem e0(BuildFileStream, "Project");
+    e0.Attribute("DefaultTargets", "Build");
+    const char* toolsVersion = this->GlobalGenerator->GetToolsVersion();
+    e0.Attribute("ToolsVersion", toolsVersion);
+    e0.Attribute("xmlns",
+                 "http://schemas.microsoft.com/developer/msbuild/2003");
+
+    {
+      Elem e1(e0, "PropertyGroup");
+      e1.Attribute("Label", "Globals");
+      e1.Element("ProjectGuid", "{" + this->GUID + "}");
+
+      cmValue projLabel = this->GeneratorTarget->GetProperty("PROJECT_LABEL");
+      e1.Element("ProjectName", projLabel ? projLabel : this->Name);
+    }
+
+    std::string PathToProjectDeps = GetPathToDeps();
+    if (!PathToProjectDeps.empty()) {
+      Elem e1(e0, "ItemGroup");
+      {
+        Elem e2(e1, "ProjectsToBuild");
+        e2.Attribute("Include", PathToProjectDeps);
+      }
+    }
+
+    for (const char* targetName : { "Build", "Clean", "Rebuild" }) {
+      {
+        Elem e1(e0, "Target");
+        e1.Attribute("Name", targetName);
+        if (!PathToProjectDeps.empty()) {
+          Elem e2(e1, "MSBuild");
+          e2.Attribute("Projects", "@(ProjectsToBuild)");
+        }
+      }
+    }
+
+    // FIXME: remove after MSBuild issue is resolved.
+    // Workaround for https: // github.com/dotnet/msbuild/issues/4303
+    {
+      Elem e1(e0, "Target");
+      e1.Attribute("Name", "GetTargetPath");
+      e1.Attribute("Returns", "@(_FakeOutputPath)");
+      Elem e2(e1, "ItemGroup");
+      {
+        Elem e3(e2, "_FakeOutputPath");
+        e3.Attribute("Include",
+                     "$(MSBuildProjectDirectory)\\$(PackageOutputPath\\$("
+                     "AssemblyName).UNK");
+      }
+    }
+  }
+
+  if (BuildFileStream.Close()) {
+    this->GlobalGenerator->FileReplacedDuringGenerate(PathToProjectFile);
+  }
+}
+
+std::string cmVisualStudio10TargetGenerator::GetPathToDeps()
+{
+
+  std::vector<std::string> PathToDeps{};
+
+  cmGlobalGenerator::TargetDependSet const& unordered =
+    this->GlobalGenerator->GetTargetDirectDepends(this->GeneratorTarget);
+  using OrderedTargetDependSet =
+    cmGlobalVisualStudioGenerator::OrderedTargetDependSet;
+  OrderedTargetDependSet depends(unordered, CMAKE_CHECK_BUILD_SYSTEM_TARGET);
+  for (cmGeneratorTarget const* dt : depends) {
+    if (!dt->IsInBuildSystem()) {
+      continue;
+    }
+    // skip fortran targets as they can not be processed by MSBuild
+    // the only reference will be in the .sln file
+    if (this->GlobalGenerator->TargetIsFortranOnly(dt)) {
+      continue;
+    }
+    cmLocalGenerator* lg = dt->GetLocalGenerator();
+    std::string name = dt->GetName();
+    std::string path;
+    if (cmValue p = dt->GetProperty("EXTERNAL_MSPROJECT")) {
+      path = *p;
+    } else {
+      path = cmStrCat(lg->GetCurrentBinaryDirectory(), '/', dt->GetName(),
+                      computeProjectFileExtension(dt));
+    }
+    ConvertToWindowsSlash(path);
+    PathToDeps.emplace_back(path);
+  }
+
+  return cmJoin(PathToDeps, ";");
 }
 
 void cmVisualStudio10TargetGenerator::WritePackageReferences(Elem& e0)

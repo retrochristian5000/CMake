@@ -390,6 +390,14 @@ void cmGlobalVisualStudio7Generator::WriteTargetsToSolution(
     if (!target->IsInBuildSystem()) {
       continue;
     }
+
+    // Starting with VS10, ALL_BUILD is a MSBuild Project file and therefore,
+    // not included in sln file.
+    if (target->Target->IsAllBuildTarget() &&
+        this->GetVersion() >= VSVersion::VS10) {
+      continue;
+    }
+
     bool written = false;
 
     // handle external vc project files

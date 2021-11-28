@@ -1144,9 +1144,9 @@ cmGlobalVisualStudio10Generator::GenerateBuildCommand(
   }
   if (useDevEnv) {
     // Use devenv to build solutions containing Intel Fortran projects.
-    return cmGlobalVisualStudio7Generator::GenerateBuildCommand(
-      makeProgram, projectName, projectDir, targetNames, config, fast, jobs,
-      verbose, makeOptions);
+    return this->GenerateDevEnvBuildCommand(makeProgram, projectName,
+                                            projectDir, targetNames, config,
+                                            fast, jobs, verbose, makeOptions);
   }
 
   std::vector<std::string> realTargetNames = targetNames;
@@ -1170,7 +1170,9 @@ cmGlobalVisualStudio10Generator::GenerateBuildCommand(
       makeCommand.Add(std::string(projectName) + ".sln");
       makeCommand.Add("/t:Clean");
     } else {
-      std::string targetProject = cmStrCat(tname, ".vcxproj");
+      std::string targetProject = (tname == "ALL_BUILD")
+        ? cmStrCat(tname, ".proj")
+        : cmStrCat(tname, ".vcxproj");
       if (targetProject.find('/') == std::string::npos) {
         // it might be in a subdir
         if (cmSlnProjectEntry const* proj = slnData.GetProjectByName(tname)) {
@@ -1204,6 +1206,61 @@ cmGlobalVisualStudio10Generator::GenerateBuildCommand(
     // Respect the verbosity: 'n' normal will show build commands
     //                        'm' minimal only the build step's title
     makeCommand.Add(std::string("/v:") + ((verbose) ? "n" : "m"));
+    makeCommand.Add(makeOptions.begin(), makeOptions.end());
+    makeCommands.emplace_back(std::move(makeCommand));
+  }
+  return makeCommands;
+}
+
+std::vector<cmGlobalGenerator::GeneratedMakeCommand>
+cmGlobalVisualStudio10Generator::GenerateDevEnvBuildCommand(
+  const std::string& makeProgram, const std::string& projectName,
+  const std::string& projectDir, std::vector<std::string> const& targetNames,
+  const std::string& config, bool fast, int jobs, bool verbose,
+  std::vector<std::string> const& makeOptions)
+{
+  const std::string makeProgramSelected = this->GetDevEnvCommand();
+
+  std::vector<GeneratedMakeCommand> makeCommands;
+
+  std::vector<std::string> realTargetNames = targetNames;
+
+  if (targetNames.empty() ||
+      ((targetNames.size() == 1) && targetNames.front().empty())) {
+    realTargetNames = { "ALL_BUILD" };
+  } else if (const auto locationOfInstall =
+               std::find_if(realTargetNames.cbegin(), realTargetNames.cend(),
+                            [](const std::string& realTargetName) {
+                              return realTargetName == "install" ||
+                                realTargetName == "INSTALL";
+                            });
+             locationOfInstall != realTargetNames.cend()) {
+    realTargetNames.insert(locationOfInstall, "ALL_BUILD");
+  }
+
+  for (const auto& tname : realTargetNames) {
+    std::string realTarget;
+    if (!tname.empty()) {
+      realTarget = tname;
+    } else {
+      continue;
+    }
+    bool clean = false;
+    if (realTarget == "clean") {
+      clean = true;
+      realTarget = "ALL_BUILD";
+    }
+    GeneratedMakeCommand makeCommand;
+    makeCommand.Add(makeProgramSelected);
+    makeCommand.Add(projectName + ".sln");
+    makeCommand.Add((clean ? "/clean" : "/build"));
+    makeCommand.Add((config.empty() ? "Debug" : config));
+
+    if (realTarget != "ALL_BUILD") {
+      makeCommand.Add("/project");
+      makeCommand.Add(realTarget);
+    }
+
     makeCommand.Add(makeOptions.begin(), makeOptions.end());
     makeCommands.emplace_back(std::move(makeCommand));
   }

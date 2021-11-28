@@ -18,6 +18,7 @@
 class cmComputeLinkInformation;
 class cmCustomCommand;
 class cmCustomCommandGenerator;
+class cmGeneratedFileStream;
 class cmGlobalVisualStudio10Generator;
 class cmLocalVisualStudio10Generator;
 class cmMakefile;
@@ -38,6 +39,8 @@ public:
     cmVisualStudio10TargetGenerator const&) = delete;
 
   void Generate();
+  void GenerateAllBuildProject();
+  std::string GetPathToDeps();
 
 private:
   struct ToolSource

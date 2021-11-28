@@ -291,4 +291,12 @@ private:
 
   // We do not use the reload macros for VS >= 10.
   std::string GetUserMacrosDirectory() override { return ""; }
+
+  // Moving generating DevEnv Build command to VS10 generator given the
+  // differences in behavior caused by moving to ALL_BUILD.proj.
+  std::vector<GeneratedMakeCommand> GenerateDevEnvBuildCommand(
+    const std::string& makeProgram, const std::string& projectName,
+    const std::string& projectDir, std::vector<std::string> const& targetNames,
+    const std::string& config, bool fast, int jobs, bool verbose,
+    std::vector<std::string> const& makeOptions = std::vector<std::string>());
 };

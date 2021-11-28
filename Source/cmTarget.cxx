@@ -2109,6 +2109,11 @@ bool cmTarget::CanCompileSources() const
   return false;
 }
 
+bool cmTarget::IsAllBuildTarget() const
+{
+  return cmStrCmp{ "ALL_BUILD" }(this->impl->Name);
+}
+
 const char* cmTarget::GetSuffixVariableInternal(
   cmStateEnums::ArtifactType artifact) const
 {

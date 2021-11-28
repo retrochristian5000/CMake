@@ -1,4 +1,4 @@
-file(READ "${RunCMake_TEST_BINARY_DIR}/ALL_BUILD.vcxproj" all_build)
+file(READ "${RunCMake_TEST_BINARY_DIR}/ALL_BUILD.proj" all_build)
 
 macro(project_reference EXTERNAL_PROJECT)
   string(REGEX MATCH
