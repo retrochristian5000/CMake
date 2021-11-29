@@ -225,11 +225,16 @@ Hints
 ``Python3_ROOT_DIR``
   Define the root directory of a Python 3 installation.
 
-``Python3_USE_STATIC_LIBS``
+``Python3_FIND_STATIC_LIBS``
   * If not defined, search for shared libraries and static libraries in that
     order.
   * If set to TRUE, search **only** for static libraries.
   * If set to FALSE, search **only** for shared libraries.
+
+  .. note::
+
+    This hint will be ignored on ``Windows`` because static libraries are not
+    available on this platform.
 
 ``Python3_FIND_ABI``
   .. versionadded:: 3.16
