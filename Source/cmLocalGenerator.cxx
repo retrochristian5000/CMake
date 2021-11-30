@@ -351,11 +351,10 @@ void cmLocalGenerator::GenerateTestFiles()
   using vec_t = std::vector<cmStateSnapshot>;
   vec_t const& children = this->Makefile->GetStateSnapshot().GetChildren();
   for (cmStateSnapshot const& i : children) {
-    // TODO: Use add_subdirectory instead?
     std::string outP = i.GetDirectory().GetCurrentBinary();
     outP = this->MaybeRelativeToCurBinDir(outP);
     outP = cmOutputConverter::EscapeForCMake(outP);
-    fout << "subdirs(" << outP << ")\n";
+    fout << "add_subdirectory(" << outP << ")\n";
   }
 
   // Add directory labels property
