@@ -863,6 +863,35 @@ void cmVisualStudio10TargetGenerator::WritePackageReferences(Elem& e0)
         e2.Attribute("Version", ri.substr(versionIndex + 1));
       }
     }
+
+    // Store a cache entry that later determines, if a package restore is
+    // required.
+    this->GeneratorTarget->Makefile->AddCacheDefinition(
+      this->GeneratorTarget->GetName() + "_REQUIRES_VS_PACKAGE_RESTORE", "ON",
+      "Value Computed by CMake", cmStateEnums::STATIC);
+  } else {
+    // If there are any dependencies that require package restore, inherit the
+    // cache variable.
+    cmGlobalGenerator::TargetDependSet const& unordered =
+      this->GlobalGenerator->GetTargetDirectDepends(this->GeneratorTarget);
+    using OrderedTargetDependSet =
+      cmGlobalVisualStudioGenerator::OrderedTargetDependSet;
+    OrderedTargetDependSet depends(unordered, CMAKE_CHECK_BUILD_SYSTEM_TARGET);
+
+    for (cmGeneratorTarget const* dt : depends) {
+      if (!dt->IsInBuildSystem()) {
+        continue;
+      }
+      if (cmValue vsPackageReferences =
+            dt->GetProperty("VS_PACKAGE_REFERENCES")) {
+        cmExpandList(*vsPackageReferences, packageReferences);
+      }
+      if (!packageReferences.empty()) {
+        this->GeneratorTarget->Makefile->AddCacheDefinition(
+          this->GeneratorTarget->GetName() + "_REQUIRES_VS_PACKAGE_RESTORE",
+          "ON", "Value Computed by CMake", cmStateEnums::STATIC);
+      }
+    }
   }
 }
 
