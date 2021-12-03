@@ -402,6 +402,19 @@ void cmVisualStudio10TargetGenerator::Generate()
   const std::string PathToProjectFile = path;
   BuildFileStream.SetCopyIfDifferent(true);
 
+  this->WriteClassicMsBuildProjectFile(BuildFileStream);
+
+  if (BuildFileStream.Close()) {
+    this->GlobalGenerator->FileReplacedDuringGenerate(PathToProjectFile);
+  }
+
+  // The groups are stored in a separate file for VS 10
+  this->WriteGroups();
+}
+
+void cmVisualStudio10TargetGenerator::WriteClassicMsBuildProjectFile(
+  cmGeneratedFileStream& BuildFileStream)
+{
   // Write the encoding header into the file
   char magic[] = { char(0xEF), char(0xBB), char(0xBF) };
   BuildFileStream.write(magic, 3);
@@ -839,13 +852,6 @@ void cmVisualStudio10TargetGenerator::Generate()
       }
     }
   }
-
-  if (BuildFileStream.Close()) {
-    this->GlobalGenerator->FileReplacedDuringGenerate(PathToProjectFile);
-  }
-
-  // The groups are stored in a separate file for VS 10
-  this->WriteGroups();
 }
 
 void cmVisualStudio10TargetGenerator::WritePackageReferences(Elem& e0)
