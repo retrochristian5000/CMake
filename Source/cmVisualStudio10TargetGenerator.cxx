@@ -406,7 +406,13 @@ void cmVisualStudio10TargetGenerator::Generate()
   char magic[] = { char(0xEF), char(0xBB), char(0xBF) };
   BuildFileStream.write(magic, 3);
 
-  this->WriteClassicMsBuildProjectFile(BuildFileStream);
+  if (this->Managed && this->GeneratorTarget->IsDotNetSdkTarget() &&
+      this->GlobalGenerator->GetVersion() >=
+        cmGlobalVisualStudioGenerator::VS16) {
+    this->WriteSdkStyleProjectFile(BuildFileStream);
+  } else {
+    this->WriteClassicMsBuildProjectFile(BuildFileStream);
+  }
 
   if (BuildFileStream.Close()) {
     this->GlobalGenerator->FileReplacedDuringGenerate(PathToProjectFile);
@@ -459,6 +465,13 @@ void cmVisualStudio10TargetGenerator::WriteClassicMsBuildProjectFile(
           this->GlobalGenerator->GetPlatformToolsetHostArchitecture()) {
       Elem e1(e0, "PropertyGroup");
       e1.Element("PreferredToolArchitecture", hostArch);
+    }
+
+    std::string_view targetName{ this->GeneratorTarget->Target->GetName() };
+    if (targetName == "ALL_BUILD" ||
+        targetName == CMAKE_CHECK_BUILD_SYSTEM_TARGET) {
+      Elem e1(e0, "PropertyGroup");
+      e1.Element("ResolveNugetPackages", "false");
     }
 
     if (this->ProjectType != VsProjectType::csproj) {
@@ -806,6 +819,86 @@ void cmVisualStudio10TargetGenerator::WriteClassicMsBuildProjectFile(
       }
     }
   }
+}
+
+void cmVisualStudio10TargetGenerator::WriteSdkStyleProjectFile(
+  cmGeneratedFileStream& BuildFileStream)
+{
+  if (!this->Managed || !this->GeneratorTarget->IsDotNetSdkTarget()) {
+    std::string message = "The target \"" + this->GeneratorTarget->GetName() +
+      "\" is not eligible for .Net SDK style project.";
+    this->Makefile->IssueMessage(MessageType::INTERNAL_ERROR, message);
+  }
+
+  Elem e0(BuildFileStream, "Project");
+  e0.Attribute("Sdk", *this->GeneratorTarget->GetProperty("DOTNET_SDK"));
+
+  {
+    Elem e1(e0, "PropertyGroup");
+    this->WriteCommonPropertyGroupGlobals(e1);
+
+    e1.Element("EnableDefaultItems", "false");
+    // Disable the project upgrade prompt that is displayed the first time a
+    // project using an older toolset version is opened in a newer version
+    // of the IDE.
+    e1.Element("VCProjectUpgraderObjectName", "NoUpgrade");
+    e1.Element("ManagedAssembly", "true");
+
+    cmValue targetFramework =
+      this->GeneratorTarget->GetProperty("DOTNET_TARGET_FRAMEWORK");
+    if (targetFramework) {
+      if (targetFramework->find(';') != std::string::npos) {
+        e1.Element("TargetFrameworks", *targetFramework);
+      } else {
+        e1.Element("TargetFramework", *targetFramework);
+      }
+    } else {
+      e1.Element("TargetFramework", "net5.0");
+    }
+
+    std::string outputType;
+    switch (this->GeneratorTarget->GetType()) {
+      case cmStateEnums::OBJECT_LIBRARY:
+      case cmStateEnums::STATIC_LIBRARY:
+      case cmStateEnums::MODULE_LIBRARY:
+        this->Makefile->IssueMessage(
+          MessageType::FATAL_ERROR,
+          cmStrCat("Target \"", this->GeneratorTarget->GetName(),
+                   "\" is of a type not supported for managed binaries."));
+        return;
+      case cmStateEnums::SHARED_LIBRARY:
+        outputType = "Library";
+        break;
+      case cmStateEnums::EXECUTABLE: {
+        auto const win32 =
+          this->GeneratorTarget->GetSafeProperty("WIN32_EXECUTABLE");
+        if (win32.find("$<") != std::string::npos) {
+          this->Makefile->IssueMessage(
+            MessageType::FATAL_ERROR,
+            cmStrCat("Target \"", this->GeneratorTarget->GetName(),
+                     "\" has a generator expression in its WIN32_EXECUTABLE "
+                     "property. This is not supported on managed "
+                     "executables."));
+          return;
+        }
+        outputType = "Exe";
+      } break;
+      case cmStateEnums::UTILITY:
+      case cmStateEnums::INTERFACE_LIBRARY:
+      case cmStateEnums::GLOBAL_TARGET:
+        outputType = "Utility";
+        break;
+      case cmStateEnums::UNKNOWN_LIBRARY:
+        break;
+    }
+    e1.Element("OutputType", outputType);
+  }
+
+  this->WriteDotNetDocumentationFile(e0);
+  this->WriteCustomCommands(e0);
+  this->WriteAllSources(e0);
+  this->WritePackageReferences(e0);
+  this->WriteProjectReferences(e0);
 }
 
 void cmVisualStudio10TargetGenerator::WriteCommonPropertyGroupGlobals(Elem& e1)
