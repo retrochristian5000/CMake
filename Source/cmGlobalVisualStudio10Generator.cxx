@@ -1154,6 +1154,10 @@ cmGlobalVisualStudio10Generator::GenerateBuildCommand(
       ((targetNames.size() == 1) && targetNames.front().empty())) {
     realTargetNames = { "ALL_BUILD" };
   }
+
+  bool ShouldRestore = (this->GetVersion() >= VSVersion::VS16) &&
+    (std::find(realTargetNames.cbegin(), realTargetNames.cend(), "clean") ==
+     realTargetNames.cend());
   for (const auto& tname : realTargetNames) {
     // msbuild.exe CxxOnly.sln /t:Build /p:Configuration=Debug
     // /target:ALL_BUILD
@@ -1170,6 +1174,10 @@ cmGlobalVisualStudio10Generator::GenerateBuildCommand(
       makeCommand.Add(std::string(projectName) + ".sln");
       makeCommand.Add("/t:Clean");
     } else {
+      if (ShouldRestore) {
+        makeCommand.Add("/t:restore");
+        makeCommand.Add("/t:build");
+      }
       std::string targetProject = cmStrCat(tname, ".vcxproj");
       if (targetProject.find('/') == std::string::npos) {
         // it might be in a subdir

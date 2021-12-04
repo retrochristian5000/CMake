@@ -263,6 +263,7 @@ private:
 
   // .Net SDK-stype project variable and helper functions
   void WriteClassicMsBuildProjectFile(cmGeneratedFileStream& BuildFileStream);
+  void WriteSdkStyleProjectFile(cmGeneratedFileStream& BuildFileStream);
 
   std::unordered_map<std::string, ConfigToSettings> ParsedToolTargetSettings;
   bool PropertyIsSameInAllConfigs(const ConfigToSettings& toolSettings,

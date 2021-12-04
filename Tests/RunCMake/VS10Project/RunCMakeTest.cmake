@@ -83,3 +83,7 @@ endif()
 
 run_cmake(VsDotnetTargetFramework)
 run_cmake(VsDotnetTargetFrameworkVersion)
+
+if(RunCMake_GENERATOR MATCHES "Visual Studio 1[6-7]*")
+  run_cmake(VsDotnetSdk)
+endif()
