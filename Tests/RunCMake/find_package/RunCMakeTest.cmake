@@ -49,3 +49,6 @@ if(UNIX
     )
   run_cmake(SetFoundResolved)
 endif()
+
+run_cmake_with_options(MissingConfigDebugPkg --debug-find-pkg=NotHere)
+run_cmake_with_options(FromPathEnvDebugPkg --debug-find-pkg=Resolved)
