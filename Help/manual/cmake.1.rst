@@ -242,13 +242,22 @@ Options
  Print extra information during the cmake run like stack traces with
  :command:`message(SEND_ERROR)` calls.
 
-``--debug-find``
- Put cmake find commands in a debug mode.
+``--debug-find[=<pkg>,...]``
+ Put cmake find commands in a debug mode
 
  Print extra find call information during the cmake run to standard
  error. Output is designed for human consumption and not for parsing.
  See also the :variable:`CMAKE_FIND_DEBUG_MODE` variable for debugging
- a more local part of the project.
+ a more local part of the project. Optionally specify a comma separated
+ list of case sensitive package names to scope find package commands in
+ a debug mode.
+
+``--debug-find-var=<vars>,...``
+  Put cmake find commands specifiying var as the return variable into a
+  debug mode
+
+ Like ``--debug-find``, but limiting scope to useages with
+ specified variable names.
 
 ``--trace``
  Put cmake in trace mode.
