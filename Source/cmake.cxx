@@ -932,7 +932,6 @@ void cmake::SetArgs(const std::vector<std::string>& args)
     CommandArgument{ "--log-level", "Invalid level specified for --log-level",
                      CommandArgument::Values::One,
                      [](std::string const& value, cmake* state) -> bool {
-                       std::cout << value << std::endl;
                        const auto logLevel = StringToLogLevel(value);
                        if (logLevel == LogLevel::LOG_UNDEFINED) {
                          cmSystemTools::Error(
@@ -967,30 +966,23 @@ void cmake::SetArgs(const std::vector<std::string>& args)
                      } },
     CommandArgument{
       "--debug-find", CommandArgument::Values::Zero,
-      [](std::string const& value, cmake* state) -> bool {
+      [](std::string const&, cmake* state) -> bool {
         std::cout << "Running with debug output on for the `find` commands.\n";
         state->SetDebugFindOutput(true);
         return true;
       } },
     CommandArgument{
-      "--debug-find-pkg", CommandArgument::Values::One,
-      CommandArgument::RequiresSeparator::Yes,
+      "--debug-find-pkg", "Provide a package argument for --debug-find-pkg",
+      CommandArgument::Values::One, CommandArgument::RequiresSeparator::Yes,
       [](std::string const& value, cmake* state) -> bool {
-        if (value.empty()) {
-          cmSystemTools::Error(
-            "Invalid argument specified for --debug-find-pkg. "
-            "Please provide package argument");
-          return false;
-        } else {
-          std::vector<std::string> find_pkgs(cmTokenize(value, ","));
-          std::cout << "Running with debug output on for the 'find' commands "
-                       "for package(s)";
-          for (auto const& v : find_pkgs) {
-            std::cout << " " << v;
-            state->SetDebugFindOutputPkgs(v);
-          }
-          std::cout << ".\n";
+        std::vector<std::string> find_pkgs(cmTokenize(value, ","));
+        std::cout << "Running with debug output on for the 'find' commands "
+                     "for package(s)";
+        for (auto const& v : find_pkgs) {
+          std::cout << " " << v;
+          state->SetDebugFindOutputPkgs(v);
         }
+        std::cout << ".\n";
         return true;
       } },
     CommandArgument{

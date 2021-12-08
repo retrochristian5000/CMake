@@ -90,12 +90,10 @@ const char* cmDocumentationOptions[][2] = {
     "useful on one try_compile at a time." },
   { "--debug-output", "Put cmake in a debug mode." },
   { "--debug-find", "Put cmake find in a debug mode." },
-  { "--debug-find-pkg=<PackageName>,..]",
-    "Put cmake find in a debug mode"
-    "limited in scope to comma separated list of packages" },
+  { "--debug-find-pkg=<pkg-name>,..",
+    "Limit cmake debug-find to the comma separated list of packages" },
   { "--debug-find-var=<var-name>",
-    "Put cmake find in debug mode for calls using <var-name> result "
-    "variable" },
+    "Limit cmake debug-find to the comma separated list of result variables" },
   { "--trace", "Put cmake in trace mode." },
   { "--trace-expand", "Put cmake in trace mode with variable expansion." },
   { "--trace-format=<human|json-v1>", "Set the output format of the trace." },
