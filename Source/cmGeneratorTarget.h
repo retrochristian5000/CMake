@@ -237,14 +237,20 @@ public:
                             cmOptionalLinkInterface& iface,
                             const cmGeneratorTarget* head) const;
 
+  enum class RequirementsFor
+  {
+    Usage,
+    Link,
+  };
+
   cmLinkInterfaceLibraries const* GetLinkInterfaceLibraries(
     const std::string& config, const cmGeneratorTarget* headTarget,
-    bool usage_requirements_only) const;
+    RequirementsFor requirementsFor) const;
 
   void ComputeLinkInterfaceLibraries(const std::string& config,
                                      cmOptionalLinkInterface& iface,
                                      const cmGeneratorTarget* head,
-                                     bool usage_requirements_only) const;
+                                     RequirementsFor requirementsFor) const;
 
   /** Get the library name for an imported interface library.  */
   std::string GetImportedLibName(std::string const& config) const;
@@ -781,7 +787,7 @@ public:
   std::string EvaluateInterfaceProperty(
     std::string const& prop, cmGeneratorExpressionContext* context,
     cmGeneratorExpressionDAGChecker* dagCheckerParent,
-    bool usage_requirements_only = true) const;
+    RequirementsFor requirementsFor = RequirementsFor::Usage) const;
 
   bool HaveInstallTreeRPATH(const std::string& config) const;
 
@@ -992,10 +998,9 @@ private:
       the link dependencies of this target.  */
   std::string CheckCMP0004(std::string const& item) const;
 
-  cmLinkInterface const* GetImportLinkInterface(const std::string& config,
-                                                const cmGeneratorTarget* head,
-                                                bool usage_requirements_only,
-                                                bool secondPass = false) const;
+  cmLinkInterface const* GetImportLinkInterface(
+    const std::string& config, const cmGeneratorTarget* head,
+    RequirementsFor requirementsFor, bool secondPass = false) const;
 
   using KindedSourcesMapType = std::map<std::string, KindedSources>;
   mutable KindedSourcesMapType KindedSourcesMap;
@@ -1008,7 +1013,7 @@ private:
   mutable std::unordered_map<std::string, bool> MaybeInterfacePropertyExists;
   bool MaybeHaveInterfaceProperty(std::string const& prop,
                                   cmGeneratorExpressionContext* context,
-                                  bool usage_requirements_only) const;
+                                  RequirementsFor requirementsFor) const;
 
   using TargetPropertyEntryVector =
     std::vector<std::unique_ptr<TargetPropertyEntry>>;
@@ -1042,7 +1047,7 @@ private:
   void ExpandLinkItems(std::string const& prop, std::string const& value,
                        std::string const& config,
                        const cmGeneratorTarget* headTarget,
-                       bool usage_requirements_only,
+                       RequirementsFor requirementsFor,
                        cmLinkInterface& iface) const;
 
   struct LookupLinkItemScope
