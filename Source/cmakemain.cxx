@@ -89,9 +89,10 @@ const char* cmDocumentationOptions[][2] = {
     "Do not delete the try_compile build tree. Only "
     "useful on one try_compile at a time." },
   { "--debug-output", "Put cmake in a debug mode." },
-  { "--debug-find[=<PackageName>,..]",
-    "Put cmake find in a debug mode."
-    "Optionally limit scope to comma separated list of packages" },
+  { "--debug-find", "Put cmake find in a debug mode." },
+  { "--debug-find-pkg=<PackageName>,..]",
+    "Put cmake find in a debug mode"
+    "limited in scope to comma separated list of packages" },
   { "--debug-find-var=<var-name>",
     "Put cmake find in debug mode for calls using <var-name> result "
     "variable" },
