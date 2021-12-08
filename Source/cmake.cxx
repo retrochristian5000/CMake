@@ -967,7 +967,7 @@ void cmake::SetArgs(const std::vector<std::string>& args)
                      } },
     CommandArgument{
       "--debug-find", CommandArgument::Values::Zero,
-      [](std::string const& value, cmake* state) -> bool {
+      [](std::string const&, cmake* state) -> bool {
         std::cout << "Running with debug output on for the `find` commands.\n";
         state->SetDebugFindOutput(true);
         return true;
