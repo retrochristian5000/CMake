@@ -1,3 +1,4 @@
+cmake_policy(SET CMP0053 NEW)
 cmake_policy(SET CMP0057 NEW)
 
 include(RunCMake)
@@ -83,3 +84,9 @@ endif()
 
 run_cmake(VsDotnetTargetFramework)
 run_cmake(VsDotnetTargetFrameworkVersion)
+
+if(RunCMake_GENERATOR MATCHES "^Visual Studio (1[6-9]|[2-9])")
+  run_cmake(VsDotnetSdk)
+  run_cmake(VsDotnetSdkCustomCommandsTarget)
+  run_cmake(VsDotnetSdkCustomCommandsSource)
+endif()

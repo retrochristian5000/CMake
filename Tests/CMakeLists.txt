@@ -470,6 +470,20 @@ if(BUILD_TESTING)
       )
   endif()
 
+  if(${CMAKE_GENERATOR} MATCHES "^Visual Studio (1[6-9]|[2-9])")
+    add_test(DotNetSdkConfigure ${CMAKE_CMAKE_COMMAND}
+      -S "${CMake_SOURCE_DIR}/Tests/DotNetSdk"
+      -B "${CMake_BINARY_DIR}/Tests/DotNetSdk"
+      -G ${CMAKE_GENERATOR}
+      -T ${CMAKE_GENERATOR_TOOLSET}
+      -A ${CMAKE_GENERATOR_PLATFORM})
+    set_tests_properties(DotNetSdkConfigure PROPERTIES FIXTURES_SETUP DotNetSdkProj)
+    add_test(DotNetSdkBuild ${CMAKE_CMAKE_COMMAND}
+      --build "${CMake_BINARY_DIR}/Tests/DotNetSdk"
+      -- /restore)
+    set_tests_properties(DotNetSdkBuild PROPERTIES FIXTURES_REQUIRED DotNetSdkProj)
+  endif()
+
   ADD_TEST_MACRO(COnly COnly)
   ADD_TEST_MACRO(CxxOnly CxxOnly)
   ADD_TEST_MACRO(CxxSubdirC CxxSubdirC)
