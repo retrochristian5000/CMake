@@ -82,10 +82,11 @@ if(NOT CMAKE_CUDA_COMPILER_ID_RUN)
       message(FATAL_ERROR "Clang with CUDA is not yet supported on Windows. See CMake issue #20776.")
     endif()
 
-    # Find the CUDA toolkit. We store the CMAKE_CUDA_COMPILER_TOOLKIT_ROOT and CMAKE_CUDA_COMPILER_LIBRARY_ROOT
-    # in CMakeCUDACompiler.cmake, so FindCUDAToolkit can avoid searching on future runs and the toolkit stays the same.
+    # Find the CUDA toolkit. We store the CMAKE_CUDA_COMPILER_TOOLKIT_ROOT, CMAKE_CUDA_COMPILER_TOOLKIT_VERSION and
+    # CMAKE_CUDA_COMPILER_LIBRARY_ROOT in CMakeCUDACompiler.cmake so FindCUDAToolkit can avoid searching on future
+    # runs and the toolkit is the same.
     # This is very similar to FindCUDAToolkit, but somewhat simplified since we can issue fatal errors
-    # if we fail to find things we need and we don't need to account for searching the libraries.
+    # if we fail and we don't need to account for searching the libraries.
 
     # For NVCC we can easily deduce the SDK binary directory from the compiler path.
     if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
@@ -183,6 +184,10 @@ if(NOT CMAKE_CUDA_COMPILER_ID_RUN)
           message(FATAL_ERROR "Failed to find nvcc.\nCompiler ${CMAKE_CUDA_COMPILER_ID} requires the CUDA toolkit. Please set the CUDAToolkit_ROOT variable.")
         endif()
       endif()
+
+      # For nvcc and Visual Studio the default compiler ID output from vendor detection suffices to detect the toolkit version.
+      # For Clang we need to invoke nvcc by itself.
+      execute_process(COMMAND ${_CUDA_NVCC_EXECUTABLE} "--version" OUTPUT_VARIABLE CMAKE_CUDA_COMPILER_ID_OUTPUT)
     endif()
 
     # Given that NVCC can be provided by multiple different sources (NVIDIA HPC SDK, CUDA Toolkit, distro)
@@ -241,6 +246,10 @@ if(NOT CMAKE_CUDA_COMPILER_ID_RUN)
     endif()
   endif()
 
+  if(CMAKE_CUDA_COMPILER_ID_OUTPUT MATCHES [=[V([0-9]+\.[0-9]+\.[0-9]+)]=])
+    set(CMAKE_CUDA_COMPILER_TOOLKIT_VERSION "${CMAKE_MATCH_1}")
+  endif()
+
   set(CMAKE_CUDA_COMPILER_ID_FLAGS_ALWAYS "-v")
 
   if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
@@ -260,27 +269,53 @@ if(NOT CMAKE_CUDA_COMPILER_ID_RUN)
     endif()
   endif()
 
-  # Append user-specified architectures.
-  if(CMAKE_CUDA_ARCHITECTURES)
-    if("x${CMAKE_CUDA_ARCHITECTURES}" STREQUAL "xall")
-      string(APPEND nvcc_test_flags " -arch=all")
-      set(architectures_mode all)
-    elseif("x${CMAKE_CUDA_ARCHITECTURES}" STREQUAL "xall-major")
-      string(APPEND nvcc_test_flags " -arch=all-major")
-      set(architectures_mode all-major)
-    else()
-      set(architectures_mode explicit)
-      foreach(arch ${CMAKE_CUDA_ARCHITECTURES})
-        # Strip specifiers as PTX vs binary doesn't matter.
-        string(REGEX MATCH "[0-9]+" arch_name "${arch}")
-        string(APPEND clang_test_flags " --cuda-gpu-arch=sm_${arch_name}")
-        string(APPEND nvcc_test_flags " -gencode=arch=compute_${arch_name},code=sm_${arch_name}")
-        list(APPEND tested_architectures "${arch_name}")
-      endforeach()
-    endif()
+  # Architectures support.
+  if("x${CMAKE_CUDA_ARCHITECTURES}" STREQUAL "xall")
+    set(architectures_mode all)
+  elseif("x${CMAKE_CUDA_ARCHITECTURES}" STREQUAL "xall-major")
+    set(architectures_mode all-major)
+  else()
+    set(architectures_mode explicit)
+    set(test_architectures ${CMAKE_CUDA_ARCHITECTURES})
+  endif()
 
-    # If the user has specified architectures we'll want to fail during compiler detection if they don't work.
-    set(CMAKE_CUDA_COMPILER_ID_REQUIRE_SUCCESS ON)
+  # For sufficiently new NVCC we can just use flags all and all-major.
+  # For others we need to use our hardcoded list.
+  if(NOT "x${architectures_mode}" STREQUAL "xexplicit")
+    include(${CMAKE_ROOT}/Modules/CUDA/architectures.cmake)
+  endif()
+
+  if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA" AND CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 11.5)
+    if("x${architectures_mode}" STREQUAL "xall")
+      string(APPEND nvcc_test_flags " -arch=all")
+    elseif("x${architectures_mode}" STREQUAL "xall-major")
+      string(APPEND nvcc_test_flags " -arch=all-major")
+    endif()
+  else()
+    # Generic implementation uses a hardcoded list.
+    include(${CMAKE_ROOT}/Modules/CUDA/architectures.cmake)
+
+    if("x${architectures_mode}" STREQUAL "xall")
+      set(test_architectures "${CMAKE_CUDA_ARCHITECTURES_ALL}")
+    elseif("x${architectures_mode}" STREQUAL "xall-major")
+      set(test_architectures "${CMAKE_CUDA_ARCHITECTURES_ALL_MAJOR}")
+    endif()
+  endif()
+
+  foreach(arch ${test_architectures})
+    # Strip specifiers as PTX vs binary doesn't matter.
+    string(REGEX MATCH "[0-9]+" arch_name "${arch}")
+    string(APPEND clang_test_flags " --cuda-gpu-arch=sm_${arch_name}")
+    string(APPEND nvcc_test_flags " -gencode=arch=compute_${arch_name},code=sm_${arch_name}")
+    list(APPEND tested_architectures "${arch_name}")
+  endforeach()
+
+  # We overwrote CMAKE_CUDA_ARCHITECTURES for constructing flags for all and all-major.
+  # Return it to the actual value and prepare the error for when the architectures don't work.
+  if(NOT "x${architectures_mode}" STREQUAL "xexplicit")
+    set(architectures_error "${architectures_mode} (${CMAKE_CUDA_ARCHITECTURES})")
+  else()
+    set(architectures_error "${CMAKE_CUDA_ARCHITECTURES}")
   endif()
 
   if(CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
@@ -610,18 +645,7 @@ if(DEFINED detected_architecture AND "${CMAKE_CUDA_ARCHITECTURES}" STREQUAL "")
   if(NOT CMAKE_CUDA_ARCHITECTURES)
     message(FATAL_ERROR "Failed to find a working CUDA architecture.")
   endif()
-elseif(architectures AND (architectures_mode STREQUAL "xall" OR
-                          architectures_mode STREQUAL "xall-major"))
-  if(NOT CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
-    message(FATAL_ERROR
-      "The CMAKE_CUDA_ARCHITECTURES:\n"
-      "  ${CMAKE_CUDA_ARCHITECTURES}\n"
-      "is not supported with the ${CMAKE_CUDA_COMPILER_ID} compiler.  Try:\n"
-      "  ${architectures}\n"
-      "instead.")
-  endif()
-
-elseif(architectures AND architectures_mode STREQUAL "xexplicit")
+elseif(architectures)
   # Sort since order mustn't matter.
   list(SORT architectures)
   list(SORT tested_architectures)
@@ -634,7 +658,7 @@ elseif(architectures AND architectures_mode STREQUAL "xexplicit")
   if(NOT "${architectures}" STREQUAL "${tested_architectures}")
     message(FATAL_ERROR
       "The CMAKE_CUDA_ARCHITECTURES:\n"
-      "  ${CMAKE_CUDA_ARCHITECTURES}\n"
+      "  ${architectures_error}\n"
       "do not all work with this compiler.  Try:\n"
       "  ${architectures}\n"
       "instead.")
