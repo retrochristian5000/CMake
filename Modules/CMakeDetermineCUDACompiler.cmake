@@ -610,8 +610,8 @@ if(DEFINED detected_architecture AND "${CMAKE_CUDA_ARCHITECTURES}" STREQUAL "")
   if(NOT CMAKE_CUDA_ARCHITECTURES)
     message(FATAL_ERROR "Failed to find a working CUDA architecture.")
   endif()
-elseif(architectures AND (architectures_mode STREQUAL "xall" OR
-                          architectures_mode STREQUAL "xall-major"))
+elseif(architectures AND ("x${architectures_mode}" STREQUAL "xall" OR
+                          "x${architectures_mode}" STREQUAL "xall-major"))
   if(NOT CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
     message(FATAL_ERROR
       "The CMAKE_CUDA_ARCHITECTURES:\n"
@@ -620,8 +620,7 @@ elseif(architectures AND (architectures_mode STREQUAL "xall" OR
       "  ${architectures}\n"
       "instead.")
   endif()
-
-elseif(architectures AND architectures_mode STREQUAL "xexplicit")
+elseif(architectures AND "x${architectures_mode}" STREQUAL "xexplicit")
   # Sort since order mustn't matter.
   list(SORT architectures)
   list(SORT tested_architectures)
