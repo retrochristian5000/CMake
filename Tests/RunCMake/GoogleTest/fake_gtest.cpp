@@ -1,3 +1,4 @@
+#include <array>
 #include <iostream>
 #include <string>
 
@@ -16,11 +17,14 @@ int main(int argc, char** argv)
 
   if (argc > 1 && std::string(argv[1]) == "--gtest_list_tests") {
     if (!is_typed_only) {
-      std::cout << "basic." << std::endl;
-      std::cout << "  case_foo" << std::endl;
-      std::cout << "  case_bar" << std::endl;
-      std::cout << "  DISABLED_disabled_case" << std::endl;
-      std::cout << "  DISABLEDnot_really_case" << std::endl;
+      const std::array<std::string, 2> suite_names{ "basic.", "ns.basic." };
+      for (const std::string& current_suite : suite_names) {
+        std::cout << current_suite << std::endl;
+        std::cout << "  case_foo" << std::endl;
+        std::cout << "  case_bar" << std::endl;
+        std::cout << "  DISABLED_disabled_case" << std::endl;
+        std::cout << "  DISABLEDnot_really_case" << std::endl;
+      }
     }
     if (!is_basic_only && !is_typed_only) {
       std::cout << "DISABLED_disabled." << std::endl;
@@ -29,19 +33,30 @@ int main(int argc, char** argv)
       std::cout << "  case" << std::endl;
     }
     if (!is_basic_only) {
-      std::cout << "typed/0.  # TypeParam = short" << std::endl;
-      std::cout << "  case" << std::endl;
-      std::cout << "typed/1.  # TypeParam = float" << std::endl;
-      std::cout << "  case" << std::endl;
+      const std::array<std::string, 2> suite_names{ "typed", "ns.typed" };
+      for (const std::string& current_suite : suite_names) {
+        std::cout << current_suite << "/0.  # TypeParam = short" << std::endl;
+        std::cout << "  case" << std::endl;
+        std::cout << current_suite << "/1.  # TypeParam = float" << std::endl;
+        std::cout << "  case" << std::endl;
+      }
     }
     if (!is_basic_only && !is_typed_only) {
-      std::cout << "value/test." << std::endl;
-      std::cout << "  case/0  # GetParam() = 1" << std::endl;
-      std::cout << "  case/1  # GetParam() = \"foo\"" << std::endl;
-      std::cout << "param/special." << std::endl;
-      std::cout << "  case/0  # GetParam() = \"semicolon;\"" << std::endl;
-      std::cout << "  case/1  # GetParam() = \"backslash\\\"" << std::endl;
-      std::cout << "  case/2  # GetParam() = \"${var}\"" << std::endl;
+      const std::array<std::string, 2> suite_names_value{ "value",
+                                                          "ns.value" };
+      for (const std::string& current_suite : suite_names_value) {
+        std::cout << current_suite << "/test." << std::endl;
+        std::cout << "  case/0  # GetParam() = 1" << std::endl;
+        std::cout << "  case/1  # GetParam() = \"foo\"" << std::endl;
+      }
+      const std::array<std::string, 2> suite_names_param{ "param",
+                                                          "ns.param" };
+      for (const std::string& current_suite : suite_names_param) {
+        std::cout << current_suite << "/special." << std::endl;
+        std::cout << "  case/0  # GetParam() = \"semicolon;\"" << std::endl;
+        std::cout << "  case/1  # GetParam() = \"backslash\\\"" << std::endl;
+        std::cout << "  case/2  # GetParam() = \"${var}\"" << std::endl;
+      }
     }
     return 0;
   }
