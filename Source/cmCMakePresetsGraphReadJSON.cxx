@@ -2,6 +2,7 @@
    file Copyright.txt or https://cmake.org/licensing for details.  */
 #include <functional>
 #include <map>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -18,6 +19,8 @@
 #include "cmCMakePresetsGraph.h"
 #include "cmCMakePresetsGraphInternal.h"
 #include "cmJSONHelpers.h"
+#include "cmStringAlgorithms.h"
+#include "cmSystemTools.h"
 #include "cmVersion.h"
 
 namespace {
@@ -406,8 +409,19 @@ cmCMakePresetsGraph::ReadFileResult EnvironmentMapHelper(
 }
 
 cmCMakePresetsGraph::ReadFileResult cmCMakePresetsGraph::ReadJSONFile(
-  const std::string& filename, bool user)
+  const std::string& filename, RootType rootType, ReadReason readReason,
+  std::set<File*>& inProgressFiles, File*& file)
 {
+  for (auto const& f : this->Files) {
+    if (cmSystemTools::SameFile(filename, f->Filename)) {
+      file = f.get();
+      if (inProgressFiles.count(file)) {
+        return cmCMakePresetsGraph::ReadFileResult::CYCLIC_INCLUDE;
+      }
+      return cmCMakePresetsGraph::ReadFileResult::READ_OK;
+    }
+  }
+
   cmsys::ifstream fin(filename.c_str());
   if (!fin) {
     return ReadFileResult::FILE_NOT_FOUND;
@@ -429,11 +443,6 @@ cmCMakePresetsGraph::ReadFileResult cmCMakePresetsGraph::ReadJSONFile(
   }
   if (v < MIN_VERSION || v > MAX_VERSION) {
     return ReadFileResult::UNRECOGNIZED_VERSION;
-  }
-  if (user) {
-    this->UserVersion = v;
-  } else {
-    this->Version = v;
   }
 
   // Support for build and test presets added in version 2.
@@ -460,8 +469,16 @@ cmCMakePresetsGraph::ReadFileResult cmCMakePresetsGraph::ReadJSONFile(
     return ReadFileResult::UNRECOGNIZED_CMAKE_VERSION;
   }
 
+  auto filePtr = cm::make_unique<File>();
+  file = filePtr.get();
+  this->Files.push_back(std::move(filePtr));
+  inProgressFiles.insert(file);
+  file->Filename = filename;
+  file->Version = v;
+  file->ReachableFiles.insert(file);
+
   for (auto& preset : presets.ConfigurePresets) {
-    preset.User = user;
+    preset.OriginFile = file;
     if (preset.Name.empty()) {
       return ReadFileResult::INVALID_PRESET;
     }
@@ -494,7 +511,7 @@ cmCMakePresetsGraph::ReadFileResult cmCMakePresetsGraph::ReadJSONFile(
   }
 
   for (auto& preset : presets.BuildPresets) {
-    preset.User = user;
+    preset.OriginFile = file;
     if (preset.Name.empty()) {
       return ReadFileResult::INVALID_PRESET;
     }
@@ -515,7 +532,7 @@ cmCMakePresetsGraph::ReadFileResult cmCMakePresetsGraph::ReadJSONFile(
   }
 
   for (auto& preset : presets.TestPresets) {
-    preset.User = user;
+    preset.OriginFile = file;
     if (preset.Name.empty()) {
       return ReadFileResult::INVALID_PRESET;
     }
@@ -535,5 +552,33 @@ cmCMakePresetsGraph::ReadFileResult cmCMakePresetsGraph::ReadJSONFile(
     this->TestPresetOrder.push_back(preset.Name);
   }
 
+  auto const includeFile = [this, &inProgressFiles, file](
+                             const std::string& include, RootType rootType2,
+                             ReadReason readReason2) -> ReadFileResult {
+    ReadFileResult r;
+    File* includedFile;
+    if ((r = this->ReadJSONFile(include, rootType2, readReason2,
+                                inProgressFiles, includedFile)) !=
+        ReadFileResult::READ_OK) {
+      return r;
+    }
+
+    file->ReachableFiles.insert(includedFile->ReachableFiles.begin(),
+                                includedFile->ReachableFiles.end());
+    return ReadFileResult::READ_OK;
+  };
+
+  if (rootType == RootType::User && readReason == ReadReason::Root) {
+    auto cmakePresetsFilename = GetFilename(this->SourceDir);
+    if (cmSystemTools::FileExists(cmakePresetsFilename)) {
+      if ((result = includeFile(cmakePresetsFilename, RootType::Project,
+                                ReadReason::Root)) !=
+          ReadFileResult::READ_OK) {
+        return result;
+      }
+    }
+  }
+
+  inProgressFiles.erase(file);
   return ReadFileResult::READ_OK;
 }
