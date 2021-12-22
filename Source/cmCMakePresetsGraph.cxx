@@ -994,6 +994,10 @@ const char* cmCMakePresetsGraph::ResultToString(ReadFileResult result)
     case ReadFileResult::BUILD_TEST_PRESETS_UNSUPPORTED:
       return "File version must be 2 or higher for build and test preset "
              "support.";
+    case ReadFileResult::INCLUDE_UNSUPPORTED:
+      return "File version must be 4 or higher for include support";
+    case ReadFileResult::INVALID_INCLUDE:
+      return "Invalid \"include\" field";
     case ReadFileResult::INVALID_CONFIGURE_PRESET:
       return "Invalid \"configurePreset\" field";
     case ReadFileResult::INSTALL_PREFIX_UNSUPPORTED:
