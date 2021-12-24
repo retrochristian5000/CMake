@@ -248,6 +248,8 @@ static std::string computeProjectFileExtension(VsProjectType projectType)
   switch (projectType) {
     case VsProjectType::csproj:
       return ".csproj";
+    case VsProjectType::proj:
+      return ".proj";
     default:
       return ".vcxproj";
   }
