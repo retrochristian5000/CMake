@@ -118,6 +118,12 @@ public:
     return this->WindowsTargetPlatformVersion;
   }
 
+  bool IsInSolution(const cmGeneratorTarget* gt) const override
+  {
+    return gt->IsInBuildSystem() &&
+      gt->GetName() != CMAKE_CHECK_BUILD_SYSTEM_TARGET;
+  }
+
   /** Return true if building for WindowsCE */
   bool TargetsWindowsCE() const override { return this->SystemIsWindowsCE; }
 
