@@ -670,14 +670,14 @@ macro (CMAKE_BUILD_UTILITIES)
 
   #---------------------------------------------------------------------
   # Use curses?
-  if (UNIX)
-    if(NOT DEFINED BUILD_CursesDialog)
-      include(${CMake_SOURCE_DIR}/Source/Checks/Curses.cmake)
-      option(BUILD_CursesDialog "Build the CMake Curses Dialog ccmake" "${CMakeCheckCurses_COMPILED}")
-    endif()
-  else ()
-    set(BUILD_CursesDialog 0)
-  endif ()
+  # HACK: Windows support for curses using PDCurses
+  if(WIN32)
+    list(APPEND CMAKE_MODULE_PATH "${CMake_SOURCE_DIR}/Source/CursesDialog/PDCurses")
+  endif()
+  if(NOT DEFINED BUILD_CursesDialog)
+    include(${CMake_SOURCE_DIR}/Source/Checks/Curses.cmake)
+    option(BUILD_CursesDialog "Build the CMake Curses Dialog ccmake" "${CMakeCheckCurses_COMPILED}")
+  endif()
   if(BUILD_CursesDialog)
     set(CURSES_NEED_NCURSES TRUE)
     find_package(Curses)

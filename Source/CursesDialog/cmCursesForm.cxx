@@ -43,3 +43,21 @@ void cmCursesForm::LogMessage(const char* msg)
 
   cmCursesForm::DebugFile << msg << std::endl;
 }
+
+void cmCursesForm::HandleResize()
+{
+  endwin();
+  if (initscr() == nullptr) {
+    fprintf(stderr, "Error: ncurses initialiation failed\n");
+    exit(1);
+  }
+  noecho();             /* Echo off */
+  cbreak();             /* nl- or cr not needed */
+  keypad(stdscr, true); /* Use key symbols as KEY_DOWN */
+  refresh();
+  int x;
+  int y;
+  getmaxyx(stdscr, y, x);
+  this->Render(1, 1, x, y);
+  this->UpdateStatusBar();
+}

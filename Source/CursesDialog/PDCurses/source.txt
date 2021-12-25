@@ -1,0 +1,10 @@
+Source commit: https://github.com/wmcbrine/PDCurses/commit/f1cd4f4569451a5028ddf3d3c202f0ad6b1ae446
+
+License: Public Domain
+
+Then deleted all but the following folders:
+- common
+- pdcurses
+- wincon
+
+Also removed all the Makefile* and a bunch of unused stuff in common.
