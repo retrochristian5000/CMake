@@ -392,7 +392,9 @@ void cmGlobalVisualStudio8Generator::WriteProjectDepends(
   TargetDependSet const& unordered = this->GetTargetDirectDepends(gt);
   OrderedTargetDependSet depends(unordered, std::string());
   for (cmTargetDepend const& i : depends) {
-    if (!i->IsInBuildSystem()) {
+    if (!i->IsInBuildSystem() ||
+        (this->Version >= VSVersion::VS16 &&
+         i->GetName() == CMAKE_CHECK_BUILD_SYSTEM_TARGET)) {
       continue;
     }
     std::string guid = this->GetGUID(i->GetName());

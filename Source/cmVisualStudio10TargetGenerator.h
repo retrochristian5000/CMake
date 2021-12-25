@@ -21,6 +21,7 @@ class cmCustomCommand;
 class cmCustomCommandGenerator;
 class cmGeneratedFileStream;
 class cmGlobalVisualStudio10Generator;
+class cmLocalVisualStudio7Generator;
 class cmLocalVisualStudio10Generator;
 class cmMakefile;
 class cmSourceFile;
@@ -63,6 +64,9 @@ private:
   using ConfigToSettings =
     std::unordered_map<std::string,
                        std::unordered_map<std::string, std::string>>;
+
+  VsProjectType ComputeProjectType(cmGeneratorTarget const* t);
+  std::string ComputeProjectFileExtension(cmGeneratorTarget const* t);
 
   std::string ConvertPath(std::string const& path, bool forceRelative);
   std::string CalcCondition(const std::string& config) const;
@@ -147,6 +151,9 @@ private:
   void WriteMidlOptions(Elem& e1, std::string const& config);
   void WriteAntBuildOptions(Elem& e1, std::string const& config);
   void OutputLinkIncremental(Elem& e1, std::string const& configName);
+  void WriteZeroCheckCustomTargets(Elem& e0, cmSourceFile const* source,
+                                   cmCustomCommand const& command,
+                                   cmLocalVisualStudio7Generator* lg);
   void WriteCustomRule(Elem& e0, cmSourceFile const* source,
                        cmCustomCommand const& command);
   void WriteCustomRuleCpp(Elem& e2, std::string const& config,
@@ -262,6 +269,7 @@ private:
   // .Net SDK-stype project variable and helper functions
   void WriteClassicMsBuildProjectFile(cmGeneratedFileStream& BuildFileStream);
   void WriteSdkStyleProjectFile(cmGeneratedFileStream& BuildFileStream);
+  void WriteZeroCheckProj(cmGeneratedFileStream& BuildFileStream);
 
   void WriteCommonPropertyGroupGlobals(
     cmVisualStudio10TargetGenerator::Elem& e1);

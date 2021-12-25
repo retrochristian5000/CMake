@@ -235,15 +235,7 @@ static bool cmVS10IsTargetsFile(std::string const& path)
   return cmSystemTools::Strucmp(ext.c_str(), ".targets") == 0;
 }
 
-static VsProjectType computeProjectType(cmGeneratorTarget const* t)
-{
-  if (t->IsCSharpOnly()) {
-    return VsProjectType::csproj;
-  }
-  return VsProjectType::vcxproj;
-}
-
-static std::string computeProjectFileExtension(VsProjectType projectType)
+static std::string getProjectFileExtension(VsProjectType projectType)
 {
   switch (projectType) {
     case VsProjectType::csproj:
@@ -253,11 +245,6 @@ static std::string computeProjectFileExtension(VsProjectType projectType)
     default:
       return ".vcxproj";
   }
-}
-
-static std::string computeProjectFileExtension(cmGeneratorTarget const* t)
-{
-  return computeProjectFileExtension(computeProjectType(t));
 }
 
 cmVisualStudio10TargetGenerator::cmVisualStudio10TargetGenerator(
@@ -354,10 +341,10 @@ std::ostream& cmVisualStudio10TargetGenerator::Elem::WriteString(
 
 void cmVisualStudio10TargetGenerator::Generate()
 {
-  this->ProjectType = computeProjectType(this->GeneratorTarget);
+  this->ProjectType = this->ComputeProjectType(this->GeneratorTarget);
   this->Managed = this->ProjectType == VsProjectType::csproj;
   const std::string ProjectFileExtension =
-    computeProjectFileExtension(this->ProjectType);
+    getProjectFileExtension(this->ProjectType);
 
   if (this->ProjectType == VsProjectType::csproj &&
       this->GeneratorTarget->GetType() == cmStateEnums::STATIC_LIBRARY) {
@@ -418,10 +405,12 @@ void cmVisualStudio10TargetGenerator::Generate()
   char magic[] = { char(0xEF), char(0xBB), char(0xBF) };
   BuildFileStream.write(magic, 3);
 
-  if (this->ProjectType == VsProjectType::csproj &&
-      this->GeneratorTarget->IsDotNetSdkTarget() &&
-      this->GlobalGenerator->GetVersion() >=
-        cmGlobalVisualStudioGenerator::VS16) {
+  if (this->ProjectType == VsProjectType::proj) {
+    this->WriteZeroCheckProj(BuildFileStream);
+  } else if (this->ProjectType == VsProjectType::csproj &&
+             this->GeneratorTarget->IsDotNetSdkTarget() &&
+             this->GlobalGenerator->GetVersion() >=
+               cmGlobalVisualStudioGenerator::VS16) {
     this->WriteSdkStyleProjectFile(BuildFileStream);
   } else {
     this->WriteClassicMsBuildProjectFile(BuildFileStream);
@@ -929,6 +918,22 @@ void cmVisualStudio10TargetGenerator::WriteSdkStyleProjectFile(
   this->WriteAllSources(e0);
   this->WritePackageReferences(e0);
   this->WriteProjectReferences(e0);
+}
+
+void cmVisualStudio10TargetGenerator::WriteZeroCheckProj(
+  cmGeneratedFileStream& BuildFileStream)
+{
+  BuildFileStream << "<?xml version=\"1.0\" encoding=\""
+                  << this->GlobalGenerator->Encoding() << "\"?>";
+  {
+    Elem e0(BuildFileStream, "Project");
+    e0.Attribute("DefaultTargets", "Build");
+    e0.Attribute("ToolsVersion", this->GlobalGenerator->GetToolsVersion());
+    e0.Attribute("xmlns",
+                 "http://schemas.microsoft.com/developer/msbuild/2003");
+
+    this->WriteCustomCommands(e0);
+  }
 }
 
 void cmVisualStudio10TargetGenerator::WriteCommonPropertyGroupGlobals(Elem& e1)
@@ -1650,9 +1655,14 @@ void cmVisualStudio10TargetGenerator::WriteCustomRule(
   }
   cmLocalVisualStudio7Generator* lg = this->LocalGenerator;
 
+  if (this->ProjectType == VsProjectType::proj) {
+    this->WriteZeroCheckCustomTargets(e0, source, command, lg);
+    return;
+  }
+
   std::unique_ptr<Elem> spe1;
   std::unique_ptr<Elem> spe2;
-  if (this->ProjectType != VsProjectType::csproj) {
+  if (this->ProjectType == VsProjectType::vcxproj) {
     spe1 = cm::make_unique<Elem>(e0, "ItemGroup");
     spe2 = cm::make_unique<Elem>(*spe1, "CustomBuild");
     this->WriteSource(*spe2, source);
@@ -1798,6 +1808,26 @@ void cmVisualStudio10TargetGenerator::WriteCustomRuleCSharp(
   Elem(e1, "Exec").Attribute("Command", script);
 }
 
+VsProjectType cmVisualStudio10TargetGenerator::ComputeProjectType(
+  cmGeneratorTarget const* t)
+{
+  if (t->IsCSharpOnly()) {
+    return VsProjectType::csproj;
+  }
+  if (this->GlobalGenerator->GetVersion() >=
+        cmGlobalVisualStudioGenerator::VS16 &&
+      t->GetName() == CMAKE_CHECK_BUILD_SYSTEM_TARGET) {
+    return VsProjectType::proj;
+  }
+  return VsProjectType::vcxproj;
+}
+
+std::string cmVisualStudio10TargetGenerator::ComputeProjectFileExtension(
+  cmGeneratorTarget const* t)
+{
+  return getProjectFileExtension(this->ComputeProjectType(t));
+}
+
 std::string cmVisualStudio10TargetGenerator::ConvertPath(
   std::string const& path, bool forceRelative)
 {
@@ -1850,7 +1880,7 @@ void cmVisualStudio10TargetGenerator::WriteGroups()
   // Write out group file
   std::string path = cmStrCat(
     this->LocalGenerator->GetCurrentBinaryDirectory(), '/', this->Name,
-    computeProjectFileExtension(this->GeneratorTarget), ".filters");
+    this->ComputeProjectFileExtension(this->GeneratorTarget), ".filters");
   cmGeneratedFileStream fout(path);
   fout.SetCopyIfDifferent(true);
   char magic[] = { char(0xEF), char(0xBB), char(0xBF) };
@@ -2994,6 +3024,93 @@ void cmVisualStudio10TargetGenerator::OutputLinkIncremental(
     if (const char* value = linkOptions.GetFlag(flag)) {
       e1.WritePlatformConfigTag(flag, cond, value);
       linkOptions.RemoveFlag(flag);
+    }
+  }
+}
+
+void cmVisualStudio10TargetGenerator::WriteZeroCheckCustomTargets(
+  Elem& e0, cmSourceFile const* source, cmCustomCommand const& command,
+  cmLocalVisualStudio7Generator* lg)
+{
+  {
+    Elem e1(e0, "Target");
+    e1.Attribute("Name", "Build");
+
+    std::string noConfig{};
+    cmCustomCommandGenerator ccg{ command, noConfig, lg, true };
+    std::string comment = lg->ConstructComment(ccg);
+    comment = cmVS10EscapeComment(comment);
+    std::string script = lg->ConstructScript(ccg);
+    bool symbolic = false;
+    // input files for custom command
+    std::stringstream additional_inputs;
+    {
+      const char* sep = "";
+      if (this->ProjectType == VsProjectType::proj) {
+        // proj files do not attach the command to a specific file
+        // so the primary input must be listed explicitly.
+        additional_inputs << source->GetFullPath();
+        sep = ";";
+      }
+
+      // Avoid listing an input more than once.
+      std::set<std::string> unique_inputs;
+      // The source is either implicit an input or has been added above.
+      unique_inputs.insert(source->GetFullPath());
+
+      for (std::string const& d : ccg.GetDepends()) {
+        std::string dep;
+        if (lg->GetRealDependency(d, noConfig, dep)) {
+          if (!unique_inputs.insert(dep).second) {
+            // already listed
+            continue;
+          }
+          ConvertToWindowsSlash(dep);
+          additional_inputs << sep << dep;
+          sep = ";";
+          if (!symbolic) {
+            if (cmSourceFile* sf = this->Makefile->GetSource(
+                  dep, cmSourceFileLocationKind::Known)) {
+              symbolic = sf->GetPropertyAsBool("SYMBOLIC");
+            }
+          }
+        }
+      }
+    }
+    // output files for custom command
+    std::stringstream outputs;
+    {
+      const char* sep = "";
+      for (std::string const& o : ccg.GetOutputs()) {
+        std::string out = o;
+        ConvertToWindowsSlash(out);
+        outputs << sep << out;
+        sep = ";";
+        if (!symbolic) {
+          if (cmSourceFile* sf = this->Makefile->GetSource(
+                o, cmSourceFileLocationKind::Known)) {
+            symbolic = sf->GetPropertyAsBool("SYMBOLIC");
+          }
+        }
+      }
+    }
+    script += lg->FinishConstructScript(this->ProjectType);
+
+    e1.Attribute("Inputs", cmVS10EscapeAttr(additional_inputs.str()));
+    e1.Attribute("Outputs", cmVS10EscapeAttr(outputs.str()));
+
+    e1.SetHasElements();
+
+    if (!comment.empty()) {
+      Elem(e1, "Exec").Attribute("Command", "echo " + comment);
+    }
+    Elem(e1, "Exec").Attribute("Command", script);
+  }
+
+  for (const char* targetName : { "Clean", "Rebuild", "GetTargetPath" }) {
+    {
+      Elem e1(e0, "Target");
+      e1.Attribute("Name", targetName);
     }
   }
 }
@@ -4515,7 +4632,7 @@ void cmVisualStudio10TargetGenerator::WriteProjectReferences(Elem& e0)
       path = *p;
     } else {
       path = cmStrCat(lg->GetCurrentBinaryDirectory(), '/', dt->GetName(),
-                      computeProjectFileExtension(dt));
+                      this->ComputeProjectFileExtension(dt));
     }
     ConvertToWindowsSlash(path);
     Elem e2(e1, "ProjectReference");
