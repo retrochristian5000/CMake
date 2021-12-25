@@ -395,7 +395,10 @@ void cmGlobalVisualStudio7Generator::WriteTargetsToSolution(
   VisualStudioFolders.clear();
 
   for (cmGeneratorTarget const* target : projectTargets) {
-    if (!target->IsInBuildSystem()) {
+    // Skip external project and ZERO_CHECK.proj
+    if (!target->IsInBuildSystem() ||
+        (this->Version >= VSVersion::VS16 &&
+         target->GetName() == CMAKE_CHECK_BUILD_SYSTEM_TARGET)) {
       continue;
     }
     bool written = false;
