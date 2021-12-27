@@ -9,7 +9,9 @@
 
 #include <cm/memory>
 #include <cmext/algorithm>
+#include <cmext/string_view>
 
+#include "cmCMakePath.h"
 #include "cmComputeLinkDepends.h"
 #include "cmGeneratorTarget.h"
 #include "cmGlobalGenerator.h"
@@ -364,6 +366,17 @@ cmComputeLinkInformation::cmComputeLinkInformation(
       "__CMAKE_LINK_EXECUTABLE",
       FeatureDescriptor{ "__CMAKE_LINK_EXECUTABLE",
                          cmStrCat(this->LoaderFlag, "<LIBRARY>") });
+  }
+  if (this->Makefile->IsOn("APPLE")) {
+    // Define a Feature descriptor for the specification of framework search
+    // path
+    cmValue fwSearchFlag = this->Makefile->GetDefinition(
+      cmStrCat("CMAKE_", this->LinkLanguage, "_FRAMEWORK_SEARCH_FLAG"));
+    this->LibraryFeatureDescriptors.emplace(
+      "__CMAKE_FRAMEWORK_SEARCH_PATH",
+      FeatureDescriptor{
+        "__CMAKE_FRAMEWORK_SEARCH_PATH",
+        cmStrCat((fwSearchFlag ? *fwSearchFlag : "-F"), "<LIBRARY>") });
   }
 
   // Check the platform policy for missing soname case.
@@ -1044,12 +1057,14 @@ void cmComputeLinkInformation::AddItem(LinkEntry const& entry)
     }
   } else {
     // This is not a CMake target.  Use the name given.
-    if (cmSystemTools::FileIsFullPath(item.Value)) {
-      if (cmSystemTools::IsPathToFramework(item.Value) &&
-          this->Makefile->IsOn("APPLE")) {
-        // This is a framework.
-        this->AddFrameworkItem(entry);
-      } else if (cmSystemTools::FileIsDirectory(item.Value)) {
+    if (cmHasSuffix(entry.Feature, "FRAMEWORK"_s) ||
+        (entry.Feature == DEFAULT &&
+         cmSystemTools::IsPathToFramework(item.Value) &&
+         this->Makefile->IsOn("APPLE"))) {
+      // This is a framework.
+      this->AddFrameworkItem(entry);
+    } else if (cmSystemTools::FileIsFullPath(item.Value)) {
+      if (cmSystemTools::FileIsDirectory(item.Value)) {
         // This is a directory.
         this->DropDirectoryItem(item);
       } else {
@@ -1677,37 +1692,57 @@ void cmComputeLinkInformation::AddUserItem(LinkEntry const& entry,
 void cmComputeLinkInformation::AddFrameworkItem(LinkEntry const& entry)
 {
   std::string const& item = entry.Item.Value;
+  std::string fw_path;
+  std::string fw;
 
-  // Try to separate the framework name and path.
-  if (!this->SplitFramework.find(item)) {
-    std::ostringstream e;
-    e << "Could not parse framework path \"" << item << "\" "
-      << "linked by target " << this->Target->GetName() << ".";
-    cmSystemTools::Error(e.str());
-    return;
-  }
+  if (entry.Feature == DEFAULT) {
+    // Try to separate the framework name and path.
+    if (!this->SplitFramework.find(item)) {
+      this->CMakeInstance->IssueMessage(
+        MessageType::FATAL_ERROR,
+        cmStrCat("Could not parse framework path \"", item, "\" ",
+                 "linked by target '", this->Target->GetName(), "'."),
+        this->Target->GetBacktrace());
+      return;
+    }
 
-  std::string fw_path = this->SplitFramework.match(1);
-  std::string fw = this->SplitFramework.match(2);
-  std::string full_fw = cmStrCat(fw_path, '/', fw, ".framework/", fw);
-
-  // Add the directory portion to the framework search path.
-  this->AddFrameworkPath(fw_path);
-
-  // add runtime information
-  this->AddLibraryRuntimeInfo(full_fw);
-
-  if (this->GlobalGenerator->IsXcode()) {
-    // Add framework path - it will be handled by Xcode after it's added to
-    // "Link Binary With Libraries" build phase
-    this->Items.emplace_back(item, ItemIsPath::Yes);
+    fw_path = this->SplitFramework.match(1);
+    fw = this->SplitFramework.match(2);
   } else {
-    // Add the item using the -framework option.
-    this->Items.emplace_back(std::string("-framework"), ItemIsPath::No);
-    cmOutputConverter converter(this->Makefile->GetStateSnapshot());
-    fw = converter.EscapeForShell(fw);
-    this->Items.emplace_back(fw, ItemIsPath::No);
+    // path format can be more flexible: .*/?.+(\.framework)?
+    cmCMakePath path(entry.Item.Value);
+
+    fw_path = path.GetParentPath().GenericString();
+    fw = path.GetExtension() == "framework"_s
+      ? path.GetStem().GenericString()
+      : path.GetFileName().GenericString();
   }
+
+  bool fwPathAdded = false;
+  if (!fw_path.empty()) {
+    std::string full_fw = cmStrCat(fw_path, '/', fw, ".framework/", fw);
+    // Add the directory portion to the framework search path.
+    fwPathAdded = this->AddFrameworkPath(fw_path);
+    // add runtime information
+    this->AddLibraryRuntimeInfo(full_fw);
+  }
+
+  if (this->GlobalGenerator->IsXcode() && fwPathAdded) {
+    // Add framework directory
+    this->Items.emplace_back(
+      fw_path, ItemIsPath::Yes, nullptr,
+      this->FindLibraryFeature("__CMAKE_FRAMEWORK_SEARCH_PATH"));
+  }
+
+  if (entry.Feature == DEFAULT) {
+    // ensure FRAMEWORK feature is loaded
+    this->AddLibraryFeature("FRAMEWORK");
+  }
+
+  this->Items.emplace_back(fw, ItemIsPath::Yes, nullptr,
+                           this->FindLibraryFeature(entry.Feature == DEFAULT
+                                                      ? "FRAMEWORK"
+                                                      : entry.Feature));
 }
 
 void cmComputeLinkInformation::DropDirectoryItem(BT<std::string> const& item)
@@ -1744,11 +1779,13 @@ void cmComputeLinkInformation::ComputeFrameworkInfo()
   this->SplitFramework.compile("(.*)/(.*)\\.framework$");
 }
 
-void cmComputeLinkInformation::AddFrameworkPath(std::string const& p)
+bool cmComputeLinkInformation::AddFrameworkPath(std::string const& p)
 {
   if (this->FrameworkPathsEmitted.insert(p).second) {
     this->FrameworkPaths.push_back(p);
+    return true;
   }
+  return false;
 }
 
 bool cmComputeLinkInformation::CheckSharedLibNoSOName(LinkEntry const& entry)

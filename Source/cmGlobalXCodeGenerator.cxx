@@ -3729,14 +3729,21 @@ void cmGlobalXCodeGenerator::AddDependAndLinkInformation(cmXCodeObject* target)
           if (cmSystemTools::FileIsFullPath(cleanPath)) {
             cleanPath = cmSystemTools::CollapseFullPath(cleanPath);
           }
-          const auto libPath = GetLibraryOrFrameworkPath(cleanPath);
-          if (cmSystemTools::StringEndsWith(libPath.c_str(), ".framework")) {
+          cmValue featureName = libName.GetFeatureName();
+          const auto libPath =
+            (featureName &&
+             featureName != cmComputeLinkDepends::LinkEntry::DEFAULT)
+            ? cleanPath
+            : GetLibraryOrFrameworkPath(cleanPath);
+          if ((!featureName ||
+               featureName == cmComputeLinkDepends::LinkEntry::DEFAULT) &&
+              cmSystemTools::StringEndsWith(libPath.c_str(), ".framework")) {
             const auto fwName =
               cmSystemTools::GetFilenameWithoutExtension(libPath);
             const auto fwDir = cmSystemTools::GetParentDirectory(libPath);
             if (emitted.insert(fwDir).second) {
-              // This is a search path we had not added before and it isn't an
-              // implicit search path, so we need it
+              // This is a search path we had not added before and it isn't
+              // an implicit search path, so we need it
               libPaths.Add("-F " + this->XCodeEscapePath(fwDir));
             }
             libPaths.Add("-framework " + this->XCodeEscapePath(fwName));

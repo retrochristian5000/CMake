@@ -63,6 +63,10 @@ public:
     cmGeneratorTarget const* Target = nullptr;
 
     bool HasFeature() const { return this->Feature != nullptr; }
+    cmValue GetFeatureName() const
+    {
+      return HasFeature() ? cmValue(&this->Feature->Name) : nullptr;
+    }
 
     BT<std::string> GetFormattedItem(std::string const& path) const
     {
@@ -203,7 +207,7 @@ private:
 
   // Framework info.
   void ComputeFrameworkInfo();
-  void AddFrameworkPath(std::string const& p);
+  bool AddFrameworkPath(std::string const& p);
   std::set<std::string> FrameworkPathsEmitted;
   cmsys::RegularExpression SplitFramework;
 
