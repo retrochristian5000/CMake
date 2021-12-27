@@ -302,6 +302,13 @@ if(NOT CMAKE_CUDA_COMPILER_ID_RUN)
     list(APPEND architectures_tested "${arch_name}")
   endforeach()
 
+  # Rest of the code treats an empty value as equivalent to "use the defaults".
+  # Error out early to prevent confusing errors as a result of this.
+  # Note that this also catches invalid non-numerical values such as "a".
+  if(DEFINED architectures_explicit AND "${architectures_tested}" STREQUAL "")
+    message(FATAL_ERROR "CMAKE_CUDA_ARCHITECTURES must be valid if set.")
+  endif()
+
   if(CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
     if(NOT CMAKE_CUDA_ARCHITECTURES)
       # Clang doesn't automatically select an architecture supported by the SDK.
