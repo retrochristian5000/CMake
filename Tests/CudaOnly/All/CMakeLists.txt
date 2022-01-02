@@ -10,6 +10,11 @@ function(verify_output flag)
   string(REPLACE "-" "_" architectures "${flag}")
   string(TOUPPER "${architectures}" architectures)
   set(architectures "${CMAKE_CUDA_ARCHITECTURES_${architectures}}")
+  message(STATUS "CTEST_FULL_OUTPUT") # avoid truncation
+  message("flag=${flag}")
+  message("architectures=${architectures}")
+  message("CMAKE_CUDA_COMPILER_ID=${CMAKE_CUDA_COMPILER_ID}")
+  message("output=\n${output}")
 
   if(CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
     set(match_regex "-target-cpu sm_([0-9]+)")
