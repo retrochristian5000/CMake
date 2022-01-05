@@ -57,6 +57,7 @@ using LinkInterfaceFor = cmGeneratorTarget::LinkInterfaceFor;
 
 const cmsys::RegularExpression FrameworkRegularExpression(
   "^(.*/)?([^/]*)\\.framework/(.*)$");
+const std::string kINTERFACE_LINK_LIBRARIES = "INTERFACE_LINK_LIBRARIES";
 }
 
 template <>
@@ -7244,13 +7245,9 @@ void cmGeneratorTarget::ComputeLinkInterfaceLibraries(
       // Compare the link implementation fallback link interface to the
       // preferred new link interface property and warn if different.
       cmLinkInterface ifaceNew;
-      static const std::string newProp = "INTERFACE_LINK_LIBRARIES";
-      if (cmValue newExplicitLibraries = this->GetProperty(newProp)) {
-        std::vector<BT<std::string>> entries;
-        entries.emplace_back(*newExplicitLibraries);
-        this->ExpandLinkItems(linkIfaceProp, cmMakeRange(entries), config,
-                              headTarget, interfaceFor, ifaceNew);
-      }
+      this->ExpandLinkItems(kINTERFACE_LINK_LIBRARIES,
+                            this->Target->GetLinkInterfaceEntries(), config,
+                            headTarget, interfaceFor, ifaceNew);
       if (ifaceNew.Libraries != iface.Libraries) {
         std::string oldLibraries = cmJoin(impl->Libraries, ";");
         std::string newLibraries = cmJoin(ifaceNew.Libraries, ";");
