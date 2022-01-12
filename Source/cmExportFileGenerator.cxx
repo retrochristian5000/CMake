@@ -175,18 +175,24 @@ bool cmExportFileGenerator::PopulateInterfaceLinkLibrariesProperty(
   if (!target->IsLinkable()) {
     return false;
   }
-  cmValue input = target->GetProperty("INTERFACE_LINK_LIBRARIES");
-  if (input) {
-    std::string prepro =
-      cmGeneratorExpression::Preprocess(*input, preprocessRule);
-    if (!prepro.empty()) {
-      this->ResolveTargetsInGeneratorExpressions(
-        prepro, target, missingTargets, ReplaceFreeTargets);
-      properties["INTERFACE_LINK_LIBRARIES"] = prepro;
-      return true;
+  static const std::array<std::string, 3> linkIfaceProps = {
+    { "INTERFACE_LINK_LIBRARIES", "INTERFACE_LINK_LIBRARIES_DIRECT",
+      "INTERFACE_LINK_LIBRARIES_DIRECT_EXCLUDE" }
+  };
+  bool hadINTERFACE_LINK_LIBRARIES = false;
+  for (std::string const& linkIfaceProp : linkIfaceProps) {
+    if (cmValue input = target->GetProperty(linkIfaceProp)) {
+      std::string prepro =
+        cmGeneratorExpression::Preprocess(*input, preprocessRule);
+      if (!prepro.empty()) {
+        this->ResolveTargetsInGeneratorExpressions(
+          prepro, target, missingTargets, ReplaceFreeTargets);
+        properties[linkIfaceProp] = prepro;
+        hadINTERFACE_LINK_LIBRARIES = true;
+      }
     }
   }
-  return false;
+  return hadINTERFACE_LINK_LIBRARIES;
 }
 
 static bool isSubDirectory(std::string const& a, std::string const& b)

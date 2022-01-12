@@ -998,8 +998,10 @@ private:
     std::string ImportLibrary;
     std::string LibName;
     std::string Languages;
-    std::vector<BT<std::string>> Libraries;
     std::string LibrariesProp;
+    std::vector<BT<std::string>> Libraries;
+    std::vector<BT<std::string>> LibrariesHeadInclude;
+    std::vector<BT<std::string>> LibrariesHeadExclude;
     std::string SharedDeps;
   };
 
@@ -1060,10 +1062,16 @@ private:
   bool IsLinkLookupScope(std::string const& n,
                          cmLocalGenerator const*& lg) const;
 
+  enum class LinkInterfaceField
+  {
+    Libraries,
+    HeadExclude,
+    HeadInclude,
+  };
   void ExpandLinkItems(std::string const& prop, cmBTStringRange entries,
                        std::string const& config,
                        const cmGeneratorTarget* headTarget,
-                       LinkInterfaceFor interfaceFor,
+                       LinkInterfaceFor interfaceFor, LinkInterfaceField field,
                        cmLinkInterface& iface) const;
 
   struct LookupLinkItemScope

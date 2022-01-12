@@ -1,0 +1,15 @@
+.. note::
+
+  This property must be used with care:
+
+  * The |INTERFACE_PROPERTY_LINK_DIRECT| target property is intended for
+    advanced use cases such as injection of static plugins into a consuming
+    executable.  It should not be used as a substitute for organizing
+    normal calls to :command:`target_link_libraries`.
+
+  * If a shared library links to another library whose direct or transitive
+    usage requirements include |INTERFACE_PROPERTY_LINK_DIRECT|, the property
+    may influence the shared library's list of direct link dependencies.
+    In the :command:`target_link_libraries` call, prefer using the ``PRIVATE``
+    specifier to avoid leaking the property's influence to dependents of the
+    shared library.

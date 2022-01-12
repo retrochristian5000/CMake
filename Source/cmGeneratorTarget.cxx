@@ -58,6 +58,10 @@ using LinkInterfaceFor = cmGeneratorTarget::LinkInterfaceFor;
 const cmsys::RegularExpression FrameworkRegularExpression(
   "^(.*/)?([^/]*)\\.framework/(.*)$");
 const std::string kINTERFACE_LINK_LIBRARIES = "INTERFACE_LINK_LIBRARIES";
+const std::string kINTERFACE_LINK_LIBRARIES_DIRECT =
+  "INTERFACE_LINK_LIBRARIES_DIRECT";
+const std::string kINTERFACE_LINK_LIBRARIES_DIRECT_EXCLUDE =
+  "INTERFACE_LINK_LIBRARIES_DIRECT_EXCLUDE";
 }
 
 template <>
@@ -6655,12 +6659,10 @@ cm::optional<cmLinkItem> cmGeneratorTarget::LookupLinkItem(
   return maybeItem;
 }
 
-void cmGeneratorTarget::ExpandLinkItems(std::string const& prop,
-                                        cmBTStringRange entries,
-                                        std::string const& config,
-                                        cmGeneratorTarget const* headTarget,
-                                        LinkInterfaceFor interfaceFor,
-                                        cmLinkInterface& iface) const
+void cmGeneratorTarget::ExpandLinkItems(
+  std::string const& prop, cmBTStringRange entries, std::string const& config,
+  cmGeneratorTarget const* headTarget, LinkInterfaceFor interfaceFor,
+  LinkInterfaceField field, cmLinkInterface& iface) const
 {
   if (entries.empty()) {
     return;
@@ -6684,9 +6686,19 @@ void cmGeneratorTarget::ExpandLinkItems(std::string const& prop,
                     this, headTarget->LinkerLanguage));
     for (std::string const& lib : libs) {
       if (cm::optional<cmLinkItem> maybeItem = this->LookupLinkItem(
-            lib, cge->GetBacktrace(), &scope, LookupSelf::No)) {
+            lib, cge->GetBacktrace(), &scope,
+            field == LinkInterfaceField::Libraries ? LookupSelf::No
+                                                   : LookupSelf::Yes)) {
         cmLinkItem item = std::move(*maybeItem);
 
+        if (field == LinkInterfaceField::HeadInclude) {
+          iface.HeadInclude.emplace_back(std::move(item));
+          continue;
+        }
+        if (field == LinkInterfaceField::HeadExclude) {
+          iface.HeadExclude.emplace_back(std::move(item));
+          continue;
+        }
         if (!item.Target) {
           // Report explicitly linked object files separately.
           std::string const& maybeObj = item.AsStr();
@@ -7157,7 +7169,9 @@ void cmGeneratorTarget::ComputeLinkInterfaceLibraries(
                            this->GetPolicyStatusCMP0022() != cmPolicies::WARN);
   if (cmp0022NEW) {
     // CMP0022 NEW behavior is to use INTERFACE_LINK_LIBRARIES.
-    haveExplicitLibraries = !this->Target->GetLinkInterfaceEntries().empty();
+    haveExplicitLibraries = !this->Target->GetLinkInterfaceEntries().empty() ||
+      !this->Target->GetLinkInterfaceDirectEntries().empty() ||
+      !this->Target->GetLinkInterfaceDirectExcludeEntries().empty();
   } else {
     // CMP0022 OLD behavior is to use LINK_INTERFACE_LIBRARIES if set on a
     // shared lib or executable.
@@ -7222,15 +7236,24 @@ void cmGeneratorTarget::ComputeLinkInterfaceLibraries(
   if (cmp0022NEW) {
     // The interface libraries are specified by INTERFACE_LINK_LIBRARIES.
     // Use its special representation directly to get backtraces.
-    this->ExpandLinkItems(kINTERFACE_LINK_LIBRARIES,
-                          this->Target->GetLinkInterfaceEntries(), config,
-                          headTarget, interfaceFor, iface);
+    this->ExpandLinkItems(
+      kINTERFACE_LINK_LIBRARIES, this->Target->GetLinkInterfaceEntries(),
+      config, headTarget, interfaceFor, LinkInterfaceField::Libraries, iface);
+    this->ExpandLinkItems(kINTERFACE_LINK_LIBRARIES_DIRECT,
+                          this->Target->GetLinkInterfaceDirectEntries(),
+                          config, headTarget, interfaceFor,
+                          LinkInterfaceField::HeadInclude, iface);
+    this->ExpandLinkItems(kINTERFACE_LINK_LIBRARIES_DIRECT_EXCLUDE,
+                          this->Target->GetLinkInterfaceDirectExcludeEntries(),
+                          config, headTarget, interfaceFor,
+                          LinkInterfaceField::HeadExclude, iface);
   } else if (explicitLibrariesCMP0022OLD) {
     // The interface libraries have been explicitly set in pre-CMP0022 style.
     std::vector<BT<std::string>> entries;
     entries.emplace_back(*explicitLibrariesCMP0022OLD);
     this->ExpandLinkItems(linkIfacePropCMP0022OLD, cmMakeRange(entries),
-                          config, headTarget, interfaceFor, iface);
+                          config, headTarget, interfaceFor,
+                          LinkInterfaceField::Libraries, iface);
   }
 
   // If the link interface is explicit, do not fall back to the link impl.
@@ -7250,7 +7273,8 @@ void cmGeneratorTarget::ComputeLinkInterfaceLibraries(
       cmLinkInterface ifaceNew;
       this->ExpandLinkItems(kINTERFACE_LINK_LIBRARIES,
                             this->Target->GetLinkInterfaceEntries(), config,
-                            headTarget, interfaceFor, ifaceNew);
+                            headTarget, interfaceFor,
+                            LinkInterfaceField::Libraries, ifaceNew);
       if (ifaceNew.Libraries != iface.Libraries) {
         std::string oldLibraries = cmJoin(impl->Libraries, ";");
         std::string newLibraries = cmJoin(ifaceNew.Libraries, ";");
@@ -7390,8 +7414,17 @@ const cmLinkInterface* cmGeneratorTarget::GetImportLinkInterface(
     iface.LibrariesDone = true;
     iface.Multiplicity = info->Multiplicity;
     cmExpandList(info->Languages, iface.Languages);
+    this->ExpandLinkItems(kINTERFACE_LINK_LIBRARIES_DIRECT,
+                          cmMakeRange(info->LibrariesHeadInclude), config,
+                          headTarget, interfaceFor,
+                          LinkInterfaceField::HeadInclude, iface);
+    this->ExpandLinkItems(kINTERFACE_LINK_LIBRARIES_DIRECT_EXCLUDE,
+                          cmMakeRange(info->LibrariesHeadExclude), config,
+                          headTarget, interfaceFor,
+                          LinkInterfaceField::HeadExclude, iface);
     this->ExpandLinkItems(info->LibrariesProp, cmMakeRange(info->Libraries),
-                          config, headTarget, interfaceFor, iface);
+                          config, headTarget, interfaceFor,
+                          LinkInterfaceField::Libraries, iface);
     std::vector<std::string> deps = cmExpandedList(info->SharedDeps);
     LookupLinkItemScope scope{ this->LocalGenerator };
     for (std::string const& dep : deps) {
@@ -7483,6 +7516,14 @@ void cmGeneratorTarget::ComputeImportInfo(std::string const& desired_config,
         info.Libraries.emplace_back(*propertyLibs);
       }
     }
+  }
+  for (BT<std::string> const& entry :
+       this->Target->GetLinkInterfaceDirectEntries()) {
+    info.LibrariesHeadInclude.emplace_back(entry);
+  }
+  for (BT<std::string> const& entry :
+       this->Target->GetLinkInterfaceDirectExcludeEntries()) {
+    info.LibrariesHeadExclude.emplace_back(entry);
   }
   if (this->GetType() == cmStateEnums::INTERFACE_LIBRARY) {
     if (loc) {
@@ -7917,6 +7958,69 @@ bool cmGeneratorTarget::IsNullImpliedByLinkLibraries(
   return cm::contains(this->LinkImplicitNullProperties, p);
 }
 
+namespace {
+class TransitiveLinkImpl
+{
+  cmGeneratorTarget const* Self;
+  std::string const& Config;
+  cmLinkImplementation& Impl;
+
+  std::set<cmLinkItem> Included;
+  std::set<cmLinkItem> Excluded;
+  std::unordered_set<cmGeneratorTarget const*> Followed;
+
+public:
+  TransitiveLinkImpl(cmGeneratorTarget const* self, std::string const& config,
+                     cmLinkImplementation& impl)
+    : Self(self)
+    , Config(config)
+    , Impl(impl)
+  {
+  }
+
+  void Follow(cmGeneratorTarget const* target);
+  void Filter();
+};
+
+void TransitiveLinkImpl::Follow(cmGeneratorTarget const* target)
+{
+  if (!target || !this->Followed.insert(target).second ||
+      target->GetPolicyStatusCMP0022() == cmPolicies::OLD ||
+      target->GetPolicyStatusCMP0022() == cmPolicies::WARN) {
+    return;
+  }
+  cmLinkInterfaceLibraries const* iface = target->GetLinkInterfaceLibraries(
+    this->Config, this->Self, LinkInterfaceFor::Link);
+  if (!iface) {
+    return;
+  }
+  if (iface->HadContextSensitiveCondition) {
+    this->Impl.HadContextSensitiveCondition = true;
+  }
+  for (cmLinkItem const& item : iface->HeadInclude) {
+    this->Follow(item.Target);
+    if (this->Included.insert(item).second) {
+      this->Impl.Libraries.emplace_back(item, /* fromGenex= */ false);
+    }
+  }
+  for (cmLinkItem const& item : iface->HeadExclude) {
+    this->Excluded.insert(item);
+  }
+  for (cmLinkItem const& item : iface->Libraries) {
+    this->Follow(item.Target);
+  }
+}
+void TransitiveLinkImpl::Filter()
+{
+  this->Impl.Libraries.erase(
+    std::remove_if(this->Impl.Libraries.begin(), this->Impl.Libraries.end(),
+                   [this](cmLinkImplItem const& item) {
+                     return this->Excluded.find(item) != this->Excluded.end();
+                   }),
+    this->Impl.Libraries.end());
+}
+}
+
 void cmGeneratorTarget::ComputeLinkImplementationLibraries(
   const std::string& config, cmOptionalLinkImplementation& impl,
   cmGeneratorTarget const* head) const
@@ -7924,6 +8028,10 @@ void cmGeneratorTarget::ComputeLinkImplementationLibraries(
   cmLocalGenerator const* lg = this->LocalGenerator;
   cmMakefile const* mf = lg->GetMakefile();
   cmBTStringRange entryRange = this->Target->GetLinkImplementationEntries();
+  cm::optional<TransitiveLinkImpl> transitiveLinkImpl;
+  if (head == this) {
+    transitiveLinkImpl.emplace(this, config, impl);
+  }
   // Collect libraries directly linked in this configuration.
   for (auto const& entry : entryRange) {
     std::vector<std::string> llibs;
@@ -8011,6 +8119,12 @@ void cmGeneratorTarget::ComputeLinkImplementationLibraries(
         }
       }
 
+      // Add items marked in 'INTERFACE_LINK_LIBRARIES' closures
+      // for inclusion in direct linking by the head target.
+      if (transitiveLinkImpl) {
+        transitiveLinkImpl->Follow(item.Target);
+      }
+
       impl.Libraries.emplace_back(std::move(item), fromGenex);
     }
 
@@ -8021,6 +8135,12 @@ void cmGeneratorTarget::ComputeLinkImplementationLibraries(
       }
     }
     cge->GetMaxLanguageStandard(this, this->MaxLanguageStandards);
+  }
+
+  // Remove items marked in 'INTERFACE_LINK_LIBRARIES' closures
+  // for exclusion from direct linking by the head target.
+  if (transitiveLinkImpl) {
+    transitiveLinkImpl->Filter();
   }
 
   // Get the list of configurations considered to be DEBUG.
