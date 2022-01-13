@@ -557,6 +557,16 @@ cmTarget::cmTarget(std::string const& name, cmStateEnums::TargetType type,
       }
     }
   }
+
+  for (auto const& prop : mf->GetState()->GetPropertyDefinitions().GetMap()) {
+    if (prop.first.second == cmProperty::TARGET &&
+        !prop.second.GetInitializeFromVariable().empty()) {
+      if (auto value =
+            mf->GetDefinition(prop.second.GetInitializeFromVariable())) {
+        this->SetProperty(prop.first.first, value);
+      }
+    }
+  }
 }
 
 cmTarget::cmTarget(cmTarget&&) noexcept = default;
