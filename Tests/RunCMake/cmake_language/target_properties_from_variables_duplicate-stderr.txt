@@ -1,0 +1,4 @@
+^CMake Error at target_properties_from_variables_duplicate\.cmake:[0-9]+ \(cmake_language\):
+  Initialized target property "PROP1" has already been created
+Call Stack \(most recent call first\):
+  CMakeLists\.txt:[0-9]+ \(include\)$

@@ -13,6 +13,7 @@ Synopsis
   cmake_language(`CALL`_ <command> [<arg>...])
   cmake_language(`EVAL`_ CODE <code>...)
   cmake_language(`DEFER`_ <options>... CALL <command> [<arg>...])
+  cmake_language(`TARGET_PROPERTIES_FROM_VARIABLES`_ <options>...)
 
 Introduction
 ^^^^^^^^^^^^
@@ -225,3 +226,34 @@ also prints::
   Immediate Message
   Deferred Message 1
   Deferred Message 2
+
+Initializing Target Properties From Variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 3.23
+
+.. _TARGET_PROPERTIES_FROM_VARIABLES:
+
+.. code-block:: cmake
+
+  cmake_language(TARGET_PROPERTIES_FROM_VARIABLES
+    PREFIX <prefix>
+    PROPERTIES <properties>...
+    )
+
+Defines target properties that are initialized from variables if those
+variables are defined. These properties are defined on a per-directory basis,
+and subdirectories inherit the properties from their parent directory when they
+are created. Each property has exactly one prefix. The variable name is
+computed by concatenating the prefix with the property name.
+
+The following options are accepted:
+
+``PREFIX <prefix>``
+
+  Specifies the prefix to place at the beginning of the variable name. May not
+  be ``CMAKE_`` or ``_CMAKE_``.
+
+``PROPERTIES <properties>``
+
+  Specifies the names of properties to define for targets.

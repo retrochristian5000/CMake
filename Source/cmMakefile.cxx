@@ -1444,6 +1444,9 @@ void cmMakefile::InitializeFromParent(cmMakefile* parent)
 
   // Recursion depth.
   this->RecursionDepth = parent->RecursionDepth;
+
+  // Initialized target properties.
+  this->InitializedTargetProperties = parent->InitializedTargetProperties;
 }
 
 void cmMakefile::AddInstallGenerator(std::unique_ptr<cmInstallGenerator> g)
@@ -4518,4 +4521,17 @@ cmMakefile::MacroPushPop::MacroPushPop(cmMakefile* mf,
 cmMakefile::MacroPushPop::~MacroPushPop()
 {
   this->Makefile->PopMacroScope(this->ReportError);
+}
+
+bool cmMakefile::AddInitializedTargetProperty(
+  const std::string& propName, InitializedTargetProperty&& property)
+{
+  if (!this->InitializedTargetProperties.emplace(propName, property).second) {
+    this->IssueMessage(MessageType::FATAL_ERROR,
+                       cmStrCat("Initialized target property \"", propName,
+                                "\" has already been created"));
+    return false;
+  }
+
+  return true;
 }

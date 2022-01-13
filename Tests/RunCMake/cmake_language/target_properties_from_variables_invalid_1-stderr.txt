@@ -1,0 +1,4 @@
+^CMake Error at target_properties_from_variables_invalid_1\.cmake:[0-9]+ \(cmake_language\):
+  cmake_language Variable prefix "CMAKE_" is not allowed
+Call Stack \(most recent call first\):
+  CMakeLists\.txt:[0-9]+ \(include\)$

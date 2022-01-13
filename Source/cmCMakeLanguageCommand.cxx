@@ -13,6 +13,7 @@
 #include <cm/string_view>
 #include <cmext/string_view>
 
+#include "cmArgumentParser.h"
 #include "cmExecutionStatus.h"
 #include "cmGlobalGenerator.h"
 #include "cmListFileCache.h"
@@ -214,6 +215,83 @@ bool cmCMakeLanguageCommandEVAL(std::vector<cmListFileArgument> const& args,
   return makefile.ReadListFileAsString(
     code, cmStrCat(context.FilePath, ":", context.Line, ":EVAL"));
 }
+
+bool cmCMakeLanguageCommandTARGET_PROPERTIES_FROM_VARIABLES(
+  std::vector<std::string> const& args, cmExecutionStatus& status)
+{
+  std::string prefix;
+  std::vector<std::string> properties;
+
+  cmArgumentParser<void> parser;
+  parser.Bind("PREFIX"_s, prefix);
+  parser.Bind("PROPERTIES"_s, properties);
+
+  std::vector<std::string> unrecognizedArgs;
+  std::vector<std::string> missingArgs;
+  parser.Parse(cmMakeRange(args).advance(1), &unrecognizedArgs, &missingArgs);
+
+  if (!unrecognizedArgs.empty()) {
+    std::string message = "Unrecognized arguments: \"";
+    bool first = true;
+    for (auto const& arg : unrecognizedArgs) {
+      if (!first) {
+        message = cmStrCat(message, "\", \"");
+      }
+      first = false;
+      message = cmStrCat(message, arg, "\"");
+    }
+    status.SetError(message);
+    cmSystemTools::SetFatalErrorOccured();
+    return false;
+  }
+
+  if (!missingArgs.empty()) {
+    std::string message = "Keywords missing arguments: \"";
+    bool first = true;
+    for (auto const& arg : missingArgs) {
+      if (!first) {
+        message = cmStrCat(message, "\", \"");
+      }
+      first = false;
+      message = cmStrCat(message, arg, "\"");
+    }
+    status.SetError(message);
+    cmSystemTools::SetFatalErrorOccured();
+    return false;
+  }
+
+  if (prefix.empty()) {
+    status.SetError("No PREFIX specified");
+    cmSystemTools::SetFatalErrorOccured();
+    return false;
+  }
+
+  constexpr const char* invalidPrefixes[] = {
+    "CMAKE_",
+    "_CMAKE_",
+  };
+
+  if (std::any_of(std::begin(invalidPrefixes), std::end(invalidPrefixes),
+                  [&prefix](const char* p) { return prefix == p; })) {
+    status.SetError(
+      cmStrCat("Variable prefix \"", prefix, "\" is not allowed"));
+    cmSystemTools::SetFatalErrorOccured();
+    return false;
+  }
+
+  for (auto const& propName : properties) {
+    cmMakefile::InitializedTargetProperty property{
+      prefix,
+    };
+    if (!status.GetMakefile().AddInitializedTargetProperty(
+          propName, std::move(property))) {
+      cmSystemTools::SetFatalErrorOccured();
+      return false;
+    }
+  }
+
+  return true;
+}
 }
 
 bool cmCMakeLanguageCommand(std::vector<cmListFileArgument> const& args,
@@ -355,6 +433,12 @@ bool cmCMakeLanguageCommand(std::vector<cmListFileArgument> const& args,
 
   if (expArgs[expArg] == "EVAL") {
     return cmCMakeLanguageCommandEVAL(args, status);
+  }
+
+  if (expArgs[expArg] == "TARGET_PROPERTIES_FROM_VARIABLES") {
+    finishArgs();
+    return cmCMakeLanguageCommandTARGET_PROPERTIES_FROM_VARIABLES(expArgs,
+                                                                  status);
   }
 
   return FatalError(status, "called with unknown meta-operation");

@@ -945,6 +945,20 @@ public:
   cm::optional<std::string> DeferGetCallIds() const;
   cm::optional<std::string> DeferGetCall(std::string const& id) const;
 
+  struct InitializedTargetProperty
+  {
+    std::string Prefix;
+  };
+
+  const std::map<std::string, InitializedTargetProperty>&
+  GetInitializedTargetProperties() const
+  {
+    return this->InitializedTargetProperties;
+  }
+
+  bool AddInitializedTargetProperty(const std::string& propName,
+                                    InitializedTargetProperty&& property);
+
 protected:
   // add link libraries and directories to the target
   void AddGlobalLinkInformation(cmTarget& target);
@@ -1109,4 +1123,6 @@ private:
   std::set<std::string> WarnedCMP0074;
   bool IsSourceFileTryCompile;
   mutable bool SuppressSideEffects;
+
+  std::map<std::string, InitializedTargetProperty> InitializedTargetProperties;
 };
