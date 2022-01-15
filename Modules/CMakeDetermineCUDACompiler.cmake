@@ -43,11 +43,13 @@ else()
 
   mark_as_advanced(CMAKE_CUDA_COMPILER)
 
-  #Allow the user to specify a host compiler except for Visual Studio
-  if(NOT $ENV{CUDAHOSTCXX} STREQUAL "")
-    get_filename_component(CMAKE_CUDA_HOST_COMPILER $ENV{CUDAHOSTCXX} PROGRAM)
-    if(NOT EXISTS ${CMAKE_CUDA_HOST_COMPILER})
-      message(FATAL_ERROR "Could not find compiler set in environment variable CUDAHOSTCXX:\n$ENV{CUDAHOSTCXX}.\n${CMAKE_CUDA_HOST_COMPILER}")
+  # Explicit is preferred similar to most other environment variables.
+  if(NOT CMAKE_CUDA_HOST_COMPILER)
+    if(NOT $ENV{CUDAHOSTCXX} STREQUAL "")
+      get_filename_component(CMAKE_CUDA_HOST_COMPILER $ENV{CUDAHOSTCXX} PROGRAM)
+      if(NOT EXISTS ${CMAKE_CUDA_HOST_COMPILER})
+        message(FATAL_ERROR "Could not find compiler set in environment variable CUDAHOSTCXX:\n$ENV{CUDAHOSTCXX}.\n${CMAKE_CUDA_HOST_COMPILER}")
+      endif()
     endif()
   endif()
 endif()
