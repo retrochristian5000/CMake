@@ -95,14 +95,16 @@ void WriteMSBuildAdditionalInputs(cmsys::ofstream& fout,
 
   // Write the format expected by MSBuild CustomBuild AdditionalInputs.
   const char* sep = "";
-  for (std::string path : content.front().paths) {
-    if (!cmSystemTools::FileIsFullPath(path)) {
-      path =
-        cmSystemTools::CollapseFullPath(path, lg.GetCurrentBinaryDirectory());
+  for (const auto& c : content) {
+    for (std::string path : c.paths) {
+      if (!cmSystemTools::FileIsFullPath(path)) {
+        path = cmSystemTools::CollapseFullPath(path,
+                                               lg.GetCurrentBinaryDirectory());
+      }
+      std::replace(path.begin(), path.end(), '/', '\\');
+      fout << sep << path;
+      sep = ";";
     }
-    std::replace(path.begin(), path.end(), '/', '\\');
-    fout << sep << path;
-    sep = ";";
   }
   fout << "\n";
 }
