@@ -18,7 +18,9 @@
 #include <cmext/algorithm>
 
 #include <cm3p/uv.h>
+#include <ctype.h>
 
+#include "cmBuildOptions.h"
 #include "cmCommandLineArgument.h"
 #include "cmConsoleBuf.h"
 #include "cmDocumentationEntry.h" // IWYU pragma: keep
@@ -657,7 +659,7 @@ int do_build(int ac, char const* const* av)
   });
 
   return cm.Build(jobs, std::move(dir), std::move(targets), std::move(config),
-                  std::move(nativeOptions), cleanFirst, verbose, presetName,
+                  std::move(nativeOptions), buildOptions, verbose, presetName,
                   listPresets);
 #endif
 }
