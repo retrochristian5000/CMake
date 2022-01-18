@@ -71,16 +71,6 @@ bool cmDefinePropertyCommand(std::vector<std::string> const& args,
     return false;
   }
 
-  // Make sure documentation was given.
-  if (BriefDocs.empty()) {
-    status.SetError("not given a BRIEF_DOCS <brief-doc> argument.");
-    return false;
-  }
-  if (FullDocs.empty()) {
-    status.SetError("not given a FULL_DOCS <full-doc> argument.");
-    return false;
-  }
-
   // Actually define the property.
   status.GetMakefile().GetState()->DefineProperty(
     PropertyName, scope, BriefDocs, FullDocs, inherited);
