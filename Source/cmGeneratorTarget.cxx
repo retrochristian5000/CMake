@@ -6740,17 +6740,16 @@ cmLinkInterface const* cmGeneratorTarget::GetLinkInterface(
   // Lookup any existing link interface for this configuration.
   cmHeadToLinkInterfaceMap& hm = this->GetHeadToLinkInterfaceMap(config);
 
-  if (secondPass) {
-    hm.erase(head);
-  }
-
   // If the link interface does not depend on the head target
-  // then return the one we computed first.
+  // then re-use the one from the head we computed first.
   if (!hm.empty() && !hm.begin()->second.HadHeadSensitiveCondition) {
-    return &hm.begin()->second;
+    head = hm.begin()->first;
   }
 
   cmOptionalLinkInterface& iface = hm[head];
+  if (secondPass) {
+    iface = cmOptionalLinkInterface();
+  }
   if (!iface.LibrariesDone) {
     iface.LibrariesDone = true;
     this->ComputeLinkInterfaceLibraries(config, iface, head,
@@ -6869,9 +6868,9 @@ const cmLinkInterfaceLibraries* cmGeneratorTarget::GetLinkInterfaceLibraries(
        : this->GetHeadToLinkInterfaceMap(config));
 
   // If the link interface does not depend on the head target
-  // then return the one we computed first.
+  // then re-use the one from the head we computed first.
   if (!hm.empty() && !hm.begin()->second.HadHeadSensitiveCondition) {
-    return &hm.begin()->second;
+    head = hm.begin()->first;
   }
 
   cmOptionalLinkInterface& iface = hm[head];
@@ -7375,17 +7374,16 @@ const cmLinkInterface* cmGeneratorTarget::GetImportLinkInterface(
        ? this->GetHeadToLinkInterfaceUsageRequirementsMap(config)
        : this->GetHeadToLinkInterfaceMap(config));
 
-  if (secondPass) {
-    hm.erase(headTarget);
-  }
-
   // If the link interface does not depend on the head target
-  // then return the one we computed first.
+  // then re-use the one from the head we computed first.
   if (!hm.empty() && !hm.begin()->second.HadHeadSensitiveCondition) {
-    return &hm.begin()->second;
+    headTarget = hm.begin()->first;
   }
 
   cmOptionalLinkInterface& iface = hm[headTarget];
+  if (secondPass) {
+    iface = cmOptionalLinkInterface();
+  }
   if (!iface.AllDone) {
     iface.AllDone = true;
     iface.LibrariesDone = true;
@@ -7899,9 +7897,9 @@ cmGeneratorTarget::GetLinkImplementationLibrariesInternal(
     this->LinkImplMap[cmSystemTools::UpperCase(config)];
 
   // If the link implementation does not depend on the head target
-  // then return the one we computed first.
+  // then re-use the one from the head we computed first.
   if (!hm.empty() && !hm.begin()->second.HadHeadSensitiveCondition) {
-    return &hm.begin()->second;
+    head = hm.begin()->first;
   }
 
   cmOptionalLinkImplementation& impl = hm[head];
