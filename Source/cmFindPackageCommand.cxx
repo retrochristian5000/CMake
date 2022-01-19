@@ -215,6 +215,11 @@ bool cmFindPackageCommand::InitialPass(std::vector<std::string> const& args)
     this->SortDirection = (*sd == "ASC") ? Asc : Dec;
   }
 
+  // Get ignored prefixes
+  auto ignoredPrefixes =
+    cmExpandedList(this->Makefile->GetDefinition("CMAKE_IGNORE_PREFIX_PATH"));
+  this->IgnoredPrefixes.insert(ignoredPrefixes.begin(), ignoredPrefixes.end());
+
   // Find what search path locations have been enabled/disable
   this->SelectDefaultSearchModes();
 
@@ -2283,6 +2288,14 @@ bool cmFindPackageCommand::SearchPrefix(std::string const& prefix_in)
 
   // Skip this if the prefix does not exist.
   if (!cmSystemTools::FileIsDirectory(prefix_in)) {
+    return false;
+  }
+
+  // Skip if the prefix is in CMAKE_IGNORE_PREFIX_PATH.
+  if (std::any_of(this->IgnoredPrefixes.begin(), this->IgnoredPrefixes.end(),
+                  [&prefix_in](const std::string& prefix) {
+                    return cmSystemTools::SameFile(prefix, prefix_in);
+                  })) {
     return false;
   }
 
