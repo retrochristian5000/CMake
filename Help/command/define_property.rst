@@ -57,3 +57,7 @@ The ``BRIEF_DOCS`` and ``FULL_DOCS`` options are followed by strings to be
 associated with the property as its brief and full documentation.
 Corresponding options to the :command:`get_property` command will retrieve
 the documentation.
+
+.. versionchanged:: 3.23
+
+  The ``BRIEF_DOCS`` and ``FULL_DOCS`` options are optional.
