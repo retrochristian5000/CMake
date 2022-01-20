@@ -15,7 +15,7 @@ struct ExpectedParseResult
     ExpectedValue;
 };
 
-static const std::vector<ExpectedParseResult> expectedResults{
+static const ExpectedParseResult expectedResults[] = {
   /* clang-format off */
   { "threads:2", true, {
     { { "threads", 2, 1 } },
