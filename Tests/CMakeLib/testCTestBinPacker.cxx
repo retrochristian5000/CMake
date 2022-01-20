@@ -16,8 +16,7 @@ struct ExpectedPackResult
   std::vector<cmCTestBinPackerAllocation> ExpectedBlockAllocations;
 };
 
-static const std::vector<ExpectedPackResult> expectedResults
-{
+static const ExpectedPackResult expectedResults[] = {
   /* clang-format off */
   {
     { 2, 2, 2, 2 },
@@ -215,7 +214,7 @@ struct AllocationComparison
   bool Equal;
 };
 
-static const std::vector<AllocationComparison> comparisons{
+static const AllocationComparison comparisons[] = {
   /* clang-format off */
   { { 0, 1, "0" }, { 0, 1, "0" }, true },
   { { 0, 1, "0" }, { 1, 1, "0" }, false },
