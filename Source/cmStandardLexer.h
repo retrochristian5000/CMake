@@ -50,6 +50,12 @@
 #  endif
 #endif
 
+#if defined(__LCC__)
+#  pragma GCC diagnostic ignored "-Wconversion"
+#  pragma GCC diagnostic ignored "-Wsign-compare"
+#  pragma GCC diagnostic ignored "-Wsign-conversion"
+#endif
+
 #if defined(__NVCOMPILER)
 #  pragma diag_suppress 111 /* statement is unreachable */
 #  pragma diag_suppress 550 /* variable set but never used */
