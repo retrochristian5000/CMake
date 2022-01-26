@@ -300,7 +300,7 @@ enabled.
    This can be skipped if ``NO_CMAKE_PATH`` is passed or by setting the
    :variable:`CMAKE_FIND_USE_CMAKE_PATH` to ``FALSE``:
 
-   * :variable:`CMAKE_PREFIX_PATH`
+   * :variable:`CMAKE_PREFIX_PATH` (paths in :variable:`CMAKE_IGNORE_PREFIX_PATH` are ignored)
    * :variable:`CMAKE_FRAMEWORK_PATH`
    * :variable:`CMAKE_APPBUNDLE_PATH`
 
@@ -343,7 +343,7 @@ enabled.
    passed or by setting the :variable:`CMAKE_FIND_USE_CMAKE_SYSTEM_PATH`
    to ``FALSE``:
 
-   * :variable:`CMAKE_SYSTEM_PREFIX_PATH`
+   * :variable:`CMAKE_SYSTEM_PREFIX_PATH` (paths in :variable:`CMAKE_SYSTEM_IGNORE_PREFIX_PATH` are ignored)
    * :variable:`CMAKE_SYSTEM_FRAMEWORK_PATH`
    * :variable:`CMAKE_SYSTEM_APPBUNDLE_PATH`
 

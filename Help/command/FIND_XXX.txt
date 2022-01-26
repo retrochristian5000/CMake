@@ -92,7 +92,7 @@ If ``NO_DEFAULT_PATH`` is not specified, the search process is as follows:
    :command:`find_package(<PackageName>)`
 
 .. |CMAKE_PREFIX_PATH_XXX_SUBDIR| replace::
-   |prefix_XXX_SUBDIR| for each ``<prefix>`` in :variable:`CMAKE_PREFIX_PATH`
+   |prefix_XXX_SUBDIR| for each ``<prefix>`` in :variable:`CMAKE_PREFIX_PATH` and not in :variable:`CMAKE_IGNORE_PREFIX_PATH`
 
 .. |SYSTEM_ENVIRONMENT_PREFIX_PATH_XXX_SUBDIR| replace::
    |prefix_XXX_SUBDIR| for each ``<prefix>/[s]bin`` in ``PATH``, and
@@ -100,7 +100,7 @@ If ``NO_DEFAULT_PATH`` is not specified, the search process is as follows:
 
 .. |CMAKE_SYSTEM_PREFIX_PATH_XXX_SUBDIR| replace::
    |prefix_XXX_SUBDIR| for each ``<prefix>`` in
-   :variable:`CMAKE_SYSTEM_PREFIX_PATH`
+   :variable:`CMAKE_SYSTEM_PREFIX_PATH` and not in :variable:`CMAKE_SYSTEM_IGNORE_PREFIX_PATH`
 
 1. .. versionadded:: 3.12
     If called from within a find module or any other script loaded by a call to
