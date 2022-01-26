@@ -820,6 +820,8 @@ Available commands are:
     ``paxr`` (restricted pax, default), and ``zip``.
   ``--mtime=<date>``
     Specify modification time recorded in tarball entries.
+  ``--touch``
+    Don't extract file modified time.
   ``--``
     Stop interpreting options and treat all remaining arguments
     as file names, even if they start with ``-``.

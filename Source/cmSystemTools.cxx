@@ -1821,7 +1821,7 @@ bool copy_data(struct archive* ar, struct archive* aw)
 
 bool extract_tar(const std::string& outFileName,
                  const std::vector<std::string>& files, bool verbose,
-                 bool extract)
+                 bool extract_timestamps, bool extract)
 {
   cmLocaleRAII localeRAII;
   static_cast<void>(localeRAII);
@@ -1879,10 +1879,12 @@ bool extract_tar(const std::string& outFileName,
       cmSystemTools::Stdout("\n");
     }
     if (extract) {
-      r = archive_write_disk_set_options(ext, ARCHIVE_EXTRACT_TIME);
-      if (r != ARCHIVE_OK) {
-        ArchiveError("Problem with archive_write_disk_set_options(): ", ext);
-        break;
+      if (extract_timestamps) {
+        r = archive_write_disk_set_options(ext, ARCHIVE_EXTRACT_TIME);
+        if (r != ARCHIVE_OK) {
+          ArchiveError("Problem with archive_write_disk_set_options(): ", ext);
+          break;
+        }
       }
 
       r = archive_write_header(ext, entry);
@@ -1942,13 +1944,14 @@ bool extract_tar(const std::string& outFileName,
 
 bool cmSystemTools::ExtractTar(const std::string& outFileName,
                                const std::vector<std::string>& files,
-                               bool verbose)
+                               bool extract_timestamps, bool verbose)
 {
 #if !defined(CMAKE_BOOTSTRAP)
-  return extract_tar(outFileName, files, verbose, true);
+  return extract_tar(outFileName, files, extract_timestamps, verbose, true);
 #else
   (void)outFileName;
   (void)files;
+  (void)extract_timestamps;
   (void)verbose;
   return false;
 #endif
@@ -1959,7 +1962,7 @@ bool cmSystemTools::ListTar(const std::string& outFileName,
                             bool verbose)
 {
 #if !defined(CMAKE_BOOTSTRAP)
-  return extract_tar(outFileName, files, verbose, false);
+  return extract_tar(outFileName, files, verbose, true, false);
 #else
   (void)outFileName;
   (void)files;

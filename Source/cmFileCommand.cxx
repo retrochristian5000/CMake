@@ -3546,7 +3546,7 @@ bool HandleArchiveExtractCommand(std::vector<std::string> const& args,
       return false;
     }
 
-    if (!cmSystemTools::ExtractTar(inFile, parsedArgs.Patterns,
+    if (!cmSystemTools::ExtractTar(inFile, parsedArgs.Patterns, true,
                                    parsedArgs.Verbose)) {
       status.SetError(cmStrCat("failed to extract: ", inFile));
       cmSystemTools::SetFatalErrorOccured();

@@ -426,7 +426,8 @@ public:
                         std::string const& format = std::string(),
                         int compressionLevel = 0);
   static bool ExtractTar(const std::string& inFileName,
-                         const std::vector<std::string>& files, bool verbose);
+                         const std::vector<std::string>& files,
+                         bool extract_timestamps, bool verbose);
   // This should be called first thing in main
   // it will keep child processes from inheriting the
   // stdin and stdout of this process.  This is important
