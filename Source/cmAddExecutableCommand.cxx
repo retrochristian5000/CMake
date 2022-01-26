@@ -28,7 +28,7 @@ bool cmAddExecutableCommand(std::vector<std::string> const& args,
   bool use_macbundle = false;
   bool excludeFromAll = false;
   bool importTarget = false;
-  bool importGlobal = false;
+  bool importGlobal = mf.IsImportedTargetGlobalScope();
   bool isAlias = false;
   while (s != args.end()) {
     if (*s == "WIN32") {

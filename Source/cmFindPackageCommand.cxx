@@ -263,6 +263,9 @@ bool cmFindPackageCommand::InitialPass(std::vector<std::string> const& args)
     } else if (args[i] == "EXACT") {
       this->VersionExact = true;
       doing = DoingNone;
+    } else if (args[i] == "GLOBAL") {
+      this->GlobalScope = true;
+      doing = DoingNone;
     } else if (args[i] == "MODULE") {
       moduleArgs.insert(i);
       doing = DoingNone;
@@ -1203,6 +1206,10 @@ bool cmFindPackageCommand::ReadListFile(const std::string& f,
                                         PolicyScopeRule psr)
 {
   const bool noPolicyScope = !this->PolicyScope || psr == NoPolicyScope;
+
+  cmMakefile::SetGlobalTargetImportScope globScope(this->Makefile,
+                                                   this->GlobalScope);
+
   if (this->Makefile->ReadDependentFile(f, noPolicyScope)) {
     return true;
   }
