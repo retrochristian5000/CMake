@@ -31,7 +31,7 @@ bool cmAddLibraryCommand(std::vector<std::string> const& args,
   }
   bool excludeFromAll = false;
   bool importTarget = false;
-  bool importGlobal = false;
+  bool importGlobal = mf.IsImportedTargetGlobalScope();
 
   auto s = args.begin();
 
