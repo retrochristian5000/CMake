@@ -453,6 +453,11 @@ bool cmMakefile::ExecuteCommand(const cmListFileFunction& lff,
   return result;
 }
 
+bool cmMakefile::IsImportedTargetGlobalScope() const
+{
+  return this->ImportedTargetGlobalScope;
+}
+
 class cmMakefile::IncludeScope
 {
 public:
