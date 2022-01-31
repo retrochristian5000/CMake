@@ -1,0 +1,8 @@
+CMake Error at invalid-feature.cmake:[0-9]+ \(target_link_libraries\):
+  Error evaluating generator expression:
+
+    \$<LINK_GROUP:feat:invalid,dep>
+
+  The feature name for \$<LINK_GROUP:...> cannot contain character ':'.
+Call Stack \(most recent call first\):
+  CMakeLists.txt:[0-9]+ \(include\)
