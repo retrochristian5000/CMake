@@ -6390,7 +6390,8 @@ bool cmGeneratorTarget::VerifyLinkItemIsTarget(LinkItemRole role,
   if (!str.empty() &&
       (str[0] == '-' || str[0] == '$' || str[0] == '`' ||
        str.find_first_of("/\\") != std::string::npos ||
-       cmHasPrefix(str, "<LINK_LIBRARY:"_s))) {
+       cmHasPrefix(str, "<LINK_LIBRARY:"_s) ||
+       cmHasPrefix(str, "<LINK_GROUP:"_s))) {
     return true;
   }
 
