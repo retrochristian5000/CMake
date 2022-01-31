@@ -42,13 +42,17 @@ public:
   void AddEnvPath(const std::string& variable);
   void AddCMakePrefixPath(const std::string& variable);
   void AddEnvPrefixPath(const std::string& variable, bool stripBin = false);
+  void AddCMakeIgnorePrefixPath(const std::string& variable);
   void AddSuffixes(const std::vector<std::string>& suffixes);
   void AddPrefixPaths(const std::vector<std::string>& paths,
                       const char* base = nullptr);
+  void AddIgnorePrefixPaths(const std::vector<std::string>& paths,
+                            const char* base = nullptr);
 
 protected:
   void AddPathInternal(const std::string& path, const char* base = nullptr);
 
   cmFindCommon* FC;
   std::vector<std::string> Paths;
+  std::vector<std::string> IgnorePrefixPaths;
 };

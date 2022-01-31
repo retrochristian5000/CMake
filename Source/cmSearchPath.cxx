@@ -130,6 +130,19 @@ void cmSearchPath::AddEnvPrefixPath(const std::string& variable, bool stripBin)
   this->AddPrefixPaths(expanded);
 }
 
+void cmSearchPath::AddCMakeIgnorePrefixPath(const std::string& variable)
+{
+  assert(this->FC != nullptr);
+
+  // Get a path from a CMake variable.
+  if (cmValue value = this->FC->Makefile->GetDefinition(variable)) {
+    std::vector<std::string> expanded = cmExpandedList(*value);
+
+    this->AddIgnorePrefixPaths(
+      expanded, this->FC->Makefile->GetCurrentSourceDirectory().c_str());
+  }
+}
+
 void cmSearchPath::AddSuffixes(const std::vector<std::string>& suffixes)
 {
   std::vector<std::string> inPaths;
@@ -174,6 +187,14 @@ void cmSearchPath::AddPrefixPaths(const std::vector<std::string>& paths,
   }
 
   for (std::string const& path : paths) {
+    if (std::any_of(this->IgnorePrefixPaths.begin(),
+                    this->IgnorePrefixPaths.end(),
+                    [&path](const std::string& ignorePrefixPath) {
+                      return cmSystemTools::SameFile(path, ignorePrefixPath);
+                    })) {
+      continue;
+    }
+
     std::string dir = path;
     if (!subdir.empty() && !dir.empty() && dir.back() != '/') {
       dir += "/";
@@ -201,6 +222,20 @@ void cmSearchPath::AddPrefixPaths(const std::vector<std::string>& paths,
     if (!subdir.empty() && path != "/") {
       this->AddPathInternal(path, base);
     }
+  }
+}
+
+void cmSearchPath::AddIgnorePrefixPaths(const std::vector<std::string>& paths,
+                                        const char* base)
+{
+  for (auto const& path : paths) {
+    std::string collapsed = cmSystemTools::CollapseFullPath(path, base);
+
+    if (collapsed.empty()) {
+      continue;
+    }
+
+    this->IgnorePrefixPaths.push_back(std::move(collapsed));
   }
 }
 

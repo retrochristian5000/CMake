@@ -168,7 +168,7 @@ bool cmFindBase::ParseArguments(std::vector<std::string> const& argsIn)
   }
   this->ExpandPaths();
 
-  this->ComputeFinalPaths();
+  this->ComputeFinalPaths(IgnorePaths::Yes);
 
   return true;
 }
@@ -236,6 +236,7 @@ void cmFindBase::FillCMakeVariablePath()
   // variables CMAKE_*_PATH to be used most of the time with -D
   // command line options
   std::string var = cmStrCat("CMAKE_", this->CMakePathName, "_PATH");
+  paths.AddCMakeIgnorePrefixPath("CMAKE_IGNORE_PREFIX_PATH");
   paths.AddCMakePrefixPath("CMAKE_PREFIX_PATH");
   paths.AddCMakePath(var);
 
@@ -268,6 +269,7 @@ void cmFindBase::FillCMakeSystemVariablePath()
   cmSearchPath& paths = this->LabeledPaths[PathLabel::CMakeSystem];
 
   std::string var = cmStrCat("CMAKE_SYSTEM_", this->CMakePathName, "_PATH");
+  paths.AddCMakeIgnorePrefixPath("CMAKE_SYSTEM_IGNORE_PREFIX_PATH");
   paths.AddCMakePrefixPath("CMAKE_SYSTEM_PREFIX_PATH");
   paths.AddCMakePath(var);
 

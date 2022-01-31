@@ -665,6 +665,16 @@ bool cmFindPackageCommand::FindPackageUsingConfigMode()
   this->IgnoredPaths.clear();
   this->IgnoredPaths.insert(ignored.begin(), ignored.end());
 
+  // get igonored prefix paths from vars and reroot them.
+  std::vector<std::string> ignoredPrefixes;
+  this->GetIgnoredPrefixPaths(ignoredPrefixes);
+  this->RerootPaths(ignoredPrefixes);
+
+  // Construct a set of ignored prefix paths
+  this->IgnoredPrefixPaths.clear();
+  this->IgnoredPrefixPaths.insert(ignoredPrefixes.begin(),
+                                  ignoredPrefixes.end());
+
   // Find and load the package.
   return this->HandlePackageMode(HandlePackageModeType::Config);
 }
@@ -1346,7 +1356,7 @@ void cmFindPackageCommand::ComputePrefixes()
   }
   this->FillPrefixesUserGuess();
 
-  this->ComputeFinalPaths();
+  this->ComputeFinalPaths(IgnorePaths::No);
 }
 
 void cmFindPackageCommand::FillPrefixesPackageRoot()
@@ -2283,6 +2293,16 @@ bool cmFindPackageCommand::SearchPrefix(std::string const& prefix_in)
 
   // Skip this if the prefix does not exist.
   if (!cmSystemTools::FileIsDirectory(prefix_in)) {
+    return false;
+  }
+
+  // Skip this if it's in ignored paths.
+  std::string prefixWithoutSlash = prefix_in;
+  if (prefixWithoutSlash != "/" && prefixWithoutSlash.back() == '/') {
+    prefixWithoutSlash.erase(prefixWithoutSlash.length() - 1);
+  }
+  if (this->IgnoredPaths.count(prefixWithoutSlash) ||
+      this->IgnoredPrefixPaths.count(prefixWithoutSlash)) {
     return false;
   }
 
