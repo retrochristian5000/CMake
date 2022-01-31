@@ -237,11 +237,20 @@ std::string cmCommonTargetGenerator::GetManifests(const std::string& config)
 {
   std::vector<cmSourceFile const*> manifest_srcs;
   this->GeneratorTarget->GetManifests(manifest_srcs, config);
+  if (manifest_srcs.empty()) {
+    return {};
+  }
 
   std::vector<std::string> manifests;
   manifests.reserve(manifest_srcs.size());
 
   std::string lang = this->GeneratorTarget->GetLinkerLanguage(config);
+
+  if (cmValue manifestEmbedFlag = this->Makefile->GetDefinition(
+        "CMAKE_" + lang + "_LINKER_MANIFEST_EMBED_FLAG")) {
+    manifests.emplace_back(*manifestEmbedFlag);
+  }
+
   std::string const& manifestFlag =
     this->Makefile->GetDefinition("CMAKE_" + lang + "_LINKER_MANIFEST_FLAG");
   for (cmSourceFile const* manifest_src : manifest_srcs) {
