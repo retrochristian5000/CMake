@@ -24,18 +24,39 @@ public:
   std::string GetName() const { return Name; }
   std::string GetRelativePath() const { return RelativePath; }
 
+  void AddProjectConfiguration(const std::string& solutionConfiguration,
+                               const std::string& projectConfiguration);
+
+  std::string GetProjectConfiguration(
+    const std::string& solutionConfiguration);
+
 private:
   std::string Guid, Name, RelativePath;
+  std::map<std::string, std::string> projectConfigurationMap;
 };
 
 class cmSlnData
 {
 public:
-  const cmSlnProjectEntry* GetProjectByGUID(
-    const std::string& projectGUID) const;
+  std::string GetVisualStudioVersion() const { return visualStudioVersion; }
+  void SetVisualStudioVersion(const std::string& version)
+  {
+    visualStudioVersion = version;
+  }
 
-  const cmSlnProjectEntry* GetProjectByName(
-    const std::string& projectName) const;
+  std::string GetMinimumVisualStudioVersion() const
+  {
+    return minimumVisualStudioVersion;
+  }
+
+  void SetMinimumVisualStudioVersion(const std::string& version)
+  {
+    minimumVisualStudioVersion = version;
+  }
+
+  cmSlnProjectEntry* GetProjectByGUID(const std::string& projectGUID);
+
+  cmSlnProjectEntry* GetProjectByName(const std::string& projectName);
 
   std::vector<cmSlnProjectEntry> GetProjects() const;
 
@@ -43,9 +64,20 @@ public:
                                 const std::string& projectName,
                                 const std::string& projectRelativePath);
 
+  void AddConfiguration(const std::string& configuration)
+  {
+    solutionConfigurations.push_back(configuration);
+  }
+
+  std::string GetConfigurationTarget(const std::string& projectName,
+                                     const std::string& solutionConfiguration,
+                                     const std::string& platformName);
+
 private:
+  std::string visualStudioVersion, minimumVisualStudioVersion;
   using ProjectStorage = std::map<std::string, cmSlnProjectEntry>;
   ProjectStorage ProjectsByGUID;
   using ProjectStringIndex = std::map<std::string, ProjectStorage::iterator>;
   ProjectStringIndex ProjectNameIndex;
+  std::vector<std::string> solutionConfigurations;
 };

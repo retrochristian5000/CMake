@@ -1134,7 +1134,7 @@ cmGlobalVisualStudio10Generator::GenerateBuildCommand(
     slnFile += ".sln";
     cmVisualStudioSlnParser parser;
     if (parser.ParseFile(slnFile, slnData,
-                         cmVisualStudioSlnParser::DataGroupProjects)) {
+                         cmVisualStudioSlnParser::DataGroupAll)) {
       std::vector<cmSlnProjectEntry> slnProjects = slnData.GetProjects();
       for (cmSlnProjectEntry const& project : slnProjects) {
         if (useDevEnv) {
@@ -1170,15 +1170,17 @@ cmGlobalVisualStudio10Generator::GenerateBuildCommand(
     GeneratedMakeCommand makeCommand;
     makeCommand.RequiresOutputForward = requiresOutputForward;
     makeCommand.Add(makeProgramSelected);
+    cmSlnProjectEntry const* proj = NULL;
 
     if (tname == "clean") {
       makeCommand.Add(std::string(projectName) + ".sln");
       makeCommand.Add("/t:Clean");
     } else {
       std::string targetProject = cmStrCat(tname, ".vcxproj");
+      proj = slnData.GetProjectByName(tname);
       if (targetProject.find('/') == std::string::npos) {
         // it might be in a subdir
-        if (cmSlnProjectEntry const* proj = slnData.GetProjectByName(tname)) {
+        if (proj != NULL) {
           targetProject = proj->GetRelativePath();
           cmSystemTools::ConvertToUnixSlashes(targetProject);
         }
@@ -1243,14 +1245,25 @@ cmGlobalVisualStudio10Generator::GenerateBuildCommand(
       }
     }
 
-    std::string configArg = "/p:Configuration=";
-    if (!config.empty()) {
-      configArg += config;
-    } else {
-      configArg += "Debug";
+    std::string plainConfig = config;
+    if (config.empty()) {
+      plainConfig = "Debug";
     }
-    makeCommand.Add(configArg);
-    makeCommand.Add(std::string("/p:Platform=") + this->GetPlatformName());
+
+    std::string platform = GetPlatformName();
+    if (proj != NULL) {
+      std::string extension =
+        cmSystemTools::GetFilenameLastExtension(proj->GetRelativePath());
+      extension = cmSystemTools::LowerCase(extension);
+      if (extension.compare(".csproj") == 0) {
+        // Use correct platform name
+        platform =
+          slnData.GetConfigurationTarget(tname, plainConfig, platform);
+      }
+    }
+
+    makeCommand.Add(std::string("/p:Configuration=") + plainConfig);
+    makeCommand.Add(std::string("/p:Platform=") + platform);
     makeCommand.Add(std::string("/p:VisualStudioVersion=") +
                     this->GetIDEVersion());
 
