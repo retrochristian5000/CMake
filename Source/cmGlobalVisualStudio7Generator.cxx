@@ -396,7 +396,7 @@ void cmGlobalVisualStudio7Generator::WriteTargetsToSolution(
   VisualStudioFolders.clear();
 
   for (cmGeneratorTarget const* target : projectTargets) {
-    if (!target->IsInBuildSystem()) {
+    if (!this->IsInSolution(target)) {
       continue;
     }
     bool written = false;
