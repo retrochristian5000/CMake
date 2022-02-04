@@ -12,12 +12,12 @@
 
 #include "cm_codecvt.hxx"
 
+#include "cmGeneratorTarget.h"
 #include "cmGlobalGenerator.h"
 #include "cmTargetDepend.h"
 #include "cmValue.h"
 
 class cmCustomCommand;
-class cmGeneratorTarget;
 class cmLocalGenerator;
 class cmMakefile;
 class cmake;
@@ -97,6 +97,12 @@ public:
 
   // return true if target is fortran only
   bool TargetIsFortranOnly(const cmGeneratorTarget* gt);
+
+  // return true if target should be included in solution.
+  virtual bool IsInSolution(const cmGeneratorTarget* gt) const
+  {
+    return gt->IsInBuildSystem();
+  }
 
   /** Get the top-level registry key for this VS version.  */
   std::string GetRegistryBase();
