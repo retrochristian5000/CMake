@@ -309,7 +309,11 @@ Options
        was called.
 
      ``line``
-       The line in ``file`` of the function call.
+       The line in ``file`` where the function call begins.
+
+     ``last_line``
+       The line in ``file`` where the function call ends. This field
+       was added in minor version 3 of the ``json-v1`` format.
 
      ``defer``
        Optional member that is present when the function call was deferred
@@ -344,7 +348,7 @@ Options
        {
          "version": {
            "major": 1,
-           "minor": 2
+           "minor": 3
          }
        }
 

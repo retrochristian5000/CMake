@@ -30,6 +30,8 @@ required_traces = [
     {
         'args': ['STATUS', 'JSON-V1 str', 'spaces'],
         'cmd': 'message',
+        'line': 1,
+        'last_line': 5
     },
     {
         'args': ['ASDF', 'fff', 'sss', '  SPACES !!!  '],
@@ -63,16 +65,17 @@ with open(trace_file, 'r') as fp:
     assert sorted(vers.keys()) == ['version']
     assert sorted(vers['version'].keys()) == ['major', 'minor']
     assert vers['version']['major'] == 1
-    assert vers['version']['minor'] == 2
+    assert vers['version']['minor'] == 3
 
     for i in fp.readlines():
         line = json.loads(i)
-        assert sorted(line.keys()) == ['args', 'cmd', 'file', 'frame', 'global_frame','line', 'time']
+        assert sorted(line.keys()) == ['args', 'cmd', 'file', 'frame', 'global_frame','last_line', 'line', 'time']
         assert isinstance(line['args'], list)
         assert isinstance(line['cmd'], unicode)
         assert isinstance(line['file'], unicode)
         assert isinstance(line['frame'], int)
         assert isinstance(line['global_frame'], int)
+        assert isinstance(line['last_line'], int)
         assert isinstance(line['line'], int)
         assert isinstance(line['time'], float)
 
