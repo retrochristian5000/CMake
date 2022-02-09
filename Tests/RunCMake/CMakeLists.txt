@@ -946,3 +946,5 @@ endif()
 if("${CMAKE_C_COMPILER_ID}" STREQUAL "LCC" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "LCC" OR "${CMAKE_Fortran_COMPILER_ID}" STREQUAL "LCC")
   add_RunCMake_test("CMP0129")
 endif()
+
+add_RunCMake_test(ExportTargetTwice)
