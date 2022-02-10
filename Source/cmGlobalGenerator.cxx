@@ -2522,6 +2522,36 @@ bool cmGlobalGenerator::NameResolvesToFramework(
   return false;
 }
 
+// If the file has no extension it's either a raw executable or might
+// be a direct reference to a binary within a framework (bad practice!).
+// This is where we change the path to point to the framework directory.
+// .tbd files also can be located in SDK frameworks (they are
+// placeholders for actual libraries shipped with the OS)
+cm::optional<std::pair<std::string, std::string>>
+cmGlobalGenerator::SplitFrameworkPath(const std::string& path) const
+{
+  // Check for framework structure:
+  //    (/path/to/)?FwName.framework
+  // or (/path/to/)?FwName.framework/FwName(.tbd)?
+  // or (/path/to/)?FwName.framework/Versions/*/FwName(.tbd)?
+  static cmsys::RegularExpression frameworkPath(
+    "((.+)/)?(.+)\\.framework(/Versions/[^/]+)?(/(.+))?$");
+
+  auto ext = cmSystemTools::GetFilenameLastExtension(path);
+  if ((ext.empty() || ext == ".tbd" || ext == ".framework") &&
+      frameworkPath.find(path)) {
+    auto name = frameworkPath.match(3);
+    auto libname =
+      cmSystemTools::GetFilenameWithoutExtension(frameworkPath.match(6));
+    if (!libname.empty() && name != libname) {
+      return std::nullopt;
+    }
+    return std::pair<std::string, std::string>{ frameworkPath.match(2), name };
+  }
+
+  return std::nullopt;
+}
+
 bool cmGlobalGenerator::CheckCMP0037(std::string const& targetName,
                                      std::string const& reason) const
 {
