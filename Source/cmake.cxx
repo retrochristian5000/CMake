@@ -1179,8 +1179,8 @@ void cmake::SetArgs(const std::vector<std::string>& args)
 
   if (!extraProvidedPath.empty() && !scriptMode) {
     this->IssueMessage(MessageType::WARNING,
-                       cmStrCat("Ignoring extra path from command line:\n ",
-                                extraProvidedPath));
+                       cmStrCat("Ignoring extra path from command line:\n \"",
+                                extraProvidedPath, "\""));
   }
   if (!possibleUnknownArg.empty() && !scriptMode) {
     cmSystemTools::Error(cmStrCat("Unknown argument ", possibleUnknownArg));
@@ -1462,7 +1462,10 @@ void cmake::PrintTraceFormatVersion()
 
 bool cmake::SetDirectoriesFromFile(const std::string& arg)
 {
-  // Check if the argument refers to a CMakeCache.txt or
+  if (arg.empty()) {
+    return false;
+  }
+  // Check if the  argument refers to a CMakeCache.txt or
   // CMakeLists.txt file.
   std::string listPath;
   std::string cachePath;
