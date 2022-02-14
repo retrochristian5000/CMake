@@ -800,6 +800,13 @@ void cmake::SetArgs(const std::vector<std::string>& args)
   ListPresets listPresets = ListPresets::None;
 #endif
 
+  auto EmptyStringArgLambda = [](std::string const&, cmake* state) -> bool {
+    state->IssueMessage(
+      MessageType::WARNING,
+      "Ignoring empty string (\"\") provided on the command line.");
+    return true;
+  };
+
   auto SourceArgLambda = [](std::string const& value, cmake* state) -> bool {
     std::string path = cmSystemTools::CollapseFullPath(value);
     cmSystemTools::ConvertToUnixSlashes(path);
@@ -836,6 +843,7 @@ void cmake::SetArgs(const std::vector<std::string>& args)
   };
 
   std::vector<CommandArgument> arguments = {
+    CommandArgument{ "", CommandArgument::Values::Zero, EmptyStringArgLambda },
     CommandArgument{ "-S", "No source directory specified for -S",
                      CommandArgument::Values::One,
                      CommandArgument::RequiresSeparator::No, SourceArgLambda },
@@ -1179,8 +1187,8 @@ void cmake::SetArgs(const std::vector<std::string>& args)
 
   if (!extraProvidedPath.empty() && !scriptMode) {
     this->IssueMessage(MessageType::WARNING,
-                       cmStrCat("Ignoring extra path from command line:\n ",
-                                extraProvidedPath));
+                       cmStrCat("Ignoring extra path from command line:\n \"",
+                                extraProvidedPath, "\""));
   }
   if (!possibleUnknownArg.empty() && !scriptMode) {
     cmSystemTools::Error(cmStrCat("Unknown argument ", possibleUnknownArg));

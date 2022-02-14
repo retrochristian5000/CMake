@@ -158,8 +158,11 @@ endif()
   run_cmake_with_options(S-arg-reverse-order ${binary_dir} -S${source_dir} )
   run_cmake_with_options(S-no-arg -S )
   run_cmake_with_options(S-no-arg2 -S -T)
+  run_cmake_with_options(S-no-arg3 -S "")
   run_cmake_with_options(S-B -S ${source_dir} -B ${binary_dir})
   run_cmake_with_options(S-B-extra-path -S ${source_dir} -B ${binary_dir} /extra/path/)
+  run_cmake_with_options(S-B-non-path -S ${source_dir} -B ${binary_dir} "")
+  run_cmake_with_options(S-B-non-path2 -S ${source_dir} "" -B ${binary_dir})
 
   # make sure that -B can explicitly construct build directories
   file(REMOVE_RECURSE "${binary_dir}")
