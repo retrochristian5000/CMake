@@ -39,16 +39,30 @@ The ``key=value`` pairs form a comma-separated list of options to
 specify details of the instance selection.
 Supported pairs are:
 
-``version=<major>.<minor>.<MMMDD>.<BBB>``
+``version=<major>.<minor>.<date>.<build>``
   .. versionadded:: 3.23
 
-  Specify the 4-component VS Build Version.
+  Specify the 4-component VS Build Version, a.k.a. Build Number.
+  The components are:
+
+  ``<major>.<minor>``
+
+    The VS major and minor version numbers.
+    These are the same as the release version numbers.
+
+  ``<date>.<build>``
+
+    A build version, typically in the format ``<MMMDD>.<BBB>``,
+    where ``MMM`` is a month index since an epoch used by Microsoft,
+    ``DD`` is a day in that month, and ``BBB`` is a build index on that day.
+
+  For example, VS 16.11.10 has VS Build Version ``16.11.32126.315``.
 
 .. versionadded:: 3.23
 
-  A portable VS instance may be specified that is not known to the
-  Visual Studio Installer tool.  The ``location`` and ``version=``
-  values must both be provided.
+  A portable VS instance may be specified, that is not known to the
+  Visual Studio Installer tool, by providing both ``location`` and
+  ``version=`` values.
 
 If the value of ``CMAKE_GENERATOR_INSTANCE`` is not specified explicitly
 by the user or a toolchain file, CMake queries the Visual Studio Installer
