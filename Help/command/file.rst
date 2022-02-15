@@ -1136,7 +1136,7 @@ Additional options to ``DOWNLOAD`` are:
 ``RANGE_END <value>``
 
   Offset of the end of the range in file in bytes.Could be omitted to
-  download everyting from the specified ``RANGE_START`` to the end of file.
+  download everything from the specified ``RANGE_START`` to the end of file.
 
 Locking
 ^^^^^^^
