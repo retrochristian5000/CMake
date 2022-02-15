@@ -20,7 +20,6 @@
 #include <cmext/algorithm>
 #include <cmext/string_view>
 
-#include <bits/exception.h>
 #include <cm3p/kwiml/int.h>
 
 #include "cmsys/FStream.hxx"
@@ -1780,7 +1779,7 @@ bool HandleDownloadCommand(std::vector<std::string> const& args,
   std::string userpwd;
 
   std::vector<std::string> curl_headers;
-  std::vector<std::pair<std::size_t, cm::optional<std::size_t>>> curl_ranges;
+  std::vector<std::pair<std::string, cm::optional<std::string>>> curl_ranges;
 
   while (i != args.end()) {
     if (*i == "TIMEOUT") {
@@ -1899,33 +1898,20 @@ bool HandleDownloadCommand(std::vector<std::string> const& args,
         status.SetError("DOWNLOAD missing value for RANGE_START.");
         return false;
       }
-      try {
-        std::size_t current_start = std::stoull(*i);
-        curl_ranges.emplace_back(current_start, std::nullopt);
-      } catch (const std::exception& e) {
-        status.SetError("RANGE_START value is not an integer: " +
-                        std::string(e.what()));
-        return false;
-      }
+      curl_ranges.emplace_back(*i, std::nullopt);
     } else if (*i == "RANGE_END") {
-      try {
-        ++i;
-        std::size_t current_end = std::stoull(*i);
-        if (curl_ranges.empty()) {
-          curl_ranges.emplace_back(0, current_end);
+      ++i;
+      if (curl_ranges.empty()) {
+        curl_ranges.emplace_back("0", *i);
+      } else {
+        auto& last_range = curl_ranges.back();
+        if (!last_range.second.has_value()) {
+          last_range.second = *i;
         } else {
-          auto& last_range = curl_ranges.back();
-          if (!last_range.second.has_value()) {
-            last_range.second = current_end;
-          } else {
-            status.SetError("Multiple RANGE_END values is provided without "
-                            "the corresponding RANGE_START.");
-            return false;
-          }
+          status.SetError("Multiple RANGE_END values is provided without "
+                          "the corresponding RANGE_START.");
+          return false;
         }
-      } catch (const std::exception& e) {
-        status.SetError("RANGE_END value is not an integer: " + *i);
-        return false;
       }
     } else if (file.empty()) {
       file = *i;
@@ -2023,8 +2009,8 @@ bool HandleDownloadCommand(std::vector<std::string> const& args,
   }
 
   for (const auto& range : curl_ranges) {
-    std::string curl_range = std::to_string(range.first) + '-' +
-      (range.second.has_value() ? std::to_string(range.second.value()) : "");
+    std::string curl_range = range.first + '-' +
+      (range.second.has_value() ? range.second.value() : "");
     res = ::curl_easy_setopt(curl, CURLOPT_RANGE, curl_range.c_str());
     check_curl_result(res, "DOWNLOAD cannot set range: ");
   }
