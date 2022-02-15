@@ -8,7 +8,6 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
-#include <exception>
 #include <map>
 #include <set>
 #include <sstream>
@@ -21,6 +20,7 @@
 #include <cmext/algorithm>
 #include <cmext/string_view>
 
+#include <bits/exception.h>
 #include <cm3p/kwiml/int.h>
 
 #include "cmsys/FStream.hxx"
