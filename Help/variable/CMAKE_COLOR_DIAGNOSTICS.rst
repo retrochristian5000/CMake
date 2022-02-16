@@ -18,4 +18,6 @@ When ``OFF``:
 
 When not defined the default behavior is used.
 
-Not defined by default.
+If the :envvar:`CMAKE_COLOR_DIAGNOSTICS` environment variable is set, its
+value is used. Otherwise, ``CMAKE_COLOR_DIAGNOSTICS`` is not defined by
+default.
