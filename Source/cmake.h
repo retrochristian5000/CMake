@@ -183,6 +183,22 @@ public:
 #endif
   std::string ReportCapabilities() const;
 
+  /**
+   * Set the home directory from `-S` or from a known location
+   * that contains a CMakeLists.txt. Will generate warnings
+   * when overwritting an existing source directory
+   *
+   *  |    args           | src dir| warning        |
+   *  | ----------------- | ------ | -------------- |
+   *  | `dirA dirA`       | dirA   | N/A            |
+   *  | `-S dirA -S dirA` | dirA   | N/A            |
+   *  | `-S dirA -S dirB` | dirA   | Ignoring dirA  |
+   *  | `-S dirA dirB`    | dirA   | Ignoring dirB  |
+   *  | `dirB -S dirA`    | dirA   | Ignoring dirB  |
+   *  | `dirA dirB`       | dirB   | Ignoring dirA  |
+   */
+  void SetHomeDirectoryViaCommandLine(const std::string& path, bool fromDashS);
+
   //@{
   /**
    * Set/Get the home directory (or output directory) in the project. The
