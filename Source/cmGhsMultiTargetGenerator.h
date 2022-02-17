@@ -79,5 +79,4 @@ private:
   GhsMultiGpj::Types TagType;
   std::string const Name;
   std::string ConfigName;     /* CMAKE_BUILD_TYPE */
-  bool const CmdWindowsShell; /* custom commands run in cmd.exe or /bin/sh */
 };
