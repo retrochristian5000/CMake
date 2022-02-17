@@ -313,6 +313,10 @@ installers.  The most commonly-used variables are:
     with a ``liblzma`` that supports parallel compression.
     Older versions did not.
 
+  .. versionadded:: 3.24
+
+    `zstd` parallel compression was added
+
 Variables for Source Package Generators
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
