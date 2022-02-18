@@ -315,7 +315,8 @@ installers.  The most commonly-used variables are:
 
   .. versionadded:: 3.24
 
-    `zstd` parallel compression was added
+    `zstd` parallel compression was added when compiled with libarchive <= 3.6,
+    which is the case for Official CMake binaries.
 
 Variables for Source Package Generators
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
