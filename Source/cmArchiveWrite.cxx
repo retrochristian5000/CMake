@@ -106,12 +106,6 @@ cmArchiveWrite::cmArchiveWrite(std::ostream& os, Compress c,
       cm::clamp<int>(std::thread::hardware_concurrency(), 1, upperLimit);
   }
 
-#ifdef _AIX
-  // FIXME: Using more than 2 threads creates an empty archive.
-  // Enforce this limit pending further investigation.
-  numThreads = std::min(numThreads, 2);
-#endif
-
   std::string sNumThreads = std::to_string(numThreads);
 
   switch (c) {
@@ -170,7 +164,14 @@ cmArchiveWrite::cmArchiveWrite(std::ostream& os, Compress c,
       }
 
       {
+
 #if ARCHIVE_VERSION_NUMBER >= 3004000
+
+#  ifdef _AIX
+        // FIXME: Using more than 2 threads creates an empty archive.
+        // Enforce this limit pending further investigation.
+        numThreads = std::min(numThreads, 2);
+#  endif
         if (archive_write_set_filter_option(this->Archive, "xz", "threads",
                                             sNumThreads.c_str()) !=
             ARCHIVE_OK) {
