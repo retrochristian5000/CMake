@@ -128,6 +128,11 @@ if(CMAKE_Fortran_COMPILE_OPTIONS_PREPROCESS_ON AND
   # Test that we can always preprocess a target
   add_executable(preprocess_target preprocess2.f)
   set_property(TARGET preprocess_target PROPERTY Fortran_PREPROCESS ON)
+  # gfortran might report spurious warnings if we include the
+  # preprocessing flags at the compilation stage
+  target_compile_options(preprocess_target PRIVATE
+    $<$<Fortran_COMPILER_ID:GNU>:-Wall -Werror>
+    )
 
   # Test that we can preprocess a single source file
   add_executable(preprocess_source preprocess3.f)
