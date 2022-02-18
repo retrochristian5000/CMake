@@ -3454,10 +3454,11 @@ void cmGeneratorTarget::AddCUDAArchitectureFlags(std::string& flags) const
         "11.5")) {
     if (property == "all") {
       flags += " -arch=all";
+      return;
     } else if (property == "all-major") {
       flags += " -arch=all-major";
+      return;
     }
-    return;
   }
 
   if (property == "all") {
