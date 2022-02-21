@@ -2639,6 +2639,9 @@ if(BUILD_TESTING)
       endif()
     endif()
     if(CTEST_TEST_UPDATE_BZR)
+      if(TEST_HOME)
+        file(MAKE_DIRECTORY "${TEST_HOME}/.bazaar")
+      endif()
       # Check if xmloutput plugin is there
       execute_process(COMMAND ${BZR_EXECUTABLE} xmlplugins RESULT_VARIABLE xmlplugres
         OUTPUT_QUIET ERROR_QUIET)
