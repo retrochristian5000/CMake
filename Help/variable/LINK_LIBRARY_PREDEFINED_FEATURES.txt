@@ -9,6 +9,8 @@
 It is assumed that the linker used is the one provided by `XCode` or is
 compatible with it.
 
+Framework support
+
 * ``FRAMEWORK``: This option tells the linker to search for the specified
   framework (use linker option ``-framework``).
 * ``NEEDED_FRAMEWORK``: This is the same as the ``FRAMEWORK`` feature but means
@@ -45,3 +47,16 @@ at link step.
    * (/path/to/)?FwName(.framework)?
    * (/path/to/)?FwName.framework/FwName
    * (/path/to/)?FwName.framework/Versions/\*/FwName
+
+Library support
+
+* ``NEEDED_LIBRARY``: This is the same as specifying a link item (target or
+  library) but means to really link with the item even if no symbols are used
+  from it (use linker option ``-needed_library`` or ``-needed-l``).
+* ``REEXPORT_LIBRARY``: This is the same as specifying a link item (target or
+  library) but also specifies that all symbols in that item should be available
+  to clients linking to the library being created (use linker option
+  ``-reexport_library`` or ``-reexport-l``).
+* ``WEAK_LIBRARY``: This is the same as specifying a link item (target or
+  library) but forces the item and all references to it to be marked as weak
+  imports (use linker option ``-weak_library`` or ``-weak-l``).
