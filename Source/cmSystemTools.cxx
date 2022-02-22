@@ -3315,7 +3315,7 @@ cmsys::Status cmSystemTools::CreateSymlink(std::string const& origName,
   int flags = 0;
 #if defined(_WIN32)
   if (cmsys::SystemTools::FileIsDirectory(origName)) {
-    flags |= UV_FS_SYMLINK_DIR;
+    flags |= UV_FS_SYMLINK_JUNCTION;
   }
 #endif
   int err = uv_fs_symlink(nullptr, &req, origName.c_str(), newName.c_str(),
