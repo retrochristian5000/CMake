@@ -1,0 +1,6 @@
+#ifdef TEST_DIR_CXX_H
+#  error "TEST_DIR_CXX_H defined"
+#endif
+#ifndef __cplusplus
+#  error "__cplusplus defined"
+#endif
