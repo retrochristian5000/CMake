@@ -147,6 +147,14 @@ private:
   // safely by the build tools.
   std::string RelativePathTopSource;
   std::string RelativePathTopBinary;
+  enum class TopRelation
+  {
+    InSource,
+    Separate,
+    BinInSrc,
+    SrcInBin,
+  };
+  TopRelation RelativePathTopRelation = TopRelation::InSource;
   void ComputeRelativePathTopSource();
   void ComputeRelativePathTopBinary();
   std::string MaybeRelativeTo(std::string const& local_path,
