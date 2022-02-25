@@ -34,6 +34,18 @@ cmOutputConverter::cmOutputConverter(cmStateSnapshot const& snapshot)
   assert(this->StateSnapshot.IsValid());
   this->ComputeRelativePathTopSource();
   this->ComputeRelativePathTopBinary();
+  if (cmSystemTools::ComparePath(this->RelativePathTopSource,
+                                 this->RelativePathTopBinary)) {
+    this->RelativePathTopRelation = TopRelation::InSource;
+  } else if (cmSystemTools::IsSubDirectory(this->RelativePathTopBinary,
+                                           this->RelativePathTopSource)) {
+    this->RelativePathTopRelation = TopRelation::BinInSrc;
+  } else if (cmSystemTools::IsSubDirectory(this->RelativePathTopSource,
+                                           this->RelativePathTopBinary)) {
+    this->RelativePathTopRelation = TopRelation::SrcInBin;
+  } else {
+    this->RelativePathTopRelation = TopRelation::Separate;
+  }
 }
 
 void cmOutputConverter::ComputeRelativePathTopSource()
@@ -92,13 +104,33 @@ void cmOutputConverter::SetRelativePathTopBinary(std::string const& top)
 std::string cmOutputConverter::MaybeRelativeTo(
   std::string const& local_path, std::string const& remote_path) const
 {
-  bool bothInBinary =
-    PathEqOrSubDir(local_path, this->RelativePathTopBinary) &&
+  bool localInBinary = PathEqOrSubDir(local_path, this->RelativePathTopBinary);
+  bool remoteInBinary =
     PathEqOrSubDir(remote_path, this->RelativePathTopBinary);
 
-  bool bothInSource =
-    PathEqOrSubDir(local_path, this->RelativePathTopSource) &&
+  bool localInSource = PathEqOrSubDir(local_path, this->RelativePathTopSource);
+  bool remoteInSource =
     PathEqOrSubDir(remote_path, this->RelativePathTopSource);
+
+  switch (this->RelativePathTopRelation) {
+    case TopRelation::Separate:
+      // Checks are independent.
+      break;
+    case TopRelation::BinInSrc:
+      localInSource = localInSource && !localInBinary;
+      remoteInSource = remoteInSource && !remoteInBinary;
+      break;
+    case TopRelation::SrcInBin:
+      localInBinary = localInBinary && !localInSource;
+      remoteInBinary = remoteInBinary && !remoteInSource;
+      break;
+    case TopRelation::InSource:
+      // Checks are identical.
+      break;
+  };
+
+  bool const bothInBinary = localInBinary && remoteInBinary;
+  bool const bothInSource = localInSource && remoteInSource;
 
   if (bothInBinary || bothInSource) {
     return cmSystemTools::ForceToRelativePath(local_path, remote_path);
