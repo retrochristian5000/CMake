@@ -65,7 +65,8 @@ std::string cmFindPathCommand::FindHeader()
 }
 
 std::string cmFindPathCommand::FindHeaderInFramework(
-  std::string const& file, std::string const& dir) const
+  std::string const& file, std::string const& dir,
+  cmFindBaseDebugState& debug) const
 {
   std::string fileName = file;
   std::string frameWorkName;
@@ -89,10 +90,13 @@ std::string cmFindPathCommand::FindHeaderInFramework(
       std::string intPath = cmStrCat(fpath, "/Headers/", fileName);
       if (cmSystemTools::FileExists(intPath)) {
         if (this->IncludeFileInPath) {
+          debug.FoundAt(intPath);
           return intPath;
         }
+        debug.FoundAt(fpath);
         return fpath;
       }
+      debug.FailedAt(intPath);
     }
   }
   // if it is not found yet or not a framework header, then do a glob search
@@ -104,11 +108,15 @@ std::string cmFindPathCommand::FindHeaderInFramework(
   if (!files.empty()) {
     std::string fheader = cmSystemTools::CollapseFullPath(files[0]);
     if (this->IncludeFileInPath) {
+      debug.FoundAt(fheader);
       return fheader;
     }
     fheader.resize(fheader.size() - file.size());
+    debug.FoundAt(fheader);
     return fheader;
   }
+
+  // No frameworks matched the glob, so nothing more to add to debug.FailedAt()
   return "";
 }
 
@@ -135,8 +143,7 @@ std::string cmFindPathCommand::FindFrameworkHeader(cmFindBaseDebugState& debug)
 {
   for (std::string const& n : this->Names) {
     for (std::string const& sp : this->SearchPaths) {
-      std::string fwPath = this->FindHeaderInFramework(n, sp);
-      fwPath.empty() ? debug.FailedAt(fwPath) : debug.FoundAt(fwPath);
+      std::string fwPath = this->FindHeaderInFramework(n, sp, debug);
       if (!fwPath.empty()) {
         return fwPath;
       }
