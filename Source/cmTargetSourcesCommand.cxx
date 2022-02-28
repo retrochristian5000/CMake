@@ -202,6 +202,11 @@ bool TargetSourcesImpl::HandleFileSetMode(
     return false;
   }
 
+  if (this->Target->GetType() == cmStateEnums::UTILITY) {
+    this->SetError("FILE_SETs may not be added to custom targets");
+    return false;
+  }
+
   bool const isDefault = args.Type == args.FileSet ||
     (args.Type.empty() && args.FileSet[0] >= 'A' && args.FileSet[0] <= 'Z');
   std::string type = isDefault ? args.FileSet : args.Type;
