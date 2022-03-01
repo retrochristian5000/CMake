@@ -200,6 +200,7 @@ endif()
   run_cmake_with_options(ExplicitDirs-C_buildsrcdir -B DummyBuildDir -S ${RunCMake_SOURCE_DIR}/C_buildsrcdir/src -C initial-cache.txt)
   # Test that full path works, too.
   run_cmake_with_options(ExplicitDirs-C_buildsrcdir -B DummyBuildDir -S ${RunCMake_SOURCE_DIR}/C_buildsrcdir/src -C ${RunCMake_TEST_BINARY_DIR}/initial-cache.txt)
+  run_cmake_with_options(ExplicitDirs-C_buildsrcdir -B DummyBuildDir ${RunCMake_SOURCE_DIR}/C_buildsrcdir/src -C ${RunCMake_TEST_BINARY_DIR}/initial-cache.txt)
 endfunction()
 run_ExplicitDirs()
 
