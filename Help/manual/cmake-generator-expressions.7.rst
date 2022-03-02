@@ -1337,6 +1337,10 @@ Output-Related Expressions
   So, we have a circular dependency between groups ``{lib1A,lib1B}`` and
   ``{lib2A,lib2B}``.
 
+  ``CMake`` pre-defines some features of general interest:
+
+  .. include:: ../variable/LINK_GROUP_PREDEFINED_FEATURES.txt
+
 .. genex:: $<INSTALL_INTERFACE:...>
 
   Content of ``...`` when the property is exported using :command:`install(EXPORT)`,
