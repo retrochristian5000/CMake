@@ -1,0 +1,5 @@
+^CMake Error at FileSetMultipleNames\.cmake:[0-9]+ \(target_sources\):
+  target_sources Each INTERFACE, PUBLIC, or PRIVATE block may have at most
+  one FILE_SET argument
+Call Stack \(most recent call first\):
+  CMakeLists\.txt:[0-9]+ \(include\)$

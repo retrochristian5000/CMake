@@ -189,6 +189,12 @@ bool TargetSourcesImpl::HandleFileSetMode(
   const std::string& scope, const std::vector<std::string>& content,
   bool /*prepend*/, bool /*system*/)
 {
+  if (std::count(content.begin(), content.end(), "FILE_SET"_s) > 1) {
+    this->SetError("Each INTERFACE, PUBLIC, or PRIVATE block may have "
+                   "at most one FILE_SET argument");
+    return false;
+  }
+
   std::vector<std::string> unparsed;
   auto args = FileSetArgsParser.Parse(content, &unparsed);
 
