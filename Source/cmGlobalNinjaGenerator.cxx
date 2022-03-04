@@ -2537,6 +2537,8 @@ bool cmGlobalNinjaGenerator::WriteDyndepFile(
   const char* module_ext = "";
   if (arg_modmapfmt == "gcc") {
     module_ext = ".gcm";
+  } else if (arg_modmapfmt == "clang") {
+    module_ext = ".pcm";
   }
 
   // Extend the module map with those provided by this target.
@@ -2615,6 +2617,23 @@ bool cmGlobalNinjaGenerator::WriteDyndepFile(
             if (m != mod_files.end()) {
               mm << r.LogicalName << " " << this->ConvertToNinjaPath(m->second)
                  << "\n";
+            }
+          }
+        } else if (arg_modmapfmt == "clang") {
+          // A response file of `-fmodule-file=NAME=PATH` arguments.
+
+          for (auto const& l : object.Provides) {
+            auto m = mod_files.find(l.LogicalName);
+            if (m != mod_files.end()) {
+              mm << "-fmodule-file=" << l.LogicalName << "="
+                 << this->ConvertToNinjaPath(m->second) << "\n";
+            }
+          }
+          for (auto const& r : object.Requires) {
+            auto m = mod_files.find(r.LogicalName);
+            if (m != mod_files.end()) {
+              mm << "-fmodule-file=" << r.LogicalName << "="
+                 << this->ConvertToNinjaPath(m->second) << "\n";
             }
           }
         } else {

@@ -29,3 +29,15 @@ if("x${CMAKE_CXX_COMPILER_FRONTEND_VARIANT}" STREQUAL "xMSVC")
     set(CMAKE_CXX_DEPENDS_USE_COMPILER TRUE)
   endif()
 endif()
+
+if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "15.0")
+  set(CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP 1)
+  string(CONCAT CMAKE_EXPERIMENTAL_CXX_SCANDEP_SOURCE
+    "<CMAKE_CXX_COMPILER> <DEFINES> <INCLUDES> <FLAGS> -E -x c++ <SOURCE>"
+    " -MT <DYNDEP_FILE> -MD -MF <DEP_FILE>"
+    " -fdep-file=<DYNDEP_FILE> -fdep-output=<OBJECT> -fdep-format=trtbd"
+    " -fno-module-import -fno-implicit-modules -fmodules -fno-implicit-module-maps -fno-prebuilt-implicit-modules -fno-autolink"
+    " -o <PREPROCESSED_SOURCE>")
+  set(CMAKE_EXPERIMENTAL_CXX_MODULE_MAP_FORMAT "clang")
+  set(CMAKE_EXPERIMENTAL_CXX_MODULE_MAP_FLAG "@<MODULE_MAP_FILE> -fmodules -fno-implicit-modules -fno-implicit-module-maps -fno-prebuilt-implicit-modules -fno-autolink -x c++")
+endif ()
