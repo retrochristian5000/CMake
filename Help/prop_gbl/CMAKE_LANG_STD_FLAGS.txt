@@ -1,0 +1,4 @@
+.. note::
+
+  If the compiler's default standard level is at least that
+  of the requested feature, CMake may omit the ``-std=`` flag.
