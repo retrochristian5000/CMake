@@ -3,3 +3,10 @@ include(Compiler/Clang)
 set(CMAKE_ASM_SOURCE_FILE_EXTENSIONS s;S;asm)
 
 __compiler_clang(ASM)
+
+if(CMAKE_SYSTEM_NAME STREQUAL Windows)
+  set(CMAKE_ASM_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreaded         "")
+  set(CMAKE_ASM_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreadedDLL      "")
+  set(CMAKE_ASM_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreadedDebug    "")
+  set(CMAKE_ASM_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreadedDebugDLL "")
+endif()
