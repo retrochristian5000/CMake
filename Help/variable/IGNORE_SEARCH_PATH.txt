@@ -1,0 +1,19 @@
+:ref:`Semicolon-separated list <CMake Language Lists>` of specific
+directories to be ignored by the :command:`find_program`,
+:command:`find_library`, :command:`find_file`, and :command:`find_path`
+commands. Any file found in one of the listed directories will be ignored.
+The listed directories do not apply recursively, so any subdirectories to
+be ignored must also be explicitly listed.
+
+:command:`find_package` is also affected by |CMAKE_IGNORE_VAR|, but only
+for *Config mode* searches. Any ``<Name>Config.cmake`` or
+``<name>-config.cmake`` file found in one of the specified directories
+will be ignored.
+
+All the ``find_...()`` commands search a set of defined subdirectories
+below a set of search *prefixes*. Any prefix found in |CMAKE_IGNORE_VAR|
+will be skipped for backward compatibility reasons, but new code should
+prefer to use |CMAKE_IGNORE_PREFIX_VAR| to ignore prefixes instead.
+To ignore only individual paths under a prefix (e.g. ``bin``, ``include``,
+``lib``, etc.), those paths should be listed in |CMAKE_IGNORE_VAR| rather
+than the prefix.
