@@ -273,10 +273,16 @@ if(NOT CMAKE_CUDA_COMPILER_ID_RUN)
   endif()
 
   # Detect explicit architectures and add them during detection.
-  if(DEFINED CMAKE_CUDA_ARCHITECTURES AND NOT "${CMAKE_CUDA_ARCHITECTURES}" STREQUAL "all" AND NOT "${CMAKE_CUDA_ARCHITECTURES}" STREQUAL "all-major")
+  set(_cmake_cuda_arch_on FALSE)
+  if(DEFINED CMAKE_CUDA_ARCHITECTURES AND ( CMAKE_CUDA_ARCHITECTURES OR "${CMAKE_CUDA_ARCHITECTURES}" STREQUAL ""))
+    set(_cmake_cuda_arch_on TRUE)
+  endif()
+  if(_cmake_cuda_arch_on AND NOT "${CMAKE_CUDA_ARCHITECTURES}" STREQUAL "all"
+                         AND NOT "${CMAKE_CUDA_ARCHITECTURES}" STREQUAL "all-major")
     set(architectures_explicit TRUE)
     set(architectures_test ${CMAKE_CUDA_ARCHITECTURES})
   endif()
+  unset(_cmake_cuda_arch_on)
 
   # For sufficiently new NVCC we can just use the all and all-major flags.
   # For VS we don't test since we can't figure out the version this early (see #23161).
@@ -632,7 +638,7 @@ if("${CMAKE_CUDA_ARCHITECTURES}" STREQUAL "")
       message(FATAL_ERROR "Failed to detect a default CUDA architecture.\n\nCompiler output:\n${CMAKE_CUDA_COMPILER_PRODUCED_OUTPUT}")
     endif()
   endif()
-else()
+elseif(CMAKE_CUDA_ARCHITECTURES) # ignore when CMAKE_CUDA_ARCHITECTURES is set to an off value
   # Sort since order mustn't matter.
   list(SORT architectures_detected)
   list(SORT architectures_tested)
