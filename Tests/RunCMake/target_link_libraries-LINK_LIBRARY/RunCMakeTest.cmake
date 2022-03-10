@@ -110,3 +110,10 @@ endif()
 if (CMAKE_C_COMPILER_ID STREQUAL "AppleClang" AND CMAKE_C_COMPILER_VERSION GREATER_EQUAL "12")
   run_cmake_target(apple_library needed_library main-needed_library)
 endif()
+
+# WHOLE_ARCHIVE feature
+if((MSVC AND MSVC_VERSION GREATER "1900")
+    OR CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS|tvOS|watchOS|Linux|BSD|SunOS|Windows|MSYS|CYGWIN")
+  run_cmake(feature-WHOLE_ARCHIVE)
+  run_cmake_target(feature-WHOLE_ARCHIVE link-exe main)
+endif()

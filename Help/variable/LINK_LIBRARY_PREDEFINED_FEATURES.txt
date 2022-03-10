@@ -68,3 +68,15 @@ Library support
   This is the same as specifying a link item (target or
   library) but forces the item and all references to it to be marked as weak
   imports (use linker option ``-weak_library`` or ``-weak-l``).
+
+**Features available in various environments**
+
+``WHOLE_ARCHIVE``
+  Force load of all members in a static library.
+
+  Platforms supported: ``Apple``, ``Linux``, all ``BSD`` variants, ``SunOS``,
+  ``Windows``, ``CYGWIN``, and ``MSYS``.
+
+  .. note::
+
+    On ``Apple`` platforms, the library cannot be specified as a radical name.
