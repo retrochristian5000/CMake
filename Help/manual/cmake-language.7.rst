@@ -627,3 +627,19 @@ in list elements, thus flattening nested lists:
 .. code-block:: cmake
 
  set(x a "b;c") # sets "x" to "a;b;c", not "a;b\;c"
+
+In general, lists do not support elements containing ``;``.
+One may instead substitute a placeholder for ``;`` when constructing
+a list, and then substitute ``;`` for the placeholder when later
+processing list elements.  For example:
+
+.. code-block:: cmake
+
+ set(mylist a "b|c")
+ foreach(entry IN LISTS mylist)
+   string(REPLACE "|" ";" entry "${entry}")
+   # use "${entry}" normally
+ endforeach()
+
+For an example interface using this approach, see the
+:module:`ExternalProject` module's ``LIST_SEPARATOR`` option.
