@@ -627,3 +627,26 @@ in list elements, thus flattening nested lists:
 .. code-block:: cmake
 
  set(x a "b;c") # sets "x" to "a;b;c", not "a;b\;c"
+
+.. warning::
+
+  In general, lists do not support elements containing ``;`` characters.
+
+In order to store values containing ``;`` as elements in a list, one may
+substitute an otherwise-unused placeholder for ``;`` when constructing the
+list.  Then substitute ``;`` for the placeholder when processing list
+elements.  For example, the following code uses ``|`` in place of ``;``:
+
+.. code-block:: cmake
+
+  set(mylist a "b|c")
+  foreach(entry IN LISTS mylist)
+    string(REPLACE "|" ";" entry "${entry}")
+    # use "${entry}" normally
+  endforeach()
+
+The :module:`ExternalProject` module's ``LIST_SEPARATOR`` option is an
+example of an interface built using this approach.
+
+In lists of :manual:`generator expressions <cmake-generator-expressions(7)>`,
+one may use the :genex:`$<SEMICOLON>` generator expression.
