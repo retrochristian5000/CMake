@@ -39,6 +39,9 @@ The ``CUDA_ARCHITECTURES`` may be set to one of the following special values:
 
   Compile for the architecture(s) of the host's GPU(s).
 
+  The architectures are clamped to the highest architecture
+  supported by the CUDA Toolkit.
+
 Examples
 ^^^^^^^^
 
