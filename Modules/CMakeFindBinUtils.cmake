@@ -173,8 +173,12 @@ else()
     else()
       list(PREPEND _CMAKE_LINKER_NAMES "ld.lld")
     endif()
-    if(NOT APPLE)
+    if(APPLE)
       # llvm-ar does not generate a symbol table that the Apple ld64 linker accepts.
+      # However, we should still consider it as a fallback in case there is no 'ar',
+      # such as when using a cross-compiling toolchain.
+      list(APPEND _CMAKE_AR_NAMES "llvm-ar")
+    else()
       list(PREPEND _CMAKE_AR_NAMES "llvm-ar")
     endif()
     list(PREPEND _CMAKE_RANLIB_NAMES "llvm-ranlib")
