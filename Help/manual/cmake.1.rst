@@ -149,6 +149,24 @@ source and build trees and generate a buildsystem:
 
     $ cmake -S src -B build
 
+When cmake is provided multiple directories it determines if each one is a
+source directory ( because it contains ``CMakeList.txt`` ) or a build
+directory. When provided multiple of each type CMake uses the following table
+to select the active source and build directory.
+
+=================================================  =================  =================
+          command                                   source directory   build directory
+=================================================  =================  =================
+ cmake -S <src-dir-A>                                   src-dir-A          cwd
+ cmake -S <src-dir-A> <build-dir>                       src-dir-A          build-dir
+ cmake -S <src-dir-A> <src-dir-B>                       src-dir-A          cwd
+ cmake -S <src-dir-A> -S <src-dir-B> <build-dir>        src-dir-B          build-dir
+ cmake -B <build-dir>                                   cwd                build-dir
+ cmake -B <build-dir> <src-dir-A>                       src-dir-A          build-dir
+ cmake -B <build-dir> <src-dir-A> <src-dir-B>           src-dir-B          build-dir
+=================================================  =================  =================
+
+
 In all cases the ``<options>`` may be zero or more of the `Options`_ below.
 
 After generating a buildsystem one may use the corresponding native
