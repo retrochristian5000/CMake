@@ -311,8 +311,14 @@ void cmGlobalGhsMultiGenerator::WriteTopLevelProject(std::ostream& fout,
   }
 }
 
-void cmGlobalGhsMultiGenerator::WriteSubProjects(std::ostream& fout)
+void cmGlobalGhsMultiGenerator::WriteSubProjects(std::ostream& fout,
+                                                 bool filter_predefined)
 {
+  std::set<std::string> predefinedTargets;
+  predefinedTargets.insert(this->GetInstallTargetName());
+  predefinedTargets.insert(this->GetAllTargetName());
+  predefinedTargets.insert(std::string(CHECK_BUILD_SYSTEM_TARGET));
+
   // All known targets
   for (cmGeneratorTarget const* target : this->ProjectTargets) {
     if (target->GetType() == cmStateEnums::INTERFACE_LIBRARY ||
@@ -322,7 +328,15 @@ void cmGlobalGhsMultiGenerator::WriteSubProjects(std::ostream& fout)
          target->GetName() != this->GetInstallTargetName())) {
       continue;
     }
-    fout << target->GetName() + ".tgt" + FILE_EXTENSION << " [Project]\n";
+    if (filter_predefined &&
+        (predefinedTargets.find(target->GetName()) !=
+         predefinedTargets.end())) {
+      fout << target->GetName() + ".tgt" + FILE_EXTENSION << " [Project]\n";
+    } else if (!filter_predefined &&
+               (predefinedTargets.find(target->GetName()) ==
+                predefinedTargets.end())) {
+      fout << target->GetName() + ".tgt" + FILE_EXTENSION << " [Project]\n";
+    }
   }
 }
 
@@ -448,7 +462,8 @@ void cmGlobalGhsMultiGenerator::OutputTopLevelProject(
   top.SetCopyIfDifferent(true);
   this->WriteTopLevelProject(top, root);
   this->WriteTargets(root);
-  this->WriteSubProjects(top);
+  this->WriteSubProjects(top, true);
+  this->WriteSubProjects(top, false);
   top.Close();
 }
 
