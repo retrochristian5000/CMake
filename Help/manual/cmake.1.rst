@@ -171,6 +171,13 @@ is used for the other.  For example:
  ``cmake -B build -S src``      ``src``      ``build``
 ============================== ============ ===========
 
+.. versionchanged:: 3.23
+
+  Specifying multiple source paths has never been officially documented or
+  supported, but older versions accidentally accepted them and used the
+  last path.  CMake now warns when paths are overridden, and no longer
+  overrides an explicit ``-S src`` option with a plain ``src`` path.
+
 After generating a buildsystem one may use the corresponding native
 build tool to build the project.  For example, after using the
 :generator:`Unix Makefiles` generator one may run ``make`` directly:

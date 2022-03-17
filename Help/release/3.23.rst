@@ -225,6 +225,14 @@ CPack
 Deprecated and Removed Features
 ===============================
 
+* The :manual:`cmake(1)` ``-S <src>`` argument now takes precedence over
+  plain ``<src>`` arguments, regardless of the order specified.
+  The behavior of ``cmake -S src1 src2`` was never formally defined or
+  documented, and scripts calling it are not officially supported.
+  However, CMake 3.22 and below accidentally accepted both arguments
+  and chose the later one.  CMake 3.23 now chooses ``-S src1`` because
+  it is more explicit, and warns that the plain ``src2`` path is ignored.
+
 * The :manual:`cpack(1)` undocumented ``OSXX11`` generator has been removed.
 
 Other Changes
