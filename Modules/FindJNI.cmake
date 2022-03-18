@@ -7,9 +7,9 @@ FindJNI
 
 Find Java Native Interface (JNI) headers and libraries.
 
-JNI enables Java code running in a Java Virtual Machine (JVM) to call
-and be called by native applications and libraries written in other
-languages such as C, C++.
+JNI enables Java code running in a Java Virtual Machine (JVM) or Dalvik Virtual
+Machine (DVM) on Android to call and be called by native applications and
+libraries written in other languages such as C and C++.
 
 This module finds if Java is installed and determines where the
 include files and libraries are.  It also determines what the name of
@@ -17,7 +17,11 @@ the library is.  The caller may set variable ``JAVA_HOME`` to specify a
 Java installation prefix explicitly.
 
 .. versionadded:: 3.24
-  Added imported targets, components ``AWT`` and ``JVM``.
+  Added imported targets, components ``AWT`` and ``JVM``, and Android
+  NDK support. If no components are specified, the module defaults to an empty
+  components list for Android NDK, and all available components otherwise. When
+  using Android NDK, the corresponding package version is reported and a
+  specific release can be requested.
 
 Imported Targets
 ^^^^^^^^^^^^^^^^
@@ -48,6 +52,23 @@ This module sets the following result variables:
 ``JNI_<component>_FOUND``
   .. versionadded:: 3.24
 
+  ``TRUE`` if ``<component>`` was found.
+``JNI_VERSION``
+  Full Android NDK package version (including suffixes such as ``-beta3`` and
+  ``-rc1``) or undefined otherwise.
+``JNI_VERSION_MAJOR``
+  .. versionadded:: 3.24
+
+  Android NDK major version or undefined otherwise.
+``JNI_VERSION_MINOR``
+  .. versionadded:: 3.24
+
+  Android NDK minor version or undefined otherwise.
+``JNI_VERSION_PATCH``
+  .. versionadded:: 3.24
+
+  Android NDK patch version or undefined otherwise.
+
 Cache Variables
 ^^^^^^^^^^^^^^^
 
@@ -61,7 +82,8 @@ The following cache variables are also available to set or use:
   The include path to ``jni.h``.
 ``JAVA_INCLUDE_PATH2``
   The include path to machine-dependant headers ``jni_md.h`` and ``jniport.h``.
-  The variable is defined only if ``jni.h`` depends on one of these headers.
+  The variable is defined only if ``jni.h`` depends on one of these headers. In
+  contrast, Android NDK ``jni.h`` can be typically used standalone.
 ``JAVA_AWT_INCLUDE_PATH``
   The include path to ``jawt.h``.
 #]=======================================================================]
@@ -74,11 +96,16 @@ include(CMakePushCheckState)
 include(FindPackageHandleStandardArgs)
 
 if(NOT JNI_FIND_COMPONENTS)
-  set(JNI_FIND_COMPONENTS AWT JVM)
-  # For compatibility purposes, if no components are specified both are
-  # considered required.
-  set(JNI_FIND_REQUIRED_AWT TRUE)
-  set(JNI_FIND_REQUIRED_JVM TRUE)
+  if(ANDROID)
+    # There are no components for Android NDK
+    set(JNI_FIND_COMPONENTS)
+  else(ANDROID)
+    set(JNI_FIND_COMPONENTS AWT JVM)
+    # For compatibility purposes, if no components are specified both are
+    # considered required.
+    set(JNI_FIND_REQUIRED_AWT TRUE)
+    set(JNI_FIND_REQUIRED_JVM TRUE)
+  endif()
 endif()
 
 # Expand {libarch} occurrences to java_libarch subdirectory(-ies) and set ${_var}
@@ -473,6 +500,24 @@ if(DEFINED _JNI_CMAKE_FIND_FRAMEWORK)
   unset(_JNI_CMAKE_FIND_FRAMEWORK)
 else()
   unset(CMAKE_FIND_FRAMEWORK)
+endif()
+
+if(ANDROID)
+  # Extract NDK version from source.properties in the NDK root
+  set(JAVA_SOURCE_PROPERTIES_FILE ${CMAKE_ANDROID_NDK}/source.properties)
+
+  if(EXISTS ${JAVA_SOURCE_PROPERTIES_FILE})
+    file(READ ${JAVA_SOURCE_PROPERTIES_FILE} NDK_VERSION_CONTENTS)
+    string (REGEX REPLACE
+      ".*Pkg\\.Revision = (([0-9]+)\\.([0-9]+)\\.([0-9]+)([^\n]+)?).*" "\\1"
+      JNI_VERSION "${NDK_VERSION_CONTENTS}")
+    set(JNI_VERSION_MAJOR ${CMAKE_MATCH_1})
+    set(JNI_VERSION_MINOR ${CMAKE_MATCH_2})
+    set(JNI_VERSION_PATCH ${CMAKE_MATCH_3})
+    set(JNI_VERSION_COMPONENTS 3)
+
+    set(JNI_FPHSA_ARGS VERSION_VAR JNI_VERSION HANDLE_VERSION_RANGE)
+  endif()
 endif()
 
 set(JNI_REQUIRED_VARS JAVA_INCLUDE_PATH)
