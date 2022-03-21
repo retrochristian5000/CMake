@@ -65,5 +65,6 @@ the documentation.
 
 The ``INITIALIZE_FROM_VARIABLE`` option is followed by the name of a variable
 from which to initialize the property. The variable name must end with the
-property name, must have a prefix before the property name, and must not begin
-with ``CMAKE_`` or ``_CMAKE_``.
+property name and must not begin with ``CMAKE_`` or ``_CMAKE_``. The property
+name must contain an underscore. It is recommended that the property name have
+a prefix specific to the project.
