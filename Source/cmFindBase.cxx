@@ -267,8 +267,46 @@ void cmFindBase::FillCMakeSystemVariablePath()
 {
   cmSearchPath& paths = this->LabeledPaths[PathLabel::CMakeSystem];
 
+  const bool install_prefix_in_list = !this->Makefile->IsOn("CMAKE_FIND_NO_INSTALL_PREFIX");
+  const bool remove_install_prefix = this->NoCMakeInstallPath;
+  const bool add_install_prefix = !this->NoCMakeInstallPath &&
+    this->Makefile->IsDefinitionSet("CMAKE_FIND_USE_INSTALL_PREFIX");
+
+  cmValue prefix_paths =
+    this->Makefile->GetDefinition("CMAKE_SYSTEM_PREFIX_PATH");
+
+  long install_prefix_index = -1;
+  if (cmValue to_skip = this->Makefile->GetDefinition(
+        "_CMAKE_SYSTEM_PREFIX_PATH_INSTALL_PREFIX_LOC")) {
+    cmStrToLong(to_skip, &install_prefix_index);
+  }
+
+  if (remove_install_prefix && install_prefix_in_list && prefix_paths &&
+      install_prefix_index >= 0) {
+    // remove entry from CMAKE_SYSTEM_PREFIX_PATH
+    std::vector<std::string> expanded = cmExpandedList(*prefix_paths);
+    expanded.erase(expanded.begin() + install_prefix_index);
+    paths.AddPrefixPaths(expanded,
+                         this->Makefile->GetCurrentSourceDirectory().c_str());
+  } else if (add_install_prefix && !install_prefix_in_list &&
+             prefix_paths && install_prefix_index >= 0) {
+    // add entry to CMAKE_SYSTEM_PREFIX_PATH
+    std::vector<std::string> expanded = cmExpandedList(*prefix_paths);
+
+    cmValue install_prefix =
+      this->Makefile->GetDefinition("CMAKE_INSTALL_PREFIX");
+    if (install_prefix) {
+      expanded.insert(expanded.begin() + install_prefix_index,
+                      *install_prefix);
+    }
+    paths.AddPrefixPaths(expanded,
+                         this->Makefile->GetCurrentSourceDirectory().c_str());
+  } else {
+    // Otherwise the current setup of `CMAKE_SYSTEM_PREFIX_PATH` is correct
+    paths.AddCMakePrefixPath("CMAKE_SYSTEM_PREFIX_PATH");
+  }
+
   std::string var = cmStrCat("CMAKE_SYSTEM_", this->CMakePathName, "_PATH");
-  paths.AddCMakePrefixPath("CMAKE_SYSTEM_PREFIX_PATH");
   paths.AddCMakePath(var);
 
   if (this->CMakePathName == "PROGRAM") {
@@ -496,7 +534,9 @@ cmFindBaseDebugState::~cmFindBaseDebugState()
         "  CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: ",
         !this->FindCommand->NoSystemEnvironmentPath, "\n",
         "  CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: ",
-        !this->FindCommand->NoCMakeSystemPath, "\n");
+        !this->FindCommand->NoCMakeSystemPath, "\n",
+        "  CMAKE_FIND_USE_INSTALL_PREFIX: ",
+        !this->FindCommand->NoCMakeInstallPath, "\n");
     }
 
     buffer +=

@@ -1682,7 +1682,48 @@ void cmFindPackageCommand::FillPrefixesCMakeSystemVariable()
 {
   cmSearchPath& paths = this->LabeledPaths[PathLabel::CMakeSystem];
 
-  paths.AddCMakePath("CMAKE_SYSTEM_PREFIX_PATH");
+  const bool install_prefix_in_list =
+    !this->Makefile->IsOn("CMAKE_FIND_NO_INSTALL_PREFIX");
+  const bool remove_install_prefix = this->NoCMakeInstallPath;
+  const bool add_install_prefix = !this->NoCMakeInstallPath &&
+    this->Makefile->IsDefinitionSet("CMAKE_FIND_USE_INSTALL_PREFIX");
+
+  cmValue prefix_paths =
+    this->Makefile->GetDefinition("CMAKE_SYSTEM_PREFIX_PATH");
+
+  long install_prefix_index = -1;
+  if (cmValue to_skip = this->Makefile->GetDefinition(
+        "_CMAKE_SYSTEM_PREFIX_PATH_INSTALL_PREFIX_LOC")) {
+    cmStrToLong(to_skip, &install_prefix_index);
+  }
+
+  if (remove_install_prefix && install_prefix_in_list && prefix_paths &&
+      install_prefix_index >= 0) {
+    // remove entry from CMAKE_SYSTEM_PREFIX_PATH
+    std::vector<std::string> expanded = cmExpandedList(*prefix_paths);
+    expanded.erase(expanded.begin() + install_prefix_index);
+    for (const auto& path : expanded) {
+      paths.AddPath(path);
+    }
+  } else if (add_install_prefix && !install_prefix_in_list &&
+             prefix_paths && install_prefix_index >= 0) {
+    // add entry to CMAKE_SYSTEM_PREFIX_PATH
+    std::vector<std::string> expanded = cmExpandedList(*prefix_paths);
+
+    cmValue install_prefix =
+      this->Makefile->GetDefinition("CMAKE_INSTALL_PREFIX");
+    if (install_prefix) {
+      expanded.insert(expanded.begin() + install_prefix_index,
+                      *install_prefix);
+    }
+    for (const auto& path : expanded) {
+      paths.AddPath(path);
+    }
+  } else {
+    // Otherwise the current setup of `CMAKE_SYSTEM_PREFIX_PATH` is correct
+    paths.AddCMakePath("CMAKE_SYSTEM_PREFIX_PATH");
+  }
+
   paths.AddCMakePath("CMAKE_SYSTEM_FRAMEWORK_PATH");
   paths.AddCMakePath("CMAKE_SYSTEM_APPBUNDLE_PATH");
 
