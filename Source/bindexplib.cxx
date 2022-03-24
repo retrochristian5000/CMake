@@ -215,8 +215,7 @@ public:
                          this->ObjectImageHeader->PointerToSymbolTable);
     this->SectionHeaders = GetSectionHeaderOffset(this->ObjectImageHeader);
     this->SymbolCount = this->ObjectImageHeader->NumberOfSymbols;
-    this->IsI386 = symbolArch == Arch::I386;
-    this->IsARM64EC = symbolArch == Arch::ARM64EC;
+    this->SymbolArch = symbolArch;
   }
 
   /*
@@ -272,7 +271,7 @@ public:
             }
           }
           // For i386 builds we need to remove _
-          if (this->IsI386 && symbol[0] == '_') {
+          if (this->SymbolArch == Arch::I386 && symbol[0] == '_') {
             symbol.erase(0, 1);
           }
 
@@ -293,7 +292,7 @@ public:
             if (symbol.find('.') == std::string::npos &&
                 !SymbolIsFromManagedCode(symbol)) {
               // skip arm64ec thunk symbols
-              if (!this->IsARM64EC ||
+              if (!this->SymbolArch == Arch::ARM64EC ||
                   (symbol.find("$ientry_thunk") == std::string::npos &&
                    symbol.find("$entry_thunk") == std::string::npos &&
                    symbol.find("$iexit_thunk") == std::string::npos &&
@@ -336,8 +335,7 @@ private:
   PIMAGE_SECTION_HEADER SectionHeaders;
   ObjectHeaderType* ObjectImageHeader;
   SymbolTableType* SymbolTable;
-  bool IsI386;
-  bool IsARM64EC;
+  Arch SymbolArch;
 };
 #endif
 
