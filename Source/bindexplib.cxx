@@ -95,6 +95,10 @@
 #    define IMAGE_FILE_MACHINE_ARM64 0xaa64 // ARM64 Little-Endian
 #  endif
 
+#  ifndef IMAGE_FILE_MACHINE_ARM64EC
+#    define IMAGE_FILE_MACHINE_ARM64EC 0xa641 // ARM64EC Little-Endian
+#  endif
+
 typedef struct cmANON_OBJECT_HEADER_BIGOBJ
 {
   /* same as ANON_OBJECT_HEADER_V2 */
@@ -193,7 +197,7 @@ public:
    */
 
   DumpSymbols(ObjectHeaderType* ih, std::set<std::string>& symbols,
-              std::set<std::string>& dataSymbols, bool isI386)
+              std::set<std::string>& dataSymbols, bool isI386, bool isARM64EC)
     : Symbols(symbols)
     , DataSymbols(dataSymbols)
   {
@@ -204,6 +208,7 @@ public:
     this->SectionHeaders = GetSectionHeaderOffset(this->ObjectImageHeader);
     this->SymbolCount = this->ObjectImageHeader->NumberOfSymbols;
     this->IsI386 = isI386;
+    this->IsARM64EC = isARM64EC;
   }
 
   /*
@@ -279,13 +284,20 @@ public:
             // skip symbols containing a dot or are from managed code
             if (symbol.find('.') == std::string::npos &&
                 !SymbolIsFromManagedCode(symbol)) {
-              if (!pSymbolTable->Type && (SectChar & IMAGE_SCN_MEM_WRITE)) {
-                // Read only (i.e. constants) must be excluded
-                this->DataSymbols.insert(symbol);
-              } else {
-                if (pSymbolTable->Type || !(SectChar & IMAGE_SCN_MEM_READ) ||
-                    (SectChar & IMAGE_SCN_MEM_EXECUTE)) {
-                  this->Symbols.insert(symbol);
+              // skip arm64ec thunk symbols
+              if (!this->IsARM64EC ||
+                  (symbol.find("$ientry_thunk") == std::string::npos &&
+                   symbol.find("$entry_thunk") == std::string::npos &&
+                   symbol.find("$iexit_thunk") == std::string::npos &&
+                   symbol.find("$exit_thunk") == std::string::npos)) {
+                if (!pSymbolTable->Type && (SectChar & IMAGE_SCN_MEM_WRITE)) {
+                  // Read only (i.e. constants) must be excluded
+                  this->DataSymbols.insert(symbol);
+                } else {
+                  if (pSymbolTable->Type || !(SectChar & IMAGE_SCN_MEM_READ) ||
+                      (SectChar & IMAGE_SCN_MEM_EXECUTE)) {
+                    this->Symbols.insert(symbol);
+                  }
                 }
               }
             }
@@ -317,6 +329,7 @@ private:
   ObjectHeaderType* ObjectImageHeader;
   SymbolTableType* SymbolTable;
   bool IsI386;
+  bool IsARM64EC;
 };
 #endif
 
@@ -421,7 +434,8 @@ static bool DumpFile(std::string const& nmPath, const char* filename,
          (imageHeader->Machine == IMAGE_FILE_MACHINE_AMD64) ||
          (imageHeader->Machine == IMAGE_FILE_MACHINE_ARM) ||
          (imageHeader->Machine == IMAGE_FILE_MACHINE_ARMNT) ||
-         (imageHeader->Machine == IMAGE_FILE_MACHINE_ARM64)) &&
+         (imageHeader->Machine == IMAGE_FILE_MACHINE_ARM64) ||
+         (imageHeader->Machine == IMAGE_FILE_MACHINE_ARM64EC)) &&
         (imageHeader->Characteristics == 0)) {
       /*
        * The tests above are checking for IMAGE_FILE_HEADER.Machine
@@ -431,7 +445,8 @@ static bool DumpFile(std::string const& nmPath, const char* filename,
        */
       DumpSymbols<IMAGE_FILE_HEADER, IMAGE_SYMBOL> symbolDumper(
         (PIMAGE_FILE_HEADER)lpFileBase, symbols, dataSymbols,
-        (imageHeader->Machine == IMAGE_FILE_MACHINE_I386));
+        (imageHeader->Machine == IMAGE_FILE_MACHINE_I386),
+        (imageHeader->Machine == IMAGE_FILE_MACHINE_ARM64EC));
       symbolDumper.DumpObjFile();
     } else {
       // check for /bigobj and llvm LTO format
@@ -441,7 +456,8 @@ static bool DumpFile(std::string const& nmPath, const char* filename,
         // bigobj
         DumpSymbols<cmANON_OBJECT_HEADER_BIGOBJ, cmIMAGE_SYMBOL_EX>
           symbolDumper((cmANON_OBJECT_HEADER_BIGOBJ*)lpFileBase, symbols,
-                       dataSymbols, (h->Machine == IMAGE_FILE_MACHINE_I386));
+                       dataSymbols, (h->Machine == IMAGE_FILE_MACHINE_I386),
+                       (h->Machine == IMAGE_FILE_MACHINE_ARM64EC));
         symbolDumper.DumpObjFile();
       } else if (
         // BCexCODE - llvm bitcode
