@@ -139,6 +139,13 @@ typedef struct _cmIMAGE_SYMBOL_EX
 } cmIMAGE_SYMBOL_EX;
 typedef cmIMAGE_SYMBOL_EX UNALIGNED* cmPIMAGE_SYMBOL_EX;
 
+enum class Arch
+{
+  Generic,
+  I386,
+  ARM64EC,
+};
+
 PIMAGE_SECTION_HEADER GetSectionHeaderOffset(
   PIMAGE_FILE_HEADER pImageFileHeader)
 {
@@ -197,7 +204,8 @@ public:
    */
 
   DumpSymbols(ObjectHeaderType* ih, std::set<std::string>& symbols,
-              std::set<std::string>& dataSymbols, bool isI386, bool isARM64EC)
+              std::set<std::string>& dataSymbols,
+              Arch symbolArch = Arch::Generic)
     : Symbols(symbols)
     , DataSymbols(dataSymbols)
   {
@@ -207,8 +215,8 @@ public:
                          this->ObjectImageHeader->PointerToSymbolTable);
     this->SectionHeaders = GetSectionHeaderOffset(this->ObjectImageHeader);
     this->SymbolCount = this->ObjectImageHeader->NumberOfSymbols;
-    this->IsI386 = isI386;
-    this->IsARM64EC = isARM64EC;
+    this->IsI386 = symbolArch == Arch::I386;
+    this->IsARM64EC = symbolArch == Arch::ARM64EC;
   }
 
   /*
@@ -445,8 +453,11 @@ static bool DumpFile(std::string const& nmPath, const char* filename,
        */
       DumpSymbols<IMAGE_FILE_HEADER, IMAGE_SYMBOL> symbolDumper(
         (PIMAGE_FILE_HEADER)lpFileBase, symbols, dataSymbols,
-        (imageHeader->Machine == IMAGE_FILE_MACHINE_I386),
-        (imageHeader->Machine == IMAGE_FILE_MACHINE_ARM64EC));
+        (imageHeader->Machine == IMAGE_FILE_MACHINE_I386
+           ? Arch::I386
+           : (imageHeader->Machine == IMAGE_FILE_MACHINE_ARM64EC
+                ? Arch::ARM64EC
+                : Arch::Generic)));
       symbolDumper.DumpObjFile();
     } else {
       // check for /bigobj and llvm LTO format
@@ -455,9 +466,12 @@ static bool DumpFile(std::string const& nmPath, const char* filename,
       if (h->Sig1 == 0x0 && h->Sig2 == 0xffff) {
         // bigobj
         DumpSymbols<cmANON_OBJECT_HEADER_BIGOBJ, cmIMAGE_SYMBOL_EX>
-          symbolDumper((cmANON_OBJECT_HEADER_BIGOBJ*)lpFileBase, symbols,
-                       dataSymbols, (h->Machine == IMAGE_FILE_MACHINE_I386),
-                       (h->Machine == IMAGE_FILE_MACHINE_ARM64EC));
+          symbolDumper(
+            (cmANON_OBJECT_HEADER_BIGOBJ*)lpFileBase, symbols, dataSymbols,
+            (h->Machine == IMAGE_FILE_MACHINE_I386
+               ? Arch::I386
+               : (h->Machine == IMAGE_FILE_MACHINE_ARM64EC ? Arch::ARM64EC
+                                                           : Arch::Generic)));
         symbolDumper.DumpObjFile();
       } else if (
         // BCexCODE - llvm bitcode
