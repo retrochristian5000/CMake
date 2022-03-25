@@ -678,7 +678,8 @@ public:
    * Print a command's invocation
    */
   void PrintCommandTrace(cmListFileFunction const& lff,
-                         cm::optional<std::string> const& deferId = {}) const;
+                         cmListFileBacktrace const& bt,
+                         bool commandMissingFromStack = false) const;
 
   /**
    * Set a callback that is invoked whenever ExecuteCommand is called.
