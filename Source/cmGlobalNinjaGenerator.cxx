@@ -2539,6 +2539,8 @@ bool cmGlobalNinjaGenerator::WriteDyndepFile(
     module_ext = ".gcm";
   } else if (arg_modmapfmt == "clang") {
     module_ext = ".pcm";
+  } else if (arg_modmapfmt == "msvc") {
+    module_ext = ".ifc";
   }
 
   // Extend the module map with those provided by this target.
@@ -2633,6 +2635,37 @@ bool cmGlobalNinjaGenerator::WriteDyndepFile(
             auto m = mod_files.find(r.LogicalName);
             if (m != mod_files.end()) {
               mm << "-fmodule-file=" << r.LogicalName << "=" << this->ConvertToNinjaPath(m->second)
+                 << "\n";
+            }
+          }
+        } else if (arg_modmapfmt == "msvc") {
+          // A response file of `-reference NAME=PATH` arguments.
+
+          for (auto const& l : object.Provides) {
+            auto m = mod_files.find(l.LogicalName);
+            if (m != mod_files.end()) {
+              mm << "-ifcOutput "
+                 << this->ConvertToNinjaPath(m->second)
+                 << "\n";
+            }
+          }
+          for (auto const& r : object.Requires) {
+            const char* flag = nullptr;
+            switch (r.Method) {
+              case LookupMethod::ByName:
+                flag = "-reference";
+                break;
+              case LookupMethod::IncludeAngle:
+                flag = "-headerUnit:angle";
+                break;
+              case LookupMethod::IncludeQuote:
+                flag = "-headerUnit:quote";
+                break;
+            }
+            auto m = mod_files.find(r.LogicalName);
+            if (m != mod_files.end()) {
+              mm << flag << " "
+                 << r.LogicalName << "=" << this->ConvertToNinjaPath(m->second)
                  << "\n";
             }
           }
