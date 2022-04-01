@@ -3,6 +3,7 @@
 #include "cmGlobalNinjaGenerator.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cctype>
 #include <cstdio>
 #include <sstream>
@@ -2511,8 +2512,18 @@ bool cmGlobalNinjaGenerator::WriteDyndepFile(
     objects.push_back(std::move(info));
   }
 
+  struct ModuleReference
+  {
+    std::string Path;
+    LookupMethod Method;
+  };
+
   // Map from module name to module file path, if known.
   std::map<std::string, std::string> mod_files;
+  // Map from module name to module names used by it.
+  std::map<std::string, std::set<std::string>> mod_usages;
+  // Map from module name to module file path for transitive closures.
+  std::map<std::string, ModuleReference> mod_references;
 
   // Populate the module map with those provided by linked targets first.
   for (std::string const& linked_target_dir : linked_target_dirs) {
@@ -2528,8 +2539,47 @@ bool cmGlobalNinjaGenerator::WriteDyndepFile(
       return false;
     }
     if (ltm.isObject()) {
-      for (Json::Value::iterator i = ltm.begin(); i != ltm.end(); ++i) {
-        mod_files[i.key().asString()] = i->asString();
+      Json::Value const& target_modules = ltm["modules"];
+      if (target_modules.isObject()) {
+        for (auto i = target_modules.begin(); i != target_modules.end(); ++i) {
+          mod_files[i.key().asString()] = i->asString();
+        }
+      }
+      Json::Value const& target_modules_references = ltm["references"];
+      if (target_modules_references.isObject()) {
+        for (auto i = target_modules_references.begin();
+             i != target_modules_references.end(); ++i) {
+          if (i->isObject()) {
+            Json::Value const& reference_path = (*i)["path"];
+            ModuleReference module_reference;
+            if (reference_path.isString()) {
+              module_reference.Path = reference_path.asString();
+            }
+            Json::Value const& reference_method = (*i)["lookup-method"];
+            if (reference_method.isString()) {
+              std::string reference = reference_method.asString();
+              if (reference == "by-name") {
+                module_reference.Method = LookupMethod::ByName;
+              } else if (reference == "include-angle") {
+                module_reference.Method = LookupMethod::IncludeAngle;
+              } else if (reference == "include-quote") {
+                module_reference.Method = LookupMethod::IncludeQuote;
+              }
+            }
+            mod_references[i.key().asString()] = module_reference;
+          }
+        }
+      }
+      Json::Value const& target_modules_usage = ltm["usages"];
+      if (target_modules_usage.isObject()) {
+        for (auto i = target_modules_usage.begin();
+             i != target_modules_usage.end(); ++i) {
+          if (i->isArray()) {
+            for (auto j = i->begin(); j != i->end(); ++j) {
+              mod_usages[i.key().asString()].insert(j->asString());
+            }
+          }
+        }
       }
     }
   }
@@ -2546,7 +2596,7 @@ bool cmGlobalNinjaGenerator::WriteDyndepFile(
   // Extend the module map with those provided by this target.
   // We do this after loading the modules provided by linked targets
   // in case we have one of the same name that must be preferred.
-  Json::Value tm = Json::objectValue;
+  Json::Value target_modules = Json::objectValue;
   for (cmScanDepInfo const& object : objects) {
     for (auto const& p : object.Provides) {
       std::string mod;
@@ -2564,9 +2614,40 @@ bool cmGlobalNinjaGenerator::WriteDyndepFile(
         mod = cmStrCat(module_dir, safe_logical_name, module_ext);
       }
       mod_files[p.LogicalName] = mod;
-      tm[p.LogicalName] = mod;
+      target_modules[p.LogicalName] = mod;
     }
   }
+
+  // Insert information about the current target's modules.
+  for (cmScanDepInfo const& object : objects) {
+    for (auto const& p : object.Provides) {
+      auto m = mod_files.find(p.LogicalName);
+      if (m != mod_files.end()) {
+        ModuleReference mod_reference;
+        mod_reference.Path = this->ConvertToNinjaPath(m->second);
+        // XXX(cxx-modules): How to support header units?
+        mod_reference.Method = LookupMethod::ByName;
+        mod_references[p.LogicalName] = mod_reference;
+      }
+    }
+
+    for (auto const& r : object.Requires) {
+      for (auto const& p : object.Provides) {
+        mod_usages[p.LogicalName].insert(r.LogicalName);
+      }
+
+      auto m = mod_files.find(r.LogicalName);
+      if (m != mod_files.end()) {
+        ModuleReference mod_reference;
+        mod_reference.Path = this->ConvertToNinjaPath(m->second);
+        mod_reference.Method = r.Method;
+        mod_references[r.LogicalName] = mod_reference;
+      }
+    }
+  }
+
+  Json::Value target_usages = Json::objectValue;
+  Json::Value target_references = Json::objectValue;
 
   cmGeneratedFileStream ddf(arg_dd);
   ddf << "ninja_dyndep_version = 1.0\n";
@@ -2641,31 +2722,106 @@ bool cmGlobalNinjaGenerator::WriteDyndepFile(
         } else if (arg_modmapfmt == "msvc") {
           // A response file of `-reference NAME=PATH` arguments.
 
+          auto flag_for_method = [](LookupMethod method) {
+            switch (method) {
+              case LookupMethod::ByName:
+                return "-reference";
+              case LookupMethod::IncludeAngle:
+                return "-headerUnit:angle";
+              case LookupMethod::IncludeQuote:
+                return "-headerUnit:quote";
+            }
+            assert(false && "unsupported lookup method");
+            return static_cast<char const*>(nullptr);
+          };
+          auto name_for_method = [](LookupMethod method) {
+            switch (method) {
+              case LookupMethod::ByName:
+                return "by-name";
+              case LookupMethod::IncludeAngle:
+                return "include-angle";
+              case LookupMethod::IncludeQuote:
+                return "include-quote";
+            }
+            assert(false && "unsupported lookup method");
+            return static_cast<char const*>(nullptr);
+          };
+
+          std::set<std::string> names;
+          std::set<std::string> usages;
+          std::map<std::string, ModuleReference> references;
+
           for (auto const& l : object.Provides) {
             auto m = mod_files.find(l.LogicalName);
             if (m != mod_files.end()) {
               mm << "-ifcOutput " << this->ConvertToNinjaPath(m->second)
                  << "\n";
+
+              names.insert(l.LogicalName);
             }
           }
           for (auto const& r : object.Requires) {
-            const char* flag = nullptr;
-            switch (r.Method) {
-              case LookupMethod::ByName:
-                flag = "-reference";
-                break;
-              case LookupMethod::IncludeAngle:
-                flag = "-headerUnit:angle";
-                break;
-              case LookupMethod::IncludeQuote:
-                flag = "-headerUnit:quote";
-                break;
-            }
+            const char* flag = flag_for_method(r.Method);
+
             auto m = mod_files.find(r.LogicalName);
             if (m != mod_files.end()) {
               mm << flag << " " << r.LogicalName << "="
                  << this->ConvertToNinjaPath(m->second) << "\n";
+
+              // Insert this usage.
+              usages.insert(r.LogicalName);
+              ModuleReference mod_reference;
+              mod_reference.Path = this->ConvertToNinjaPath(m->second);
+              mod_reference.Method = r.Method;
+              references[r.LogicalName] = mod_reference;
+
+              // Insert transitive usages.
+              auto t = mod_usages.find(r.LogicalName);
+              if (t != mod_usages.end()) {
+                usages.insert(t->second.begin(), t->second.end());
+              }
             }
+          }
+
+          std::set<std::string> transitive_usages = usages;
+
+          // Remove direct usages.
+          for (auto const& r : object.Requires) {
+            transitive_usages.erase(r.LogicalName);
+          }
+
+          // Add flags for transitive usage.
+          for (auto const& u : transitive_usages) {
+            auto r = mod_references.find(u);
+            if (r != mod_references.end()) {
+              const char* flag = flag_for_method(r->second.Method);
+
+              mm << flag << " " << u << "=" << r->second.Path << "\n";
+
+              references[u] = r->second;
+            }
+          }
+
+          Json::Value json_usages = Json::arrayValue;
+          for (auto const& u : usages) {
+            json_usages.append(u);
+          }
+
+          // Ensure that there are references for the transitive usages.
+          Json::Value json_references = Json::objectValue;
+          for (auto const& r : references) {
+            Json::Value json_reference = Json::objectValue;
+            json_reference["path"] = r.second.Path;
+            json_reference["lookup-method"] = name_for_method(r.second.Method);
+
+            // TODO: Ensure that if we are already referencing the module, we
+            // are consistent.
+            target_references[r.first] = json_reference;
+          }
+
+          // Save information about this module for further usage.
+          for (auto const& n : names) {
+            target_usages[n] = json_usages;
           }
         } else {
           cmSystemTools::Error(
@@ -2685,12 +2841,17 @@ bool cmGlobalNinjaGenerator::WriteDyndepFile(
     }
   }
 
+  Json::Value target_module_info = Json::objectValue;
+  target_module_info["modules"] = target_modules;
+  target_module_info["usages"] = target_usages;
+  target_module_info["references"] = target_references;
+
   // Store the map of modules provided by this target in a file for
   // use by dependents that reference this target in linked-target-dirs.
   std::string const target_mods_file = cmStrCat(
     cmSystemTools::GetFilenamePath(arg_dd), '/', arg_lang, "Modules.json");
   cmGeneratedFileStream tmf(target_mods_file);
-  tmf << tm;
+  tmf << target_module_info;
 
   return true;
 }
