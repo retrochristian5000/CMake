@@ -165,6 +165,43 @@ cmValue cmTargetPropertyComputer::GetSources<cmTarget>(cmTarget const* tgt,
   return cmValue(srcs);
 }
 
+namespace {
+struct FileSetEntries
+{
+  cm::static_string_view PropertyName;
+  std::vector<BT<std::string>> Entries;
+};
+
+struct FileSetType
+{
+  cm::static_string_view TypeName;
+  cm::static_string_view DefaultDirectoryProperty;
+  cm::static_string_view DefaultPathProperty;
+  cm::static_string_view DirectoryPrefix;
+  cm::static_string_view PathPrefix;
+  cm::static_string_view TypeDescription;
+  cm::static_string_view DefaultDescription;
+  cm::static_string_view ArbitraryDescription;
+
+  FileSetEntries SelfEntries;
+  FileSetEntries InterfaceEntries;
+
+  template <typename ValueType>
+  bool WriteProperties(cmTarget* tgt, cmTargetInternals* impl,
+                       const std::string& prop, ValueType value, bool clear);
+  std::pair<bool, cmValue> ReadProperties(cmTarget const* tgt,
+                                          cmTargetInternals const* impl,
+                                          const std::string& prop) const;
+
+  // Do not allow copying or moving. The string_view members are referencing
+  // locals.
+  FileSetType(FileSetType const&) = delete;
+  FileSetType(FileSetType&&) = delete;
+  FileSetType& operator=(FileSetType const&) = delete;
+  FileSetType& operator=(FileSetType&) = delete;
+};
+}
+
 class cmTargetInternals
 {
 public:
@@ -206,12 +243,14 @@ public:
   std::vector<BT<std::string>> LinkInterfacePropertyEntries;
   std::vector<BT<std::string>> LinkInterfaceDirectPropertyEntries;
   std::vector<BT<std::string>> LinkInterfaceDirectExcludePropertyEntries;
-  std::vector<BT<std::string>> HeaderSetsEntries;
-  std::vector<BT<std::string>> InterfaceHeaderSetsEntries;
   std::vector<std::pair<cmTarget::TLLSignature, cmListFileContext>>
     TLLCommands;
   std::map<std::string, cmFileSet> FileSets;
   cmListFileBacktrace Backtrace;
+
+  FileSetType HeadersFileSets;
+
+  cmTargetInternals();
 
   bool CheckImportedLibName(std::string const& prop,
                             std::string const& value) const;
@@ -236,6 +275,115 @@ public:
   cmValue GetFileSetPaths(cmTarget const* self, std::string const& fileSetName,
                           cm::string_view fileSetType) const;
 };
+
+cmTargetInternals::cmTargetInternals()
+  : HeadersFileSets{ "HEADERS"_s,
+                     "HEADER_DIRS"_s,
+                     "HEADER_SET"_s,
+                     "HEADER_DIRS_"_s,
+                     "HEADER_SET_"_s,
+                     "Header"_s,
+                     "The default header set"_s,
+                     "Header set"_s,
+                     { "HEADER_SETS"_s, {} },
+                     { "INTERFACE_HEADER_SETS"_s, {} } }
+{
+}
+
+template <typename ValueType>
+bool FileSetType::WriteProperties(cmTarget* tgt, cmTargetInternals* impl,
+                                  const std::string& prop, ValueType value,
+                                  bool clear)
+{
+  if (prop == this->DefaultDirectoryProperty) {
+    impl->AddDirectoryToFileSet(tgt, std::string(this->TypeName), value,
+                                this->TypeName, this->DefaultDescription,
+                                clear);
+    return true;
+  }
+  if (prop == this->DefaultPathProperty) {
+    impl->AddPathToFileSet(tgt, std::string(this->TypeName), value,
+                           this->TypeName, this->DefaultDescription, clear);
+    return true;
+  }
+  if (cmHasPrefix(prop, this->DirectoryPrefix)) {
+    auto fileSetName = prop.substr(this->DirectoryPrefix.size());
+    if (fileSetName.empty()) {
+      impl->Makefile->IssueMessage(
+        MessageType::FATAL_ERROR,
+        cmStrCat(this->ArbitraryDescription, " name cannot be empty."));
+    } else {
+      impl->AddDirectoryToFileSet(
+        tgt, fileSetName, value, this->TypeName,
+        cmStrCat(this->ArbitraryDescription, " \"", fileSetName, "\""), clear);
+    }
+    return true;
+  }
+  if (cmHasPrefix(prop, this->PathPrefix)) {
+    auto fileSetName = prop.substr(this->PathPrefix.size());
+    if (fileSetName.empty()) {
+      impl->Makefile->IssueMessage(
+        MessageType::FATAL_ERROR,
+        cmStrCat(this->ArbitraryDescription, " name cannot be empty."));
+    } else {
+      impl->AddPathToFileSet(
+        tgt, fileSetName, value, this->TypeName,
+        cmStrCat(this->ArbitraryDescription, " \"", fileSetName, "\""), clear);
+    }
+    return true;
+  }
+  if (prop == this->SelfEntries.PropertyName) {
+    impl->AddFileSets(tgt, value, this->TypeName, this->TypeDescription,
+                      this->SelfEntries.Entries, clear);
+    return true;
+  }
+  if (prop == this->InterfaceEntries.PropertyName) {
+    impl->AddFileSets(tgt, value, this->TypeName, this->TypeDescription,
+                      this->InterfaceEntries.Entries, clear);
+    return true;
+  }
+  return false;
+}
+
+std::pair<bool, cmValue> FileSetType::ReadProperties(
+  cmTarget const* tgt, cmTargetInternals const* impl,
+  const std::string& prop) const
+{
+  bool did_read = false;
+  cmValue value = nullptr;
+  if (prop == this->DefaultDirectoryProperty) {
+    value = impl->GetFileSetDirectories(tgt, std::string(this->TypeName),
+                                        this->TypeName);
+    did_read = true;
+  } else if (prop == this->DefaultPathProperty) {
+    value =
+      impl->GetFileSetPaths(tgt, std::string(this->TypeName), this->TypeName);
+    did_read = true;
+  } else if (prop == this->SelfEntries.PropertyName) {
+    static std::string output;
+    output = cmJoin(this->SelfEntries.Entries, ";"_s);
+    value = cmValue(output);
+    did_read = true;
+  } else if (prop == this->InterfaceEntries.PropertyName) {
+    static std::string output;
+    output = cmJoin(this->InterfaceEntries.Entries, ";"_s);
+    value = cmValue(output);
+    did_read = true;
+  } else if (cmHasPrefix(prop, this->DirectoryPrefix)) {
+    std::string fileSetName = prop.substr(this->DirectoryPrefix.size());
+    if (!fileSetName.empty()) {
+      value = impl->GetFileSetDirectories(tgt, fileSetName, this->TypeName);
+    }
+    did_read = true;
+  } else if (cmHasPrefix(prop, this->PathPrefix)) {
+    std::string fileSetName = prop.substr(this->PathPrefix.size());
+    if (!fileSetName.empty()) {
+      value = impl->GetFileSetPaths(tgt, fileSetName, this->TypeName);
+    }
+    did_read = true;
+  }
+  return { did_read, value };
+}
 
 namespace {
 #define SETUP_COMMON_LANGUAGE_PROPERTIES(lang)                                \
@@ -1176,12 +1324,12 @@ cmBTStringRange cmTarget::GetLinkInterfaceDirectExcludeEntries() const
 
 cmBTStringRange cmTarget::GetHeaderSetsEntries() const
 {
-  return cmMakeRange(this->impl->HeaderSetsEntries);
+  return cmMakeRange(this->impl->HeadersFileSets.SelfEntries.Entries);
 }
 
 cmBTStringRange cmTarget::GetInterfaceHeaderSetsEntries() const
 {
-  return cmMakeRange(this->impl->InterfaceHeaderSetsEntries);
+  return cmMakeRange(this->impl->HeadersFileSets.InterfaceEntries.Entries);
 }
 
 namespace {
@@ -1213,10 +1361,6 @@ MAKE_PROP(BINARY_DIR);
 MAKE_PROP(SOURCE_DIR);
 MAKE_PROP(FALSE);
 MAKE_PROP(TRUE);
-MAKE_PROP(HEADER_DIRS);
-MAKE_PROP(HEADER_SET);
-MAKE_PROP(HEADER_SETS);
-MAKE_PROP(INTERFACE_HEADER_SETS);
 MAKE_PROP(INTERFACE_LINK_LIBRARIES);
 MAKE_PROP(INTERFACE_LINK_LIBRARIES_DIRECT);
 MAKE_PROP(INTERFACE_LINK_LIBRARIES_DIRECT_EXCLUDE);
@@ -1391,7 +1535,9 @@ void cmTarget::StoreProperty(const std::string& prop, ValueType value)
     }
   } else if (cmHasLiteralPrefix(prop, "IMPORTED_LIBNAME") &&
              !this->impl->CheckImportedLibName(
-               prop, value ? value : std::string{})) {
+               prop,
+               value ? value
+                     : std::string{})) { // NOLINT(bugprone-branch-clone)
     /* error was reported by check method */
   } else if (prop == propCUDA_PTX_COMPILATION &&
              this->GetType() != cmStateEnums::OBJECT_LIBRARY) {
@@ -1442,38 +1588,9 @@ void cmTarget::StoreProperty(const std::string& prop, ValueType value)
     } else {
       this->impl->LanguageStandardProperties.erase(prop);
     }
-  } else if (prop == propHEADER_DIRS) {
-    this->impl->AddDirectoryToFileSet(this, "HEADERS", value, "HEADERS"_s,
-                                      "The default header set"_s, true);
-  } else if (prop == propHEADER_SET) {
-    this->impl->AddPathToFileSet(this, "HEADERS", value, "HEADERS"_s,
-                                 "The default header set"_s, true);
-  } else if (cmHasLiteralPrefix(prop, "HEADER_DIRS_")) {
-    auto fileSetName = prop.substr(cmStrLen("HEADER_DIRS_"));
-    if (fileSetName.empty()) {
-      this->impl->Makefile->IssueMessage(MessageType::FATAL_ERROR,
-                                         "Header set name cannot be empty.");
-      return;
-    }
-    this->impl->AddDirectoryToFileSet(
-      this, fileSetName, value, "HEADERS"_s,
-      cmStrCat("Header set \"", fileSetName, "\""), true);
-  } else if (cmHasLiteralPrefix(prop, "HEADER_SET_")) {
-    auto fileSetName = prop.substr(cmStrLen("HEADER_SET_"));
-    if (fileSetName.empty()) {
-      this->impl->Makefile->IssueMessage(MessageType::FATAL_ERROR,
-                                         "Header set name cannot be empty.");
-      return;
-    }
-    this->impl->AddPathToFileSet(this, fileSetName, value, "HEADERS"_s,
-                                 cmStrCat("Header set \"", fileSetName, "\""),
-                                 true);
-  } else if (prop == propHEADER_SETS) {
-    this->impl->AddFileSets(this, value, "HEADERS"_s, "Header"_s,
-                            this->impl->HeaderSetsEntries, true);
-  } else if (prop == propINTERFACE_HEADER_SETS) {
-    this->impl->AddFileSets(this, value, "HEADERS"_s, "Header"_s,
-                            this->impl->InterfaceHeaderSetsEntries, true);
+  } else if (this->impl->HeadersFileSets.WriteProperties(
+               this, this->impl.get(), prop, value, true)) {
+    /* Handled in the `if` condition. */
   } else {
     this->impl->Properties.SetProperty(prop, value);
   }
@@ -1584,38 +1701,9 @@ void cmTarget::AppendProperty(const std::string& prop,
              prop == "OBJC_STANDARD" || prop == "OBJCXX_STANDARD") {
     this->impl->Makefile->IssueMessage(
       MessageType::FATAL_ERROR, prop + " property may not be appended.");
-  } else if (prop == "HEADER_DIRS") {
-    this->impl->AddDirectoryToFileSet(this, "HEADERS", value, "HEADERS"_s,
-                                      "The default header set"_s, false);
-  } else if (cmHasLiteralPrefix(prop, "HEADER_DIRS_")) {
-    auto fileSetName = prop.substr(cmStrLen("HEADER_DIRS_"));
-    if (fileSetName.empty()) {
-      this->impl->Makefile->IssueMessage(MessageType::FATAL_ERROR,
-                                         "Header set name cannot be empty.");
-      return;
-    }
-    this->impl->AddDirectoryToFileSet(
-      this, fileSetName, value, "HEADERS"_s,
-      cmStrCat("Header set \"", fileSetName, "\""), false);
-  } else if (prop == "HEADER_SET") {
-    this->impl->AddPathToFileSet(this, "HEADERS", value, "HEADERS"_s,
-                                 "The default header set"_s, false);
-  } else if (cmHasLiteralPrefix(prop, "HEADER_SET_")) {
-    auto fileSetName = prop.substr(cmStrLen("HEADER_SET_"));
-    if (fileSetName.empty()) {
-      this->impl->Makefile->IssueMessage(MessageType::FATAL_ERROR,
-                                         "Header set name cannot be empty.");
-      return;
-    }
-    this->impl->AddPathToFileSet(this, fileSetName, value, "HEADERS"_s,
-                                 cmStrCat("Header set \"", fileSetName, "\""),
-                                 false);
-  } else if (prop == "HEADER_SETS") {
-    this->impl->AddFileSets(this, value, "HEADERS"_s, "Header"_s,
-                            this->impl->HeaderSetsEntries, false);
-  } else if (prop == "INTERFACE_HEADER_SETS") {
-    this->impl->AddFileSets(this, value, "HEADERS"_s, "Header"_s,
-                            this->impl->InterfaceHeaderSetsEntries, false);
+  } else if (this->impl->HeadersFileSets.WriteProperties(
+               this, this->impl.get(), prop, value, false)) {
+    /* Handled in the `if` condition. */
   } else {
     this->impl->Properties.AppendProperty(prop, value, asString);
   }
@@ -1990,10 +2078,6 @@ cmValue cmTarget::GetProperty(const std::string& prop) const
     propBINARY_DIR,
     propSOURCE_DIR,
     propSOURCES,
-    propHEADER_DIRS,
-    propHEADER_SET,
-    propHEADER_SETS,
-    propINTERFACE_HEADER_SETS,
     propINTERFACE_LINK_LIBRARIES,
     propINTERFACE_LINK_LIBRARIES_DIRECT,
     propINTERFACE_LINK_LIBRARIES_DIRECT_EXCLUDE,
@@ -2150,36 +2234,15 @@ cmValue cmTarget::GetProperty(const std::string& prop) const
                        .GetDirectory()
                        .GetCurrentSource());
     }
-    if (prop == propHEADER_DIRS) {
-      return this->impl->GetFileSetDirectories(this, "HEADERS", "HEADERS"_s);
-    }
-    if (prop == propHEADER_SET) {
-      return this->impl->GetFileSetPaths(this, "HEADERS", "HEADERS"_s);
-    }
-    if (prop == propHEADER_SETS) {
-      static std::string output;
-      output = cmJoin(this->impl->HeaderSetsEntries, ";"_s);
-      return cmValue(output);
-    }
-    if (prop == propINTERFACE_HEADER_SETS) {
-      static std::string output;
-      output = cmJoin(this->impl->InterfaceHeaderSetsEntries, ";"_s);
-      return cmValue(output);
-    }
   }
-  if (cmHasLiteralPrefix(prop, "HEADER_DIRS_")) {
-    std::string fileSetName = prop.substr(cmStrLen("HEADER_DIRS_"));
-    if (fileSetName.empty()) {
-      return nullptr;
+
+  // Check fileset properties.
+  {
+    auto headers =
+      this->impl->HeadersFileSets.ReadProperties(this, this->impl.get(), prop);
+    if (headers.first) {
+      return headers.second;
     }
-    return this->impl->GetFileSetDirectories(this, fileSetName, "HEADERS"_s);
-  }
-  if (cmHasLiteralPrefix(prop, "HEADER_SET_")) {
-    std::string fileSetName = prop.substr(cmStrLen("HEADER_SET_"));
-    if (fileSetName.empty()) {
-      return nullptr;
-    }
-    return this->impl->GetFileSetPaths(this, fileSetName, "HEADERS"_s);
   }
 
   cmValue retVal = this->impl->Properties.GetPropertyValue(prop);
@@ -2484,7 +2547,7 @@ std::vector<std::string> cmTarget::GetAllInterfaceFileSets() const
     }
   };
 
-  appendEntries(this->impl->InterfaceHeaderSetsEntries);
+  appendEntries(this->impl->HeadersFileSets.InterfaceEntries.Entries);
 
   return result;
 }
