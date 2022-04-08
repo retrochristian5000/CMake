@@ -1,0 +1,11 @@
+CMake Error in CMakeLists.txt:
+  The `noexperimentalflag` target has C\+\+ module sources but its experimental
+  support has not been requested
+
+(
+CMake Error in CMakeLists.txt:
+  The `noexperimentalflag` target contains C\+\+ module sources which are not
+  supported by the `((Borland|NMake|Unix) Makefiles|Visual Studio (16 2019|17 2022)|Watcom WMake|Xcode)` generator
+
+)?
+CMake Generate step failed.  Build files cannot be regenerated correctly.
