@@ -401,6 +401,18 @@ void cmGlobalVisualStudio7Generator::WriteTargetsToSolution(
     }
     bool written = false;
 
+    // FIXME: This needs checked per configuration.
+    target->CheckCxxModuleStatus(this->GetConfigName());
+
+    if (target->HaveCxx20ModuleSources() && !this->SupportsCxxModuleDyndep()) {
+      this->Makefile->IssueMessage(
+        MessageType::FATAL_ERROR,
+        cmStrCat("The `", target->GetName(),
+                 "` target contains C++ module sources which are not "
+                 "supported by the `",
+                 this->GlobalGenerator->GetName(), "` generator"));
+    }
+
     // handle external vc project files
     cmValue expath = target->GetProperty("EXTERNAL_MSPROJECT");
     if (expath) {
