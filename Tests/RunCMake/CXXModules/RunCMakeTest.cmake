@@ -1,0 +1,15 @@
+include(RunCMake)
+
+set(fileset_types
+  Modules
+  ModuleHeaders
+  ModuleInternalPartitions)
+set(scopes
+  Interface
+  Private
+  Public)
+foreach (fileset_type IN LISTS fileset_types)
+  foreach (scope IN LISTS scopes)
+    run_cmake("FileSet${fileset_type}${scope}")
+  endforeach ()
+endforeach ()
