@@ -1602,6 +1602,78 @@ void cmNinjaTargetGenerator::WriteTargetDependInfo(std::string const& lang,
     tdi_linked_target_dirs.append(l);
   }
 
+  cmTarget* tgt = this->GeneratorTarget->Target;
+  auto all_file_sets = tgt->GetAllFileSetNames();
+  Json::Value& tdi_cxx_module_info = tdi["cxx-modules"] = Json::objectValue;
+  for (auto const& file_set_name : all_file_sets) {
+    auto* file_set = tgt->GetFileSet(file_set_name);
+    if (!file_set) {
+      // XXX: error
+    }
+    auto fs_type = file_set->GetType();
+    // We only care about C++ module sources here.
+    if (fs_type != "CXX_MODULES"_s &&
+        fs_type != "CXX_MODULE_INTERNAL_PARTITIONS"_s) {
+      continue;
+    }
+
+    auto fileEntries = file_set->CompileFileEntries();
+    auto directoryEntries = file_set->CompileDirectoryEntries();
+
+    auto directories = file_set->EvaluateDirectoryEntries(
+      directoryEntries, this->GeneratorTarget->LocalGenerator, config,
+      this->GeneratorTarget);
+    std::map<std::string, std::vector<std::string>> files_per_dirs;
+    for (auto const& entry : fileEntries) {
+      file_set->EvaluateFileEntry(directories, files_per_dirs, entry,
+                                  this->GeneratorTarget->LocalGenerator,
+                                  config, this->GeneratorTarget);
+    }
+
+    std::map<std::string, cmSourceFile const*> sf_map;
+    {
+      std::vector<cmSourceFile const*> objectSources;
+      this->GeneratorTarget->GetObjectSources(objectSources, config);
+      for (auto const* sf : objectSources) {
+        auto full_path = sf->GetFullPath();
+        if (full_path.empty()) {
+          // XXX: make noise?
+          continue;
+        }
+        sf_map[full_path] = sf;
+      }
+    }
+
+    for (auto const& files_per_dir : files_per_dirs) {
+      for (auto const& file : files_per_dir.second) {
+        auto lookup = sf_map.find(file);
+        if (lookup == sf_map.end()) {
+          // XXX: make noise?
+          continue;
+        }
+
+        auto const* sf = lookup->second;
+
+        if (!sf) {
+          // XXX: error
+          continue;
+        }
+
+        auto obj_path = this->GetObjectFilePath(sf, config);
+        Json::Value& tdi_module_info = tdi_cxx_module_info[obj_path] =
+          Json::objectValue;
+
+        tdi_module_info["source"] = file;
+        tdi_module_info["relative-directory"] = files_per_dir.first;
+        tdi_module_info["name"] = file_set->GetName();
+        tdi_module_info["type"] = file_set->GetType();
+        tdi_module_info["visibility"] =
+          std::string(cmFileSetVisibilityToName(file_set->GetVisibility()));
+        tdi_module_info["destination"] = "UNKNOWN"; // TODO
+      }
+    }
+  }
+
   std::string const tdin = this->GetTargetDependInfoPath(lang, config);
   cmGeneratedFileStream tdif(tdin);
   tdif << tdi;
