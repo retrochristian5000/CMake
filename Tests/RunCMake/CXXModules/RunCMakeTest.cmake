@@ -17,3 +17,8 @@ endforeach ()
 run_cmake(InstallBMI)
 run_cmake(ExportBuildCxxModules)
 run_cmake(ExportInstallCxxModules)
+
+# Generator-specific tests.
+if (RunCMake_GENERATOR MATCHES "Ninja")
+  run_cmake(NinjaDependInfoFileSet)
+endif ()
