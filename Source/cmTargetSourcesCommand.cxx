@@ -256,8 +256,8 @@ bool TargetSourcesImpl::HandleOneFileSet(
       this->SetError("Must specify a TYPE when creating file set");
       return false;
     }
-    if (type != "HEADERS"_s) {
-      this->SetError("File set TYPE may only be \"HEADERS\"");
+    if (type != "HEADERS"_s && type != "CXX_MODULES"_s && type != "CXX_MODULE_INTERNAL_PARTITIONS"_s && type != "CXX_MODULE_HEADERS"_s) {
+      this->SetError("File set TYPE may only be \"HEADERS\", \"CXX_MODULES\", \"CXX_MODULE_INTERNAL_PARTITIONS\", or \"CXX_MODULE_HEADERS\"");
       return false;
     }
 
@@ -294,7 +294,7 @@ bool TargetSourcesImpl::HandleOneFileSet(
   if (!baseDirectories.empty()) {
     fileSet.first->AddDirectoryEntry(
       BT<std::string>(baseDirectories, this->Makefile->GetBacktrace()));
-    if (type == "HEADERS"_s) {
+    if (type == "HEADERS"_s || type == "CXX_MODULE_HEADERS"_s) {
       for (auto const& dir : cmExpandedList(baseDirectories)) {
         auto interfaceDirectoriesGenex =
           cmStrCat("$<BUILD_INTERFACE:", dir, ">");
