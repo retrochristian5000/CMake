@@ -1,0 +1,16 @@
+CXX_MODULE_INTERNAL_PARTITION_SET
+---------------------------------
+
+.. versionadded:: NEXTVERSION
+
+Semicolon-separated list of files in the target's default C++ module internal
+partition set, (i.e. the file set with name and type
+``CXX_MODULE_INTERNAL_PARTITIONS``). If any of the paths are relative, they
+are computed relative to the target's source directory. The property supports
+:manual:`generator expressions <cmake-generator-expressions(7)>`.
+
+This property is normally only set by :command:`target_sources(FILE_SET)`
+rather than being manipulated directly.
+
+See :prop_tgt:`CXX_MODULE_INTERNAL_PARTITION_SET_<NAME>` for the list of files
+in other C++ module internal partition sets.

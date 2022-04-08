@@ -1721,7 +1721,8 @@ void addFileSetEntry(cmGeneratorTarget const* headTarget,
         }
       }
       if (!found) {
-        if (fileSet->GetType() == "HEADERS"_s) {
+        if (fileSet->GetType() == "HEADERS"_s ||
+            fileSet->GetType() == "CXX_MODULE_HEADER_UNITS"_s) {
           headTarget->Makefile->GetOrCreateSourceGroup("Header Files")
             ->AddGroupFile(path);
         }
@@ -1740,6 +1741,29 @@ void AddFileSetEntries(cmGeneratorTarget const* headTarget,
     for (auto const& name : cmExpandedList(entry.Value)) {
       auto const* headerSet = headTarget->Target->GetFileSet(name);
       addFileSetEntry(headTarget, config, dagChecker, headerSet, entries);
+    }
+  }
+  for (auto const& entry : headTarget->Target->GetCxxModuleSetsEntries()) {
+    for (auto const& name : cmExpandedList(entry.Value)) {
+      auto const* cxxModuleSet = headTarget->Target->GetFileSet(name);
+      addFileSetEntry(headTarget, config, dagChecker, cxxModuleSet, entries);
+    }
+  }
+  for (auto const& entry :
+       headTarget->Target->GetCxxModuleInternalPartitionSetsEntries()) {
+    for (auto const& name : cmExpandedList(entry.Value)) {
+      auto const* cxxModuleInternalPartitionSet =
+        headTarget->Target->GetFileSet(name);
+      addFileSetEntry(headTarget, config, dagChecker,
+                      cxxModuleInternalPartitionSet, entries);
+    }
+  }
+  for (auto const& entry :
+       headTarget->Target->GetCxxModuleHeaderSetsEntries()) {
+    for (auto const& name : cmExpandedList(entry.Value)) {
+      auto const* cxxModuleHeaderSet = headTarget->Target->GetFileSet(name);
+      addFileSetEntry(headTarget, config, dagChecker, cxxModuleHeaderSet,
+                      entries);
     }
   }
 }
