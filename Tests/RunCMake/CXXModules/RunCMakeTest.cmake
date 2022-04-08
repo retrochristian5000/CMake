@@ -47,3 +47,11 @@ run_cmake(InstallBMIGenericArgs)
 run_cmake(InstallBMIIgnore)
 run_cmake(ExportBuildCxxModules)
 run_cmake(ExportInstallCxxModules)
+
+# Generator-specific tests.
+if (RunCMake_GENERATOR MATCHES "Ninja")
+  run_cmake(NinjaDependInfoFileSet)
+else ()
+  message(FATAL_ERROR
+    "Please add 'DependInfo' tests for the '${RunCMake_GENERATOR}' generator.")
+endif ()
