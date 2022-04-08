@@ -1,0 +1,11 @@
+CMake Error in CMakeLists.txt:
+  The `nocxx` target has C\+\+ module sources but the `CXX` language has not
+  been enabled
+
+(
+CMake Error in CMakeLists.txt:
+  The `nocxx` target contains C\+\+ module sources which are not supported by
+  the `(Unix Makefiles)` generator
+
+)?
+CMake Generate step failed.  Build files cannot be regenerated correctly.

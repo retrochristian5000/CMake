@@ -1721,7 +1721,8 @@ void addFileSetEntry(cmGeneratorTarget const* headTarget,
         }
       }
       if (!found) {
-        if (fileSet->GetType() == "HEADERS"_s) {
+        if (fileSet->GetType() == "HEADERS"_s ||
+            fileSet->GetType() == "CXX_MODULE_HEADER_UNITS"_s) {
           headTarget->Makefile->GetOrCreateSourceGroup("Header Files")
             ->AddGroupFile(path);
         }
@@ -1740,6 +1741,29 @@ void AddFileSetEntries(cmGeneratorTarget const* headTarget,
     for (auto const& name : cmExpandedList(entry.Value)) {
       auto const* headerSet = headTarget->Target->GetFileSet(name);
       addFileSetEntry(headTarget, config, dagChecker, headerSet, entries);
+    }
+  }
+  for (auto const& entry : headTarget->Target->GetCxxModuleSetsEntries()) {
+    for (auto const& name : cmExpandedList(entry.Value)) {
+      auto const* cxxModuleSet = headTarget->Target->GetFileSet(name);
+      addFileSetEntry(headTarget, config, dagChecker, cxxModuleSet, entries);
+    }
+  }
+  for (auto const& entry :
+       headTarget->Target->GetCxxModuleInternalPartitionSetsEntries()) {
+    for (auto const& name : cmExpandedList(entry.Value)) {
+      auto const* cxxModuleInternalPartitionSet =
+        headTarget->Target->GetFileSet(name);
+      addFileSetEntry(headTarget, config, dagChecker,
+                      cxxModuleInternalPartitionSet, entries);
+    }
+  }
+  for (auto const& entry :
+       headTarget->Target->GetCxxModuleHeaderSetsEntries()) {
+    for (auto const& name : cmExpandedList(entry.Value)) {
+      auto const* cxxModuleHeaderSet = headTarget->Target->GetFileSet(name);
+      addFileSetEntry(headTarget, config, dagChecker, cxxModuleHeaderSet,
+                      entries);
     }
   }
 }
@@ -8696,4 +8720,69 @@ std::string cmGeneratorTarget::GenerateHeaderSetVerificationFile(
   fout.close();
 
   return filename;
+}
+
+bool cmGeneratorTarget::HaveCxx20ModuleSources() const
+{
+  for (auto const& name : this->Target->GetAllFileSetNames()) {
+    auto const* file_set = this->Target->GetFileSet(name);
+    if (!file_set) {
+      this->Makefile->IssueMessage(
+        MessageType::INTERNAL_ERROR,
+        cmStrCat("Target `", this->Target->GetName(),
+                "` is tracked to have file set `", name,
+                "`, but it was not found."));
+      continue;
+    }
+
+    auto const& fs_type = file_set->GetType();
+    if (fs_type == "CXX_MODULES"_s || fs_type == "CXX_MODULE_INTERNAL_PARTITIONS"_s || fs_type == "CXX_MODULE_HEADER_UNITS"_s) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+cmGeneratorTarget::Cxx20SupportLevel cmGeneratorTarget::HaveCxxModuleSupport(std::string const& config) const
+{
+  auto const* state = this->Makefile->GetState();
+  if (!state->GetLanguageEnabled("CXX")) {
+    return Cxx20SupportLevel::MissingCxx;
+  }
+  cmStandardLevelResolver standardResolver(this->Makefile);
+  if (!standardResolver.HaveStandardAvailable(this, "CXX", config, "cxx_std_20")) {
+    return Cxx20SupportLevel::NoCxx20;
+  }
+  if (!this->Makefile->IsOn("CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP")) {
+    return Cxx20SupportLevel::MissingExperimentalFlag;
+  }
+  return Cxx20SupportLevel::Supported;
+}
+
+void cmGeneratorTarget::CheckCxxModuleStatus(std::string const& config) const
+{
+  // Check for `CXX_MODULE*` file sets and a lack of support.
+  if (this->HaveCxx20ModuleSources()) {
+    switch (this->HaveCxxModuleSupport(config)) {
+      case cmGeneratorTarget::Cxx20SupportLevel::MissingCxx:
+        this->Makefile->IssueMessage(
+          MessageType::FATAL_ERROR,
+          cmStrCat("The `", this->GetName(), "` target has C++ module sources but the `CXX` language has not been enabled"));
+        break;
+      case cmGeneratorTarget::Cxx20SupportLevel::MissingExperimentalFlag:
+        this->Makefile->IssueMessage(
+          MessageType::FATAL_ERROR,
+          cmStrCat("The `", this->GetName(), "` target has C++ module sources but its experimental support has not been requested"));
+        break;
+      case cmGeneratorTarget::Cxx20SupportLevel::NoCxx20:
+        this->Makefile->IssueMessage(
+          MessageType::FATAL_ERROR,
+          cmStrCat("The `", this->GetName(), "` target has C++ module sources but is not using at least `cxx_std_20`"));
+        break;
+      case cmGeneratorTarget::Cxx20SupportLevel::Supported:
+        // All is well.
+        break;
+    }
+  }
 }

@@ -1350,6 +1350,15 @@ bool cmGlobalXCodeGenerator::CreateXCodeTargets(
   std::vector<cmGeneratorTarget*> gts =
     this->GetLocalGeneratorTargetsInOrder(gen);
   for (auto gtgt : gts) {
+    // FIXME: This needs checked per configuration.
+    gtgt->CheckCxxModuleStatus(this->GetConfigName());
+
+    if (gtgt->HaveCxx20ModuleSources()) {
+      this->Makefile->IssueMessage(
+        MessageType::FATAL_ERROR,
+        cmStrCat("The `", gtgt->GetName(), "` target contains C++ module sources which are not supported by the `", this->GlobalGenerator->GetName(), "` generator"));
+    }
+
     if (!this->CreateXCodeTarget(gtgt, targets)) {
       return false;
     }

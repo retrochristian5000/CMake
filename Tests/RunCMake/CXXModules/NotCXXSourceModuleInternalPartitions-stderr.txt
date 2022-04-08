@@ -1,0 +1,8 @@
+CMake Error in CMakeLists.txt:
+  Target `not-cxx-source` contains the
+  `.*/Tests/RunCMake/CXXModules/sources/c-anchor.c`,
+  source in a file set of type `CXX_MODULE_INTERNAL_PARTITIONS` but the
+  source is not classifed as a `CXX` source.
+
+
+CMake Generate step failed.  Build files cannot be regenerated correctly.
