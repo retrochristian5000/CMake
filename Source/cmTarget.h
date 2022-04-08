@@ -275,8 +275,14 @@ public:
   cmBTStringRange GetLinkInterfaceDirectExcludeEntries() const;
 
   cmBTStringRange GetHeaderSetsEntries() const;
+  cmBTStringRange GetCxxModuleSetsEntries() const;
+  cmBTStringRange GetCxxModuleInternalPartitionSetsEntries() const;
+  cmBTStringRange GetCxxModuleHeaderSetsEntries() const;
 
   cmBTStringRange GetInterfaceHeaderSetsEntries() const;
+  cmBTStringRange GetInterfaceCxxModuleSetsEntries() const;
+  cmBTStringRange GetInterfaceCxxModuleInternalPartitionSetsEntries() const;
+  cmBTStringRange GetInterfaceCxxModuleHeaderSetsEntries() const;
 
   std::string ImportedGetFullPath(const std::string& config,
                                   cmStateEnums::ArtifactType artifact) const;
