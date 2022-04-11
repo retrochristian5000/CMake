@@ -86,7 +86,7 @@ void cmExportInstallAndroidMKGenerator::GenerateImportPropertyCode(
 }
 
 void cmExportInstallAndroidMKGenerator::GenerateMissingTargetsCheckCode(
-  std::ostream&, const std::vector<std::string>&)
+  std::ostream&)
 {
 }
 
@@ -132,7 +132,7 @@ void cmExportInstallAndroidMKGenerator::GenerateImportedFileChecksCode(
 }
 
 bool cmExportInstallAndroidMKGenerator::GenerateImportFileConfig(
-  const std::string&, std::vector<std::string>&)
+  const std::string&)
 {
   return true;
 }

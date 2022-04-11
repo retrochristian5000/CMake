@@ -56,8 +56,7 @@ protected:
     std::ostream& os, const std::string& config,
     cmGeneratorTarget const* target,
     ImportPropertyMap const& properties) override;
-  void GenerateMissingTargetsCheckCode(
-    std::ostream& os, const std::vector<std::string>& missingTargets) override;
+  void GenerateMissingTargetsCheckCode(std::ostream& os) override;
   void GenerateInterfaceProperties(
     cmGeneratorTarget const* target, std::ostream& os,
     const ImportPropertyMap& properties) override;
