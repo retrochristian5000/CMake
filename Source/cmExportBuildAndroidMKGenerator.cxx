@@ -60,7 +60,7 @@ void cmExportBuildAndroidMKGenerator::GenerateImportPropertyCode(
 }
 
 void cmExportBuildAndroidMKGenerator::GenerateMissingTargetsCheckCode(
-  std::ostream&, const std::vector<std::string>&)
+  std::ostream&)
 {
 }
 
