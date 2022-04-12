@@ -190,7 +190,7 @@ cmStateEnums::TargetType cmExportBuildFileGenerator::GetExportTargetType(
   // to support transitive usage requirements on other targets that
   // use the object library.
   if (targetType == cmStateEnums::OBJECT_LIBRARY &&
-      !this->LG->GetGlobalGenerator()->HasKnownObjectFileLocation(nullptr)) {
+      !target->Target->HasKnownObjectFileLocation(nullptr)) {
     targetType = cmStateEnums::INTERFACE_LIBRARY;
   }
   return targetType;
