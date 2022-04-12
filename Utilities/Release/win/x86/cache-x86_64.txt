@@ -17,6 +17,9 @@ CMake_GUI_DISTRIBUTE_WITH_Qt_LGPL:STRING=3
 CMAKE_PREFIX_PATH:STRING=C:/qt-x86_64
 CMake_QT_STATIC_QWindowsIntegrationPlugin_LIBRARIES:STRING=c:/qt-x86_64/plugins/platforms/qwindows.lib;c:/qt-x86_64/plugins/styles/qwindowsvistastyle.lib;c:/qt-x86_64/lib/Qt5EventDispatcherSupport.lib;c:/qt-x86_64/lib/Qt5FontDatabaseSupport.lib;c:/qt-x86_64/lib/Qt5ThemeSupport.lib;c:/qt-x86_64/lib/qtfreetype.lib;c:/qt-x86_64/lib/qtlibpng.lib;imm32.lib;wtsapi32.lib
 
+# Enable ccmake (using vendored pdcurses).
+BUILD_CursesDialog:BOOL=ON
+
 # Build documentation.
 CMAKE_DOC_DIR:STRING=doc/cmake
 PYTHON_EXECUTABLE:FILEPATH=C:/python3/python.exe
