@@ -262,37 +262,19 @@ int do_cmake(int ac, char const* const* av)
         return true;
       } },
     CommandArgument{ "--system-information", CommandArgument::Values::Zero,
-                     [&](std::string const&) -> bool {
-                       sysinfo = true;
-                       return true;
-                     } },
+                     CommandArgument::generateBooleanLambda(sysinfo) },
     CommandArgument{ "-N", CommandArgument::Values::Zero,
-                     [&](std::string const&) -> bool {
-                       view_only = true;
-                       return true;
-                     } },
-    CommandArgument{ "-LAH", CommandArgument::Values::Zero,
-                     [&](std::string const&) -> bool {
-                       list_all_cached = true;
-                       list_help = true;
-                       return true;
-                     } },
+                     CommandArgument::generateBooleanLambda(view_only) },
+    CommandArgument{
+      "-LAH", CommandArgument::Values::Zero,
+      CommandArgument::generateBooleanLambda(list_all_cached, list_help) },
     CommandArgument{ "-LA", CommandArgument::Values::Zero,
-                     [&](std::string const&) -> bool {
-                       list_all_cached = true;
-                       return true;
-                     } },
-    CommandArgument{ "-LH", CommandArgument::Values::Zero,
-                     [&](std::string const&) -> bool {
-                       list_cached = true;
-                       list_help = true;
-                       return true;
-                     } },
+                     CommandArgument::generateBooleanLambda(list_all_cached) },
+    CommandArgument{
+      "-LH", CommandArgument::Values::Zero,
+      CommandArgument::generateBooleanLambda(list_cached, list_help) },
     CommandArgument{ "-L", CommandArgument::Values::Zero,
-                     [&](std::string const&) -> bool {
-                       list_cached = true;
-                       return true;
-                     } },
+                     CommandArgument::generateBooleanLambda(list_cached) },
     CommandArgument{ "-P", "No script specified for argument -P",
                      CommandArgument::Values::One,
                      CommandArgument::RequiresSeparator::No,
