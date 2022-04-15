@@ -369,9 +369,61 @@ std::string cmExportBuildFileGenerator::GetFileSetDirectories(
     cmJoin(fileSet->GetDirectoryEntries(), ";"));
 }
 
-std::string cmExportBuildFileGenerator::GetFileSetFiles(
-  cmGeneratorTarget* /*gte*/, cmFileSet* fileSet, cmTargetExport* /*te*/)
+namespace {
+bool EntryIsContextSensitive(
+  const std::unique_ptr<cmCompiledGeneratorExpression>& cge)
 {
-  return cmOutputConverter::EscapeForCMake(
-    cmJoin(fileSet->GetFileEntries(), ";"));
+  return cge->GetHadContextSensitiveCondition();
+}
+}
+
+std::string cmExportBuildFileGenerator::GetFileSetFiles(
+  cmGeneratorTarget* gte, cmFileSet* fileSet, cmTargetExport* /*te*/)
+{
+  std::vector<std::string> resultVector;
+
+  auto configs =
+    gte->Makefile->GetGeneratorConfigs(cmMakefile::IncludeEmptyConfig);
+
+  auto fileEntries = fileSet->CompileFileEntries();
+  auto directoryEntries = fileSet->CompileDirectoryEntries();
+
+  cmGeneratorExpression destGe;
+
+  for (auto const& config : configs) {
+    auto directories = fileSet->EvaluateDirectoryEntries(
+      directoryEntries, gte->LocalGenerator, config, gte);
+
+    std::map<std::string, std::vector<std::string>> files;
+    for (auto const& entry : fileEntries) {
+      fileSet->EvaluateFileEntry(directories, files, entry,
+                                 gte->LocalGenerator, config, gte);
+    }
+
+    bool const contextSensitive =
+      std::any_of(directoryEntries.begin(), directoryEntries.end(),
+                  EntryIsContextSensitive) ||
+      std::any_of(fileEntries.begin(), fileEntries.end(),
+                  EntryIsContextSensitive);
+
+    for (auto const& it : files) {
+      auto prefix = it.first.empty() ? "" : cmStrCat(it.first, '/');
+      for (auto const& filename : it.second) {
+        auto escapedFile = cmOutputConverter::EscapeForCMake(
+          filename, cmOutputConverter::WrapQuotes::NoWrap);
+        if (contextSensitive && configs.size() != 1) {
+          resultVector.push_back(
+            cmStrCat("\"$<$<CONFIG:", config, ">:", escapedFile, ">\""));
+        } else {
+          resultVector.push_back(cmStrCat('"', escapedFile, '"'));
+        }
+      }
+    }
+
+    if (!(contextSensitive && configs.size() != 1)) {
+      break;
+    }
+  }
+
+  return cmJoin(resultVector, " ");
 }
