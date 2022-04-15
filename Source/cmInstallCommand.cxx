@@ -744,7 +744,7 @@ bool HandleTargetsMode(std::vector<std::string> const& args,
               })) {
           status.SetError(cmStrCat(
             "TARGETS target ", target.GetName(),
-            " is exported but not all of its file sets are installed"));
+            " is exported but not all of its interface file sets are installed"));
           return false;
         }
 
