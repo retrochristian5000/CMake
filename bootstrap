@@ -490,6 +490,7 @@ CMAKE_CXX_SOURCES="\
   cmUVProcessChain \
   cmVersion \
   cmWhileCommand \
+  cmWindowsRegistry \
   cmWorkingDirectory \
   cmake  \
   cmakemain \
