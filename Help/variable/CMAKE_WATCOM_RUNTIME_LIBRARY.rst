@@ -24,8 +24,9 @@ library with or without debug information depending on the configuration.
 
 If this variable is not set then the :prop_tgt:`WATCOM_RUNTIME_LIBRARY` target
 property will not be set automatically.  If that property is not set then
-CMake uses the default value ``MultiThreaded$<$<CONFIG:Debug>:Debug>DLL``
-to select a Watcom runtime library.
+CMake uses the default value ``MultiThreaded$<$<CONFIG:Debug>:Debug>DLL`` on
+Windows and ``SingleThreaded$<$<CONFIG:Debug>:Debug>`` on other platforms to select
+a Watcom runtime library.
 
 .. note::
 

@@ -10,6 +10,14 @@ string(APPEND CMAKE_EXE_LINKER_FLAGS_INIT " system linux opt noextension")
 string(APPEND CMAKE_MODULE_LINKER_FLAGS_INIT " system linux")
 string(APPEND CMAKE_SHARED_LINKER_FLAGS_INIT " system linux")
 
+cmake_policy(GET CMP0134 __LINUX_WATCOM_CMP0134)
+if(__LINUX_WATCOM_CMP0134 STREQUAL "NEW")
+  set(CMAKE_WATCOM_RUNTIME_LIBRARY_DEFAULT "SingleThreaded$<$<CONFIG:Debug>:Debug>")
+else()
+  set(CMAKE_WATCOM_RUNTIME_LIBRARY_DEFAULT "")
+endif()
+unset(__LINUX_WATCOM_CMP0134)
+
 # single/multi-threaded                 /-bm
 # default is setup for single-threaded libraries
 string(APPEND CMAKE_C_FLAGS_INIT " -bt=linux")
@@ -23,3 +31,10 @@ if(CMAKE_CROSSCOMPILING)
     set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES $ENV{WATCOM}/lh)
   endif()
 endif()
+
+macro(__linux_open_watcom lang)
+  set(CMAKE_${lang}_COMPILE_OPTIONS_WATCOM_RUNTIME_LIBRARY_SingleThreaded         "")
+  set(CMAKE_${lang}_COMPILE_OPTIONS_WATCOM_RUNTIME_LIBRARY_SingleThreadedDebug    "")
+  set(CMAKE_${lang}_COMPILE_OPTIONS_WATCOM_RUNTIME_LIBRARY_MultiThreaded          -bm)
+  set(CMAKE_${lang}_COMPILE_OPTIONS_WATCOM_RUNTIME_LIBRARY_MultiThreadedDebug     -bm)
+endmacro()
