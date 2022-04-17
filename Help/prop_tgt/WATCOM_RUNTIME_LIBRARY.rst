@@ -22,7 +22,9 @@ selects for the target ``foo`` a multi-threaded statically-linked runtime
 library with or without debug information depending on the configuration.
 
 If this property is not set then CMake uses the default value
-``MultiThreaded$<$<CONFIG:Debug>:Debug>DLL`` to select a Watcom runtime library.
+``MultiThreaded$<$<CONFIG:Debug>:Debug>DLL`` on Windows and
+``SingleThreaded$<$<CONFIG:Debug>:Debug>`` on other platforms to select a Watcom
+runtime library.
 
 .. note::
 
