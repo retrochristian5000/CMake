@@ -778,9 +778,10 @@ Installing Exports
 .. code-block:: cmake
 
   install(EXPORT <export-name> DESTINATION <dir>
-          [NAMESPACE <namespace>] [[FILE <name>.cmake]|
+          [NAMESPACE <namespace>] [FILE <name>.cmake]
           [PERMISSIONS permissions...]
-          [CONFIGURATIONS [Debug|Release|...]]
+          [CONFIGURATIONS [Debug|Release|...]
+          [CXX_MODULES_DIRECTORY <directory>]
           [EXPORT_LINK_INTERFACE_LIBRARIES]
           [COMPONENT <component>]
           [EXCLUDE_FROM_ALL])
