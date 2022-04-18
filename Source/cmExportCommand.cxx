@@ -61,13 +61,15 @@ bool cmExportCommand(std::vector<std::string> const& args,
     std::string Namespace;
     std::string Filename;
     std::string AndroidMKFile;
+    std::string CxxModulesDirectory;
     bool Append = false;
     bool ExportOld = false;
   };
 
   auto parser = cmArgumentParser<Arguments>{}
                   .Bind("NAMESPACE"_s, &Arguments::Namespace)
-                  .Bind("FILE"_s, &Arguments::Filename);
+                  .Bind("FILE"_s, &Arguments::Filename)
+                  .Bind("CXX_MODULES_DIRECTORY"_s, &Arguments::CxxModulesDirectory);
 
   if (args[0] == "EXPORT") {
     parser.Bind("EXPORT"_s, &Arguments::ExportSetName);
@@ -214,6 +216,7 @@ bool cmExportCommand(std::vector<std::string> const& args,
   }
   ebfg->SetExportFile(fname.c_str());
   ebfg->SetNamespace(arguments.Namespace);
+  ebfg->SetCxxModuleDirectory(arguments.CxxModulesDirectory);
   ebfg->SetAppendMode(arguments.Append);
   if (exportSet != nullptr) {
     ebfg->SetExportSet(exportSet);
