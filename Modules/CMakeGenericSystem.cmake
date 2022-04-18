@@ -72,6 +72,10 @@ if(NOT DEFINED CMAKE_EXPORT_COMPILE_COMMANDS AND CMAKE_GENERATOR MATCHES "Ninja|
   mark_as_advanced(CMAKE_EXPORT_COMPILE_COMMANDS)
 endif()
 
+if(NOT DEFINED CMAKE_COMPILE_WARNING_AS_ERROR)
+    set(CMAKE_COMPILE_WARNING_AS_ERROR OFF CACHE BOOL "Treat all compile warnings as errors.")
+endif()
+
 # GetDefaultWindowsPrefixBase
 #
 # Compute the base directory for CMAKE_INSTALL_PREFIX based on:

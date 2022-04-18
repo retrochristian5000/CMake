@@ -1,0 +1,21 @@
+cmake_minimum_required(VERSION 3.23 FATAL_ERROR)
+project(WerrorOff)
+add_executable(WerrorOff main.cxx )
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang)$")
+  set(warning_flags "-Wall;-Wextra")
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "Intel")
+  set(warning_flags "-Wall;-w2;-w3")
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+  set(warning_flags "\\Wall")
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
+  set(warning_flags "+w;+w2")
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "Fujitsu")
+  set(warning_flags "-w 8")
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "NVCC")
+  set(warning_flags "-Wall")
+endif()
+
+target_compile_options(WerrorOff PUBLIC "${warning_flags}")
+
+set_target_properties(WerrorOff PROPERTIES COMPILE_WARNING_AS_ERROR OFF)

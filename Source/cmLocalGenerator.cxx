@@ -1600,6 +1600,15 @@ std::vector<BT<std::string>> cmLocalGenerator::GetTargetCompileFlags(
     this->AppendFeatureOptions(compileFlags, lang, "IPO");
   }
 
+  // Add Warning as errors flags
+  cmValue wError = target->GetProperty("COMPILE_WARNING_AS_ERROR");
+  if (!wError.IsSet()) {
+    wError = mf->GetDefinition("CMAKE_COMPILE_WARNING_AS_ERROR");
+  }
+  if (wError.IsOn()) {
+    this->AddWarningAsErrorFlag(compileFlags, lang);
+  }
+
   this->AddArchitectureFlags(compileFlags, target, lang, config, arch);
 
   if (lang == "Fortran") {
@@ -2375,6 +2384,26 @@ void cmLocalGenerator::AddColorDiagnosticsFlags(std::string& flags,
     for (std::string const& option : options) {
       this->AppendFlagEscape(flags, option);
     }
+  }
+}
+
+void cmLocalGenerator::AddWarningAsErrorFlag(std::string& flags,
+                                             const std::string& lang)
+{
+  std::string compiler = this->Makefile->GetSafeDefinition(
+    cmStrCat("CMAKE_", lang, "_COMPILER_ID"));
+  if (compiler == "GNU" || compiler == "Clang" || compiler == "AppleClang") {
+    this->AppendFlags(flags, "-Werror");
+  } else if (compiler == "MSVC") {
+    this->AppendFlags(flags, "/WX");
+  } else if (compiler == "SunPro") {
+    this->AppendFlags(flags, "-errwarn");
+  } else if (compiler == "Intel") {
+    this->AppendFlags(flags, "-Werror-all");
+  } else if (compiler == "Fujitsu") {
+    this->AppendFlags(flags, "-cwno");
+  } else if (compiler == "NVCC") {
+    this->AppendFlags(flags, "--Werror all-warnings");
   }
 }
 

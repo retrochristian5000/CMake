@@ -160,6 +160,7 @@ public:
                                   const std::string& lang,
                                   const std::string& config);
   void AddColorDiagnosticsFlags(std::string& flags, const std::string& lang);
+  void AddWarningAsErrorFlag(std::string& flags, std::string const& lang);
   //! Append flags to a string.
   virtual void AppendFlags(std::string& flags,
                            const std::string& newFlags) const;
