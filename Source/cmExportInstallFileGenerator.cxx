@@ -561,6 +561,19 @@ std::string cmExportInstallFileGenerator::GetFileSetDirectories(
                            cge->Evaluate(gte->LocalGenerator, config, gte),
                            cmOutputConverter::WrapQuotes::NoWrap));
 
+    auto const type = fileSet->GetType();
+    // C++ modules do not support interface file sets which are dependent upon
+    // the configuration.
+    if (cge->GetHadContextSensitiveCondition() && (type == "CXX_MODULES"_s || type == "CXX_MODULE_INTERNAL_PARTITIONS"_s || type == "CXX_MODULE_HEADERS"_s)) {
+      auto* mf = this->IEGen->GetLocalGenerator()->GetMakefile();
+      std::ostringstream e;
+      e << "The \"" << gte->GetName() << "\" target's interface file set \""
+        << fileSet->GetName() << "\" of type \"" << type
+        << "\" contains context-sensitive base file entries which is not supported.";
+      mf->IssueMessage(MessageType::FATAL_ERROR, e.str());
+      return std::string{};
+    }
+
     if (cge->GetHadContextSensitiveCondition() && configs.size() != 1) {
       resultVector.push_back(
         cmStrCat("\"$<$<CONFIG:", config, ">:", dest, ">\""));
@@ -608,6 +621,19 @@ std::string cmExportInstallFileGenerator::GetFileSetFiles(
                   EntryIsContextSensitive) ||
       std::any_of(fileEntries.begin(), fileEntries.end(),
                   EntryIsContextSensitive);
+
+    auto const type = fileSet->GetType();
+    // C++ modules do not support interface file sets which are dependent upon
+    // the configuration.
+    if (contextSensitive && (type == "CXX_MODULES"_s || type == "CXX_MODULE_INTERNAL_PARTITIONS"_s || type == "CXX_MODULE_HEADERS"_s)) {
+      auto* mf = this->IEGen->GetLocalGenerator()->GetMakefile();
+      std::ostringstream e;
+      e << "The \"" << gte->GetName() << "\" target's interface file set \""
+        << fileSet->GetName() << "\" of type \"" << type
+        << "\" contains context-sensitive base file entries which is not supported.";
+      mf->IssueMessage(MessageType::FATAL_ERROR, e.str());
+      return std::string{};
+    }
 
     for (auto const& it : files) {
       auto prefix = it.first.empty() ? "" : cmStrCat(it.first, '/');
