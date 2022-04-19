@@ -23,4 +23,5 @@ run_cmake(ExportInstallCxxModules)
 # Generator-specific tests.
 if (RunCMake_GENERATOR MATCHES "Ninja")
   run_cmake(NinjaDependInfoFileSet)
+  run_cmake(NinjaDependInfoExport)
 endif ()
