@@ -24,6 +24,7 @@ else()
     string(APPEND CMAKE_${lang}_FLAGS_MINSIZEREL_INIT " -Os")
     string(APPEND CMAKE_${lang}_FLAGS_RELEASE_INIT " -O3")
     string(APPEND CMAKE_${lang}_FLAGS_RELWITHDEBINFO_INIT " -O2 -g")
+    set(CMAKE_${lang}_WARNING_AS_ERROR_FLAG "-Werror-all")
 
     set(CMAKE_${lang}_COMPILER_PREDEFINES_COMMAND "${CMAKE_${lang}_COMPILER}")
     if(CMAKE_${lang}_COMPILER_ARG1)

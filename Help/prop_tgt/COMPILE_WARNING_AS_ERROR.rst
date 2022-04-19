@@ -1,7 +1,7 @@
 COMPILE_WARNING_AS_ERROR
 ------------------------
 
-.. versionadded:: 3.23
+.. versionadded:: 3.24
 
 Specify whether to treat warnings on compile as errors.
 

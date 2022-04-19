@@ -11,6 +11,7 @@ include(Compiler/CMakeCommonCompilerMacros)
 
 macro(__compiler_fujitsu lang)
   set(CMAKE_${lang}_VERBOSE_FLAG "-###")
+  set(CMAKE_${lang}_WARNING_AS_ERROR_FLAG "-cwno")
 
   # Initial configuration flags
   string(APPEND CMAKE_${lang}_FLAGS_INIT " ")

@@ -1600,12 +1600,6 @@ std::vector<BT<std::string>> cmLocalGenerator::GetTargetCompileFlags(
     this->AppendFeatureOptions(compileFlags, lang, "IPO");
   }
 
-  // Add Warning as errors flags
-  cmValue wError = target->GetProperty("COMPILE_WARNING_AS_ERROR");
-  if (wError.IsOn()) {
-    this->AddWarningAsErrorFlag(compileFlags, lang);
-  }
-
   this->AddArchitectureFlags(compileFlags, target, lang, config, arch);
 
   if (lang == "Fortran") {
@@ -1925,6 +1919,15 @@ void cmLocalGenerator::AddLanguageFlags(std::string& flags,
 
   std::string compilerSimulateId = this->Makefile->GetSafeDefinition(
     cmStrCat("CMAKE_", lang, "_SIMULATE_ID"));
+
+  // Add Warning as errors flags
+  const cmValue wError = target->GetProperty("COMPILE_WARNING_AS_ERROR");
+  const cmValue wErrorFlag = this->Makefile->GetDefinition(
+    cmStrCat("CMAKE_", lang, "_WARNING_AS_ERROR_FLAG"));
+  if (wError.IsOn() && wErrorFlag.IsSet()) {
+    this->AppendFlags(flags, wErrorFlag.GetCStr());
+  }
+
   if (lang == "Swift") {
     if (cmValue v = target->GetProperty("Swift_LANGUAGE_VERSION")) {
       if (cmSystemTools::VersionCompare(
@@ -2381,26 +2384,6 @@ void cmLocalGenerator::AddColorDiagnosticsFlags(std::string& flags,
     for (std::string const& option : options) {
       this->AppendFlagEscape(flags, option);
     }
-  }
-}
-
-void cmLocalGenerator::AddWarningAsErrorFlag(std::string& flags,
-                                             const std::string& lang)
-{
-  std::string compiler = this->Makefile->GetSafeDefinition(
-    cmStrCat("CMAKE_", lang, "_COMPILER_ID"));
-  if (compiler == "GNU" || compiler == "Clang" || compiler == "AppleClang") {
-    this->AppendFlags(flags, "-Werror");
-  } else if (compiler == "MSVC") {
-    this->AppendFlags(flags, "/WX");
-  } else if (compiler == "SunPro") {
-    this->AppendFlags(flags, "-errwarn");
-  } else if (compiler == "Intel") {
-    this->AppendFlags(flags, "-Werror-all");
-  } else if (compiler == "Fujitsu") {
-    this->AppendFlags(flags, "-cwno");
-  } else if (compiler == "NVCC") {
-    this->AppendFlags(flags, "--Werror all-warnings");
   }
 }
 

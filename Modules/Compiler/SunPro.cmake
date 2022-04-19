@@ -8,3 +8,7 @@ endif()
 set(__COMPILER_SUNPRO 1)
 
 include(Compiler/CMakeCommonCompilerMacros)
+
+macro(__COMPILER_SUNPRO lang)
+  set(CMAKE_${lang}_WARNING_AS_ERROR_FLAG "-errwarn")
+endmacro()
