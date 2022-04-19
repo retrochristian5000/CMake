@@ -397,7 +397,7 @@ cmTarget::cmTarget(std::string const& name, cmStateEnums::TargetType type,
     initPropValue("UNITY_BUILD_MODE", "BATCH");
     initPropValue("PCH_WARN_INVALID", "ON");
     initPropValue("PCH_INSTANTIATE_TEMPLATES", "ON");
-    initPropValue("COMPILE_WARNINGS_AS_ERRORS", "OFF");
+    initPropValue("COMPILE_WARNING_AS_ERROR", "OFF");
 
 #ifdef __APPLE__
     if (this->GetGlobalGenerator()->IsXcode()) {

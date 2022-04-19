@@ -1602,9 +1602,6 @@ std::vector<BT<std::string>> cmLocalGenerator::GetTargetCompileFlags(
 
   // Add Warning as errors flags
   cmValue wError = target->GetProperty("COMPILE_WARNING_AS_ERROR");
-  if (!wError.IsSet()) {
-    wError = mf->GetDefinition("CMAKE_COMPILE_WARNING_AS_ERROR");
-  }
   if (wError.IsOn()) {
     this->AddWarningAsErrorFlag(compileFlags, lang);
   }
