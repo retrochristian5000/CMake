@@ -21,10 +21,13 @@
 
 #include "cmComputeLinkInformation.h"
 #include "cmCustomCommandGenerator.h"
+#include "cmExportBuildFileGenerator.h"
 #include "cmGeneratedFileStream.h"
 #include "cmGeneratorExpression.h"
 #include "cmGeneratorTarget.h"
 #include "cmGlobalNinjaGenerator.h"
+#include "cmInstallCxxModuleBmiGenerator.h"
+#include "cmInstallExportGenerator.h"
 #include "cmLocalGenerator.h"
 #include "cmLocalNinjaGenerator.h"
 #include "cmMakefile.h"
@@ -39,6 +42,7 @@
 #include "cmStateTypes.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
+#include "cmTargetExport.h"
 #include "cmValue.h"
 #include "cmake.h"
 
@@ -250,6 +254,51 @@ std::string cmNinjaTargetGenerator::ComputeFlagsForObject(
 
     this->LocalGenerator->AppendCompileOptions(
       flags, genexInterpreter.Evaluate(pchOptions, COMPILE_OPTIONS));
+  }
+
+  if (this->NeedCxxModuleSupport(language, config)) {
+    auto const& path = source->GetFullPath();
+    auto const* tgt = this->GeneratorTarget->Target;
+
+    std::string file_set_type;
+
+    for (auto const& name : tgt->GetAllFileSetNames()) {
+      auto const* file_set = tgt->GetFileSet(name);
+      if (!file_set) {
+        // TODO: Error
+        continue;
+      }
+
+      auto fileEntries = file_set->CompileFileEntries();
+      auto directoryEntries = file_set->CompileDirectoryEntries();
+      auto directories = file_set->EvaluateDirectoryEntries(
+        directoryEntries, this->LocalGenerator, config, this->GeneratorTarget);
+
+      std::map<std::string, std::vector<std::string>> files;
+      for (auto const& entry : fileEntries) {
+        file_set->EvaluateFileEntry(directories, files, entry,
+                                    this->LocalGenerator, config,
+                                    this->GeneratorTarget);
+      }
+
+      for (auto const& it : files) {
+        for (auto const& filename : it.second) {
+          if (filename == path) {
+            file_set_type = file_set->GetType();
+            break;
+          }
+        }
+      }
+
+      if (!file_set_type.empty()) {
+        std::string source_type_var = cmStrCat(
+          "CMAKE_EXPERIMENTAL_CXX_MODULE_SOURCE_TYPE_FLAG_", file_set_type);
+        cmMakefile* mf = this->GetMakefile();
+        if (cmValue source_type_flag = mf->GetDefinition(source_type_var)) {
+          this->LocalGenerator->AppendFlags(flags, *source_type_flag);
+        }
+      }
+    }
   }
 
   return flags;
@@ -1672,6 +1721,106 @@ void cmNinjaTargetGenerator::WriteTargetDependInfo(std::string const& lang,
         tdi_module_info["destination"] = "UNKNOWN"; // TODO
       }
     }
+  }
+
+  tdi["config"] = config;
+
+  // Add information about the export sets that this target is a member of.
+  Json::Value& tdi_exports = tdi["exports"] = Json::arrayValue;
+  std::string export_name = this->GeneratorTarget->GetExportName();
+
+  auto const& all_install_exports =
+    this->GetGlobalGenerator()->GetExportSets();
+  for (auto const& exp : all_install_exports) {
+    // Ignore exports sets which are not for this target.
+    auto const& targets = exp.second.GetTargetExports();
+    auto tgt_export =
+      std::find_if(targets.begin(), targets.end(),
+                   [this](std::unique_ptr<cmTargetExport> const& te) {
+                     return te->Target == this->GeneratorTarget;
+                   });
+    if (tgt_export == targets.end()) {
+      continue;
+    }
+
+    Json::Value tdi_bmi_info = Json::objectValue;
+    if (auto const* bmi_gen = (*tgt_export)->CxxModuleBmiGenerator) {
+      tdi_bmi_info["component"] = bmi_gen->GetComponent();
+      tdi_bmi_info["permissions"] = bmi_gen->GetFilePermissions();
+      tdi_bmi_info["optional"] = bmi_gen->GetOptional();
+      tdi_bmi_info["exclude-from-all"] = bmi_gen->GetExcludeFromAll();
+      tdi_bmi_info["destination"] = bmi_gen->GetDestination(config);
+      const char* msg_level = "";
+      switch (bmi_gen->GetMessageLevel()) {
+        case cmInstallGenerator::MessageDefault:
+          break;
+        case cmInstallGenerator::MessageAlways:
+          msg_level = "MESSAGE_ALWAYS";
+          break;
+        case cmInstallGenerator::MessageLazy:
+          msg_level = "MESSAGE_LAZY";
+          break;
+        case cmInstallGenerator::MessageNever:
+          msg_level = "MESSAGE_NEVER";
+          break;
+      }
+      tdi_bmi_info["message-level"] = msg_level;
+    }
+
+    auto const* installs = exp.second.GetInstallations();
+    for (auto const* install : *installs) {
+      Json::Value tdi_export_info = Json::objectValue;
+
+      auto const& ns = install->GetNamespace();
+      auto const& dest = install->GetDestination();
+      auto const& cxxm_dir = install->GetCxxModuleDirectory();
+      auto const& export_prefix = install->GetTempDir();
+
+      tdi_export_info["namespace"] = ns;
+      tdi_export_info["export-name"] = export_name;
+      tdi_export_info["destination"] = dest;
+      tdi_export_info["cxx-module-info-dir"] = cxxm_dir;
+      tdi_export_info["export-prefix"] = export_prefix;
+      tdi_export_info["install"] = true;
+      tdi_export_info["bmi-installation"] = tdi_bmi_info;
+
+      tdi_exports.append(tdi_export_info);
+    }
+  }
+
+  auto const& all_build_exports =
+    this->GetMakefile()->GetExportBuildFileGenerators();
+  for (auto const& exp : all_build_exports) {
+    std::vector<std::string> targets;
+    exp->GetTargets(targets);
+
+    // Ignore exports sets which are not for this target.
+    auto const& name = this->GeneratorTarget->GetName();
+    bool has_current_target =
+      std::any_of(targets.begin(), targets.end(),
+                  [name](std::string const& tname) { return tname == name; });
+    if (!has_current_target) {
+      continue;
+    }
+
+    Json::Value tdi_export_info = Json::objectValue;
+
+    auto const& ns = exp->GetNamespace();
+    auto const& main_fn = exp->GetMainExportFileName();
+    auto const& cxxm_dir = exp->GetCxxModuleDirectory();
+    auto dest = cmsys::SystemTools::GetParentDirectory(main_fn);
+    auto const& export_prefix =
+      cmSystemTools::GetFilenamePath(exp->GetMainExportFileName());
+
+    tdi_export_info["namespace"] = ns;
+    tdi_export_info["export-name"] = export_name;
+    tdi_export_info["destination"] = dest;
+    tdi_export_info["cxx-module-info-dir"] = cxxm_dir;
+    tdi_export_info["export-prefix"] = export_prefix;
+    tdi_export_info["install"] = false;
+    tdi_export_info["bmi-installation"] = Json::nullValue;
+
+    tdi_exports.append(tdi_export_info);
   }
 
   std::string const tdin = this->GetTargetDependInfoPath(lang, config);
