@@ -2011,7 +2011,14 @@ void cmLocalGenerator::AddLanguageFlagsForLinking(
   this->AddLanguageFlags(flags, target, lang, config);
 
   if (target->IsIPOEnabled(lang, config)) {
-    this->AppendFeatureOptions(flags, lang, "IPO");
+    cmValue optionList = this->Makefile->GetDefinition(
+      cmStrCat("CMAKE_", lang, "_LINK_OPTIONS_IPO"));
+    if (optionList) {
+      std::vector<std::string> options = cmExpandedList(*optionList);
+      for (std::string const& o : options) {
+        this->AppendFlagEscape(flags, o);
+      }
+    }
   }
 }
 
