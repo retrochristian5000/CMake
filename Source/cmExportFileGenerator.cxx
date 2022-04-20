@@ -985,34 +985,34 @@ void cmExportFileGenerator::GenerateExpectedTargetsCode(
   /* clang-format off */
   os << "# Protect against multiple inclusion, which would fail when already "
         "imported targets are added once more.\n"
-        "set(_targetsDefined)\n"
-        "set(_targetsNotDefined)\n"
-        "set(_expectedTargets)\n"
-        "foreach(_expectedTarget " << expectedTargets << ")\n"
-        "  list(APPEND _expectedTargets ${_expectedTarget})\n"
-        "  if(NOT TARGET ${_expectedTarget})\n"
-        "    list(APPEND _targetsNotDefined ${_expectedTarget})\n"
+        "set(__cmake_targets_defined)\n"
+        "set(__cmake_targets_not_defined)\n"
+        "set(__cmake_expected_targets)\n"
+        "foreach(__cmake_expected_target " << expectedTargets << ")\n"
+        "  list(APPEND __cmake_expected_targets ${__cmake_expected_target})\n"
+        "  if(NOT TARGET ${__cmake_expected_target})\n"
+        "    list(APPEND __cmake_targets_not_defined ${__cmake_expected_target})\n"
         "  endif()\n"
-        "  if(TARGET ${_expectedTarget})\n"
-        "    list(APPEND _targetsDefined ${_expectedTarget})\n"
+        "  if(TARGET ${__cmake_expected_target})\n"
+        "    list(APPEND __cmake_targets_defined ${__cmake_expected_target})\n"
         "  endif()\n"
         "endforeach()\n"
-        "if(\"${_targetsDefined}\" STREQUAL \"${_expectedTargets}\")\n"
-        "  unset(_targetsDefined)\n"
-        "  unset(_targetsNotDefined)\n"
-        "  unset(_expectedTargets)\n"
+        "if(\"${__cmake_targets_defined}\" STREQUAL \"${__cmake_expected_targets}\")\n"
+        "  unset(__cmake_targets_defined)\n"
+        "  unset(__cmake_targets_not_defined)\n"
+        "  unset(__cmake_expected_targets)\n"
         "  set(CMAKE_IMPORT_FILE_VERSION)\n"
         "  cmake_policy(POP)\n"
         "  return()\n"
         "endif()\n"
-        "if(NOT \"${_targetsDefined}\" STREQUAL \"\")\n"
+        "if(NOT \"${__cmake_targets_defined}\" STREQUAL \"\")\n"
         "  message(FATAL_ERROR \"Some (but not all) targets in this export "
-        "set were already defined.\\nTargets Defined: ${_targetsDefined}\\n"
-        "Targets not yet defined: ${_targetsNotDefined}\\n\")\n"
+        "set were already defined.\\nTargets Defined: ${__cmake_targets_defined}\\n"
+        "Targets not yet defined: ${__cmake_targets_not_defined}\\n\")\n"
         "endif()\n"
-        "unset(_targetsDefined)\n"
-        "unset(_targetsNotDefined)\n"
-        "unset(_expectedTargets)\n"
+        "unset(__cmake_targets_defined)\n"
+        "unset(__cmake_targets_not_defined)\n"
+        "unset(__cmake_expected_targets)\n"
         "\n\n";
   /* clang-format on */
 }
@@ -1178,12 +1178,12 @@ void cmExportFileGenerator::GenerateImportedFileCheckLoop(std::ostream& os)
   // but the development package was not installed.).
   /* clang-format off */
   os << "# Loop over all imported files and verify that they actually exist\n"
-        "foreach(target ${_IMPORT_CHECK_TARGETS} )\n"
-        "  foreach(file ${_IMPORT_CHECK_FILES_FOR_${target}} )\n"
-        "    if(NOT EXISTS \"${file}\" )\n"
-        "      message(FATAL_ERROR \"The imported target \\\"${target}\\\""
+        "foreach(__cmake_target IN LISTS __cmake_import_check_targets)\n"
+        "  foreach(__cmake_file IN LISTS \"__cmake_import_check_files_for_${__cmake_target}\")\n"
+        "    if(NOT EXISTS \"${__cmake_file}\")\n"
+        "      message(FATAL_ERROR \"The imported target \\\"${__cmake_target}\\\""
         " references the file\n"
-        "   \\\"${file}\\\"\n"
+        "   \\\"${__cmake_file}\\\"\n"
         "but this file does not exist.  Possible reasons include:\n"
         "* The file was deleted, renamed, or moved to another location.\n"
         "* An install or uninstall procedure did not complete successfully.\n"
@@ -1193,9 +1193,9 @@ void cmExportFileGenerator::GenerateImportedFileCheckLoop(std::ostream& os)
         "\")\n"
         "    endif()\n"
         "  endforeach()\n"
-        "  unset(_IMPORT_CHECK_FILES_FOR_${target})\n"
+        "  unset(\"__cmake_import_check_files_for_${__cmake_target}\")\n"
         "endforeach()\n"
-        "unset(_IMPORT_CHECK_TARGETS)\n"
+        "unset(__cmake_import_check_targets)\n"
         "\n";
   /* clang-format on */
 }
@@ -1208,9 +1208,9 @@ void cmExportFileGenerator::GenerateImportedFileChecksCode(
   // Construct the imported target name.
   std::string targetName = cmStrCat(this->Namespace, target->GetExportName());
 
-  os << "list(APPEND _IMPORT_CHECK_TARGETS " << targetName
+  os << "list(APPEND __cmake_import_check_targets " << targetName
      << " )\n"
-        "list(APPEND _IMPORT_CHECK_FILES_FOR_"
+        "list(APPEND __cmake_import_check_files_for_"
      << targetName << " ";
 
   for (std::string const& li : importedLocations) {
