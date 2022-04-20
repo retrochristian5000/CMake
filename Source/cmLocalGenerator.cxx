@@ -1566,8 +1566,6 @@ void cmLocalGenerator::GetTargetFlags(
   std::string extraLinkFlags;
   this->AppendPositionIndependentLinkerFlags(extraLinkFlags, target, config,
                                              linkLanguage);
-  this->AppendIPOLinkerFlags(extraLinkFlags, target, config, linkLanguage);
-
   if (!extraLinkFlags.empty()) {
     linkFlags.emplace_back(std::move(extraLinkFlags));
   }
@@ -2012,7 +2010,7 @@ void cmLocalGenerator::AddLanguageFlagsForLinking(
   this->AddLanguageFlags(flags, target, lang, config);
 
   if (target->IsIPOEnabled(lang, config)) {
-    this->AppendFeatureOptions(flags, lang, "IPO");
+    this->AppendIPOLinkerFlags(flags, target, config, lang);
   }
 }
 
@@ -3030,7 +3028,7 @@ void cmLocalGenerator::AddUnityBuild(cmGeneratorTarget* target)
 }
 
 void cmLocalGenerator::AppendIPOLinkerFlags(std::string& flags,
-                                            cmGeneratorTarget* target,
+                                            const cmGeneratorTarget* target,
                                             const std::string& config,
                                             const std::string& lang)
 {

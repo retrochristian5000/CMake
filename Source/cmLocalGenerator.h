@@ -171,7 +171,8 @@ public:
   void AddPchDependencies(cmGeneratorTarget* target);
   void AddUnityBuild(cmGeneratorTarget* target);
   virtual void AddXCConfigSources(cmGeneratorTarget* /* target */) {}
-  void AppendIPOLinkerFlags(std::string& flags, cmGeneratorTarget* target,
+  void AppendIPOLinkerFlags(std::string& flags,
+                            const cmGeneratorTarget* target,
                             const std::string& config,
                             const std::string& lang);
   void AppendPositionIndependentLinkerFlags(std::string& flags,
