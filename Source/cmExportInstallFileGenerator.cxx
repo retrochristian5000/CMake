@@ -256,7 +256,7 @@ void cmExportInstallFileGenerator::LoadConfigFiles(std::ostream& os)
      << "get_filename_component(_DIR \"${CMAKE_CURRENT_LIST_FILE}\" PATH)\n"
      << "file(GLOB __cmake_config_files \"${_DIR}/"
      << this->GetConfigImportFileGlob() << "\")\n"
-     << "foreach(__cmake_config_file ${__cmake_config_files})\n"
+     << "foreach(__cmake_config_file IN LISTS __cmake_config_files)\n"
      << "  include(\"${__cmake_config_file}\")\n"
      << "endforeach()\n"
      << "\n";
