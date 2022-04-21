@@ -1919,6 +1919,15 @@ void cmLocalGenerator::AddLanguageFlags(std::string& flags,
 
   std::string compilerSimulateId = this->Makefile->GetSafeDefinition(
     cmStrCat("CMAKE_", lang, "_SIMULATE_ID"));
+
+  // Add Warning as errors flags
+  const cmValue wError = target->GetProperty("COMPILE_WARNING_AS_ERROR");
+  const cmValue wErrorFlag = this->Makefile->GetDefinition(
+    cmStrCat("CMAKE_", lang, "_COMPILE_OPTIONS_WARNING_AS_ERROR"));
+  if (wError.IsOn() && wErrorFlag.IsSet()) {
+    this->AppendFlags(flags, wErrorFlag);
+  }
+
   if (lang == "Swift") {
     if (cmValue v = target->GetProperty("Swift_LANGUAGE_VERSION")) {
       if (cmSystemTools::VersionCompare(
