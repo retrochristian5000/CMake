@@ -56,55 +56,17 @@ bool cmInstallExportGenerator::Compute(cmLocalGenerator* lg)
   return true;
 }
 
-void cmInstallExportGenerator::ComputeTempDir()
+std::string cmInstallExportGenerator::TempDirCalculate() const
 {
   // Choose a temporary directory in which to generate the import
   // files to be installed.
-  this->TempDir = cmStrCat(this->LocalGenerator->GetCurrentBinaryDirectory(),
-                           "/CMakeFiles/Export");
-  if (this->Destination.empty()) {
-    return;
-  }
-  this->TempDir += "/";
+  return cmStrCat(this->LocalGenerator->GetCurrentBinaryDirectory(),
+                  "/CMakeFiles/Export");
+}
 
-  // Enforce a maximum length.
-  bool useMD5 = false;
-#if defined(_WIN32) || defined(__CYGWIN__)
-  std::string::size_type const max_total_len = 250;
-#else
-  std::string::size_type const max_total_len = 1000;
-#endif
-  // Will generate files of the form "<temp-dir>/<base>-<config>.<ext>".
-  std::string::size_type const len = this->TempDir.size() + 1 +
-    this->FileName.size() + 1 + this->GetMaxConfigLength();
-  if (len < max_total_len) {
-    // Keep the total path length below the limit.
-    std::string::size_type const max_len = max_total_len - len;
-    if (this->Destination.size() > max_len) {
-      useMD5 = true;
-    }
-  } else {
-    useMD5 = true;
-  }
-  if (useMD5) {
-    // Replace the destination path with a hash to keep it short.
-#ifndef CMAKE_BOOTSTRAP
-    this->TempDir += cmSystemTools::ComputeStringMD5(this->Destination);
-#endif
-  } else {
-    std::string dest = this->Destination;
-    // Avoid unix full paths.
-    if (dest[0] == '/') {
-      dest[0] = '_';
-    }
-    // Avoid windows full paths by removing colons.
-    std::replace(dest.begin(), dest.end(), ':', '_');
-    // Avoid relative paths that go up the tree.
-    cmSystemTools::ReplaceString(dest, "../", "__/");
-    // Avoid spaces.
-    std::replace(dest.begin(), dest.end(), ' ', '_');
-    this->TempDir += dest;
-  }
+void cmInstallExportGenerator::ComputeTempDir()
+{
+  this->TempDir = this->TempDirCalculate();
 }
 
 size_t cmInstallExportGenerator::GetMaxConfigLength() const
@@ -123,6 +85,14 @@ size_t cmInstallExportGenerator::GetMaxConfigLength() const
     }
   }
   return len;
+}
+
+std::string cmInstallExportGenerator::GetTempDir() const
+{
+  if (this->TempDir.empty()) {
+    return this->TempDirCalculate();
+  }
+  return this->TempDir;
 }
 
 void cmInstallExportGenerator::GenerateScript(std::ostream& os)
