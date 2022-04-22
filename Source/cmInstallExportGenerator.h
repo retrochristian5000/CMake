@@ -55,6 +55,7 @@ public:
   {
     return this->CxxModulesDirectory;
   }
+  std::string GetTempDir() const;
 
 protected:
   void GenerateScript(std::ostream& os) override;
@@ -62,6 +63,7 @@ protected:
   void GenerateScriptActions(std::ostream& os, Indent indent) override;
   void GenerateImportFile(cmExportSet const* exportSet);
   void GenerateImportFile(const char* config, cmExportSet const* exportSet);
+  std::string TempDirCalculate() const;
   void ComputeTempDir();
   size_t GetMaxConfigLength() const;
 
