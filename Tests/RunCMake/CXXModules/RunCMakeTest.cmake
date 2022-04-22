@@ -15,3 +15,5 @@ foreach (fileset_type IN LISTS fileset_types)
 endforeach ()
 
 run_cmake(InstallBMI)
+run_cmake(ExportBuildCxxModules)
+run_cmake(ExportInstallCxxModules)
