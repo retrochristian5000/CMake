@@ -1043,14 +1043,12 @@ A primary use-case for ``INTERFACE`` libraries is header-only libraries.
 
 .. code-block:: cmake
 
-  add_library(Eigen INTERFACE
-    src/eigen.h
-    src/vector.h
-    src/matrix.h
-    )
-  target_include_directories(Eigen INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-    $<INSTALL_INTERFACE:include/Eigen>
+  add_library(Eigen INTERFACE)
+
+  target_sources(Eigen INTERFACE
+    FILE_SET HEADERS
+      BASE_DIRS src
+      FILES src/eigen.h src/vector.h src/matrix.h
   )
 
   add_executable(exe1 exe1.cpp)
@@ -1081,26 +1079,21 @@ This way, the build specification of ``exe1`` is expressed entirely as linked
 targets, and the complexity of compiler-specific flags is encapsulated in an
 ``INTERFACE`` library target.
 
-``INTERFACE`` libraries may be installed and exported.  Any content they refer
-to must be installed separately:
+``INTERFACE`` libraries may be installed and exported. Here we can install the
+default header set alongside the target:
 
 .. code-block:: cmake
 
-  set(Eigen_headers
-    src/eigen.h
-    src/vector.h
-    src/matrix.h
-    )
-  add_library(Eigen INTERFACE ${Eigen_headers})
-  target_include_directories(Eigen INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-    $<INSTALL_INTERFACE:include/Eigen>
+  add_library(Eigen INTERFACE)
+
+  target_sources(Eigen INTERFACE
+    FILE_SET HEADERS
+      BASE_DIRS src
+      FILES src/eigen.h src/vector.h src/matrix.h
   )
 
-  install(TARGETS Eigen EXPORT eigenExport)
+  install(TARGETS Eigen EXPORT eigenExport
+    FILE_SET HEADERS DESTINATION include/Eigen)
   install(EXPORT eigenExport NAMESPACE Upstream::
     DESTINATION lib/cmake/Eigen
-  )
-  install(FILES ${Eigen_headers}
-    DESTINATION include/Eigen
   )
