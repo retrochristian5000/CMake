@@ -2878,6 +2878,7 @@ bool cmGlobalNinjaGenerator::WriteDyndepFile(
   }
 
   Json::Value target_module_info = Json::objectValue;
+  // TODO: Trim non-`PUBLIC` module information from these objects.
   target_module_info["modules"] = target_modules;
   target_module_info["usages"] = target_usages;
   target_module_info["references"] = target_references;
