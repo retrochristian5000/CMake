@@ -67,6 +67,15 @@ public:
     return this->ConfigCxxModuleTargetFiles;
   }
 
+  /** Get the per-config C++ module file generated for each configuration.
+      This maps from the configuration name to the file temporary location
+      for installation for each target in the export set.  */
+  std::map<std::string, std::vector<std::string>> const&
+  GetConfigCxxModuleTargetInstallFiles()
+  {
+    return this->ConfigCxxModuleTargetInstallFiles;
+  }
+
   /** Compute the globbing expression used to load per-config import
       files from the main file.  */
   std::string GetConfigImportFileGlob();
@@ -129,4 +138,7 @@ protected:
   std::map<std::string, std::string> ConfigCxxModuleFiles;
   // The C++ module property target files generated for each configuration.
   std::map<std::string, std::vector<std::string>> ConfigCxxModuleTargetFiles;
+  // The C++ module install files generated for each configuration.
+  std::map<std::string, std::vector<std::string>>
+    ConfigCxxModuleTargetInstallFiles;
 };
