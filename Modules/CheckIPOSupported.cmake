@@ -76,6 +76,7 @@ endmacro()
 
 # Run IPO/LTO test
 macro(_ipo_run_language_check language)
+
   set(testdir "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/_CMakeLTOTest-${language}")
 
   file(REMOVE_RECURSE "${testdir}")
@@ -94,10 +95,16 @@ macro(_ipo_run_language_check language)
   set(_C_ext "c")
   set(_CXX_ext "cpp")
   set(_Fortran_ext "f")
+  string(COMPARE EQUAL "${language}" "CUDA" is_cuda)
 
   set(ext ${_${language}_ext})
   if(NOT "${ext}" STREQUAL "")
     set(copy_sources foo.${ext} main.${ext})
+  elseif(is_cuda)
+    if(_CMAKE_CUDA_IPO_SUPPORTED_BY_CMAKE)
+      set("${X_RESULT}" YES PARENT_SCOPE)
+    endif()
+    return()
   else()
     message(FATAL_ERROR "Language not supported")
   endif()
@@ -211,6 +218,11 @@ function(check_ipo_supported)
       list(APPEND languages "C")
     endif()
 
+    list(FIND enabled_languages "CUDA" result)
+    if(NOT result EQUAL -1)
+      list(APPEND languages "CUDA")
+    endif()
+
     list(FIND enabled_languages "Fortran" result)
     if(NOT result EQUAL -1)
       list(APPEND languages "Fortran")
@@ -219,7 +231,7 @@ function(check_ipo_supported)
     string(COMPARE EQUAL "${languages}" "" no_languages)
     if(no_languages)
       _ipo_not_supported(
-          "no C/CXX/Fortran languages found in ENABLED_LANGUAGES global property"
+          "no C/CXX/CUDA/Fortran languages found in ENABLED_LANGUAGES global property"
       )
       return()
     endif()
@@ -227,7 +239,7 @@ function(check_ipo_supported)
     set(languages "${X_LANGUAGES}")
 
     set(unsupported_languages "${languages}")
-    list(REMOVE_ITEM unsupported_languages "C" "CXX" "Fortran")
+    list(REMOVE_ITEM unsupported_languages "C" "CXX" "CUDA" "Fortran")
     string(COMPARE NOTEQUAL "${unsupported_languages}" "" has_unsupported)
     if(has_unsupported)
       _ipo_not_supported(
