@@ -2493,9 +2493,21 @@ struct CxxModuleFileSet
   std::string Destination;
 };
 
+struct CxxModuleExport
+{
+  std::string Name;
+  std::string Destination;
+  std::string Prefix;
+  std::string CxxModuleInfoDir;
+  std::string Namespace;
+  bool Install;
+};
+
 struct cmGlobalNinjaGenerator::CxxModuleExportInfo
 {
   std::map<std::string, CxxModuleFileSet> ObjectToFileSet;
+  std::vector<CxxModuleExport> Exports;
+  std::string Config;
 };
 
 bool cmGlobalNinjaGenerator::WriteDyndepFile(
