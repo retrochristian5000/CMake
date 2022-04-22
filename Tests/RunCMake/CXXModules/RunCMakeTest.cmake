@@ -13,3 +13,5 @@ foreach (fileset_type IN LISTS fileset_types)
     run_cmake("FileSet${fileset_type}${scope}")
   endforeach ()
 endforeach ()
+
+run_cmake(InstallBMI)
