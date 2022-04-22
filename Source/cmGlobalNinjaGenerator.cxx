@@ -2493,6 +2493,16 @@ struct CxxModuleFileSet
   std::string Destination;
 };
 
+struct CxxModuleBmiInstall
+{
+  std::string Component;
+  std::string Destination;
+  bool ExcludeFromAll;
+  bool Optional;
+  std::string Permissions;
+  std::string MessageLevel;
+};
+
 struct CxxModuleExport
 {
   std::string Name;
@@ -2501,6 +2511,7 @@ struct CxxModuleExport
   std::string CxxModuleInfoDir;
   std::string Namespace;
   bool Install;
+  std::optional<CxxModuleBmiInstall> BmiInstallation;
 };
 
 struct cmGlobalNinjaGenerator::CxxModuleExportInfo
@@ -3006,7 +3017,7 @@ bool cmGlobalNinjaGenerator::WriteDyndepFile(
       continue;
     }
 
-    // Write out properties for any exports.
+    // Write out properties and install rules for any exports.
     for (auto const& exp : exports) {
       for (auto const& p : object.Provides) {
         std::string iface_source;
@@ -3023,7 +3034,12 @@ bool cmGlobalNinjaGenerator::WriteDyndepFile(
         std::string bmi_path;
         auto m = mod_files.find(p.LogicalName);
         if (m != mod_files.end()) {
-          if (!exp.second->Install) {
+          if (exp.second->Install && exp.second->BmiInstallation) {
+            // TODO: Absolute destinations
+            bmi_path = cmStrCat("${_IMPORT_PREFIX}/",
+                                exp.second->BmiInstallation->Destination, '/',
+                                cmSystemTools::GetFilenameName(m->second));
+          } else if (!exp.second->Install) {
             bmi_path = m->second;
           }
         }
@@ -3035,6 +3051,41 @@ bool cmGlobalNinjaGenerator::WriteDyndepFile(
           *exp.first.Properties << ',' << bmi_path;
         }
         *exp.first.Properties << "\"\n";
+
+        // No installation necessary for build exports.
+        if (!exp.second->Install || !exp.second->BmiInstallation) {
+          continue;
+        }
+        auto const& bmi_install = *exp.second->BmiInstallation;
+
+        // No BMI, nothing to install.
+        if (bmi_path.empty()) {
+          continue;
+        }
+
+        *exp.first.Install << "if (CMAKE_INSTALL_COMPONENT STREQUAL \""
+                           << bmi_install.Component << '\"';
+        if (!bmi_install.ExcludeFromAll) {
+          *exp.first.Install << " OR NOT CMAKE_INSTALL_COMPONENT";
+        }
+        *exp.first.Install << ")\n";
+        *exp.first.Install << "  file(INSTALL\n"
+                              "    DESTINATION \"${CMAKE_INSTALL_PREFIX}/"
+                           << bmi_install.Destination
+                           << "\"\n"
+                              "    TYPE FILE\n";
+        if (bmi_install.Optional) {
+          *exp.first.Install << "    OPTIONAL\n";
+        }
+        if (!bmi_install.MessageLevel.empty()) {
+          *exp.first.Install << "    " << bmi_install.MessageLevel << "\n";
+        }
+        if (!bmi_install.Permissions.empty()) {
+          *exp.first.Install << "    PERMISSIONS" << bmi_install.Permissions
+                             << "\n";
+        }
+        *exp.first.Install << "    FILES \"" << m->second << "\")\n";
+        *exp.first.Install << "endif ()\n";
       }
     }
   }
@@ -3133,6 +3184,22 @@ int cmcmd_cmake_ninja_dyndep(std::vector<std::string>::const_iterator argBeg,
       exp.Prefix = tdi_export["export-prefix"].asString();
       exp.CxxModuleInfoDir = tdi_export["cxx-module-info-dir"].asString();
       exp.Namespace = tdi_export["namespace"].asString();
+
+      auto const& bmi_installation = tdi_export["bmi-installation"];
+      if (bmi_installation.isObject()) {
+        CxxModuleBmiInstall bmi_install;
+
+        bmi_install.Component = bmi_installation["component"].asString();
+        bmi_install.Destination = bmi_installation["destination"].asString();
+        bmi_install.ExcludeFromAll =
+          bmi_installation["exclude-from-all"].asBool();
+        bmi_install.Optional = bmi_installation["optional"].asBool();
+        bmi_install.Permissions = bmi_installation["permissions"].asString();
+        bmi_install.MessageLevel =
+          bmi_installation["message-level"].asString();
+
+        exp.BmiInstallation = bmi_install;
+      }
 
       export_info.Exports.push_back(exp);
     }
