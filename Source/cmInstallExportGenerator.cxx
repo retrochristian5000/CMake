@@ -219,6 +219,18 @@ void cmInstallExportGenerator::GenerateScriptConfigs(std::ostream& os,
     os << indent << "endif()\n";
     files.clear();
   }
+
+  // FIXME: This is in the wrong place; it should be part of the
+  // CxxModuleBmiGenerator instead, but it doesn't know enough.
+  auto indentN = indent.Next();
+  for (auto const& i : this->EFGen->GetConfigCxxModuleTargetInstallFiles()) {
+    std::string config_test = this->CreateConfigTest(i.first);
+    os << indent << "if(" << config_test << ")\n";
+    for (auto const& p : i.second) {
+      os << indentN << "include(\"" << p << "\")\n";
+    }
+    os << indent << "endif()\n";
+  }
 }
 
 void cmInstallExportGenerator::GenerateScriptActions(std::ostream& os,

@@ -719,10 +719,14 @@ bool cmExportInstallFileGenerator::GenerateImportCxxModuleConfigTargetInclusion(
   this->ConfigCxxModuleFiles[config] = fileName;
 
   auto& prop_files = this->ConfigCxxModuleTargetFiles[config];
+  auto& install_files = this->ConfigCxxModuleTargetInstallFiles[config];
   for (auto const* tgt : this->ExportedTargets) {
     auto prop_filename = cmStrCat("target-", tgt->GetExportName(), '-', filename_config, ".cmake");
     prop_files.emplace_back(cmStrCat(dest, prop_filename));
     os << "include(\"${CMAKE_CURRENT_LIST_DIR}/" << prop_filename << "\")\n";
+
+    auto install_filename = cmStrCat("install-", tgt->GetExportName(), '-', filename_config, ".cmake");
+    install_files.emplace_back(cmStrCat(dest, install_filename));
   }
 
   return true;
