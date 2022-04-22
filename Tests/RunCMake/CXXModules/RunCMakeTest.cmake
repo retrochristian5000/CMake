@@ -41,3 +41,7 @@ foreach (fileset_type IN LISTS fileset_types)
   # list.
   run_cmake("NotCXXSource${fileset_type}")
 endforeach ()
+
+run_cmake(InstallBMI)
+run_cmake(InstallBMIGenericArgs)
+run_cmake(InstallBMIIgnore)
