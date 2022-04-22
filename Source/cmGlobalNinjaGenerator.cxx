@@ -2885,6 +2885,40 @@ bool cmGlobalNinjaGenerator::WriteDyndepFile(
 
   bool result = true;
 
+  struct ExportProperties
+  {
+    std::unique_ptr<cmGeneratedFileStream> Properties;
+    std::unique_ptr<cmGeneratedFileStream> Install;
+  };
+
+  // Prepare the export information blocks.
+  std::string const config_upper =
+    cmSystemTools::UpperCase(export_info.Config);
+  std::vector<std::pair<ExportProperties, CxxModuleExport const*>> exports;
+  for (auto const& exp : export_info.Exports) {
+    ExportProperties ep;
+
+    std::string const export_dir =
+      cmStrCat(exp.Prefix, '/', exp.CxxModuleInfoDir, '/');
+    std::string const property_file_path = cmStrCat(
+      export_dir, "target-", exp.Name, '-', export_info.Config, ".cmake");
+    ep.Properties = cm::make_unique<cmGeneratedFileStream>(property_file_path);
+
+    // Set up the preamble.
+    *ep.Properties << "set_property(TARGET \"" << exp.Namespace << exp.Name
+                   << "\"\n"
+                   << "  PROPERTY IMPORTED_CXX_MODULES_" << config_upper
+                   << '\n';
+
+    if (exp.Install) {
+      std::string const install_script_path = cmStrCat(
+        export_dir, "install-", exp.Name, '-', export_info.Config, ".cmake");
+      ep.Install = cm::make_unique<cmGeneratedFileStream>(install_script_path);
+    }
+
+    exports.emplace_back(std::move(ep), &exp);
+  }
+
   for (cmScanDepInfo const& object : objects) {
     // Convert to forward slashes.
     auto output_path = object.PrimaryOutput;
@@ -2971,6 +3005,43 @@ bool cmGlobalNinjaGenerator::WriteDyndepFile(
       // Nothing needs to be conveyed about non-`PUBLIC` modules.
       continue;
     }
+
+    // Write out properties for any exports.
+    for (auto const& exp : exports) {
+      for (auto const& p : object.Provides) {
+        std::string iface_source;
+        if (exp.second->Install) {
+          // TODO: Absolute destinations
+          iface_source =
+            cmStrCat("${_IMPORT_PREFIX}/", file_set.Destination, '/',
+                     file_set.RelativeDirectory,
+                     cmSystemTools::GetFilenameName(file_set.SourcePath));
+        } else {
+          iface_source = file_set.SourcePath;
+        }
+
+        std::string bmi_path;
+        auto m = mod_files.find(p.LogicalName);
+        if (m != mod_files.end()) {
+          if (!exp.second->Install) {
+            bmi_path = m->second;
+          }
+        }
+
+        // TODO: CMake escaping.
+        *exp.first.Properties << "    \"" << p.LogicalName << '='
+                              << iface_source;
+        if (!bmi_path.empty()) {
+          *exp.first.Properties << ',' << bmi_path;
+        }
+        *exp.first.Properties << "\"\n";
+      }
+    }
+  }
+
+  // Add trailing parenthesis for the `set_property` call.
+  for (auto const& exp : exports) {
+    *exp.first.Properties << ")\n";
   }
 
   return result;
@@ -3048,6 +3119,24 @@ int cmcmd_cmake_ninja_dyndep(std::vector<std::string>::const_iterator argBeg,
   }
 
   cmGlobalNinjaGenerator::CxxModuleExportInfo export_info;
+  export_info.Config = tdi["config"].asString();
+  if (export_info.Config.empty()) {
+    export_info.Config = "noconfig";
+  }
+  Json::Value const& tdi_exports = tdi["exports"];
+  if (tdi_exports.isArray()) {
+    for (auto const& tdi_export : tdi_exports) {
+      CxxModuleExport exp;
+      exp.Install = tdi_export["install"].asBool();
+      exp.Name = tdi_export["export-name"].asString();
+      exp.Destination = tdi_export["destination"].asString();
+      exp.Prefix = tdi_export["export-prefix"].asString();
+      exp.CxxModuleInfoDir = tdi_export["cxx-module-info-dir"].asString();
+      exp.Namespace = tdi_export["namespace"].asString();
+
+      export_info.Exports.push_back(exp);
+    }
+  }
   Json::Value const& tdi_cxx_modules = tdi["cxx-modules"];
   if (tdi_cxx_modules.isObject()) {
     for (auto i = tdi_cxx_modules.begin(); i != tdi_cxx_modules.end(); ++i) {
