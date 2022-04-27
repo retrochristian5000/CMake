@@ -7,6 +7,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <unordered_set>
 
 #include "cmValue.h"
 
@@ -73,6 +74,9 @@ protected:
   std::string ComputeTargetCompilePDB(const std::string& config) const;
 
   std::string GetLinkerLauncher(const std::string& config);
+
+  bool HaveRequiredLanguages(std::vector<cmSourceFile const*> sources,
+                             std::unordered_set<std::string>& languagesNeeded) const;
 
 private:
   using ByLanguageMap = std::map<std::string, std::string>;

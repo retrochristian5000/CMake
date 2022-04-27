@@ -123,17 +123,14 @@ void cmNinjaNormalTargetGenerator::WriteLanguagesRules(
 #endif
 
   // Write rules for languages compiled in this target.
-  std::set<std::string> languages;
+
+  std::unordered_set<std::string> languages;
   std::vector<cmSourceFile const*> sourceFiles;
   this->GetGeneratorTarget()->GetObjectSources(sourceFiles, config);
-  for (cmSourceFile const* sf : sourceFiles) {
-    std::string const lang = sf->GetLanguage();
-    if (!lang.empty()) {
-      languages.insert(lang);
+  if(this->HaveRequiredLanguages(sourceFiles, languages)) {
+    for (std::string const& language : languages) {
+      this->WriteLanguageRules(language, config);
     }
-  }
-  for (std::string const& language : languages) {
-    this->WriteLanguageRules(language, config);
   }
 }
 
