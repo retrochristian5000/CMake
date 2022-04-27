@@ -139,6 +139,7 @@ endif()
 set(doc_html_opts "")
 if(CMake_SPHINX_CMAKE_ORG)
   list(APPEND doc_html_opts
+    -t tutorial_archive
     -A googleanalytics=1
     -A opensearch=1
     -A versionswitch=1
@@ -147,6 +148,10 @@ if(CMake_SPHINX_CMAKE_ORG)
   if(CMake_SPHINX_CMAKE_ORG_OUTDATED)
     list(APPEND doc_html_opts -A outdated=1)
   endif()
+
+  list(APPEND html_pre_commands
+    COMMAND ${CMAKE_COMMAND} -Dversion=${CMake_VERSION} -P ${CMAKE_CURRENT_SOURCE_DIR}/tutorial_archive.cmake
+    )
 
   list(APPEND qthelp_post_commands
     COMMAND ${CMAKE_COMMAND} -E copy
