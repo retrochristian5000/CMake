@@ -305,6 +305,25 @@ void cmMakefileTargetGenerator::WriteTargetBuildRules()
   std::vector<cmSourceFile const*> objectSources;
   this->GeneratorTarget->GetObjectSources(objectSources,
                                           this->GetConfigName());
+
+  // validate that all languages requested are enabled.
+  std::unordered_set<std::string> requiredLangs;
+  for (cmSourceFile const* sf : objectSources) {
+    requiredLangs.insert(sf->GetLanguage());
+  }
+  for (auto const& lang : requiredLangs) {
+    if (!this->LocalGenerator->GetState()->GetLanguageEnabled(lang)) {
+      this->Makefile->IssueMessage(
+        MessageType::FATAL_ERROR,
+        cmStrCat("The language ", lang,
+                 " was requested for compilation but was not enabled."
+                 "To enable a language you need a call to project(LANGUAGES ",
+                 lang, ") or enable_language(", lang,
+                 ") in the root CMakeLists.txt"));
+      return;
+    }
+  }
+
   for (cmSourceFile const* sf : objectSources) {
     // Generate this object file's rule file.
     this->WriteObjectRuleFiles(*sf);
@@ -532,8 +551,7 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
   cmSourceFile const& source)
 {
   // Identify the language of the source file.
-  const std::string& lang =
-    this->LocalGenerator->GetSourceFileLanguage(source);
+  const std::string& lang = source.GetLanguage();
   if (lang.empty()) {
     // don't know anything about this file so skip it
     return;
