@@ -599,7 +599,8 @@ String Transformations
 
   .. versionadded:: 3.15
 
-  Removes duplicated items in the given ``list``.
+  Removes duplicated items in the given ``list``. The first occurrence of an
+  item will be the one retained.
 
 .. genex:: $<FILTER:list,INCLUDE|EXCLUDE,regex>
 
