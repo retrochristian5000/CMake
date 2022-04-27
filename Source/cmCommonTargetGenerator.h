@@ -74,6 +74,8 @@ protected:
 
   std::string GetLinkerLauncher(const std::string& config);
 
+  bool HaveRequiredLanguages(std::vector<cmSourceFile const*> sources) const;
+
 private:
   using ByLanguageMap = std::map<std::string, std::string>;
   struct ByConfig
