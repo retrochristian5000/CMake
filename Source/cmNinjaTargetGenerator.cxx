@@ -1076,8 +1076,11 @@ void cmNinjaTargetGenerator::WriteObjectBuildStatements(
     std::vector<cmSourceFile const*> objectSources;
     this->GeneratorTarget->GetObjectSources(objectSources, config);
 
-    for (cmSourceFile const* sf : objectSources) {
-      this->WriteObjectBuildStatement(sf, config, fileConfig, firstForConfig);
+    // validate that all languages requested are enabled.
+    if(this->HaveRequiredLanguages(objectSources)) {
+      for (cmSourceFile const* sf : objectSources) {
+        this->WriteObjectBuildStatement(sf, config, fileConfig, firstForConfig);
+      }
     }
   }
 
