@@ -1076,6 +1076,21 @@ void cmNinjaTargetGenerator::WriteObjectBuildStatements(
     std::vector<cmSourceFile const*> objectSources;
     this->GeneratorTarget->GetObjectSources(objectSources, config);
 
+    //validate that all languages requested are enabled.
+    std::unordered_set<std::string> requiredLangs;
+    for (cmSourceFile const* sf : objectSources) {
+      requiredLangs.insert(sf->GetLanguage());
+    }
+    for(auto const& lang : requiredLangs ) {
+      if(!this->LocalGenerator->GetState()->GetLanguageEnabled(lang)) {
+        this->Makefile->IssueMessage(MessageType::FATAL_ERROR,
+                                cmStrCat("The language ", lang, " was requested for compilation but was not enabled."
+                                  "To enable a language you need a call to project(LANGUAGES ", lang, ") or enable_language(", lang, ") in the root CMakeLists.txt"));
+      return;
+      }
+    }
+
+
     for (cmSourceFile const* sf : objectSources) {
       this->WriteObjectBuildStatement(sf, config, fileConfig, firstForConfig);
     }
