@@ -1077,7 +1077,8 @@ void cmNinjaTargetGenerator::WriteObjectBuildStatements(
     this->GeneratorTarget->GetObjectSources(objectSources, config);
 
     for (cmSourceFile const* sf : objectSources) {
-      this->WriteObjectBuildStatement(sf, config, fileConfig, firstForConfig);
+      this->WriteObjectBuildStatement(sf, config, fileConfig,
+                                      firstForConfig);
     }
   }
 

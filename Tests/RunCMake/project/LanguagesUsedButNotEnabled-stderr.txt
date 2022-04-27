@@ -1,0 +1,4 @@
+CMake Error in CMakeLists.txt:
+  The language CXX was requested for compilation but was not enabled.  To
+  enable a language you need a call to project\(LANGUAGES CXX\) or
+  enable_language\(CXX\) in the root CMakeLists.txt
