@@ -104,3 +104,17 @@ if(NOT CMAKE_GENERATOR MATCHES "Visual Studio")
   unset(_CUDA_ARCHS_RESULT)
   unset(_CUDA_ARCHS_OUTPUT)
 endif()
+
+# Don't generate jit code when using native
+list(TRANSFORM _CUDA_ARCHITECTURES_NATIVE APPEND "-real")
+
+# only generate jit code for the newest arch for all/all-major
+list(POP_BACK CMAKE_CUDA_ARCHITECTURES_ALL _latest_arch)
+list(TRANSFORM CMAKE_CUDA_ARCHITECTURES_ALL APPEND "-real")
+list(APPEND CMAKE_CUDA_ARCHITECTURES_ALL ${_latest_arch})
+
+list(POP_BACK CMAKE_CUDA_ARCHITECTURES_ALL_MAJOR _latest_arch)
+list(TRANSFORM CMAKE_CUDA_ARCHITECTURES_ALL_MAJOR APPEND "-real")
+list(APPEND CMAKE_CUDA_ARCHITECTURES_ALL_MAJOR ${_latest_arch})
+
+unset(_latest_arch)
