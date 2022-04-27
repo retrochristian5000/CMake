@@ -16,6 +16,7 @@
 #include "cmOutputConverter.h"
 #include "cmRange.h"
 #include "cmSourceFile.h"
+#include "cmState.h"
 #include "cmStateTypes.h"
 #include "cmStringAlgorithms.h"
 #include "cmTarget.h"
@@ -320,4 +321,27 @@ std::string cmCommonTargetGenerator::GetLinkerLauncher(
     }
   }
   return std::string();
+}
+
+bool cmCommonTargetGenerator::HaveRequiredLanguages(
+  std::vector<cmSourceFile const*> sources,
+  std::unordered_set<std::string>& languagesNeeded) const
+{
+  for (cmSourceFile const* sf : sources) {
+    languagesNeeded.insert(sf->GetLanguage());
+  }
+
+  for (auto const& lang : languagesNeeded) {
+    if (!this->Makefile->GetState()->GetLanguageEnabled(lang)) {
+      this->Makefile->IssueMessage(
+        MessageType::FATAL_ERROR,
+        cmStrCat("The language ", lang,
+                 " was requested for compilation but was not enabled."
+                 " To enable a language you need a call to project(LANGUAGES ",
+                 lang, ") or enable_language(", lang,
+                 ") in the root CMakeLists.txt"));
+      return false;
+    }
+  }
+  return true;
 }
