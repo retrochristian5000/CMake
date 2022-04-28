@@ -38,6 +38,7 @@ else()
     set(CMAKE_${lang}_COMPILE_OPTIONS_PIE "-fPIE")
     set(CMAKE_${lang}_LINK_OPTIONS_PIE ${CMAKE_${lang}_COMPILE_OPTIONS_PIE} "-pie")
     set(CMAKE_${lang}_LINK_OPTIONS_NO_PIE "-no-pie")
+    set(CMAKE_${lang}_COMPILE_OPTIONS_WARNING_AS_ERROR "-Werror-all")
 
     set(CMAKE_SHARED_LIBRARY_${lang}_FLAGS "-fPIC")
     set(CMAKE_SHARED_LIBRARY_CREATE_${lang}_FLAGS "-shared")

@@ -19,6 +19,7 @@ macro(__compiler_gnu lang)
   # Feature flags.
   set(CMAKE_${lang}_VERBOSE_FLAG "-v")
   set(CMAKE_${lang}_COMPILE_OPTIONS_PIC "-fPIC")
+  set(CMAKE_${lang}_COMPILE_OPTIONS_WARNING_AS_ERROR "-Werror")
   set (_CMAKE_${lang}_PIE_MAY_BE_SUPPORTED_BY_LINKER NO)
   if(NOT CMAKE_${lang}_COMPILER_VERSION VERSION_LESS 3.4)
     set(CMAKE_${lang}_COMPILE_OPTIONS_PIE "-fPIE")

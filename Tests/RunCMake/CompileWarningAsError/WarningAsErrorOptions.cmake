@@ -1,0 +1,15 @@
+# add compile options to warning_options to ensure unused-parameter throws a warning
+# if warning_options is NOT DEFINED, assume compiler doesn't support warning as error
+macro(get_warning_options warning_options)
+  if (CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang|XLClang|IBMClang)$")
+    set(${warning_options} "-Wall;-Wextra")
+  elseif (CMAKE_CXX_COMPILER_ID MATCHES "^(Intel|IntelLLVM)$")
+    set(${warning_options} "-Wall;-w2;-w3")
+  elseif (CMAKE_CXX_COMPILER_ID MATCHES "^(MSVC|NVCC)$")
+    set(${warning_options} "-Wall")
+  elseif (CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
+    set(${warning_options} "+w;+w2")
+  elseif (CMAKE_CXX_COMPILER_ID MATCHES "Fujitsu")
+    set(${warning_options} "SHELL:-w 8")
+  endif()
+endmacro()
