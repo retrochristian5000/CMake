@@ -23,7 +23,6 @@ Generators
    /cpack_gen/ifw
    /cpack_gen/nsis
    /cpack_gen/nuget
-   /cpack_gen/packagemaker
    /cpack_gen/productbuild
    /cpack_gen/rpm
    /cpack_gen/wix
