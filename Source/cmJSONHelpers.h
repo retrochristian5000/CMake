@@ -17,11 +17,12 @@
 template <typename T, typename E>
 using cmJSONHelper = std::function<E(T& out, const Json::Value* value)>;
 
-template <typename T, typename E>
+template <typename T, typename E, typename... CallState>
 class cmJSONObjectHelper
 {
 public:
-  cmJSONObjectHelper(E&& success, E&& fail, bool allowExtra = true);
+  cmJSONObjectHelper(E&& success, E&& fail, bool allowExtra = true,
+                     CallState&&... state);
 
   template <typename U, typename M, typename F>
   cmJSONObjectHelper& Bind(const cm::string_view& name, M U::*member, F func,
@@ -49,24 +50,28 @@ private:
   E Success;
   E Fail;
   bool AllowExtra;
+  std::tuple<CallState...> State;
 
   cmJSONObjectHelper& BindPrivate(const cm::string_view& name,
                                   MemberFunction&& func, bool required);
 };
 
-template <typename T, typename E>
-cmJSONObjectHelper<T, E>::cmJSONObjectHelper(E&& success, E&& fail,
-                                             bool allowExtra)
+template <typename T, typename E, typename... CallState>
+cmJSONObjectHelper<T, E, CallState...>::cmJSONObjectHelper(
+  E&& success, E&& fail, bool allowExtra, CallState&&... state)
   : Success(std::move(success))
   , Fail(std::move(fail))
   , AllowExtra(allowExtra)
+  , State(state...)
 {
 }
 
-template <typename T, typename E>
+template <typename T, typename E, typename... CallState>
 template <typename U, typename M, typename F>
-cmJSONObjectHelper<T, E>& cmJSONObjectHelper<T, E>::Bind(
-  const cm::string_view& name, M U::*member, F func, bool required)
+cmJSONObjectHelper<T, E, CallState...>&
+cmJSONObjectHelper<T, E, CallState...>::Bind(const cm::string_view& name,
+                                             M U::*member, F func,
+                                             bool required)
 {
   return this->BindPrivate(
     name,
@@ -76,10 +81,12 @@ cmJSONObjectHelper<T, E>& cmJSONObjectHelper<T, E>::Bind(
     required);
 }
 
-template <typename T, typename E>
+template <typename T, typename E, typename... CallState>
 template <typename M, typename F>
-cmJSONObjectHelper<T, E>& cmJSONObjectHelper<T, E>::Bind(
-  const cm::string_view& name, std::nullptr_t, F func, bool required)
+cmJSONObjectHelper<T, E, CallState...>&
+cmJSONObjectHelper<T, E, CallState...>::Bind(const cm::string_view& name,
+                                             std::nullptr_t, F func,
+                                             bool required)
 {
   return this->BindPrivate(name,
                            [func](T& /*out*/, const Json::Value* value) -> E {
@@ -89,16 +96,18 @@ cmJSONObjectHelper<T, E>& cmJSONObjectHelper<T, E>::Bind(
                            required);
 }
 
-template <typename T, typename E>
+template <typename T, typename E, typename... CallState>
 template <typename F>
-cmJSONObjectHelper<T, E>& cmJSONObjectHelper<T, E>::Bind(
-  const cm::string_view& name, F func, bool required)
+cmJSONObjectHelper<T, E, CallState...>&
+cmJSONObjectHelper<T, E, CallState...>::Bind(const cm::string_view& name,
+                                             F func, bool required)
 {
   return this->BindPrivate(name, MemberFunction(func), required);
 }
 
-template <typename T, typename E>
-cmJSONObjectHelper<T, E>& cmJSONObjectHelper<T, E>::BindPrivate(
+template <typename T, typename E, typename... CallState>
+cmJSONObjectHelper<T, E, CallState...>&
+cmJSONObjectHelper<T, E, CallState...>::BindPrivate(
   const cm::string_view& name, MemberFunction&& func, bool required)
 {
   Member m;
@@ -112,8 +121,9 @@ cmJSONObjectHelper<T, E>& cmJSONObjectHelper<T, E>::BindPrivate(
   return *this;
 }
 
-template <typename T, typename E>
-E cmJSONObjectHelper<T, E>::operator()(T& out, const Json::Value* value) const
+template <typename T, typename E, typename... CallState>
+E cmJSONObjectHelper<T, E, CallState...>::operator()(
+  T& out, const Json::Value* value) const
 {
   if (!value && this->AnyRequired) {
     return this->Fail;
@@ -148,9 +158,10 @@ E cmJSONObjectHelper<T, E>::operator()(T& out, const Json::Value* value) const
   return this->AllowExtra || extraFields.empty() ? this->Success : this->Fail;
 }
 
-template <typename E>
+template <typename E, typename... CallState>
 cmJSONHelper<std::string, E> cmJSONStringHelper(E success, E fail,
-                                                const std::string& defval = "")
+                                                const std::string& defval = "",
+                                                CallState&&... state)
 {
   return
     [success, fail, defval](std::string& out, const Json::Value* value) -> E {
@@ -166,8 +177,9 @@ cmJSONHelper<std::string, E> cmJSONStringHelper(E success, E fail,
     };
 }
 
-template <typename E>
-cmJSONHelper<int, E> cmJSONIntHelper(E success, E fail, int defval = 0)
+template <typename E, typename... CallState>
+cmJSONHelper<int, E> cmJSONIntHelper(E success, E fail, int defval = 0,
+                                     CallState&&... state)
 {
   return [success, fail, defval](int& out, const Json::Value* value) -> E {
     if (!value) {
@@ -182,9 +194,10 @@ cmJSONHelper<int, E> cmJSONIntHelper(E success, E fail, int defval = 0)
   };
 }
 
-template <typename E>
+template <typename E, typename... CallState>
 cmJSONHelper<unsigned int, E> cmJSONUIntHelper(E success, E fail,
-                                               unsigned int defval = 0)
+                                               unsigned int defval = 0,
+                                               CallState&&... state)
 {
   return
     [success, fail, defval](unsigned int& out, const Json::Value* value) -> E {
@@ -200,8 +213,9 @@ cmJSONHelper<unsigned int, E> cmJSONUIntHelper(E success, E fail,
     };
 }
 
-template <typename E>
-cmJSONHelper<bool, E> cmJSONBoolHelper(E success, E fail, bool defval = false)
+template <typename E, typename... CallState>
+cmJSONHelper<bool, E> cmJSONBoolHelper(E success, E fail, bool defval = false,
+                                       CallState&&... state)
 {
   return [success, fail, defval](bool& out, const Json::Value* value) -> E {
     if (!value) {
@@ -216,9 +230,11 @@ cmJSONHelper<bool, E> cmJSONBoolHelper(E success, E fail, bool defval = false)
   };
 }
 
-template <typename T, typename E, typename F, typename Filter>
+template <typename T, typename E, typename F, typename Filter,
+          typename... CallState>
 cmJSONHelper<std::vector<T>, E> cmJSONVectorFilterHelper(E success, E fail,
-                                                         F func, Filter filter)
+                                                         F func, Filter filter,
+                                                         CallState&&... state)
 {
   return [success, fail, func, filter](std::vector<T>& out,
                                        const Json::Value* value) -> E {
@@ -245,17 +261,18 @@ cmJSONHelper<std::vector<T>, E> cmJSONVectorFilterHelper(E success, E fail,
   };
 }
 
-template <typename T, typename E, typename F>
-cmJSONHelper<std::vector<T>, E> cmJSONVectorHelper(E success, E fail, F func)
+template <typename T, typename E, typename F, typename... CallState>
+cmJSONHelper<std::vector<T>, E> cmJSONVectorHelper(E success, E fail, F func,
+                                                   CallState&&... state)
 {
   return cmJSONVectorFilterHelper<T, E, F>(success, fail, func,
                                            [](const T&) { return true; });
 }
 
-template <typename T, typename E, typename F, typename Filter>
-cmJSONHelper<std::map<std::string, T>, E> cmJSONMapFilterHelper(E success,
-                                                                E fail, F func,
-                                                                Filter filter)
+template <typename T, typename E, typename F, typename Filter,
+          typename... CallState>
+cmJSONHelper<std::map<std::string, T>, E> cmJSONMapFilterHelper(
+  E success, E fail, F func, Filter filter, CallState&&... state)
 {
   return [success, fail, func, filter](std::map<std::string, T>& out,
                                        const Json::Value* value) -> E {
@@ -282,16 +299,18 @@ cmJSONHelper<std::map<std::string, T>, E> cmJSONMapFilterHelper(E success,
   };
 }
 
-template <typename T, typename E, typename F>
+template <typename T, typename E, typename F, typename... CallState>
 cmJSONHelper<std::map<std::string, T>, E> cmJSONMapHelper(E success, E fail,
-                                                          F func)
+                                                          F func,
+                                                          CallState&&... state)
 {
   return cmJSONMapFilterHelper<T, E, F>(
     success, fail, func, [](const std::string&) { return true; });
 }
 
-template <typename T, typename E, typename F>
-cmJSONHelper<cm::optional<T>, E> cmJSONOptionalHelper(E success, F func)
+template <typename T, typename E, typename F, typename... CallState>
+cmJSONHelper<cm::optional<T>, E> cmJSONOptionalHelper(E success, F func,
+                                                      CallState&&... state)
 {
   return [success, func](cm::optional<T>& out, const Json::Value* value) -> E {
     if (!value) {
@@ -303,8 +322,8 @@ cmJSONHelper<cm::optional<T>, E> cmJSONOptionalHelper(E success, F func)
   };
 }
 
-template <typename T, typename E, typename F>
-cmJSONHelper<T, E> cmJSONRequiredHelper(E fail, F func)
+template <typename T, typename E, typename F, typename... CallState>
+cmJSONHelper<T, E> cmJSONRequiredHelper(E fail, F func, CallState&&... state)
 {
   return [fail, func](T& out, const Json::Value* value) -> E {
     if (!value) {
