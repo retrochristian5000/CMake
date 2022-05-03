@@ -411,7 +411,11 @@ class cmMakefile;
          3, 24, 0, cmPolicies::WARN)                                          \
   SELECT(POLICY, CMP0136,                                                     \
          "Watcom runtime library flags are selected by an abstraction.", 3,   \
-         24, 0, cmPolicies::WARN)
+         24, 0, cmPolicies::WARN)                                             \
+  SELECT(POLICY, CMP0137,                                                     \
+         "try_compile() passes CMAKE_TRY_COMPILE_PLATFORM_VARIABLES in "      \
+         "project mode",                                                      \
+         3, 24, 0, cmPolicies::WARN)
 
 #define CM_SELECT_ID(F, A1, A2, A3, A4, A5, A6) F(A1)
 #define CM_FOR_EACH_POLICY_ID(POLICY)                                         \
