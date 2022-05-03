@@ -219,6 +219,10 @@ CPack
   :variable:`CPACK_WIX_SKIP_WIX_UI_EXTENSION`, to skip the inclusion
   of WixUIExtensions.
 
+* The :cpack_gen:`CPack WIX Generator` gained a new variable,
+  :variable:`CPACK_WIX_ARCHITECTURE`, to specify the installer architecture
+  in order to support computers running Windows for ARM.
+
 Deprecated and Removed Features
 ===============================
 

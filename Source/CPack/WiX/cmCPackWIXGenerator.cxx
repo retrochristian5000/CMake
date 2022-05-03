@@ -89,10 +89,18 @@ bool cmCPackWIXGenerator::RunCandleCommand(std::string const& sourceFile,
     return false;
   }
 
+  if (!GetOption("CPACK_WIX_ARCHITECTURE")) {
+    std::string arch = GetArchitecture();
+    SetOption("CPACK_WIX_ARCHITECTURE", arch);
+    cmCPackLogger(cmCPackLog::LOG_VERBOSE,
+                  "CPACK_WIX_ARCHITECTURE implicitly set to " << arch << " . "
+                                                              << std::endl);
+  }
+
   std::ostringstream command;
   command << QuotePath(executable);
   command << " -nologo";
-  command << " -arch " << GetArchitecture();
+  command << " -arch " << GetOption("CPACK_WIX_ARCHITECTURE");
   command << " -out " << QuotePath(objectFile);
 
   for (std::string const& ext : CandleExtensions) {
