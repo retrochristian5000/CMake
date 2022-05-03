@@ -58,6 +58,7 @@ Policies Introduced by CMake 3.24
 .. toctree::
    :maxdepth: 1
 
+   CMP0134: try_compile() passes CMAKE_TRY_COMPILE_PLATFORM_VARIABLES in project mode. </policy/CMP0134>
    CMP0133: The CPack module disables SLA by default in the CPack DragNDrop Generator. </policy/CMP0133>
    CMP0132: Do not set compiler environment variables on first run. </policy/CMP0132>
    CMP0131: LINK_LIBRARIES supports the LINK_ONLY generator expression. </policy/CMP0131>
