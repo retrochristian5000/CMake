@@ -400,6 +400,10 @@ class cmMakefile;
   SELECT(POLICY, CMP0133,                                                     \
          "The CPack module disables SLA by default in the CPack DragNDrop "   \
          "Generator.",                                                        \
+         3, 24, 0, cmPolicies::WARN)                                          \
+  SELECT(POLICY, CMP0134,                                                     \
+         "try_compile() passes CMAKE_TRY_COMPILE_PLATFORM_VARIABLES in "      \
+         "project mode",                                                      \
          3, 24, 0, cmPolicies::WARN)
 
 #define CM_SELECT_ID(F, A1, A2, A3, A4, A5, A6) F(A1)

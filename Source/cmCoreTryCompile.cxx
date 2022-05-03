@@ -959,6 +959,21 @@ int cmCoreTryCompile::TryCompileCode(std::vector<std::string> const& argv,
     projectName = "CMAKE_TRY_COMPILE";
   }
 
+  if (!this->SrcFileSignature &&
+      this->Makefile->GetPolicyStatus(cmPolicies::CMP0134) ==
+        cmPolicies::NEW) {
+    if (cmValue varListStr = this->Makefile->GetDefinition(
+          kCMAKE_TRY_COMPILE_PLATFORM_VARIABLES)) {
+      std::vector<std::string> varList = cmExpandedList(*varListStr);
+      for (std::string const& var : varList) {
+        if (cmValue val = this->Makefile->GetDefinition(var)) {
+          std::string flag = "-D" + var + "=" + *val;
+          cmakeFlags.push_back(std::move(flag));
+        }
+      }
+    }
+  }
+
   if (this->Makefile->GetState()->UseGhsMultiIDE()) {
     // Forward the GHS variables to the inner project cache.
     for (std::string const& var : ghs_platform_vars) {
