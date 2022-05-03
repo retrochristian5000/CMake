@@ -3356,6 +3356,11 @@ bool cmVisualStudio10TargetGenerator::ComputeClOptions(
     }
   }
 
+  if (auto sysIncludeFlagWarning = this->Makefile->GetDefinition(cmStrCat(
+        "_CMAKE_INCLUDE_SYSTEM_FLAG_", this->LangForClCompile, "_WARNING"))) {
+    flags = cmStrCat(flags, ' ', *sysIncludeFlagWarning);
+  }
+
   clOptions.Parse(flags);
   clOptions.Parse(defineFlags);
   std::vector<std::string> targetDefines;
@@ -3384,8 +3389,27 @@ bool cmVisualStudio10TargetGenerator::ComputeClOptions(
 
   // Get includes for this target
   if (!this->LangForClCompile.empty()) {
-    clOptions.AddIncludes(
-      this->GetIncludes(configName, this->LangForClCompile));
+    auto includeList = this->GetIncludes(configName, this->LangForClCompile);
+
+    auto sysIncludeFlag = this->Makefile->GetDefinition(
+      cmStrCat("CMAKE_INCLUDE_SYSTEM_FLAG_", this->LangForClCompile));
+
+    if (sysIncludeFlag) {
+      for (auto i : includeList) {
+        cmSystemTools::ConvertToUnixSlashes(i);
+        if (this->GeneratorTarget->IsSystemIncludeDirectory(
+              i, configName, this->LangForClCompile)) {
+          std::replace(i.begin(), i.end(), '-', '/');
+          clOptions.AppendFlagString(
+            "AdditionalOptions",
+            cmStrCat(cmTrimWhitespace(*sysIncludeFlag), " \"", i, '"'));
+        } else {
+          clOptions.AddInclude(i);
+        }
+      }
+    } else {
+      clOptions.AddIncludes(includeList);
+    }
   }
 
   if (this->MSTools) {
