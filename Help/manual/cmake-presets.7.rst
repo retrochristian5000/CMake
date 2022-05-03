@@ -1068,6 +1068,14 @@ Recognized macros include:
 
   A literal dollar sign (``$``).
 
+``${pathSep}``
+
+  Native character for separating lists of paths.
+  For example, by setting ``PATH`` to ``/path/to/ninja/bin${pathSep}$env{PATH}``,
+  ${pathSep} will expand to the underlying operating system's character used
+  for concatenation in ``PATH``.
+  This is allowed in preset files specifying version ``5`` or above.
+
 ``$env{<variable-name>}``
 
   Environment variable with name ``<variable-name>``. The variable name may
