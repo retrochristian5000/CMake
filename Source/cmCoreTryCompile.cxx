@@ -227,6 +227,8 @@ std::string const kCMAKE_TRY_COMPILE_OSX_ARCHITECTURES =
   "CMAKE_TRY_COMPILE_OSX_ARCHITECTURES";
 std::string const kCMAKE_TRY_COMPILE_PLATFORM_VARIABLES =
   "CMAKE_TRY_COMPILE_PLATFORM_VARIABLES";
+std::string const kCMAKE_NO_TRY_COMPILE_PLATFORM_VARIABLES =
+  "CMAKE_NO_TRY_COMPILE_PLATFORM_VARIABLES";
 std::string const kCMAKE_WARN_DEPRECATED = "CMAKE_WARN_DEPRECATED";
 std::string const kCMAKE_WATCOM_RUNTIME_LIBRARY_DEFAULT =
   "CMAKE_WATCOM_RUNTIME_LIBRARY_DEFAULT";
@@ -482,6 +484,7 @@ int cmCoreTryCompile::TryCompileCode(std::vector<std::string> const& argv,
   }
 
   std::string outFileName = this->BinaryDirectory + "/CMakeLists.txt";
+
   // which signature are we using? If we are using var srcfile bindir
   if (this->SrcFileSignature) {
     // remove any CMakeCache.txt files so we will have a clean test
@@ -871,6 +874,12 @@ int cmCoreTryCompile::TryCompileCode(std::vector<std::string> const& argv,
     projectName = "CMAKE_TRY_COMPILE";
   }
 
+  cmValue noUsePlatFormVars =
+    this->Makefile->GetDefinition(kCMAKE_NO_TRY_COMPILE_PLATFORM_VARIABLES);
+  bool usePlatFormVars = noUsePlatFormVars.isEmpty()
+    ? (this->Makefile->GetPolicyStatus(cmPolicies::CMP0137) == cmPolicies::NEW)
+    : noUsePlatFormVars.isOFF();
+
   // Forward a set of variables to the inner project cache.
   if (this->SrcFileSignature) {
     std::set<std::string> vars;
@@ -914,7 +923,9 @@ int cmCoreTryCompile::TryCompileCode(std::vector<std::string> const& argv,
     vars.emplace("CMAKE_WATCOM_RUNTIME_LIBRARY"_s);
 
     if (cmValue varListStr = this->Makefile->GetDefinition(
-          kCMAKE_TRY_COMPILE_PLATFORM_VARIABLES)) {
+          kCMAKE_TRY_COMPILE_PLATFORM_VARIABLES) && (usePlatFormVars ||
+             (this->Makefile->GetPolicyStatus(cmPolicies::CMP0137) ==
+              cmPolicies::OLD)) {
       std::vector<std::string> varList = cmExpandedList(*varListStr);
       vars.insert(varList.begin(), varList.end());
     }
@@ -964,7 +975,8 @@ int cmCoreTryCompile::TryCompileCode(std::vector<std::string> const& argv,
       }
     }
   } else if (this->Makefile->GetPolicyStatus(cmPolicies::CMP0137) ==
-             cmPolicies::NEW) {
+               cmPolicies::NEW &&
+             usePlatFormVars) {
     if (cmValue varListStr = this->Makefile->GetDefinition(
           kCMAKE_TRY_COMPILE_PLATFORM_VARIABLES)) {
       std::vector<std::string> varList = cmExpandedList(*varListStr);
