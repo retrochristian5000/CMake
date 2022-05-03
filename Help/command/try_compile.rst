@@ -25,6 +25,11 @@ will not be deleted after this command is run.  Specify ``<targetName>`` to
 build a specific target instead of the ``all`` or ``ALL_BUILD`` target.  See
 below for the meaning of other options.
 
+.. versionadded:: 3.24
+Variables in :variable:`CMAKE_TRY_COMPILE_PLATFORM_VARIABLES` will be forwarded
+into the project if :policy:`CMP0137` is ``NEW``
+
+
 Try Compiling Source Files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 

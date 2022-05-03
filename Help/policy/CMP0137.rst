@@ -1,0 +1,25 @@
+CMP0137
+-------
+
+.. versionadded:: 3.24
+
+The :command:`try_compile` does not forward any variables if the project
+signature of the command is used. Even variables given in :variable:`CMAKE_TRY_COMPILE_PLATFORM_VARIABLES`
+are ignored which is inconsistent to the source signature of :command:`try_compile` and prohibits correctly
+forwarding variables which are necessary as input for :variable:`CMAKE_TOOLCHAIN_FILE` without the calling
+cmake file to know about these inputs.
+
+The ``OLD`` behavior for this policy is to not pass any additional variables to
+:command:`try_compile` using the project signature
+The ``NEW`` behavior for this policy is to pass variables in
+:variable:`CMAKE_TRY_COMPILE_PLATFORM_VARIABLES` consistently via :command:`try_compile`
+
+This policy was introduced in CMake version 3.24.  Use the
+:command:`cmake_policy` command to set this policy to ``OLD`` or ``NEW``
+explicitly. Unlike many policies, CMake version |release| does *not* warn
+by default when this policy is not set and simply uses ``OLD`` behavior.
+See documentation of the
+:variable:`CMAKE_POLICY_WARNING_CMP0137 <CMAKE_POLICY_WARNING_CMP<NNNN>>`
+variable to control the warning.
+
+.. include:: DEPRECATED.txt

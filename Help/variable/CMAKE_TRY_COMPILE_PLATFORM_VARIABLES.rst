@@ -16,6 +16,10 @@ propagated automatically.  The ``CMAKE_TRY_COMPILE_PLATFORM_VARIABLES``
 variable may be set to pass custom variables meaningful to a toolchain file.
 For example, a toolchain file may contain:
 
+.. versionadded:: 3.24
+If :policy:`CMP0137` is ``NEW`` the  :command:`try_compile` project signature
+will also propagate these variables into the test project.
+
 .. code-block:: cmake
 
   set(CMAKE_SYSTEM_NAME ...)
