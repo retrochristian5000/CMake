@@ -20,6 +20,10 @@ For example, a toolchain file may contain:
 If :policy:`CMP0137` is ``NEW`` the  :command:`try_compile` project signature
 will also propagate these variables into the test project.
 
+:variable:`CMAKE_NO_TRY_COMPILE_PLATFORM_VARIABLES` can be set to completly
+deactivate the propagation of any variables within
+``CMAKE_TRY_COMPILE_PLATFORM_VARIABLES`` to :command:`try_compile`.
+
 .. code-block:: cmake
 
   set(CMAKE_SYSTEM_NAME ...)
