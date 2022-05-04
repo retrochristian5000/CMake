@@ -197,6 +197,84 @@ else()
   message(STATUS "try_compile with bad#source.c correctly failed")
 endif()
 
+message("Testing try_compile forwarding of CMAKE_TRY_COMPILE_PLATFORM_VARIABLES")
+set(CMAKE_TRY_COMPILE_PLATFORM_VARIABLES_BAK "${CMAKE_TRY_COMPILE_PLATFORM_VARIABLES}")
+set(CMAKE_TRY_COMPILE_PLATFORM_VARIABLES SHOULD_BE_DEFINED SHOULD_NOT_BE_DEFINED)
+cmake_policy(PUSH)
+if(POLICY CMP0136)
+  cmake_policy(SET CMP0136 OLD)
+  # Older behavior never forwards.
+endif()
+try_compile(SHOULD_PASS
+  ${TryCompile_BINARY_DIR}/CMakeFiles/NoForward_OLD
+  ${TryCompile_SOURCE_DIR}/NoForward
+  OUTPUT_VARIABLE output)
+TEST_ASSERT(SHOULD_PASS "try_compile project mode failed:\n${output}")
+try_compile(SHOULD_FAIL
+  ${TryCompile_BINARY_DIR}/CMakeFiles/Forward_OLD
+  ${TryCompile_SOURCE_DIR}/Forward
+  OUTPUT_VARIABLE output)
+if(SHOULD_FAIL)
+   message(SEND_ERROR "Should fail passed ${output}")
+endif()
+set(CMAKE_NO_TRY_COMPILE_PLATFORM_VARIABLES FALSE)
+try_compile(SHOULD_PASS
+  ${TryCompile_BINARY_DIR}/CMakeFiles/NoForward_OLD
+  ${TryCompile_SOURCE_DIR}/NoForward
+  OUTPUT_VARIABLE output)
+TEST_ASSERT(SHOULD_PASS "try_compile project mode failed:\n${output}")
+try_compile(SHOULD_FAIL
+  ${TryCompile_BINARY_DIR}/CMakeFiles/Forward_OLD
+  ${TryCompile_SOURCE_DIR}/Forward
+  OUTPUT_VARIABLE output)
+if(SHOULD_FAIL)
+   message(SEND_ERROR "Should fail passed ${output}")
+endif()
+set(CMAKE_NO_TRY_COMPILE_PLATFORM_VARIABLES TRUE)
+try_compile(SHOULD_PASS
+  ${TryCompile_BINARY_DIR}/CMakeFiles/NoForward_OLD
+  ${TryCompile_SOURCE_DIR}/NoForward
+  OUTPUT_VARIABLE output)
+TEST_ASSERT(SHOULD_PASS "try_compile project mode failed:\n${output}")
+try_compile(SHOULD_FAIL
+  ${TryCompile_BINARY_DIR}/CMakeFiles/Forward_OLD
+  ${TryCompile_SOURCE_DIR}/Forward
+  OUTPUT_VARIABLE output)
+if(SHOULD_FAIL)
+   message(SEND_ERROR "Should fail passed ${output}")
+endif()
+
+if(POLICY CMP0136)
+  cmake_policy(SET CMP0136 NEW)
+  # New behavior only forwards if CMAKE_NO_TRY_COMPILE_PLATFORM_VARIABLES isn't true
+endif()
+unset(CMAKE_NO_TRY_COMPILE_PLATFORM_VARIABLES)
+try_compile(SHOULD_PASS
+  ${TryCompile_BINARY_DIR}/CMakeFiles/Forward_NEW
+  ${TryCompile_SOURCE_DIR}/Forward
+  OUTPUT_VARIABLE output)
+TEST_ASSERT(SHOULD_PASS "try_compile project mode failed:\n${output}")
+set(CMAKE_NO_TRY_COMPILE_PLATFORM_VARIABLES FALSE)
+try_compile(SHOULD_PASS
+  ${TryCompile_BINARY_DIR}/CMakeFiles/Forward_NEW
+  ${TryCompile_SOURCE_DIR}/Forward
+  OUTPUT_VARIABLE output)
+TEST_ASSERT(SHOULD_PASS "try_compile project mode failed:\n${output}")
+set(CMAKE_NO_TRY_COMPILE_PLATFORM_VARIABLES TRUE)
+try_compile(SHOULD_PASS
+  ${TryCompile_BINARY_DIR}/CMakeFiles/NoForward_NEW
+  ${TryCompile_SOURCE_DIR}/NoForward
+  OUTPUT_VARIABLE output)
+TEST_ASSERT(SHOULD_PASS "try_compile project mode failed:\n${output}")
+# TODO: tests for source signature with OLD behavior and CMAKE_NO_TRY_COMPILE_PLATFORM_VARIABLES
+#       being false/true/empty -> Result always pass variables
+# TODO: tests for source signature with NEW behavior and CMAKE_NO_TRY_COMPILE_PLATFORM_VARIABLES
+#       being true -> Result don't pass variables; false/empty -> pass variables
+# NOTE: CMP0056, CMP0067, CMP0083 seem to be untested.
+unset(CMAKE_NO_TRY_COMPILE_PLATFORM_VARIABLES)
+set(CMAKE_TRY_COMPILE_PLATFORM_VARIABLES "${CMAKE_TRY_COMPILE_PLATFORM_VARIABLES_BAK}")
+cmake_policy(POP)
+
 add_executable(TryCompile pass.c)
 
 ######################################
