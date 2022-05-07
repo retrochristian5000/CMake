@@ -3,7 +3,9 @@ project(TestFindVulkan C CXX)
 include(CTest)
 
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../)
-find_package(Vulkan REQUIRED)
+find_package(Vulkan REQUIRED
+  COMPONENTS
+    glslang)
 
 add_executable(test_tgt main.c)
 target_link_libraries(test_tgt Vulkan::Vulkan)
@@ -22,6 +24,10 @@ add_executable(test_var_dl main-dynamicVulkanLoading.cpp)
 target_include_directories(test_var_dl PRIVATE ${Vulkan_INCLUDE_DIRS})
 target_link_libraries(test_var_dl ${CMAKE_DL_LIBS})
 add_test(NAME test_var_dl COMMAND test_var_dl)
+
+add_executable(test_tgt_glslang main-glslang.cxx)
+target_link_libraries(test_tgt_glslang Vulkan::glslang)
+add_test(NAME test_tgt_glslang COMMAND test_tgt_glslang)
 
 if(Vulkan_GLSLC_EXECUTABLE)
   add_test(NAME test_glslc
