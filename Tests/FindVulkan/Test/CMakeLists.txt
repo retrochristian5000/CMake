@@ -5,7 +5,6 @@ include(CTest)
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../../Modules)
 find_package(Vulkan REQUIRED
   COMPONENTS
-    glslang
     shaderc-combined
     SPIRV-Tools)
 
@@ -26,10 +25,6 @@ add_executable(test_var_dl main-dynamicVulkanLoading.cpp)
 target_include_directories(test_var_dl PRIVATE ${Vulkan_INCLUDE_DIRS})
 target_link_libraries(test_var_dl ${CMAKE_DL_LIBS})
 add_test(NAME test_var_dl COMMAND test_var_dl)
-
-add_executable(test_tgt_glslang main-glslang.cxx)
-target_link_libraries(test_tgt_glslang Vulkan::glslang)
-add_test(NAME test_tgt_glslang COMMAND test_tgt_glslang)
 
 add_executable(test_tgt_shaderc-combined main-shaderc-combined.c)
 target_link_libraries(test_tgt_shaderc-combined Vulkan::shaderc-combined)
