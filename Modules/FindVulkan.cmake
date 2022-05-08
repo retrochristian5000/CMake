@@ -127,6 +127,8 @@ environment.
 
 #]=======================================================================]
 
+cmake_policy(SET CMP0057 NEW)
+
 if(WIN32)
   set(_Vulkan_library_name vulkan-1)
   set(_Vulkan_hint_include_search_paths
