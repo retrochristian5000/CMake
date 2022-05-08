@@ -5,7 +5,8 @@ include(CTest)
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../../Modules)
 find_package(Vulkan REQUIRED
   COMPONENTS
-    glslang)
+    glslang
+    shaderc-combined)
 
 add_executable(test_tgt main.c)
 target_link_libraries(test_tgt Vulkan::Vulkan)
@@ -28,6 +29,10 @@ add_test(NAME test_var_dl COMMAND test_var_dl)
 add_executable(test_tgt_glslang main-glslang.cxx)
 target_link_libraries(test_tgt_glslang Vulkan::glslang)
 add_test(NAME test_tgt_glslang COMMAND test_tgt_glslang)
+
+add_executable(test_tgt_shaderc-combined main-shaderc-combined.c)
+target_link_libraries(test_tgt_shaderc-combined Vulkan::shaderc-combined)
+add_test(NAME test_tgt_shaderc-combined COMMAND test_tgt_shaderc-combined)
 
 if(Vulkan_GLSLC_EXECUTABLE)
   add_test(NAME test_glslc

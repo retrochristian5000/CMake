@@ -15,7 +15,8 @@ Optional COMPONENTS
 
 .. versionadded:: 3.XX
 
-This module one optional COMPONENT: ``glslang``.  There is a corresponding import target for it.
+This module respects several optional COMPONENTS: ``glslang``, and
+``shaderc_combined``.  There are corresponding import targets for each of these flags.
 
 IMPORTED Targets
 ^^^^^^^^^^^^^^^^
@@ -49,6 +50,9 @@ This module defines :prop_tgt:`IMPORTED` targets if Vulkan has been found:
 ``Vulkan::glslang``
   Defined if SDK has the Khronos-reference front-end shader parser and SPIR-V generator library (glslang).
 
+``Vulkan::shaderc_combined``
+  Defined if SDK has the Google static library for Vulkan shader compilation (shaderc_combined).
+
 Result Variables
 ^^^^^^^^^^^^^^^^
 
@@ -66,9 +70,11 @@ This module defines the following variables:
   value from ``vulkan/vulkan_core.h``
 ``Vulkan_glslang_FOUND``
   True, if the SDK has the glslang library.
+``Vulkan_shaderc_combined_FOUND``
+  True, if the SDK has the shaderc_combined library.
 
 .. versionadded:: 3.XX
-  Variables for component library ``glslang``.
+  Variables for component library ``glslang`` and ``shaderc_combined``.
 
 The module will also defines these cache variables:
 
@@ -82,9 +88,11 @@ The module will also defines these cache variables:
   the path to the glslangValidator tool
 ``Vulkan_glslang_LIBRARY``
  Path to the glslang library.
+``Vulkan_shaderc_combined_LIBRARY``
+ Path to the shaderc_combined library.
 
 .. versionadded:: 3.XX
-  Variables for component library ``glslang``.
+  Variables for component library ``glslang`` and ``shaderc_combined``.
 
 Hints
 ^^^^^
@@ -225,6 +233,16 @@ if(glslang IN_LIST Vulkan_FIND_COMPONENTS)
       ${_Vulkan_hint_library_search_paths}
     )
 endif()
+if(shaderc-combined IN_LIST Vulkan_FIND_COMPONENTS)
+    find_library(Vulkan_shaderc-combined_LIBRARY
+      NAMES shaderc_combined
+      HINTS
+      ${_Vulkan_hint_library_search_paths})
+    find_library(Vulkan_shaderc-combined_DEBUG_LIBRARY
+      NAMES shaderc_combinedd
+      HINTS
+      ${_Vulkan_hint_library_search_paths})
+endif()
 
 if(Vulkan_glslang-spirv_LIBRARY OR Vulkan_glslang-spirv_DEBUG_LIBRARY)
   set(Vulkan_glslang-spirv_FOUND TRUE)
@@ -266,6 +284,12 @@ if((Vulkan_glslang_LIBRARY OR Vulkan_glslang_DEBUG_LIBRARY)
   set(Vulkan_glslang_FOUND TRUE)
 else()
   set(Vulkan_glslang_FOUND FALSE)
+endif()
+
+if(Vulkan_shaderc-combined_LIBRARY OR Vulkan_shaderc-combined_DEBUG_LIBRARY)
+  set(Vulkan_shaderc-combined_FOUND TRUE)
+else()
+  set(Vulkan_shaderc-combined_FOUND FALSE)
 endif()
 
 set(Vulkan_LIBRARIES ${Vulkan_LIBRARY})
@@ -316,6 +340,8 @@ mark_as_advanced(Vulkan_INCLUDE_DIR
                  Vulkan_glslang-genericcodegen_DEBUG_LIBRARY
                  Vulkan_glslang_LIBRARY
                  Vulkan_glslang_DEBUG_LIBRARY
+                 Vulkan_shaderc-combined_DEBUG_LIBRARY
+                 Vulkan_shaderc-combined_RELEASE_LIBRARY
 )
 
 if(Vulkan_FOUND AND NOT TARGET Vulkan::Vulkan)
@@ -492,6 +518,36 @@ if(Vulkan_FOUND)
         Vulkan::glslang-machineindependent
         Vulkan::glslang-genericcodegen
     )
+  endif()
+
+  if((Vulkan_shaderc-combined_LIBRARY OR Vulkan_shaderc-combined_DEBUG_LIBRARY) AND NOT TARGET Vulkan::shaderc-combined)
+    add_library(Vulkan::shaderc-combined STATIC IMPORTED)
+    set_property(TARGET Vulkan::shaderc-combined
+      PROPERTY
+        INTERFACE_INCLUDE_DIRECTORIES "${Vulkan_INCLUDE_DIRS}")
+    if(Vulkan_shaderc-combined_LIBRARY)
+      set_property(TARGET Vulkan::shaderc-combined APPEND
+        PROPERTY
+          IMPORTED_CONFIGURATIONS Release)
+      set_property(TARGET Vulkan::shaderc-combined
+        PROPERTY
+          IMPORTED_LOCATION_RELEASE "${Vulkan_shaderc-combined_LIBRARY}")
+    endif()
+    if(Vulkan_shaderc-combined_DEBUG_LIBRARY)
+      set_property(TARGET Vulkan::shaderc-combined APPEND
+        PROPERTY
+          IMPORTED_CONFIGURATIONS Debug)
+      set_property(TARGET Vulkan::shaderc-combined
+        PROPERTY
+          IMPORTED_LOCATION_DEBUG "${Vulkan_shaderc-combined_DEBUG_LIBRARY}")
+    endif()
+
+    if(UNIX)
+      find_package(Threads REQUIRED)
+      target_link_libraries(Vulkan::shaderc-combined
+        INTERFACE
+          Threads::Threads)
+    endif()
   endif()
 endif()
 
