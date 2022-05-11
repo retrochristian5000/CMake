@@ -201,8 +201,8 @@ message("Testing try_compile forwarding of CMAKE_TRY_COMPILE_PLATFORM_VARIABLES"
 set(CMAKE_TRY_COMPILE_PLATFORM_VARIABLES_BAK "${CMAKE_TRY_COMPILE_PLATFORM_VARIABLES}")
 set(CMAKE_TRY_COMPILE_PLATFORM_VARIABLES SHOULD_BE_DEFINED SHOULD_NOT_BE_DEFINED)
 cmake_policy(PUSH)
-if(POLICY CMP0136)
-  cmake_policy(SET CMP0136 OLD)
+if(POLICY CMP0137)
+  cmake_policy(SET CMP0137 OLD)
   # Older behavior never forwards.
 endif()
 try_compile(SHOULD_PASS
@@ -244,8 +244,8 @@ if(SHOULD_FAIL)
    message(SEND_ERROR "Should fail passed ${output}")
 endif()
 
-if(POLICY CMP0136)
-  cmake_policy(SET CMP0136 NEW)
+if(POLICY CMP0137)
+  cmake_policy(SET CMP0137 NEW)
   # New behavior only forwards if CMAKE_NO_TRY_COMPILE_PLATFORM_VARIABLES isn't true
 endif()
 unset(CMAKE_NO_TRY_COMPILE_PLATFORM_VARIABLES)
