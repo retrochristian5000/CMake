@@ -375,7 +375,7 @@ void cmMakefileTargetGenerator::WriteTargetBuildRules()
             cmStrCat(
               "Target \"", tgt->GetName(), "\" contains the source\n  ", path,
               "\nin a file set of type \"", file_set_type,
-              "\" but the source is not classified as a \"CXX\" source."));
+              R"(" but the source is not classified as a "CXX" source.)"));
         }
       }
     }
