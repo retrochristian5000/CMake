@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.4)
 project(TestFindVulkan C CXX)
 include(CTest)
 
-SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../../Modules)
 find_package(Vulkan REQUIRED
   COMPONENTS
     glslang
