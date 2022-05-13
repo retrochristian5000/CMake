@@ -5,7 +5,8 @@ include(CTest)
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../../Modules)
 find_package(Vulkan REQUIRED
   COMPONENTS
-    shaderc_combined)
+    shaderc_combined
+    SPIRV-Tools)
 
 add_executable(test_tgt main.c)
 target_link_libraries(test_tgt Vulkan::Vulkan)
@@ -28,6 +29,10 @@ add_test(NAME test_var_dl COMMAND test_var_dl)
 add_executable(test_tgt_shaderc_combined main-shaderc_combined.c)
 target_link_libraries(test_tgt_shaderc_combined Vulkan::shaderc_combined)
 add_test(NAME test_tgt_shaderc_combined COMMAND test_tgt_shaderc_combined)
+
+add_executable(test_tgt_SPIRV-Tools main-SPIRV-Tools.c)
+target_link_libraries(test_tgt_SPIRV-Tools Vulkan::SPIRV-Tools)
+add_test(NAME test_tgt_SPIRV-Tools COMMAND test_tgt_SPIRV-Tools)
 
 if(Vulkan_GLSLC_EXECUTABLE)
   add_test(NAME test_glslc
