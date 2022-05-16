@@ -110,6 +110,9 @@ const char* cmDocumentationOptions[][2] = {
   { "--check-system-vars",
     "Find problems with variable usage in system "
     "files." },
+  { "--ignore-warning-as-error",
+    "Ignore COMPILE_WARNING_AS_ERROR property and "
+    "CMAKE_COMPILE_WARNING_AS_ERROR cache variable." },
 #  if !defined(CMAKE_BOOTSTRAP)
   { "--profiling-format=<fmt>",
     "Output data for profiling CMake scripts. Supported formats: "
