@@ -110,16 +110,16 @@ public:
   cm::optional<std::string> DeferId;
 
   cmListFileContext() = default;
-  cmListFileContext(cmListFileContext&& /*other*/) = default;
+  cmListFileContext(cmListFileContext&& /*other*/) noexcept = default;
   cmListFileContext(const cmListFileContext& /*other*/) = default;
   cmListFileContext& operator=(const cmListFileContext& /*other*/) = default;
 #if __cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
-  cmListFileContext& operator=(cmListFileContext&& /*other*/) = default;
+  cmListFileContext& operator=(cmListFileContext&& /*other*/) noexcept = default;
 #else
   // The move assignment operators for several STL classes did not become
   // noexcept until C++17, which causes some tools to warn about this move
   // assignment operator throwing an exception when it shouldn't.
-  cmListFileContext& operator=(cmListFileContext&& /*other*/) = delete;
+  cmListFileContext& operator=(cmListFileContext&& /*other*/) noexcept = delete;
 #endif
 
   cmListFileContext(std::string name, std::string filePath, long line)
