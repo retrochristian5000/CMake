@@ -2543,7 +2543,7 @@ void cmake::AddCacheEntry(const std::string& key, cmValue value,
                           const char* helpString, int type)
 {
   this->State->AddCacheEntry(key, value, helpString,
-                             cmStateEnums::CacheEntryType(type));
+                             cmStateEnums::CacheEntryType{type});
   this->UnwatchUnusedCli(key);
 
   if (key == "CMAKE_WARN_DEPRECATED"_s) {
@@ -2606,7 +2606,7 @@ std::string cmake::StripExtension(const std::string& file) const
 #if defined(_WIN32) || defined(__APPLE__)
     auto ext = cmSystemTools::LowerCase(file.substr(dotpos + 1));
 #else
-    auto ext = cm::string_view(file).substr(dotpos + 1);
+    auto ext = cm::string_view{file}.substr(dotpos + 1);
 #endif
     if (this->IsAKnownExtension(ext)) {
       return file.substr(0, dotpos);

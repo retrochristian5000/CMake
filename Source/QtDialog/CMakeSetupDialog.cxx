@@ -88,7 +88,7 @@ CMakeSetupDialog::CMakeSetupDialog()
   , ConfigureNeeded(true)
   , CurrentState(Interrupting)
 {
-  QString title = QString(tr("CMake %1"));
+  QString title = QString{tr("CMake %1")};
   title = title.arg(cmVersion::GetCMakeVersion());
   this->setWindowTitle(title);
 
@@ -395,7 +395,7 @@ bool CMakeSetupDialog::prepareConfigure()
     if (!dir.mkpath(".")) {
       QMessageBox::information(
         this, tr("Create Directory Failed"),
-        QString(tr("Failed to create directory %1")).arg(dir.path()),
+        QString{tr("Failed to create directory %1")}.arg(dir.path()),
         QMessageBox::Ok);
 
       return false;
@@ -769,7 +769,7 @@ void CMakeSetupDialog::onSourceDirectoryChanged(const QString& dir)
 
 void CMakeSetupDialog::onBinaryDirectoryChanged(const QString& dir)
 {
-  QString title = QString(tr("CMake %1 - %2"));
+  QString title = QString{tr("CMake %1 - %2")};
   title = title.arg(cmVersion::GetCMakeVersion());
   title = title.arg(dir);
   this->setWindowTitle(title);

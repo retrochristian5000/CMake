@@ -535,7 +535,7 @@ private:
 
   void NextSection()
   {
-    this->Section = SectionType((this->Section + 1) % SectionCount);
+    this->Section = SectionType{(this->Section + 1) % SectionCount};
     this->Separator = SectionSep[this->Section];
     if (this->Section == SectionHeader) {
       this->GIT->DoRevision(this->Rev, this->Changes);

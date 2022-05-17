@@ -256,7 +256,7 @@ private:
                                    ParseMode& parseState) const
   {
     // parse the string to get the value
-    auto possible_value = cm::string_view(input).substr(this->Name.size());
+    auto possible_value = cm::string_view{input}.substr(this->Name.size());
     if (possible_value.empty()) {
       parseState = ParseMode::ValueError;
     } else if (possible_value[0] == '=') {

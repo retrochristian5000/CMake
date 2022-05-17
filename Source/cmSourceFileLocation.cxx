@@ -153,7 +153,7 @@ bool cmSourceFileLocation::MatchesAmbiguousExtension(
 
   // Only a fixed set of extensions will be tried to match a file on
   // disk.  One of these must match if loc refers to this source file.
-  auto ext = cm::string_view(this->Name).substr(loc.Name.size() + 1);
+  auto ext = cm::string_view{this->Name}.substr(loc.Name.size() + 1);
   cmMakefile const* mf = this->Makefile;
   auto* cm = mf->GetCMakeInstance();
   return cm->IsAKnownExtension(ext);

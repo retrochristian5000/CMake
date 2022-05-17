@@ -53,7 +53,7 @@ struct UserArgumentParser : public cmArgumentParser<void>
     for (std::string const& key : names) {
       auto const it = ref.emplace(key, T{}).first;
       bool const inserted = this->cmArgumentParser<void>::Bind(
-        cm::string_view(it->first), it->second);
+        cm::string_view{it->first}, it->second);
       if (!inserted) {
         duplicateKey(key);
       }

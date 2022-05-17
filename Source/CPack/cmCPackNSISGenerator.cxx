@@ -70,7 +70,7 @@ int cmCPackNSISGenerator::PackageFiles()
 
       // Use the custom component install directory if we have one
       if (pos != std::string::npos) {
-        auto componentName = cm::string_view(fileN).substr(0, pos);
+        auto componentName = cm::string_view{fileN}.substr(0, pos);
         outputDir = this->CustomComponentInstallDirectory(componentName);
       } else {
         outputDir = this->CustomComponentInstallDirectory(fileN);

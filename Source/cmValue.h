@@ -60,7 +60,7 @@ public:
   bool IsOn() const noexcept
   {
     return this->Value != nullptr &&
-      cmValue::IsOn(cm::string_view(*this->Value));
+      cmValue::IsOn(cm::string_view{*this->Value});
   }
   /**
    * Does the value indicate a false or off value ? Note that this is
@@ -72,13 +72,13 @@ public:
   bool IsOff() const noexcept
   {
     return this->Value == nullptr ||
-      cmValue::IsOff(cm::string_view(*this->Value));
+      cmValue::IsOff(cm::string_view{*this->Value});
   }
   /** Return true if value is NOTFOUND or ends in -NOTFOUND.  */
   bool IsNOTFOUND() const noexcept
   {
     return this->Value != nullptr &&
-      cmValue::IsNOTFOUND(cm::string_view(*this->Value));
+      cmValue::IsNOTFOUND(cm::string_view{*this->Value});
   }
   bool IsEmpty() const noexcept
   {
@@ -93,7 +93,7 @@ public:
   bool IsInternallyOn() const noexcept
   {
     return this->Value != nullptr &&
-      cmValue::IsInternallyOn(cm::string_view(*this->Value));
+      cmValue::IsInternallyOn(cm::string_view{*this->Value});
   }
 
   bool IsSet() const noexcept

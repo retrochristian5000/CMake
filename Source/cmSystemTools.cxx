@@ -383,7 +383,7 @@ std::vector<std::string> cmSystemTools::HandleResponseFile(
       if (!responseFile) {
         std::string error = cmStrCat("failed to open for reading (",
                                      cmSystemTools::GetLastSystemError(),
-                                     "):\n  ", cm::string_view(arg).substr(1));
+                                     "):\n  ", cm::string_view{arg}.substr(1));
         cmSystemTools::Error(error);
       } else {
         std::string line;

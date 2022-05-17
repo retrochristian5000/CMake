@@ -737,7 +737,7 @@ void cmExtraEclipseCDT4Generator::CreateCProjectFile() const
     // exclude source directory from output search path
     // - only if not named the same as an output directory
     if (!cmSystemTools::FileIsDirectory(
-          std::string(this->HomeOutputDirectory + "/" + p))) {
+          cmStrCat(this->HomeOutputDirectory, '/', p))) {
       excludeFromOut += p + "/|";
     }
   }
@@ -1025,7 +1025,7 @@ void cmExtraEclipseCDT4Generator::CreateCProjectFile() const
   xml.Attribute("version", "4.0.0");
 
   xml.StartElement("project");
-  xml.Attribute("id", std::string(lg->GetProjectName()) + ".null.1");
+  xml.Attribute("id", std::string{lg->GetProjectName()} + ".null.1");
   xml.Attribute("name", lg->GetProjectName());
   xml.EndElement(); // project
 

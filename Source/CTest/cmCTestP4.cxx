@@ -248,7 +248,7 @@ private:
       this->Rev = Revision();
     }
 
-    this->Section = SectionType((this->Section + 1) % SectionCount);
+    this->Section = SectionType{(this->Section + 1) % SectionCount};
   }
 
   void DoHeaderLine()

@@ -113,7 +113,7 @@ int cmValue::Compare(cm::string_view value) const noexcept
   if (value.data() == nullptr) {
     return 1;
   }
-  return cm::string_view(*this->Value).compare(value);
+  return cm::string_view{*this->Value}.compare(value);
 }
 
 std::ostream& operator<<(std::ostream& o, cmValue v)

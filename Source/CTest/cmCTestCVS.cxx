@@ -209,7 +209,7 @@ std::string cmCTestCVS::ComputeBranchFlag(std::string const& dir)
   if (tagStream && cmSystemTools::GetLineFromStream(tagStream, tagLine) &&
       tagLine.size() > 1 && tagLine[0] == 'T') {
     // Use the branch specified in the tag file.
-    std::string flag = cmStrCat("-r", cm::string_view(tagLine).substr(1));
+    std::string flag = cmStrCat("-r", cm::string_view{tagLine}.substr(1));
     return flag;
   }
   // Use the default branch.

@@ -3518,7 +3518,7 @@ static bool cmLocalGeneratorShortenObjectName(std::string& objName,
   // its own md5 sum.
   cmCryptoHash md5(cmCryptoHash::AlgoMD5);
   std::string md5name = cmStrCat(md5.HashString(objName.substr(0, pos)),
-                                 cm::string_view(objName).substr(pos));
+                                 cm::string_view{objName}.substr(pos));
   objName = md5name;
 
   // The object name is now shorter, check if it is short enough.

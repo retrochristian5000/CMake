@@ -1354,7 +1354,7 @@ int cmcmd::ExecuteCMakeCommand(std::vector<std::string> const& args,
     if ((args[1] == "cmake_autorcc") && (args.size() >= 3)) {
       cm::string_view const infoFile = args[2];
       cm::string_view const config =
-        (args.size() > 3) ? cm::string_view(args[3]) : cm::string_view();
+        (args.size() > 3) ? cm::string_view{args[3]} : cm::string_view();
       return cmQtAutoRcc(infoFile, config) ? 0 : 1;
     }
 #endif

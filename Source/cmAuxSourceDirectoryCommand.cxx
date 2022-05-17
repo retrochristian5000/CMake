@@ -49,7 +49,7 @@ bool cmAuxSourceDirectoryCommand(std::vector<std::string> const& args,
       // Split the filename into base and extension
       std::string::size_type dotpos = file.rfind('.');
       if (dotpos != std::string::npos) {
-        auto ext = cm::string_view(file).substr(dotpos + 1);
+        auto ext = cm::string_view{file}.substr(dotpos + 1);
         // Process only source files
         auto* cm = mf.GetCMakeInstance();
         if (dotpos > 0 && cm->IsACLikeSourceExtension(ext)) {
