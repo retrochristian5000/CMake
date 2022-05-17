@@ -1,4 +1,4 @@
-FROM fedora:35 as rvm-build
+FROM fedora:36 as rvm-build
 MAINTAINER Ben Boeckel <ben.boeckel@kitware.com>
 
 COPY install_rvm.sh /root/install_rvm.sh
