@@ -7,10 +7,12 @@
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
+#include <functional>
 #include <map>
 #include <memory>
 #include <set>
 #include <sstream>
+#include <unordered_map>
 #include <utility>
 
 #include <cm/iterator>
@@ -24,6 +26,7 @@
 #include "cmsys/String.h"
 
 #include "cmAlgorithms.h"
+#include "cmCMakePath.h"
 #include "cmComputeLinkInformation.h"
 #include "cmGeneratorExpression.h"
 #include "cmGeneratorExpressionContext.h"
@@ -599,6 +602,299 @@ static const struct UpperCaseNode : public cmGeneratorExpressionNode
   }
 } upperCaseNode;
 
+static const struct PathNode : public cmGeneratorExpressionNode
+{
+  PathNode() {} // NOLINT(modernize-use-equals-default)
+
+  int NumExpectedParameters() const override { return TwoOrMoreParameters; }
+
+  bool AcceptsArbitraryContentParameter() const override { return true; }
+
+  std::string Evaluate(
+    const std::vector<std::string>& parameters,
+    cmGeneratorExpressionContext* context,
+    const GeneratorExpressionContent* content,
+    cmGeneratorExpressionDAGChecker* /*dagChecker*/) const override
+  {
+    static auto checkParametersEx =
+      [context, content](const std::string& option, std::size_t count,
+                         int required = 1, bool exactly = true) -> bool {
+      if (static_cast<int>(count) < required ||
+          (exactly && static_cast<int>(count) > required)) {
+        reportError(
+          context, content->GetOriginalExpression(),
+          cmStrCat("$<PATH:", option, "> expression requires ",
+                   (exactly ? "exactly" : "at least"), ' ',
+                   (required == 1 ? "one parameter" : "two parameters"), '.'));
+        return false;
+      }
+      return true;
+    };
+    static auto checkParameters = [&parameters](int required = 1) -> bool {
+      return checkParametersEx(parameters.front(), parameters.size() - 1,
+                               required);
+    };
+    static auto ToString = [](bool isTrue) -> std::string {
+      return isTrue ? "1" : "0";
+    };
+
+    static std::unordered_map<cm::string_view, std::function<std::string()>>
+      pathCommands{
+        { "GET_ROOT_NAME"_s,
+          [&parameters]() -> std::string {
+            return checkParameters() && !parameters[1].empty()
+              ? cmCMakePath{ parameters[1] }.GetRootName().String()
+              : std::string{};
+          } },
+        { "GET_ROOT_DIRECTORY"_s,
+          [&parameters]() -> std::string {
+            return checkParameters() && !parameters[1].empty()
+              ? cmCMakePath{ parameters[1] }.GetRootDirectory().String()
+              : std::string{};
+          } },
+        { "GET_ROOT_PATH"_s,
+          [&parameters]() -> std::string {
+            return checkParameters() && !parameters[1].empty()
+              ? cmCMakePath{ parameters[1] }.GetRootPath().String()
+              : std::string{};
+          } },
+        { "GET_FILENAME"_s,
+          [&parameters]() -> std::string {
+            return checkParameters() && !parameters[1].empty()
+              ? cmCMakePath{ parameters[1] }.GetFileName().String()
+              : std::string{};
+          } },
+        { "GET_EXTENSION"_s,
+          [&parameters]() -> std::string {
+            bool lastOnly = parameters[1] == "LAST_ONLY"_s;
+            if (checkParametersEx(
+                  lastOnly ? cmStrCat(parameters.front(), ',', parameters[1])
+                           : parameters.front(),
+                  parameters.size() - (lastOnly ? 2 : 1))) {
+              if (parameters[lastOnly ? 2 : 1].empty()) {
+                return std::string{};
+              }
+              return lastOnly
+                ? cmCMakePath{ parameters[2] }.GetExtension().String()
+                : cmCMakePath{ parameters[1] }.GetWideExtension().String();
+            }
+            return std::string{};
+          } },
+        { "GET_STEM"_s,
+          [&parameters]() -> std::string {
+            bool lastOnly = parameters[1] == "LAST_ONLY"_s;
+            if (checkParametersEx(
+                  lastOnly ? cmStrCat(parameters.front(), ',', parameters[1])
+                           : parameters.front(),
+                  parameters.size() - (lastOnly ? 2 : 1))) {
+              if (parameters[lastOnly ? 2 : 1].empty()) {
+                return std::string{};
+              }
+              return lastOnly
+                ? cmCMakePath{ parameters[2] }.GetStem().String()
+                : cmCMakePath{ parameters[1] }.GetNarrowStem().String();
+            }
+            return std::string{};
+          } },
+        { "GET_RELATIVE_PART"_s,
+          [&parameters]() -> std::string {
+            return checkParameters() && !parameters[1].empty()
+              ? cmCMakePath{ parameters[1] }.GetRelativePath().String()
+              : std::string{};
+          } },
+        { "GET_PARENT_PATH"_s,
+          [&parameters]() -> std::string {
+            return checkParameters()
+              ? cmCMakePath{ parameters[1] }.GetParentPath().String()
+              : std::string{};
+          } },
+        { "HAS_ROOT_NAME"_s,
+          [&parameters]() -> std::string {
+            return checkParameters()
+              ? ToString(cmCMakePath{ parameters[1] }.HasRootName())
+              : std::string{ "0" };
+          } },
+        { "HAS_ROOT_DIRECTORY"_s,
+          [&parameters]() -> std::string {
+            return checkParameters()
+              ? ToString(cmCMakePath{ parameters[1] }.HasRootDirectory())
+              : std::string{ "0" };
+          } },
+        { "HAS_ROOT_PATH"_s,
+          [&parameters]() -> std::string {
+            return checkParameters()
+              ? ToString(cmCMakePath{ parameters[1] }.HasRootPath())
+              : std::string{ "0" };
+          } },
+        { "HAS_FILENAME"_s,
+          [&parameters]() -> std::string {
+            return checkParameters()
+              ? ToString(cmCMakePath{ parameters[1] }.HasFileName())
+              : std::string{ "0" };
+          } },
+        { "HAS_EXTENSION"_s,
+          [&parameters]() -> std::string {
+            return checkParameters() && !parameters[1].empty()
+              ? ToString(cmCMakePath{ parameters[1] }.HasExtension())
+              : std::string{ "0" };
+          } },
+        { "HAS_STEM"_s,
+          [&parameters]() -> std::string {
+            return checkParameters()
+              ? ToString(cmCMakePath{ parameters[1] }.HasStem())
+              : std::string{ "0" };
+          } },
+        { "HAS_RELATIVE_PART"_s,
+          [&parameters]() -> std::string {
+            return checkParameters()
+              ? ToString(cmCMakePath{ parameters[1] }.HasRelativePath())
+              : std::string{ "0" };
+          } },
+        { "HAS_PARENT_PATH"_s,
+          [&parameters]() -> std::string {
+            return checkParameters()
+              ? ToString(cmCMakePath{ parameters[1] }.HasParentPath())
+              : std::string{ "0" };
+          } },
+        { "IS_ABSOLUTE"_s,
+          [&parameters]() -> std::string {
+            return checkParameters()
+              ? ToString(cmCMakePath{ parameters[1] }.IsAbsolute())
+              : std::string{ "0" };
+          } },
+        { "IS_RELATIVE"_s,
+          [&parameters]() -> std::string {
+            return checkParameters()
+              ? ToString(cmCMakePath{ parameters[1] }.IsRelative())
+              : std::string{ "0" };
+          } },
+        { "IS_PREFIX"_s,
+          [&parameters]() -> std::string {
+            bool normalize = parameters[1] == "NORMALIZE"_s;
+            if (checkParametersEx(
+                  normalize ? cmStrCat(parameters.front(), ',', parameters[1])
+                            : parameters.front(),
+                  parameters.size() - (normalize ? 2 : 1), 2)) {
+              return ToString(
+                normalize ? cmCMakePath{ parameters[2] }.Normal().IsPrefix(
+                              cmCMakePath{ parameters[3] }.Normal())
+                          : cmCMakePath{ parameters[1] }.IsPrefix(
+                              cmCMakePath{ parameters[2] }));
+            }
+            return std::string{};
+          } },
+        { "APPEND"_s,
+          [&parameters]() -> std::string {
+            if (checkParametersEx(parameters.front(), parameters.size() - 1, 1,
+                                  false)) {
+              cmCMakePath path;
+              for (const auto& p :
+                   cmRange{ parameters.begin() + 1, parameters.end() }) {
+                path /= p;
+              }
+              return path.String();
+            }
+            return std::string{};
+          } },
+        { "REMOVE_FILENAME"_s,
+          [&parameters]() -> std::string {
+            return checkParameters() && !parameters[1].empty()
+              ? cmCMakePath{ parameters[1] }.RemoveFileName().String()
+              : std::string{};
+          } },
+        { "REPLACE_FILENAME"_s,
+          [&parameters]() -> std::string {
+            return checkParameters(2)
+              ? cmCMakePath{ parameters[1] }
+                  .ReplaceFileName(cmCMakePath{ parameters[2] })
+                  .String()
+              : std::string{};
+          } },
+        { "REMOVE_EXTENSION"_s,
+          [&parameters]() -> std::string {
+            bool lastOnly = parameters[1] == "LAST_ONLY"_s;
+            if (checkParametersEx(
+                  lastOnly ? cmStrCat(parameters.front(), ',', parameters[1])
+                           : parameters.front(),
+                  parameters.size() - (lastOnly ? 2 : 1))) {
+              if (parameters[lastOnly ? 2 : 1].empty()) {
+                return std::string{};
+              }
+              return lastOnly
+                ? cmCMakePath{ parameters[2] }.RemoveExtension().String()
+                : cmCMakePath{ parameters[1] }.RemoveWideExtension().String();
+            }
+            return std::string{};
+          } },
+        { "REPLACE_EXTENSION"_s,
+          [&parameters]() -> std::string {
+            bool lastOnly = parameters[1] == "LAST_ONLY"_s;
+            if (checkParametersEx(
+                  lastOnly ? cmStrCat(parameters.front(), ',', parameters[1])
+                           : parameters.front(),
+                  parameters.size() - (lastOnly ? 2 : 1), 2)) {
+              return lastOnly
+                ? cmCMakePath{ parameters[2] }
+                    .ReplaceExtension(cmCMakePath{ parameters[3] })
+                    .String()
+                : cmCMakePath{ parameters[1] }
+                    .ReplaceWideExtension(cmCMakePath{ parameters[2] })
+                    .String();
+            }
+            return std::string{};
+          } },
+        { "NORMAL_PATH"_s,
+          [&parameters]() -> std::string {
+            return checkParameters() && !parameters[1].empty()
+              ? cmCMakePath{ parameters[1] }.Normal().String()
+              : std::string{};
+          } },
+        { "RELATIVE_PATH"_s,
+          [&parameters, context, content]() -> std::string {
+            auto count = parameters.size() - 1;
+            if (count < 1 || count > 2) {
+              reportError(
+                context, content->GetOriginalExpression(),
+                cmStrCat("$<PATH:RELATIVE_PATH> expression requires ",
+                         "one or two parameters."));
+              return std::string{};
+            }
+            auto baseDir = count == 2
+              ? parameters[2]
+              : context->LG->GetCurrentSourceDirectory();
+            return cmCMakePath{ parameters[1] }.Relative(baseDir).String();
+          } },
+        { "ABSOLUTE_PATH"_s,
+          [&parameters, context, content]() -> std::string {
+            bool normalize = parameters[1] == "NORMALIZE"_s;
+            auto count = parameters.size() - (normalize ? 2 : 1);
+            if (count < 1 || count > 2) {
+              reportError(context, content->GetOriginalExpression(),
+                          cmStrCat("$<PATH:ABSOLUTE_PATH",
+                                   (normalize ? ",NORMALIZE" : ""),
+                                   "> expression requires ",
+                                   "one or two parameters."));
+              return std::string{};
+            }
+            auto baseDir = count == 2
+              ? parameters[normalize ? 3 : 2]
+              : context->LG->GetCurrentSourceDirectory();
+            auto path =
+              cmCMakePath{ parameters[normalize ? 2 : 1] }.Absolute(baseDir);
+            return normalize ? path.Normal().String() : path.String();
+          } }
+      };
+
+    if (cm::contains(pathCommands, parameters.front())) {
+      return pathCommands[parameters.front()]();
+    }
+
+    reportError(context, content->GetOriginalExpression(),
+                cmStrCat(parameters.front(), ": invalid option."));
+    return std::string{};
+  }
+} pathNode;
+
 static const struct MakeCIdentifierNode : public cmGeneratorExpressionNode
 {
   MakeCIdentifierNode() {} // NOLINT(modernize-use-equals-default)
@@ -977,7 +1273,8 @@ static const struct CompileLanguageNode : public cmGeneratorExpressionNode
       reportError(
         context, content->GetOriginalExpression(),
         "$<COMPILE_LANGUAGE:...> may only be used to specify include "
-        "directories, compile definitions, compile options, and to evaluate "
+        "directories, compile definitions, compile options, and to "
+        "evaluate "
         "components of the file(GENERATE) command.");
       return std::string();
     }
@@ -1024,7 +1321,8 @@ static const struct CompileLanguageAndIdNode : public cmGeneratorExpressionNode
       // reportError(context, content->GetOriginalExpression(), "");
       reportError(
         context, content->GetOriginalExpression(),
-        "$<COMPILE_LANG_AND_ID:lang,id> may only be used with binary targets "
+        "$<COMPILE_LANG_AND_ID:lang,id> may only be used with binary "
+        "targets "
         "to specify include directories, compile definitions, and compile "
         "options.  It may not be used with the add_custom_command, "
         "add_custom_target, or file(GENERATE) commands.");
@@ -1037,9 +1335,9 @@ static const struct CompileLanguageAndIdNode : public cmGeneratorExpressionNode
         genName.find("Visual Studio") == std::string::npos &&
         genName.find("Xcode") == std::string::npos &&
         genName.find("Watcom WMake") == std::string::npos) {
-      reportError(
-        context, content->GetOriginalExpression(),
-        "$<COMPILE_LANG_AND_ID:lang,id> not supported for this generator.");
+      reportError(context, content->GetOriginalExpression(),
+                  "$<COMPILE_LANG_AND_ID:lang,id> not supported for this "
+                  "generator.");
       return std::string();
     }
 
@@ -1165,7 +1463,8 @@ static const struct LinkLanguageAndIdNode : public cmGeneratorExpressionNode
       reportError(
         context, content->GetOriginalExpression(),
         "$<LINK_LANG_AND_ID:lang,id> may only be used with binary targets "
-        "to specify link libraries, link directories, link options, and link "
+        "to specify link libraries, link directories, link options, and "
+        "link "
         "depends.");
       return std::string();
     }
@@ -1421,7 +1720,8 @@ static std::string getLinkedTargetsContent(
       if (lib.Target) {
         // Pretend $<TARGET_PROPERTY:lib.Target,prop> appeared in our
         // caller's property and hand-evaluate it as if it were compiled.
-        // Create a context as cmCompiledGeneratorExpression::Evaluate does.
+        // Create a context as cmCompiledGeneratorExpression::Evaluate
+        // does.
         cmGeneratorExpressionContext libContext(
           target->GetLocalGenerator(), context->Config, context->Quiet, target,
           target, context->EvaluateForBuildsystem, lib.Backtrace,
@@ -1530,19 +1830,21 @@ static const struct TargetPropertyNode : public cmGeneratorExpressionNode
 
       context->HadHeadSensitiveCondition = true;
       if (!target) {
-        reportError(
-          context, content->GetOriginalExpression(),
-          "$<TARGET_PROPERTY:prop>  may only be used with binary targets.  "
-          "It may not be used with add_custom_command or add_custom_target.  "
-          " "
-          "Specify the target to read a property from using the "
-          "$<TARGET_PROPERTY:tgt,prop> signature instead.");
+        reportError(context, content->GetOriginalExpression(),
+                    "$<TARGET_PROPERTY:prop>  may only be used with "
+                    "binary targets.  "
+                    "It may not be used with add_custom_command or "
+                    "add_custom_target. "
+                    " "
+                    " "
+                    "Specify the target to read a property from using the "
+                    "$<TARGET_PROPERTY:tgt,prop> signature instead.");
         return std::string();
       }
     } else {
-      reportError(
-        context, content->GetOriginalExpression(),
-        "$<TARGET_PROPERTY:...> expression requires one or two parameters");
+      reportError(context, content->GetOriginalExpression(),
+                  "$<TARGET_PROPERTY:...> expression requires one or two "
+                  "parameters");
       return std::string();
     }
 
@@ -1570,10 +1872,10 @@ static const struct TargetPropertyNode : public cmGeneratorExpressionNode
       if (target->LinkLanguagePropagatesToDependents() && dagCheckerParent &&
           (dagCheckerParent->EvaluatingLinkLibraries() ||
            dagCheckerParent->EvaluatingSources())) {
-        reportError(
-          context, content->GetOriginalExpression(),
-          "LINKER_LANGUAGE target property can not be used while evaluating "
-          "link libraries for a static library");
+        reportError(context, content->GetOriginalExpression(),
+                    "LINKER_LANGUAGE target property can not be used "
+                    "while evaluating "
+                    "link libraries for a static library");
         return std::string();
       }
       return target->GetLinkerLanguage(context->Config);
@@ -2565,9 +2867,9 @@ struct TargetOutputNameArtifactResultGetter<ArtifactPdbTag>
     std::string pdbSupportVar = "CMAKE_" + language + "_LINKER_SUPPORTS_PDB";
 
     if (!context->LG->GetMakefile()->IsOn(pdbSupportVar)) {
-      ::reportError(
-        context, content->GetOriginalExpression(),
-        "TARGET_PDB_FILE_BASE_NAME is not supported by the target linker.");
+      ::reportError(context, content->GetOriginalExpression(),
+                    "TARGET_PDB_FILE_BASE_NAME is not supported by the "
+                    "target linker.");
       return std::string();
     }
 
@@ -2829,6 +3131,7 @@ const cmGeneratorExpressionNode* cmGeneratorExpressionNode::GetNode(
     { "REMOVE_DUPLICATES", &removeDuplicatesNode },
     { "LOWER_CASE", &lowerCaseNode },
     { "UPPER_CASE", &upperCaseNode },
+    { "PATH", &pathNode },
     { "MAKE_C_IDENTIFIER", &makeCIdentifierNode },
     { "BOOL", &boolNode },
     { "IF", &ifNode },

@@ -123,6 +123,67 @@ String Comparisons
 
   ``1`` if ``v1`` is a version greater than or equal to ``v2``, else ``0``.
 
+.. _GenEx Path Queries:
+
+Path Queries
+------------
+
+The ``$<PATH>`` generator expression offers the same capabilities as the
+:command:`cmake_path` command, for the :ref:`Query <Path Query>` options.
+
+The ``$<PATH>`` generator expression can also be used for path
+:ref:`Decomposition <GenEx Path Decomposition>` and
+:ref:`Transformations <GenEx Path Transformations>`.
+
+.. genex:: $<PATH:HAS_*,path>
+
+  .. versionadded:: 3.24
+
+  The following operations return ``1`` if the particular path component is
+  present, ``0`` otherwise. See :ref:`Path Structure And Terminology` for the
+  meaning of each path component.
+
+  ::
+
+    $<PATH:HAS_ROOT_NAME,path>
+    $<PATH:HAS_ROOT_DIRECTORY,path>
+    $<PATH:HAS_ROOT_PATH,path>
+    $<PATH:HAS_FILENAME,path>
+    $<PATH:HAS_EXTENSION,path>
+    $<PATH:HAS_STEM,path>
+    $<PATH:HAS_RELATIVE_PART,path>
+    $<PATH:HAS_PARENT_PATH,path>
+
+  Note the following special cases:
+
+  * For ``HAS_ROOT_PATH``, a true result will only be returned if at least one
+    of ``root-name`` or ``root-directory`` is non-empty.
+
+  * For ``HAS_PARENT_PATH``, the root directory is also considered to have a
+    parent, which will be itself.  The result is true except if the path
+    consists of just a :ref:`filename <FILENAME_DEF>`.
+
+.. genex:: $<PATH:IS_ABSOLUTE,path>
+
+  .. versionadded:: 3.24
+
+  Returns ``1`` if the path is :ref:`absolute <IS_ABSOLUTE>`, ``0`` otherwise.
+
+.. genex:: $<PATH:IS_RELATIVE,path>
+
+  .. versionadded:: 3.24
+
+  This will return the opposite of ``IS_ABSOLUTE``.
+
+.. genex:: $<PATH:IS_PREFIX[,NORMALIZE],path,input>
+
+  .. versionadded:: 3.24
+
+  Returns ``1`` if ``path`` is the prefix of ``input``,``0`` otherwise.
+
+  When the ``NORMALIZE`` option is specified, ``path`` and ``input`` are
+  :ref:`normalized <Normalization>` before the check.
+
 Variable Queries
 ----------------
 
@@ -663,6 +724,135 @@ String Transformations
       COMMAND ${CMAKE_COMMAND} -E
         echo $<TARGET_GENEX_EVAL:foo,$<TARGET_PROPERTY:foo,CUSTOM_KEYS>>
     )
+
+.. _GenEx Path Decomposition:
+
+Path Decomposition
+------------------
+
+The ``$<PATH>`` generator expression offers the same capabilities as the
+:command:`cmake_path` command, for the
+:ref:`Decomposition <Path Decomposition>` options.
+
+The ``$<PATH>`` generator expression can also be used for path
+:ref:`Queries <GenEx Path Queries>` and
+:ref:`Transformations <GenEx Path Transformations>`.
+
+.. genex:: $<PATH:GET_*,...>
+
+  .. versionadded:: 3.24
+
+  The following operations retrieve a different component or group of
+  components from a path. See :ref:`Path Structure And Terminology` for the
+  meaning of each path component.
+
+  ::
+
+    $<PATH:GET_ROOT_NAME,path>
+    $<PATH:GET_ROOT_DIRECTORY,path>
+    $<PATH:GET_ROOT_PATH,path>
+    $<PATH:GET_FILENAME,path>
+    $<PATH:GET_EXTENSION[,LAST_ONLY],path>
+    $<PATH:GET_STEM[,LAST_ONLY],path>
+    $<PATH:GET_RELATIVE_PART,path>
+    $<PATH:GET_PARENT_PATH,path>
+
+  If a requested component is not present in the path, an empty string is
+  returned.
+
+.. _GenEx Path Transformations:
+
+Path Transformations
+--------------------
+
+The ``$<PATH>`` generator expression offers the same capabilities as the
+:command:`cmake_path` command, for the
+:ref:`Modification <Path Modification>` and
+:ref:`Generation <Path Generation>` options.
+
+The ``$<PATH>`` generator expression can also be used for path
+:ref:`Queries <GenEx Path Queries>` and
+:ref:`Decomposition <GenEx Path Decomposition>`.
+
+.. genex:: $<PATH:APPEND,path,input,...>
+
+  .. versionadded:: 3.24
+
+  Returns all the ``input`` arguments appended to ``path`` using ``/`` as the
+  ``directory-separator``. Depending on the ``input``, the value of ``path``
+  may be discarded.
+
+  See :ref:`cmake_path(APPEND) <APPEND>` for more details.
+
+.. genex:: $<PATH:REMOVE_FILENAME,path>
+
+  .. versionadded:: 3.24
+
+  Returns ``path`` with filename component (as returned by
+  ``$<PATH:GET_FILENAME>``) removed. After removal, any trailing
+  ``directory-separator`` is left alone, if present.
+
+  See :ref:`cmake_path(REMOVE_FILENAME) <REMOVE_FILENAME>` for more details.
+
+.. genex:: $<PATH:REPLACE_FILENAME,path,input>
+
+  .. versionadded:: 3.24
+
+  Returns ``path`` with the filename component replaced by ``input``. If
+  ``path`` has no filename component (i.e. ``$<PATH:HAS_FILENAME>`` returns
+  ``0``), ``path`` is unchanged.
+
+  See :ref:`cmake_path(REPLACE_FILENAME) <REPLACE_FILENAME>` for more details.
+
+.. genex:: $<PATH:REMOVE_EXTENSION[,LAST_ONLY],path>
+
+  .. versionadded:: 3.24
+
+  Returns ``path`` with the :ref:`extension <EXTENSION_DEF>` removed, if any.
+
+  See :ref:`cmake_path(REMOVE_EXTENSION) <REMOVE_EXTENSION>` for more details.
+
+.. genex:: $<PATH:REPLACE_EXTENSION[,LAST_ONLY],path>
+
+  .. versionadded:: 3.24
+
+  Returns ``path`` with the :ref:`extension <EXTENSION_DEF>` replaced by
+  ``input``, if any.
+
+  See :ref:`cmake_path(REPLACE_EXTENSION) <REPLACE_EXTENSION>` for more details.
+
+.. genex:: $<PATH:NORMAL_PATH,path>
+
+  .. versionadded:: 3.24
+
+  Returns ``path`` normalized according to the steps described in
+  :ref:`Normalization`.
+
+.. genex:: $<PATH:RELATIVE_PATH,path[,base_directory]>
+
+  .. versionadded:: 3.24
+
+  Returns ``path``, modified to make it relative to the ``base_directory``
+  argument. If ``base_directory`` is not specified, the default base directory
+  will be :variable:`CMAKE_CURRENT_SOURCE_DIR`.
+
+  See :ref:`cmake_path(RELATIVE_PATH) <cmake_path-RELATIVE_PATH>` for more
+  details.
+
+.. genex:: $<PATH:ABSOLUTE_PATH[,NORMALIZE],path[,base_directory]>
+
+  .. versionadded:: 3.24
+
+  Returns ``path`` as absolute. If ``path`` is a relative path
+  (``$<PATH:IS_RELATIVE>`` returns ``1``), it is evaluated relative to the
+  given base directory specified by ``base_directory`` argument. if
+  ``base_directory`` is not specified, the default base directory will be
+  :variable:`CMAKE_CURRENT_SOURCE_DIR`.
+
+  When the ``NORMALIZE`` option is specified, the path is
+  :ref:`normalized <Normalization>` after the path computation.
+
+  See :ref:`cmake_path(ABSOLUTE_PATH) <ABSOLUTE_PATH>` for more details.
 
 Variable Queries
 ----------------

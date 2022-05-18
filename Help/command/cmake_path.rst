@@ -96,6 +96,8 @@ The following conventions are used in this command's documentation:
   The name of a variable into which the result of a command will be written.
 
 
+.. _Path Structure And Terminology:
+
 Path Structure And Terminology
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -215,6 +217,8 @@ normalize a path is as follows:
 7. If the path is empty by this stage, add a ``dot`` (normal form of ``./``
    is ``.``).
 
+
+.. _Path Decomposition:
 
 Decomposition
 ^^^^^^^^^^^^^
@@ -385,13 +389,14 @@ Path traversal examples
   Parent path is "c:/"
 
 
+.. _Path Query:
+
 Query
 ^^^^^
 
 Each of the ``GET`` subcommands has a corresponding ``HAS_...``
 subcommand which can be used to discover whether a particular path
-component is present.  See `Path Structure And Terminology`_ for the
-meaning of each path component.
+component is present. ¢
 
 .. _HAS_ROOT_NAME:
 .. _HAS_ROOT_DIRECTORY:
@@ -494,6 +499,8 @@ according to the following pseudo-code logic:
   Unlike most other ``cmake_path()`` subcommands, the ``COMPARE`` subcommand
   takes literal strings as input, not the names of variables.
 
+
+.. _Path Modification:
 
 Modification
 ^^^^^^^^^^^^
@@ -644,6 +651,8 @@ is equivalent to the following:
   cmake_path(APPEND_STRING path "input")
 
 
+.. _Path Generation:
+
 Generation
 ^^^^^^^^^^
 
@@ -663,9 +672,7 @@ Normalize ``<path-var>`` according the steps described in :ref:`Normalization`.
   cmake_path(RELATIVE_PATH <path-var> [BASE_DIRECTORY <input>]
                                       [OUTPUT_VARIABLE <out-var>])
 
-Modifies ``<path-var>`` to make it relative to the ``BASE_DIRECTORY`` argument.
-If ``BASE_DIRECTORY`` is not specified, the default base directory will be
-:variable:`CMAKE_CURRENT_SOURCE_DIR`.
+¢
 
 For reference, the algorithm used to compute the relative path is the same
 as that used by C++
