@@ -1145,11 +1145,11 @@ endfunction()
 # The setter also records the source and binary dirs used.
 #=======================================================================
 
-# Internal use, projects must not call this directly. It is intended
-# for use by things like the FetchContent_Populate() function to
-# record when FetchContent_Populate() is called for a particular
-# content name.
-function(__FetchContent_setPopulated contentName)
+# Semi-internal use. Projects must not call this directly. Dependency
+# providers must call it if they satisfy a request made with the
+# FETCHCONTENT_MAKEAVAILABLE_SERIAL method (that is the only permitted
+# place to call it outside of the FetchContent module).
+function(FetchContent_SetPopulated contentName)
 
   cmake_parse_arguments(PARSE_ARGV 1 arg
     ""
@@ -1584,7 +1584,7 @@ function(FetchContent_Populate contentName)
     )
   endif()
 
-  __FetchContent_setPopulated(
+  FetchContent_SetPopulated(
     ${contentName}
     SOURCE_DIR "${${contentNameLower}_SOURCE_DIR}"
     BINARY_DIR "${${contentNameLower}_BINARY_DIR}"
@@ -1654,13 +1654,75 @@ endfunction()
 # calls will be available to the caller.
 macro(FetchContent_MakeAvailable)
 
+  get_property(__cmake_providerCommand GLOBAL PROPERTY
+    __FETCHCONTENT_MAKEAVAILABLE_SERIAL_PROVIDER
+  )
   foreach(__cmake_contentName IN ITEMS ${ARGV})
     string(TOLOWER ${__cmake_contentName} __cmake_contentNameLower)
 
+    set(__cmake_triedProvider NO)
+
     # If user specified FETCHCONTENT_SOURCE_DIR_... for this dependency, that
-    # overrides everything else and we shouldn't try to use find_package().
+    # overrides everything else and we shouldn't try to use find_package() or
+    # a dependency provider.
     string(TOUPPER ${__cmake_contentName} __cmake_contentNameUpper)
     if("${FETCHCONTENT_SOURCE_DIR_${__cmake_contentNameUpper}}" STREQUAL "")
+      # Dependency provider gets first opportunity
+      if(NOT "${__cmake_providerCommand}" STREQUAL "")
+        message(VERBOSE
+          "Trying FETCHCONTENT_MAKEAVAILABLE_SERIAL dependency provider for ${__cmake_contentName}"
+        )
+        # It's still valid if there are no saved details. The project may have
+        # been written to assume a dependency provider is always set and will
+        # provide dependencies without having any declared details for them.
+        __FetchContent_getSavedDetails(${__cmake_contentName} __cmake_contentDetails)
+        set(__cmake_providerArgs
+          "FETCHCONTENT_MAKEAVAILABLE_SERIAL"
+          "${__cmake_contentName}"
+        )
+        # Empty arguments must be preserved because of things like
+        # GIT_SUBMODULES (see CMP0097)
+        foreach(__cmake_item IN LISTS __cmake_contentDetails)
+          string(APPEND __cmake_providerArgs " [==[${__cmake_item}]==]")
+        endforeach()
+        get_property(__cmake_addfpargs GLOBAL PROPERTY
+          _FetchContent_${contentNameLower}_find_package_args DEFINED
+        )
+        if(__cmake_addfpargs)
+          get_property(__cmake_fpargs GLOBAL PROPERTY
+            _FetchContent_${contentNameLower}_find_package_args
+          )
+          string(APPEND __cmake_providerArgs " FIND_PACKAGE_ARGS")
+          foreach(__cmake_item IN LISTS __cmake_fpargs)
+            string(APPEND __cmake_providerArgs " [==[${__cmake_item}]==]")
+          endforeach()
+        endif()
+
+        # This call could lead to FetchContent_MakeAvailable() being called for
+        # a nested dependency and it may occur in the current variable scope.
+        # We have to save/restore the variables we need to preserve.
+        list(APPEND __cmake_fcCurrentNameStack
+          ${__cmake_contentName}
+          ${__cmake_contentNameLower}
+        )
+        cmake_language(EVAL CODE "${__cmake_providerCommand}(${__cmake_providerArgs})")
+        list(POP_BACK __cmake_fcCurrentNameStack
+          __cmake_contentNameLower
+          __cmake_contentName
+        )
+        unset(__cmake_providerArgs)
+        unset(__cmake_addfpargs)
+        unset(__cmake_fpargs)
+        unset(__cmake_item)
+        unset(__cmake_contentDetails)
+
+        set(__cmake_triedProvider YES)
+        FetchContent_GetProperties(${__cmake_contentName})
+        if(${__cmake_contentNameLower}_POPULATED)
+          continue()
+        endif()
+      endif()
+
       # Check if we've been asked to try find_package() first, even if we
       # have already populated this dependency. If we previously tried to
       # use find_package() for this and it succeeded, those things might
@@ -1670,6 +1732,11 @@ macro(FetchContent_MakeAvailable)
       if(__cmake_haveFpArgs)
         message(VERBOSE "Trying find_package(${__cmake_contentName} ...) before FetchContent")
         get_property(__cmake_fpArgs GLOBAL PROPERTY ${__cmake_fpArgsPropName})
+
+        # Don't ask the dependency provider a second time for the same thing
+        if(__cmake_triedProvider)
+          list(PREPEND __cmake_fpArgs BYPASS_PROVIDER)
+        endif()
 
         # This call could lead to FetchContent_MakeAvailable() being called for
         # a nested dependency and it may occur in the current variable scope.
@@ -1688,7 +1755,7 @@ macro(FetchContent_MakeAvailable)
           set(${__cmake_contentNameLower}_SOURCE_DIR "")
           set(${__cmake_contentNameLower}_BINARY_DIR "")
           set(${__cmake_contentNameLower}_POPULATED  TRUE)
-          __FetchContent_setPopulated(${__cmake_contentName})
+          FetchContent_SetPopulated(${__cmake_contentName})
           continue()
         endif()
       endif()
@@ -1731,5 +1798,7 @@ macro(FetchContent_MakeAvailable)
   # clear local variables to prevent leaking into the caller's scope
   unset(__cmake_contentName)
   unset(__cmake_contentNameLower)
+  unset(__cmake_providerCommand)
+  unset(__cmake_triedProvider)
 
 endmacro()
