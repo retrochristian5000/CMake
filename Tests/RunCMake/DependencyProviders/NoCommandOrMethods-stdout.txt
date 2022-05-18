@@ -1,0 +1,3 @@
+-- Before cmake_language
+-- After cmake_language
+-- SomethingThatDoesNotExist_FOUND = 0

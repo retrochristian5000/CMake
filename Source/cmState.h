@@ -12,7 +12,10 @@
 #include <unordered_set>
 #include <vector>
 
+#include <cm/optional>
+
 #include "cmDefinitions.h"
+#include "cmDependencyProvider.h"
 #include "cmLinkedTree.h"
 #include "cmPolicies.h"
 #include "cmProperty.h"
@@ -227,6 +230,24 @@ public:
 
   ProjectKind GetProjectKind() const;
 
+  void ClearDependencyProvider() { this->DependencyProvider.reset(); }
+  void SetDependencyProvider(cmDependencyProvider provider)
+  {
+    this->DependencyProvider = std::move(provider);
+  }
+  cm::optional<cmDependencyProvider> const& GetDependencyProvider() const
+  {
+    return this->DependencyProvider;
+  }
+  Command GetDependencyProviderCommand(
+    cmDependencyProvider::Method method) const;
+
+  void SetInTopLevelIncludes(bool inTopLevelIncludes)
+  {
+    this->ProcessingTopLevelIncludes = inTopLevelIncludes;
+  }
+  bool InTopLevelIncludes() const { return this->ProcessingTopLevelIncludes; }
+
 private:
   friend class cmake;
   void AddCacheEntry(const std::string& key, const char* value,
@@ -288,4 +309,6 @@ private:
   bool NinjaMulti = false;
   Mode StateMode = Unknown;
   ProjectKind StateProjectKind = ProjectKind::Normal;
+  cm::optional<cmDependencyProvider> DependencyProvider;
+  bool ProcessingTopLevelIncludes = false;
 };
