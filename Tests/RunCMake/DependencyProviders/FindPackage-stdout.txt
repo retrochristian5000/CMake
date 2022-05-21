@@ -1,0 +1,7 @@
+-- Before cmake_language
+-- After cmake_language
+-- Intercepted find_package\(NoExist\)
+-- Provider invoked for method FIND_PACKAGE with args: QUIET
+-- NoExist_FOUND = TRUE
+-- FetchContent_MakeAvailable\(\) succeeded
+-- Configuring done
