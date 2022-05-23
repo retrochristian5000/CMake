@@ -206,6 +206,9 @@ MEM_STATIC void BIT_addBits(BIT_CStream_t* bitC,
     DEBUG_STATIC_ASSERT(BIT_MASK_SIZE == 32);
     assert(nbBits < BIT_MASK_SIZE);
     assert(nbBits + bitC->bitPos < sizeof(bitC->bitContainer) * 8);
+    // This analyzer lint fires because the prior asserts are not "seen" in
+    // non-debug builds. Suppress its detection.
+    // NOLINTNEXTLINE(core.UndefinedBinaryOperatorResult)
     bitC->bitContainer |= (value & BIT_mask[nbBits]) << bitC->bitPos;
     bitC->bitPos += nbBits;
 }
