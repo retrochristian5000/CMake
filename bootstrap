@@ -338,6 +338,7 @@ CMAKE_CXX_SOURCES="\
   cmExecProgramCommand \
   cmExecuteProcessCommand \
   cmExpandedCommandArgument \
+  cmExperimental \
   cmExportBuildFileGenerator \
   cmExportFileGenerator \
   cmExportInstallFileGenerator \
@@ -392,6 +393,7 @@ CMAKE_CXX_SOURCES="\
   cmIncludeRegularExpressionCommand \
   cmInstallCommand \
   cmInstallCommandArguments \
+  cmInstallCxxModuleBmiGenerator \
   cmInstallDirectoryGenerator \
   cmInstallExportGenerator \
   cmInstallFileSetGenerator \
