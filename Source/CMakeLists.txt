@@ -543,6 +543,8 @@ set(SRCS
   cmExecuteProcessCommand.h
   cmExpandedCommandArgument.cxx
   cmExpandedCommandArgument.h
+  cmExperimental.cxx
+  cmExperimental.h
   cmExportCommand.cxx
   cmExportCommand.h
   cmExportLibraryDependenciesCommand.cxx
@@ -603,6 +605,8 @@ set(SRCS
   cmInstallCommand.h
   cmInstallCommandArguments.cxx
   cmInstallCommandArguments.h
+  cmInstallCxxModuleBmiGenerator.cxx
+  cmInstallCxxModuleBmiGenerator.h
   cmInstallFilesCommand.cxx
   cmInstallFilesCommand.h
   cmInstallProgramsCommand.cxx
