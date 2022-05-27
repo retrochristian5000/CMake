@@ -83,7 +83,7 @@ public:
     Preset(Preset&& /*other*/) = default;
     Preset(const Preset& /*other*/) = default;
     Preset& operator=(const Preset& /*other*/) = default;
-    virtual ~Preset() = default;
+    virtual ~Preset() noexcept = default;
 #if __cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
     Preset& operator=(Preset&& /*other*/) = default;
 #else
@@ -124,7 +124,7 @@ public:
     ConfigurePreset(ConfigurePreset&& /*other*/) = default;
     ConfigurePreset(const ConfigurePreset& /*other*/) = default;
     ConfigurePreset& operator=(const ConfigurePreset& /*other*/) = default;
-    ~ConfigurePreset() override = default;
+    ~ConfigurePreset() noexcept override = default;
 #if __cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
     ConfigurePreset& operator=(ConfigurePreset&& /*other*/) = default;
 #else
@@ -169,7 +169,7 @@ public:
     BuildPreset(BuildPreset&& /*other*/) = default;
     BuildPreset(const BuildPreset& /*other*/) = default;
     BuildPreset& operator=(const BuildPreset& /*other*/) = default;
-    ~BuildPreset() override = default;
+    ~BuildPreset() noexcept override = default;
 #if __cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
     BuildPreset& operator=(BuildPreset&& /*other*/) = default;
 #else
@@ -200,7 +200,7 @@ public:
     TestPreset(TestPreset&& /*other*/) = default;
     TestPreset(const TestPreset& /*other*/) = default;
     TestPreset& operator=(const TestPreset& /*other*/) = default;
-    ~TestPreset() override = default;
+    ~TestPreset() noexcept override = default;
 #if __cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
     TestPreset& operator=(TestPreset&& /*other*/) = default;
 #else
