@@ -20,9 +20,19 @@
  *
  ***************************************************************************/
 
+#if !defined(_WIN32) \
+  && (!defined(_POSIX_C_SOURCE) || _POSIX_C_SOURCE < 200112L)
+#  undef _POSIX_C_SOURCE
+#  define _POSIX_C_SOURCE 200112L
+#endif
+
 #include "curl_setup.h"
 
 #include "curl_gethostname.h"
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 /*
  * Curl_gethostname() is a wrapper around gethostname() which allows
