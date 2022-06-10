@@ -1841,6 +1841,10 @@ ZEXTERN int ZEXPORT gzgetc_ OF((gzFile file));  /* backward compatibility */
 #  undef z_gzgetc
 #  define z_gzgetc(g) \
           ((g)->have ? ((g)->have--, (g)->pos++, *((g)->next)++) : (gzgetc)(g))
+#elif 1 /* Hook for mangling inside CMake.  */
+#  undef cm_zlib_gzgetc
+#  define cm_zlib_gzgetc(g) \
+          ((g)->have ? ((g)->have--, (g)->pos++, *((g)->next)++) : (gzgetc)(g))
 #else
 #  define gzgetc(g) \
           ((g)->have ? ((g)->have--, (g)->pos++, *((g)->next)++) : (gzgetc)(g))
