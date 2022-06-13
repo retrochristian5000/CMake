@@ -48,7 +48,7 @@
   {                                                                     \
   T const x = VALUE(T, U);                                              \
   char const* str = STR;                                                \
-  sprintf(buf, "%" KWIML_INT_PRI##PRI, x);                              \
+  snprintf(buf, sizeof(buf), "%" KWIML_INT_PRI##PRI, x);                \
   printf(LANG "KWIML_INT_PRI" #PRI ":"                                  \
          " expected [%s], got [%s]", str, buf);                         \
   if(strcmp(str, buf) == 0)                                             \
