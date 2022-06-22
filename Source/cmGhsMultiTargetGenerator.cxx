@@ -184,6 +184,7 @@ void cmGhsMultiTargetGenerator::SetCompilerFlags(std::string const& config,
   if (i == this->FlagsByLanguage.end()) {
     std::string flags;
     this->LocalGenerator->AddLanguageFlags(flags, this->GeneratorTarget,
+                                           cmLanguageFlagKind::Compile,
                                            language, config);
     this->LocalGenerator->AddCMP0018Flags(flags, this->GeneratorTarget,
                                           language, config);

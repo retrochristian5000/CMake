@@ -3300,6 +3300,7 @@ bool cmVisualStudio10TargetGenerator::ComputeClOptions(
   this->LangForClCompile = langForClCompile;
   if (!langForClCompile.empty()) {
     this->LocalGenerator->AddLanguageFlags(flags, this->GeneratorTarget,
+                                           cmLanguageFlagKind::Compile,
                                            langForClCompile, configName);
     this->LocalGenerator->AddCompileOptions(flags, this->GeneratorTarget,
                                             langForClCompile, configName);
@@ -3675,7 +3676,8 @@ bool cmVisualStudio10TargetGenerator::ComputeCudaOptions(
 
   // Get compile flags for CUDA in this directory.
   std::string flags;
-  this->LocalGenerator->AddLanguageFlags(flags, this->GeneratorTarget, "CUDA",
+  this->LocalGenerator->AddLanguageFlags(flags, this->GeneratorTarget,
+                                         cmLanguageFlagKind::Compile, "CUDA",
                                          configName);
   this->LocalGenerator->AddCompileOptions(flags, this->GeneratorTarget, "CUDA",
                                           configName);
@@ -3947,6 +3949,7 @@ bool cmVisualStudio10TargetGenerator::ComputeMasmOptions(
 
   std::string flags;
   this->LocalGenerator->AddLanguageFlags(flags, this->GeneratorTarget,
+                                         cmLanguageFlagKind::Compile,
                                          "ASM_MASM", configName);
 
   masmOptions.Parse(flags);
@@ -3999,6 +4002,7 @@ bool cmVisualStudio10TargetGenerator::ComputeNasmOptions(
 
   std::string flags;
   this->LocalGenerator->AddLanguageFlags(flags, this->GeneratorTarget,
+                                         cmLanguageFlagKind::Compile,
                                          "ASM_NASM", configName);
   flags += " -f";
   flags += this->Makefile->GetSafeDefinition("CMAKE_ASM_NASM_OBJECT_FORMAT");
