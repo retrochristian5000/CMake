@@ -4,6 +4,7 @@
 #  include <unistd.h>
 #endif
 
+#include <sched.h>
 #include <stdio.h>
 
 int main(void)
