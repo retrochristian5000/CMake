@@ -1,7 +1,7 @@
 # add compile options to warning_options to ensure unused-function throws a warning
 # if warning_options is NOT DEFINED, assume compiler doesn't support warning as error
 macro(get_warning_options warning_options)
-  if (CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang|XLClang|IBMClang|LCC|NVCC|IntelLLVM)$")
+  if (CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang|XLClang|IBMClang|LCC|NVHPC|IntelLLVM)$")
     set(${warning_options} "-Wall")
   elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC"
           OR (CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND CMAKE_CXX_SIMULATE_ID MATCHES "MSVC"))
