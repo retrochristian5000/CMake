@@ -484,6 +484,13 @@ if(NOT LAPACK_NOT_FOUND_MESSAGE)
       AND (BLA_VENDOR STREQUAL "OpenBLAS" OR BLA_VENDOR STREQUAL "All"))
     set(_lapack_openblas_lib "openblas")
 
+    if(BLA_STATIC)
+      # If OpenBLAS contains LAPACK, -lgfortran must be added
+      set(_lapack_openblas_deps "-lgfortran")
+    else()
+      set(_lapack_openblas_deps "")
+    endif()
+
     if(_lapack_sizeof_integer EQUAL 8)
       string(APPEND _lapack_openblas_lib "64")
     endif()
@@ -494,7 +501,7 @@ if(NOT LAPACK_NOT_FOUND_MESSAGE)
       cheev
       ""
       "${_lapack_openblas_lib}"
-      ""
+      "${_lapack_openblas_deps}"
       ""
       ""
       "${BLAS_LIBRARIES}"
