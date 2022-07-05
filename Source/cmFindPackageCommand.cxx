@@ -2581,12 +2581,8 @@ bool cmFindPackageCommand::SearchPrefix(std::string const& prefix_in)
   }
 
   // PREFIX/(Foo|foo|FOO).*/(lib/ARCH|lib*|share)/(Foo|foo|FOO).*/(cmake|CMake)/
-  if (TryGeneratedPaths(searchFn, prefix, firstPkgDirGen, cmnGen,
-                        secondPkgDirGen, iCMakeGen)) {
-    return true;
-  }
-
-  return false;
+  return TryGeneratedPaths(searchFn, prefix, firstPkgDirGen, cmnGen,
+                           secondPkgDirGen, iCMakeGen);
 }
 
 bool cmFindPackageCommand::SearchFrameworkPrefix(std::string const& prefix_in)
@@ -2624,11 +2620,7 @@ bool cmFindPackageCommand::SearchFrameworkPrefix(std::string const& prefix_in)
   }
 
   // <prefix>/Foo.framework/Versions/*/Resources/CMake/
-  if (TryGeneratedPaths(searchFn, prefix, fwGen, vGen, grGen, iCMakeGen)) {
-    return true;
-  }
-
-  return false;
+  return TryGeneratedPaths(searchFn, prefix, fwGen, vGen, grGen, iCMakeGen);
 }
 
 bool cmFindPackageCommand::SearchAppBundlePrefix(std::string const& prefix_in)
@@ -2652,13 +2644,9 @@ bool cmFindPackageCommand::SearchAppBundlePrefix(std::string const& prefix_in)
   }
 
   // <prefix>/Foo.app/Contents/Resources/CMake
-  if (TryGeneratedPaths(
-        searchFn, prefix, appGen, crGen,
-        cmCaseInsensitiveDirectoryListGenerator{ "cmake"_s })) {
-    return true;
-  }
-
-  return false;
+  return TryGeneratedPaths(
+    searchFn, prefix, appGen, crGen,
+    cmCaseInsensitiveDirectoryListGenerator{ "cmake"_s });
 }
 
 // TODO: Debug cmsys::Glob double slash problem.
