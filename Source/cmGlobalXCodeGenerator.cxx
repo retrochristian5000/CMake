@@ -2423,6 +2423,10 @@ void cmGlobalXCodeGenerator::CreateBuildSettings(cmGeneratorTarget* gtgt,
   this->AppendDefines(ppDefs, targetDefines);
   buildSettings->AddAttribute("GCC_PREPROCESSOR_DEFINITIONS",
                               ppDefs.CreateList());
+  if (languages.count("Swift")) {
+    buildSettings->AddAttribute("SWIFT_ACTIVE_COMPILATION_CONDITIONS",
+                                ppDefs.CreateList());
+  }
 
   std::string extraLinkOptionsVar;
   std::string extraLinkOptions;
