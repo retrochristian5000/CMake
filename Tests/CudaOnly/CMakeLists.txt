@@ -26,6 +26,9 @@ if(CMake_TEST_CUDA AND NOT CMake_TEST_CUDA STREQUAL "Clang")
 
   # Only NVCC defines __CUDACC_DEBUG__ when compiling in debug mode.
   add_cuda_test_macro(CudaOnly.GPUDebugFlag CudaOnlyGPUDebugFlag)
+
+  # Verify we pass NVCC the cuda toolkit as an explicit system include
+  add_cuda_test_macro(CudaOnly.ToolkitIsSystemInclude CudaOnlySystemInclude)
 endif()
 
 add_test(NAME CudaOnly.DontResolveDeviceSymbols COMMAND
