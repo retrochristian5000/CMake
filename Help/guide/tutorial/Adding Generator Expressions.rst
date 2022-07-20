@@ -1,4 +1,4 @@
-Step 10: Adding Generator Expressions
+Step 4: Adding Generator Expressions
 =====================================
 
 :manual:`Generator expressions <cmake-generator-expressions(7)>` are evaluated
@@ -37,16 +37,16 @@ instead of using :variable:`CMAKE_CXX_STANDARD`.
 
 So the following code:
 
-.. literalinclude:: Step10/CMakeLists.txt
+.. literalinclude:: Step4/CMakeLists.txt
   :caption: CMakeLists.txt
   :name: CMakeLists.txt-CXX_STANDARD-variable-remove
   :language: cmake
   :start-after: project(Tutorial VERSION 1.0)
-  :end-before: # control where the static and shared libraries are built so that on windows
+  :end-before: # should we use our own math functions
 
 Would be replaced with:
 
-.. literalinclude:: Step11/CMakeLists.txt
+.. literalinclude:: Step5/CMakeLists.txt
   :caption: CMakeLists.txt
   :name: CMakeLists.txt-cxx_std-feature
   :language: cmake
@@ -69,12 +69,12 @@ warning flags vary based on the compiler we use the ``COMPILE_LANG_AND_ID``
 generator expression to control which flags to apply given a language and a set
 of compiler ids as seen below:
 
-.. literalinclude:: Step11/CMakeLists.txt
+.. literalinclude:: Step5/CMakeLists.txt
   :caption: CMakeLists.txt
   :name: CMakeLists.txt-target_compile_options-genex
   :language: cmake
   :start-after: # the BUILD_INTERFACE genex
-  :end-before: # control where the static and shared libraries are built so that on windows
+  :end-before: # should we use our own math functions
 
 Looking at this we see that the warning flags are encapsulated inside a
 ``BUILD_INTERFACE`` condition. This is done so that consumers of our installed
@@ -82,3 +82,51 @@ project will not inherit our warning flags.
 
 **Exercise**: Modify ``MathFunctions/CMakeLists.txt`` so that all targets have
 a :command:`target_link_libraries` call to ``tutorial_compiler_flags``.
+
+Next, let's use generator expressions to add code for exclusively debug mode.
+When the build is run in release mode, all of this code will be removed. Add
+the following line to the end of your MathFunctions CMakeList:
+
+.. literalinclude:: Step5/MathFunctions/CMakeLists.txt
+  :caption: CMakeLists.txt
+  :name: CMakeLists.txt-target_compile_definitions-genex
+  :language: cmake
+  :start-after: # Creating a DEBUG variable to pass through
+
+As you can see, generator expressions can be nested. The inner expression
+checks if we are in config mode debug. This returns a boolean value. The
+outer generator expression stores that boolean value in the variable DEBUG
+for us to use in our code.
+
+Since we have the variable DEBUG to use, lets move some our function print
+outs to be a debug only feature. In mysqrt.cxx, wrap the print message with
+``#ifdef DEBUG`` to look like the following.
+
+.. literalinclude:: Step5/MathFunctions/mysqrt.cxx
+  :caption: mysqrt.cxx
+  :name: mysqrt.cxx-debug-ifdef
+  :language: c++
+  :start-after: result = result + 0.5 * delta / result;
+  :end-before: }
+
+With this all set, we can build in debug mode by calling the following
+from the command line:
+
+.. code-block:: console
+  :caption: console
+  :name: build-debug-config
+
+  cmake --build . --config Debug
+
+Then to build in release mode, we would call the following from the command
+line:
+
+.. code-block:: console
+  :caption: console
+  :name: build-release-config
+
+  cmake --build . --config Release
+
+Both of these commands will create the respective folders Debug and Release.
+In these folders will be your executable. Run it to verify that the extended
+output is only produced in debug mode.

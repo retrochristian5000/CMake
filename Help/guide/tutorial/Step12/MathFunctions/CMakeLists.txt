@@ -9,6 +9,9 @@ target_include_directories(MathFunctions
                             $<INSTALL_INTERFACE:include>
                            )
 
+# Creating a DEBUG variable to pass through
+target_compile_definitions(MathFunctions PRIVATE $<$<CONFIG:Debug>:DEBUG>)
+
 # should we use our own math functions
 option(USE_MYMATH "Use tutorial provided math implementation" ON)
 if(USE_MYMATH)
