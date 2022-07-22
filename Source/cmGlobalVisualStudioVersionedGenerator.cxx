@@ -900,10 +900,20 @@ std::string cmGlobalVisualStudioVersionedGenerator::FindMSBuildCommand()
   if (vsSetupAPIHelper.GetVSInstanceInfo(vs)) {
     if (this->Version >= cmGlobalVisualStudioGenerator::VSVersion::VS17) {
 #if defined(_M_ARM64)
-      std::string msbuild_arm64 =
-        vs + "/MSBuild/Current/Bin/arm64/MSBuild.exe";
-      if (cmSystemTools::FileExists(msbuild_arm64)) {
-        return msbuild_arm64;
+      cmSystemTools::WindowsVersion const windowsVersion =
+        cmSystemTools::GetWindowsVersion();
+      bool const isWindows11OrGreater =
+        (windowsVersion.dwMajorVersion > 10 ||
+         (windowsVersion.dwMajorVersion == 10 &&
+          windowsVersion.dwMinorVersion > 0) ||
+         (windowsVersion.dwMajorVersion == 10 &&
+          windowsVersion.dwMinorVersion == 0 &&
+          windowsVersion.dwBuildNumber >= 22000));
+      if (isWindows11OrGreater) {
+        msbuild = vs + "/MSBuild/Current/Bin/arm64/MSBuild.exe";
+        if (cmSystemTools::FileExists(msbuild)) {
+          return msbuild;
+        }
       }
 #endif
 
