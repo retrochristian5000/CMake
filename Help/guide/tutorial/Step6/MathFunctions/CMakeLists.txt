@@ -6,6 +6,9 @@ target_include_directories(MathFunctions
           INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
           )
 
+# Creating a DEBUG variable to pass through
+target_compile_definitions(MathFunctions PRIVATE $<$<CONFIG:Debug>:DEBUG>)
+
 # install rules
 install(TARGETS MathFunctions DESTINATION lib)
 install(FILES MathFunctions.h DESTINATION include)
