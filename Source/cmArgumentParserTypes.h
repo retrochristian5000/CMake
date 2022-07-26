@@ -9,16 +9,19 @@ namespace ArgumentParser {
 template <typename T>
 struct Maybe : public T
 {
+  using T::T;
 };
 
 template <typename T>
 struct MaybeEmpty : public T
 {
+  using T::T;
 };
 
 template <typename T>
 struct NonEmpty : public T
 {
+  using T::T;
 };
 
 } // namespace ArgumentParser
