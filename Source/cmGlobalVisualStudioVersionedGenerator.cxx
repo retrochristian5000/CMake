@@ -25,53 +25,78 @@
 #include "cmVSSetupHelper.h"
 #include "cmake.h"
 
-#if defined(_M_ARM64)
-#  define HOST_PLATFORM_NAME "ARM64"
-#  define HOST_TOOLS_ARCH(v)                                                  \
-    (v >= cmGlobalVisualStudioGenerator::VSVersion::VS17) ? "ARM64" : ""
-#elif defined(_M_ARM)
-#  define HOST_PLATFORM_NAME "ARM"
-#  define HOST_TOOLS_ARCH(v) ""
-#elif defined(_M_IA64)
-#  define HOST_PLATFORM_NAME "Itanium"
-#  define HOST_TOOLS_ARCH(v) ""
-#elif defined(_WIN64)
-#  define HOST_PLATFORM_NAME "x64"
-#  define HOST_TOOLS_ARCH(v) "x64"
-#else
+#ifndef IMAGE_FILE_MACHINE_ARM64
+#  define IMAGE_FILE_MACHINE_ARM64 0xaa64 // ARM64 Little-Endian
+#endif
+
 static bool VSIsWow64()
 {
   BOOL isWow64 = false;
   return IsWow64Process(GetCurrentProcess(), &isWow64) && isWow64;
 }
-#endif
+
+static bool VSIsArm64Host()
+{
+  typedef BOOL(WINAPI * CM_ISWOW64PROCESS2)(
+    HANDLE hProcess, USHORT * pProcessMachine, USHORT * pNativeMachine);
+
+  static const CM_ISWOW64PROCESS2 s_IsWow64Process2Impl =
+    (CM_ISWOW64PROCESS2)GetProcAddress(
+      GetModuleHandleW(L"api-ms-win-core-wow64-l1-1-1.dll"),
+      "IsWow64Process2");
+  USHORT processMachine, nativeMachine;
+
+  return s_IsWow64Process2Impl != nullptr &&
+    s_IsWow64Process2Impl(GetCurrentProcess(), &processMachine,
+                          &nativeMachine) &&
+    nativeMachine == IMAGE_FILE_MACHINE_ARM64;
+}
+
+static bool VSHasDotNETFrameworkArm64()
+{
+  std::string dotNetArm64;
+  return cmSystemTools::ReadRegistryValue(
+    "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\.NETFramework;InstallRootArm64",
+    dotNetArm64);
+}
 
 static std::string VSHostPlatformName()
 {
-#ifdef HOST_PLATFORM_NAME
-  return HOST_PLATFORM_NAME;
-#else
-  if (VSIsWow64()) {
+  if (VSIsArm64Host()) {
+    return "ARM64";
+  } else if (VSIsWow64()) {
     return "x64";
   } else {
+#if defined(_M_ARM)
+    return "ARM";
+#elif defined(_M_IA64)
+    return "Itanium";
+#elif defined(_WIN64)
+    return "x64";
+#else
     return "Win32";
-  }
 #endif
+  }
 }
 
 static std::string VSHostArchitecture(
   cmGlobalVisualStudioGenerator::VSVersion v)
 {
-  static_cast<void>(v);
-#ifdef HOST_TOOLS_ARCH
-  return HOST_TOOLS_ARCH(v);
-#else
-  if (VSIsWow64()) {
+  if (VSIsArm64Host()) {
+    return v >= cmGlobalVisualStudioGenerator::VSVersion::VS17 ? "ARM64" : "";
+  } else if (VSIsWow64()) {
     return "x64";
   } else {
+#if defined(_M_ARM)
+    return "";
+#elif defined(_M_IA64)
+    return "";
+#elif defined(_WIN64)
+    return "x64";
+#else
     return "x86";
-  }
 #endif
+  }
 }
 
 static unsigned int VSVersionToMajor(
@@ -899,14 +924,12 @@ std::string cmGlobalVisualStudioVersionedGenerator::FindMSBuildCommand()
   std::string vs;
   if (vsSetupAPIHelper.GetVSInstanceInfo(vs)) {
     if (this->Version >= cmGlobalVisualStudioGenerator::VSVersion::VS17) {
-#if defined(_M_ARM64)
-      std::string msbuild_arm64 =
-        vs + "/MSBuild/Current/Bin/arm64/MSBuild.exe";
-      if (cmSystemTools::FileExists(msbuild_arm64)) {
-        return msbuild_arm64;
+      if (VSIsArm64Host() && VSHasDotNETFrameworkArm64()) {
+        msbuild = vs + "/MSBuild/Current/Bin/arm64/MSBuild.exe";
+        if (cmSystemTools::FileExists(msbuild)) {
+          return msbuild;
+        }
       }
-#endif
-
       msbuild = vs + "/MSBuild/Current/Bin/amd64/MSBuild.exe";
       if (cmSystemTools::FileExists(msbuild)) {
         return msbuild;
