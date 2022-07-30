@@ -372,6 +372,7 @@ private:
 
 #if defined(__LCC__)
 #  define CM_LCC_DIAG_SUPPRESS_3288
+#  pragma diag_suppress 1222 // invalid error number (3288)
 #  pragma diag_suppress 3288 // parameter was declared but never referenced
 #endif
 
@@ -425,6 +426,7 @@ bool TryGeneratedPaths(CallbackFn&& filesCollector,
 #ifdef CM_LCC_DIAG_SUPPRESS_3288
 #  undef CM_LCC_DIAG_SUPPRESS_3288
 #  pragma diag_default 3288
+#  pragma diag_default 1222
 #endif
 
 #ifdef CM_NVHPC_DIAG_SUPPRESS_177
