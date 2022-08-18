@@ -773,6 +773,18 @@ Available commands are:
     ``true`` if cmake supports server-mode and ``false`` otherwise.
     Always false since CMake 3.20.
 
+  ``curl``
+    .. versionadded:: 3.25
+
+    A JSON object with information about the CURL installation that CMake is
+    using. Keys are:
+
+      ``ssl``
+        A JSON object with information about CURL's SSL capabilities. Keys are:
+
+        ``enabled``
+          ``true`` if SSL support is enabled, ``false`` if it is not.
+
 .. option:: cat [--] <files>...
 
   .. versionadded:: 3.18
