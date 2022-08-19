@@ -1,0 +1,2 @@
+block(NEW_SCOPE POLICIES PROPAGATE VAR1)
+endblock()
