@@ -134,6 +134,7 @@ else()
   set(ZLIB_WINAPI_COMPILED 0)
   set(ZLIB_WINAPI_WITH_LIB cmzlib)
   add_subdirectory(Utilities/cmzlib)
+  add_library(ZLIB::ZLIB ALIAS cmzlib)
   CMAKE_SET_TARGET_FOLDER(cmzlib "Utilities/3rdParty")
 endif()
 
