@@ -749,10 +749,10 @@ target_link_libraries(
   PUBLIC
     cmstd
     cmsys
+    CURL::libcurl
     EXPAT::EXPAT
     LibArchive::LibArchive
     ZLIB::ZLIB
-    ${CMAKE_CURL_LIBRARIES}
     ${CMAKE_JSONCPP_LIBRARIES}
     ${CMAKE_LIBUV_LIBRARIES}
     ${CMAKE_LIBRHASH_LIBRARIES}
@@ -1001,9 +1001,8 @@ target_include_directories(
   CTestLib
   PUBLIC
     "${CMake_SOURCE_DIR}/Source/CTest"
-    ${CMAKE_CURL_INCLUDES}
   )
-target_link_libraries(CTestLib PUBLIC CMakeLib ${CMAKE_CURL_LIBRARIES})
+target_link_libraries(CTestLib PUBLIC CMakeLib)
 
 #
 # Build CPackLib
