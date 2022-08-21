@@ -58,17 +58,6 @@ configure_file(
   @ONLY
   )
 
-# add the include path to find the .h
-include_directories(
-  "${CMake_BINARY_DIR}/Source"
-  "${CMake_SOURCE_DIR}/Source"
-  "${CMake_SOURCE_DIR}/Source/LexerParser"
-  ${CMAKE_ZLIB_INCLUDES}
-  ${CMAKE_EXPAT_INCLUDES}
-  ${CMAKE_TAR_INCLUDES}
-  ${CMake_HAIKU_INCLUDE_DIRS}
-  )
-
 #
 # create a library used by the command line and the GUI
 add_library(
@@ -735,7 +724,18 @@ add_library(
 
   bindexplib.cxx
   )
-
+target_include_directories(
+  CMakeLib
+  PUBLIC
+    # add the include path to find the .h
+    "${CMake_BINARY_DIR}/Source"
+    "${CMake_SOURCE_DIR}/Source"
+    "${CMake_SOURCE_DIR}/Source/LexerParser"
+    ${CMAKE_ZLIB_INCLUDES}
+    ${CMAKE_EXPAT_INCLUDES}
+    ${CMAKE_TAR_INCLUDES}
+    ${CMake_HAIKU_INCLUDE_DIRS}
+  )
 target_link_libraries(
   CMakeLib
   PUBLIC
@@ -937,14 +937,6 @@ endif()
 target_compile_definitions(CMakeLib PUBLIC ${CLANG_TIDY_DEFINITIONS})
 
 #
-# CTestLib
-#
-include_directories(
-  "${CMake_SOURCE_DIR}/Source/CTest"
-  ${CMAKE_CURL_INCLUDES}
-  )
-
-#
 # Build CTestLib
 #
 add_library(
@@ -1016,16 +1008,17 @@ add_library(
   LexerParser/cmCTestResourceGroupsLexer.h
   LexerParser/cmCTestResourceGroupsLexer.in.l
   )
+target_include_directories(
+  CTestLib
+  PUBLIC
+    "${CMake_SOURCE_DIR}/Source/CTest"
+    ${CMAKE_CURL_INCLUDES}
+  )
 target_link_libraries(CTestLib CMakeLib ${CMAKE_CURL_LIBRARIES})
 
 #
-# CPack
-#
-include_directories(
-  "${CMake_SOURCE_DIR}/Source/CPack"
-  )
-
 # Build CPackLib
+#
 add_library(
   CPackLib
   CPack/cmCPackArchiveGenerator.cxx
@@ -1050,6 +1043,7 @@ add_library(
   CPack/IFW/cmCPackIFWRepository.cxx
   CPack/IFW/cmCPackIFWRepository.h
   )
+target_include_directories(CPackLib PUBLIC "${CMake_SOURCE_DIR}/Source/CPack")
 target_link_libraries(CPackLib CMakeLib)
 
 if(CYGWIN)
@@ -1083,11 +1077,7 @@ if(UNIX)
         pkg
         DOC "FreeBSD pkg(8) library")
       if(FREEBSD_PKG_LIBRARIES)
-        target_sources(
-          CPackLib
-          PUBLIC
-            CPack/cmCPackFreeBSDGenerator.cxx
-          )
+        target_sources(CPackLib PUBLIC CPack/cmCPackFreeBSDGenerator.cxx)
       endif()
     endif()
 
@@ -1160,14 +1150,14 @@ if(APPLE)
   endif()
 endif()
 if(CYGWIN AND LibUUID_FOUND)
+  target_include_directories(CPackLib PUBLIC ${LibUUID_INCLUDE_DIRS})
   target_link_libraries(CPackLib ${LibUUID_LIBRARIES})
-  include_directories(CPackLib ${LibUUID_INCLUDE_DIRS})
   set_property(SOURCE CPack/cmCPackGeneratorFactory.cxx PROPERTY COMPILE_DEFINITIONS HAVE_LIBUUID)
 endif()
 if(CPACK_ENABLE_FREEBSD_PKG AND FREEBSD_PKG_INCLUDE_DIRS AND FREEBSD_PKG_LIBRARIES)
+  target_include_directories(CPackLib PUBLIC ${FREEBSD_PKG_INCLUDE_DIRS})
   target_link_libraries(CPackLib ${FREEBSD_PKG_LIBRARIES})
-  include_directories(${FREEBSD_PKG_INCLUDE_DIRS})
-  add_definitions(-DHAVE_FREEBSD_PKG)
+  target_compile_definitions(CPackLib PUBLIC HAVE_FREEBSD_PKG)
 endif()
 
 # Build CMake executable
