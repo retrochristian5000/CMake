@@ -750,8 +750,8 @@ target_include_directories(
 target_link_libraries(
   CMakeLib
   PUBLIC
+    cmstd
     cmsys
-    ${CMAKE_STD_LIBRARY}
     ${CMAKE_EXPAT_LIBRARIES} ${CMAKE_ZLIB_LIBRARIES}
     ${CMAKE_TAR_LIBRARIES}
     ${CMAKE_CURL_LIBRARIES}
