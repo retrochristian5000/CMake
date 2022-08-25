@@ -412,7 +412,7 @@ function(run_EnvironmentExportCompileCommands)
   unset(ENV{CMAKE_EXPORT_COMPILE_COMMANDS})
 endfunction(run_EnvironmentExportCompileCommands)
 
-if(RunCMake_GENERATOR MATCHES "Unix Makefiles" OR RunCMake_GENERATOR MATCHES "Ninja")
+if(RunCMake_GENERATOR MATCHES "Makefiles|Ninja")
   run_EnvironmentExportCompileCommands()
 endif()
 
