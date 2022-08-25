@@ -84,7 +84,7 @@ if(BUILD_TESTING)
   endif()
 
   if(NOT CMake_TEST_EXTERNAL_CMAKE)
-    if("${CMAKE_GENERATOR}" MATCHES "Unix Makefiles" OR ("${CMAKE_GENERATOR}" MATCHES Ninja AND NOT WIN32))
+    if("${CMAKE_GENERATOR}" MATCHES "Makefiles|Ninja")
       set(TEST_CompileCommandOutput 1)
     endif()
   endif()
