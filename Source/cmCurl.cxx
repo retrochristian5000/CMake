@@ -38,6 +38,14 @@ std::string cmCurlSetCAInfo(::CURL* curl, const std::string& cafile)
     ::CURLcode res = ::curl_easy_setopt(curl, CURLOPT_CAINFO, cafile.c_str());
     check_curl_result(res, "Unable to set TLS/SSL Verify CAINFO: ");
   }
+  /* Honor the user-configurable OpenSSL environment variables. */
+  else if (cmSystemTools::GetEnv("SSL_CERT_FILE", e)) {
+    ::CURLcode res = ::curl_easy_setopt(curl, CURLOPT_CAINFO, e.c_str());
+    check_curl_result(res, "Unable to set TLS/SSL Verify CAINFO: ");
+  } else if (cmSystemTools::GetEnv("SSL_CERT_DIR", e)) {
+    ::CURLcode res = ::curl_easy_setopt(curl, CURLOPT_CAPATH, e.c_str());
+    check_curl_result(res, "Unable to set TLS/SSL Verify CAINFO: ");
+  }
 #ifdef CMAKE_FIND_CAFILE
 #  define CMAKE_CAFILE_FEDORA "/etc/pki/tls/certs/ca-bundle.crt"
   else if (cmSystemTools::FileExists(CMAKE_CAFILE_FEDORA, true)) {
