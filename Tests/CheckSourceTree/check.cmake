@@ -3,6 +3,8 @@ if(DEFINED ENV{CTEST_REAL_HOME})
   set(ENV{HOME} "$ENV{CTEST_REAL_HOME}")
 endif()
 
+file(REMOVE "${CMake_SOURCE_DIR}/Tests/JavaExportImport/InstallExport/hs_err_pid31134.log")
+
 execute_process(
   COMMAND "${GIT_EXECUTABLE}" status
   WORKING_DIRECTORY "${CMake_SOURCE_DIR}"
