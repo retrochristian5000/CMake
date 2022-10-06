@@ -51,7 +51,6 @@ else()
     set(CMAKE_${lang}_COMPILE_OPTIONS_PIE "-fPIE")
     set(CMAKE_${lang}_LINK_OPTIONS_PIE ${CMAKE_${lang}_COMPILE_OPTIONS_PIE} "-pie")
     set(CMAKE_${lang}_LINK_OPTIONS_NO_PIE "-no-pie")
-    set(CMAKE_${lang}_COMPILE_OPTIONS_WARNING_AS_ERROR "-Werror")
 
     set(CMAKE_SHARED_LIBRARY_${lang}_FLAGS "-fPIC")
     set(CMAKE_SHARED_LIBRARY_CREATE_${lang}_FLAGS "-shared")
@@ -98,6 +97,9 @@ else()
       set(CMAKE_${lang}_COMPILE_OPTIONS_INVALID_PCH -Winvalid-pch)
       set(CMAKE_${lang}_COMPILE_OPTIONS_USE_PCH -Xclang -include-pch -Xclang <PCH_FILE> -Xclang -include -Xclang <PCH_HEADER>)
       set(CMAKE_${lang}_COMPILE_OPTIONS_CREATE_PCH -Xclang -emit-pch -Xclang -include -Xclang <PCH_HEADER> -x ${__pch_header_${lang}})
+
+      # COMPILE_WARNING_AS_ERROR
+      set(CMAKE_${lang}_COMPILE_OPTIONS_WARNING_AS_ERROR "-Werror")
     endif()
   endmacro()
 endif()

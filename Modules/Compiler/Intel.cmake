@@ -25,7 +25,6 @@ else()
     string(APPEND CMAKE_${lang}_FLAGS_MINSIZEREL_INIT " -Os")
     string(APPEND CMAKE_${lang}_FLAGS_RELEASE_INIT " -O3")
     string(APPEND CMAKE_${lang}_FLAGS_RELWITHDEBINFO_INIT " -O2 -g")
-    set(CMAKE_${lang}_COMPILE_OPTIONS_WARNING_AS_ERROR "-Werror-all")
 
     set(CMAKE_${lang}_COMPILER_PREDEFINES_COMMAND "${CMAKE_${lang}_COMPILER}")
     if(CMAKE_${lang}_COMPILER_ARG1)
@@ -43,6 +42,9 @@ else()
       set(CMAKE_${lang}_COMPILE_OPTIONS_INVALID_PCH -Winvalid-pch)
       set(CMAKE_${lang}_COMPILE_OPTIONS_USE_PCH -Wno-pch-messages -pch-use <PCH_FILE> -include <PCH_HEADER>)
       set(CMAKE_${lang}_COMPILE_OPTIONS_CREATE_PCH -Wno-pch-messages -pch-create <PCH_FILE> -include <PCH_HEADER>)
+
+      # COMPILE_WARNING_AS_ERROR
+      set(CMAKE_${lang}_COMPILE_OPTIONS_WARNING_AS_ERROR "-Werror-all")
     endif()
   endmacro()
 endif()
