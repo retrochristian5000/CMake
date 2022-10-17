@@ -522,6 +522,13 @@ specifiers:
 ``%Y``
   The current year.
 
+``%z``
+  .. versionadded:: 3.26
+
+  The offset of the time zone from UTC, in hours and minutes,
+  with format ``+hhmm`` or ``-hhmm``.
+
+
 Unknown format specifiers will be ignored and copied to the output
 as-is.
 

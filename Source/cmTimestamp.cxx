@@ -128,8 +128,8 @@ std::string cmTimestamp::CreateTimestampFromTimeT(time_t timeT,
                                             : static_cast<char>(0);
 
     if (c1 == '%' && c2 != 0) {
-      result +=
-        this->AddTimestampComponent(c2, timeStruct, timeT, microseconds);
+      result += this->AddTimestampComponent(c2, timeStruct, timeT, utcFlag,
+                                            microseconds);
       ++i;
     } else {
       result += c1;
@@ -179,7 +179,7 @@ time_t cmTimestamp::CreateUtcTimeTFromTm(struct tm& tm) const
 }
 
 std::string cmTimestamp::AddTimestampComponent(
-  char flag, struct tm& timeStruct, const time_t timeT,
+  char flag, struct tm& timeStruct, const time_t timeT, const bool utcFlag,
   const uint32_t microseconds) const
 {
   std::string formatString = cmStrCat('%', flag);
@@ -202,6 +202,18 @@ std::string cmTimestamp::AddTimestampComponent(
     case 'y':
     case 'Y':
     case '%':
+      break;
+    case 'z':
+#if defined(__GLIBC__)
+      // 'struct tm' has the time zone, so strftime can honor UTC.
+      static_cast<void>(utcFlag);
+#else
+      // 'struct tm' may not have the time zone, so strftime may
+      // use local time.  Hard-code the UTC result.
+      if (utcFlag) {
+        return std::string("+0000");
+      }
+#endif
       break;
     case 's': // Seconds since UNIX epoch (midnight 1-jan-1970)
     {
