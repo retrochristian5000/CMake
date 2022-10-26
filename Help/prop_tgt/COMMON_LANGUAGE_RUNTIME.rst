@@ -10,10 +10,11 @@ The Visual Studio generator defines the ``clr`` parameter depending on
 the value of ``COMMON_LANGUAGE_RUNTIME``:
 
 * property not set: native C++ (i.e. default)
-* property set but empty: mixed unmanaged/managed C++
+* property set but empty: mixed unmanaged/managed C++ using .NET Framework
+* property set to ``netcore``: mixed unmanaged/managed C++ using .NET Core
 * property set to any non empty value: managed C++
 
-Supported values: ``""``, ``"pure"``, ``"safe"``
+Supported values: ``""``, ``"netcore"``, ``"pure"``, ``"safe"``
 
 This property is only evaluated :ref:`Visual Studio Generators` for
 VS 2010 and above.
