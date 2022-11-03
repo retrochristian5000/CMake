@@ -2014,6 +2014,7 @@ syn keyword cmakeKWExternalProject contained
             \ INACTIVITY_TIMEOUT
             \ INDEPENDENT_STEP_TARGETS
             \ INSTALL_COMMAND
+            \ INSTALL_BYPRODUCTS
             \ INSTALL_DIR
             \ JOB_POOLS
             \ LIST_SEPARATOR
