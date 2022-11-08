@@ -3,6 +3,7 @@
 #include "cmCustomCommandGenerator.h"
 
 #include <cstddef>
+#include <cstring>
 #include <memory>
 #include <utility>
 
@@ -147,6 +148,15 @@ std::string EvaluateDepfile(std::string const& path,
 {
   std::unique_ptr<cmCompiledGeneratorExpression> cge = ge.Parse(path);
   return cge->Evaluate(lg, config);
+}
+
+const char* EvaluateComment(const char* comment,
+                            cmGeneratorExpression const& ge,
+                            cmLocalGenerator* lg, std::string const& config)
+{
+  std::unique_ptr<cmCompiledGeneratorExpression> cge = ge.Parse(comment);
+  auto comment_str = cge->Evaluate(lg, config);
+  return strdup(comment_str.c_str());
 }
 }
 
@@ -465,7 +475,14 @@ std::string cmCustomCommandGenerator::GetInternalDepfile() const
 
 const char* cmCustomCommandGenerator::GetComment() const
 {
-  return this->CC->GetComment();
+  const char* comment = this->CC->GetComment();
+  if (!comment || !*comment) {
+    return comment;
+  }
+
+  cmGeneratorExpression ge(*this->LG->GetCMakeInstance(),
+                           this->CC->GetBacktrace());
+  return EvaluateComment(comment, ge, this->LG, this->OutputConfig);
 }
 
 std::string cmCustomCommandGenerator::GetWorkingDirectory() const
