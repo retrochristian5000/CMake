@@ -47,19 +47,19 @@
     variables:
         VCVARSALL: "${VS170COMNTOOLS}\\..\\..\\VC\\Auxiliary\\Build\\vcvarsall.bat"
         VCVARSPLATFORM: "x64"
-        VCVARSVERSION: "14.32.31326"
+        VCVARSVERSION: "14.34.31933"
 
 .windows_vcvarsall_vs2022_x86_package:
     variables:
         VCVARSALL: "${VS170COMNTOOLS}\\..\\..\\VC\\Auxiliary\\Build\\vcvarsall.bat"
         VCVARSPLATFORM: "x86"
-        VCVARSVERSION: "14.32.31326"
+        VCVARSVERSION: "14.34.31933"
 
 .windows_vcvarsall_vs2022_x64_arm64_package:
     variables:
         VCVARSALL: "${VS170COMNTOOLS}\\..\\..\\VC\\Auxiliary\\Build\\vcvarsall.bat"
         VCVARSPLATFORM: "x64_arm64"
-        VCVARSVERSION: "14.32.31326"
+        VCVARSVERSION: "14.34.31933"
 
 .windows_vs2022_x64_ninja:
     extends:
@@ -278,7 +278,7 @@
         - windows
         - shell
         - vs2022
-        - msvc-19.32
+        - msvc-19.34
         - nonconcurrent
 
 .windows_tags_arm64_package:
@@ -287,7 +287,7 @@
         - windows
         - shell
         - vs2022
-        - msvc-19.32-arm64
+        - msvc-19.34-arm64
         - nonconcurrent
 
 ## Windows-specific scripts
