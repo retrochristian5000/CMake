@@ -1972,7 +1972,10 @@ static const struct TargetPropertyNode : public cmGeneratorExpressionNode
         }
         return std::string();
       }
-      target = context->LG->FindGeneratorTargetToUse(targetName);
+      cmLocalGenerator const* lg = context->CurrentTarget
+        ? context->CurrentTarget->GetLocalGenerator()
+        : context->LG;
+      target = lg->FindGeneratorTargetToUse(targetName);
 
       if (!target) {
         std::ostringstream e;
