@@ -424,7 +424,7 @@ void cmVisualStudio10TargetGenerator::Generate()
     cmStrCat(this->LocalGenerator->GetCurrentBinaryDirectory(), '/',
              this->Name, ProjectFileExtension);
   cmGeneratedFileStream BuildFileStream(path);
-  const std::string PathToProjectFile = path;
+  const std::string& PathToProjectFile = path;
   BuildFileStream.SetCopyIfDifferent(true);
 
   // Write the encoding header into the file
@@ -2862,7 +2862,7 @@ void cmVisualStudio10TargetGenerator::OutputSourceSpecificFlags(
                fileName.substr(0, fileName.find_last_of(".")));
   }
   if (this->ProjectType == VsProjectType::csproj) {
-    std::string f = source->GetFullPath();
+    std::string const& f = source->GetFullPath();
     using CsPropMap = std::map<std::string, std::string>;
     CsPropMap sourceFileTags;
     this->GetCSharpSourceProperties(&sf, sourceFileTags);
