@@ -48,6 +48,9 @@ where ``<dir>`` is one of:
   modifiable architecture-independent data (``com``)
 ``LOCALSTATEDIR``
   modifiable single-machine data (``var``)
+
+  .. versionchanged:: 3.26
+  On FreeBSD, this is ``/var`` regardless of :variable:`CMAKE_INSTALL_PREFIX`.
 ``RUNSTATEDIR``
   .. versionadded:: 3.9
     run-time variable data (``LOCALSTATEDIR/run``)
@@ -405,6 +408,12 @@ macro(GNUInstallDirs_get_absolute_install_dir absvar var)
     elseif("${CMAKE_INSTALL_PREFIX}" MATCHES "^/opt/" AND NOT "${CMAKE_INSTALL_PREFIX}" MATCHES "^/opt/homebrew/")
       if("${GGAID_dir}" STREQUAL "SYSCONFDIR" OR "${GGAID_dir}" STREQUAL "LOCALSTATEDIR" OR "${GGAID_dir}" STREQUAL "RUNSTATEDIR")
         set(${absvar} "/${${var}}${CMAKE_INSTALL_PREFIX}")
+      else()
+        set(${absvar} "${CMAKE_INSTALL_PREFIX}/${${var}}")
+      endif()
+    elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+      if("${GGAID_dir}" STREQUAL "LOCALSTATEDIR")
+        set(${absvar} "/${${var}}")
       else()
         set(${absvar} "${CMAKE_INSTALL_PREFIX}/${${var}}")
       endif()
