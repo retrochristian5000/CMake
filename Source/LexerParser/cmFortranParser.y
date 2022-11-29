@@ -138,6 +138,10 @@ stmt:
     cmFortranParser_SetInInterface(parser, true);
     free($2);
   }
+| END INTERFACE WORD EOSTMT {
+    cmFortranParser* parser = cmFortran_yyget_extra(yyscanner);
+    cmFortranParser_SetInInterface(parser, false);
+  }
 | END INTERFACE EOSTMT {
     cmFortranParser* parser = cmFortran_yyget_extra(yyscanner);
     cmFortranParser_SetInInterface(parser, false);
