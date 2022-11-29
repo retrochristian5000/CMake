@@ -548,16 +548,16 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  2
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   432
+#define YYLAST   433
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  41
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  14
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  64
+#define YYNRULES  65
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  121
+#define YYNSTATES  123
 
 /* YYMAXUTOK -- Last valid token kind.  */
 #define YYMAXUTOK   295
@@ -608,15 +608,15 @@ static const yytype_int8 yytranslate[] =
 
 #if YYDEBUG
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
-static const yytype_uint8 yyrline[] =
+static const yytype_int16 yyrline[] =
 {
        0,   106,   106,   106,   109,   113,   118,   123,   129,   136,
-     141,   145,   150,   162,   167,   172,   177,   182,   187,   192,
-     197,   202,   206,   210,   214,   218,   219,   224,   224,   224,
-     225,   225,   226,   226,   227,   227,   228,   228,   229,   229,
-     230,   230,   231,   231,   232,   232,   233,   233,   236,   237,
-     238,   239,   240,   241,   242,   243,   244,   245,   246,   247,
-     248,   249,   250,   251,   252
+     141,   145,   149,   154,   166,   171,   176,   181,   186,   191,
+     196,   201,   206,   210,   214,   218,   222,   223,   228,   228,
+     228,   229,   229,   230,   230,   231,   231,   232,   232,   233,
+     233,   234,   234,   235,   235,   236,   236,   237,   237,   240,
+     241,   242,   243,   244,   245,   246,   247,   248,   249,   250,
+     251,   252,   253,   254,   255,   256
 };
 #endif
 
@@ -670,15 +670,15 @@ static const yytype_int16 yypact[] =
      -39,   -39,   -39,   -39,   -39,   -39,   -39,   -39,   -39,   -39,
      -39,   -39,   -39,   -39,   -39,   -39,   -25,   -19,    20,    -8,
      -15,   -22,   -39,    -6,    14,    15,    16,    17,   -39,   -39,
-     -39,   -39,   -39,   -39,    59,    49,    51,   -39,    63,    64,
-      35,    36,    37,   -39,   -39,   -39,   -39,   -39,   -39,    74,
-     112,   127,   165,   180,   -39,   -39,   -39,   -39,   -39,   -39,
+     -39,   -39,   -39,   -39,    59,    51,    48,   -39,    63,    64,
+      35,    36,    37,   -39,   -39,   -39,   -39,   -39,   -39,    75,
+     113,   128,   166,   181,   -39,   -39,   -39,   -39,   -39,   -39,
      -39,   -39,   -39,   -39,   -39,   -39,   -39,   -39,   -39,   -39,
-     -39,   -39,   -39,   -39,   -39,   -39,   -39,   -20,    43,   -39,
-     218,   233,   271,   286,   324,   339,   -39,   -39,   -39,   -39,
-     -39,    39,    40,    41,   377,   -39,   -39,   -39,   -39,   -39,
-     -39,    46,    78,   -39,   -39,    50,   -39,   392,    79,   -39,
-     -39
+     -39,   -39,   -39,   -39,    68,   -39,   -39,   -39,   -20,    44,
+     -39,   219,   234,   272,   287,   325,   340,   -39,   -39,   -39,
+     -39,   -39,   -39,    40,    41,    42,   378,   -39,   -39,   -39,
+     -39,   -39,   -39,    46,    79,   -39,   -39,    50,   -39,   393,
+      90,   -39,   -39
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -686,19 +686,19 @@ static const yytype_int16 yypact[] =
    means the default is an error.  */
 static const yytype_int8 yydefact[] =
 {
-       2,     0,     1,     0,    25,     0,    27,    28,    29,    31,
-      30,    33,    32,    34,    36,    38,    42,    40,    44,    35,
-      37,    39,    43,    41,    45,    46,     0,     0,     0,     0,
-       0,     0,     3,     0,     0,     0,     0,     0,    46,    46,
-      46,    46,    26,    46,     0,     0,     0,     4,     0,     0,
-       0,     0,     0,    46,    46,    46,    46,    46,    46,     0,
-       0,     0,     0,     0,    15,    57,    56,    64,    62,    58,
-      59,    60,    61,    63,    55,    48,    49,    50,    51,    52,
-      53,    54,    47,    10,    13,     9,     6,     0,     0,    46,
-       0,     0,     0,     0,     0,     0,    21,    22,    23,    24,
-      14,     0,     0,     0,     0,     5,    16,    17,    18,    19,
-      20,     0,     0,    46,    11,     0,     7,     0,     0,    12,
-       8
+       2,     0,     1,     0,    26,     0,    28,    29,    30,    32,
+      31,    34,    33,    35,    37,    39,    43,    41,    45,    36,
+      38,    40,    44,    42,    46,    47,     0,     0,     0,     0,
+       0,     0,     3,     0,     0,     0,     0,     0,    47,    47,
+      47,    47,    27,    47,     0,     0,     0,     4,     0,     0,
+       0,     0,     0,    47,    47,    47,    47,    47,    47,     0,
+       0,     0,     0,     0,    16,    58,    57,    65,    63,    59,
+      60,    61,    62,    64,    56,    49,    50,    51,    52,    53,
+      54,    55,    48,    11,     0,    14,     9,     6,     0,     0,
+      47,     0,     0,     0,     0,     0,     0,    22,    23,    24,
+      25,    15,    10,     0,     0,     0,     0,     5,    17,    18,
+      19,    20,    21,     0,     0,    47,    12,     0,     7,     0,
+       0,    13,     8
 };
 
 /* YYPGOTO[NTERM-NUM].  */
@@ -720,50 +720,50 @@ static const yytype_int8 yydefgoto[] =
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int8 yytable[] =
 {
-      59,    60,    61,    62,    51,    63,    52,   101,    42,    43,
-     102,    53,    45,    46,    50,    90,    91,    92,    93,    94,
-      95,     2,     3,    47,     4,    49,    54,     5,     6,     7,
+      59,    60,    61,    62,    51,    63,    52,   103,    42,    43,
+     104,    53,    45,    46,    50,    91,    92,    93,    94,    95,
+      96,     2,     3,    47,     4,    49,    54,     5,     6,     7,
        8,     9,    10,    11,    12,    13,    14,    15,    16,    17,
       18,    19,    20,    21,    22,    23,    24,    55,    56,    57,
-      58,   104,    83,    48,    84,    25,    26,    27,    28,    29,
-      30,    31,    64,    65,    66,    67,    85,    86,    87,    88,
-      89,   103,   111,   112,   113,   117,   115,    96,    65,    66,
-      67,   116,   120,   118,     0,    68,    69,    70,    71,    72,
+      58,    85,   106,    48,    83,    25,    26,    27,    28,    29,
+      30,    31,    64,    65,    66,    67,    86,    87,    88,    89,
+      90,   102,   105,   113,   114,   115,   117,   119,    97,    65,
+      66,    67,   118,   120,    84,    68,    69,    70,    71,    72,
+      73,    74,    75,   122,    76,    77,    78,    79,    80,    81,
+       0,    68,    69,    70,    71,    72,    73,    74,    75,     0,
+      76,    77,    78,    79,    80,    81,    98,    65,    66,    67,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,    99,    65,    66,    67,     0,     0,     0,     0,    68,
+      69,    70,    71,    72,    73,    74,    75,     0,    76,    77,
+      78,    79,    80,    81,    68,    69,    70,    71,    72,    73,
+      74,    75,     0,    76,    77,    78,    79,    80,    81,   100,
+      65,    66,    67,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,   101,    65,    66,    67,     0,     0,
+       0,     0,    68,    69,    70,    71,    72,    73,    74,    75,
+       0,    76,    77,    78,    79,    80,    81,    68,    69,    70,
+      71,    72,    73,    74,    75,     0,    76,    77,    78,    79,
+      80,    81,   107,    65,    66,    67,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,   108,    65,    66,
+      67,     0,     0,     0,     0,    68,    69,    70,    71,    72,
       73,    74,    75,     0,    76,    77,    78,    79,    80,    81,
       68,    69,    70,    71,    72,    73,    74,    75,     0,    76,
-      77,    78,    79,    80,    81,    97,    65,    66,    67,     0,
+      77,    78,    79,    80,    81,   109,    65,    66,    67,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-      98,    65,    66,    67,     0,     0,     0,     0,    68,    69,
+     110,    65,    66,    67,     0,     0,     0,     0,    68,    69,
       70,    71,    72,    73,    74,    75,     0,    76,    77,    78,
       79,    80,    81,    68,    69,    70,    71,    72,    73,    74,
-      75,     0,    76,    77,    78,    79,    80,    81,    99,    65,
+      75,     0,    76,    77,    78,    79,    80,    81,   111,    65,
       66,    67,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,   100,    65,    66,    67,     0,     0,     0,
+       0,     0,     0,   112,    65,    66,    67,     0,     0,     0,
        0,    68,    69,    70,    71,    72,    73,    74,    75,     0,
       76,    77,    78,    79,    80,    81,    68,    69,    70,    71,
       72,    73,    74,    75,     0,    76,    77,    78,    79,    80,
-      81,   105,    65,    66,    67,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,   106,    65,    66,    67,
+      81,   116,    65,    66,    67,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,   121,    65,    66,    67,
        0,     0,     0,     0,    68,    69,    70,    71,    72,    73,
       74,    75,     0,    76,    77,    78,    79,    80,    81,    68,
       69,    70,    71,    72,    73,    74,    75,     0,    76,    77,
-      78,    79,    80,    81,   107,    65,    66,    67,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,   108,
-      65,    66,    67,     0,     0,     0,     0,    68,    69,    70,
-      71,    72,    73,    74,    75,     0,    76,    77,    78,    79,
-      80,    81,    68,    69,    70,    71,    72,    73,    74,    75,
-       0,    76,    77,    78,    79,    80,    81,   109,    65,    66,
-      67,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,   110,    65,    66,    67,     0,     0,     0,     0,
-      68,    69,    70,    71,    72,    73,    74,    75,     0,    76,
-      77,    78,    79,    80,    81,    68,    69,    70,    71,    72,
-      73,    74,    75,     0,    76,    77,    78,    79,    80,    81,
-     114,    65,    66,    67,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,   119,    65,    66,    67,     0,
-       0,     0,     0,    68,    69,    70,    71,    72,    73,    74,
-      75,     0,    76,    77,    78,    79,    80,    81,    68,    69,
-      70,    71,    72,    73,    74,    75,     0,    76,    77,    78,
-      79,    80,    81
+      78,    79,    80,    81
 };
 
 static const yytype_int8 yycheck[] =
@@ -773,10 +773,26 @@ static const yytype_int8 yycheck[] =
       58,     0,     1,     3,     3,    33,    32,     6,     7,     8,
        9,    10,    11,    12,    13,    14,    15,    16,    17,    18,
       19,    20,    21,    22,    23,    24,    25,    33,    33,    33,
-      33,    89,     3,    33,     3,    34,    35,    36,    37,    38,
+      33,     3,    90,    33,     3,    34,    35,    36,    37,    38,
       39,    40,     3,     4,     5,     6,     3,     3,    33,    33,
-      33,    28,    33,    33,    33,   113,    30,     3,     4,     5,
-       6,     3,     3,    33,    -1,    26,    27,    28,    29,    30,
+      33,     3,    28,    33,    33,    33,    30,   115,     3,     4,
+       5,     6,     3,    33,    33,    26,    27,    28,    29,    30,
+      31,    32,    33,     3,    35,    36,    37,    38,    39,    40,
+      -1,    26,    27,    28,    29,    30,    31,    32,    33,    -1,
+      35,    36,    37,    38,    39,    40,     3,     4,     5,     6,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,     3,     4,     5,     6,    -1,    -1,    -1,    -1,    26,
+      27,    28,    29,    30,    31,    32,    33,    -1,    35,    36,
+      37,    38,    39,    40,    26,    27,    28,    29,    30,    31,
+      32,    33,    -1,    35,    36,    37,    38,    39,    40,     3,
+       4,     5,     6,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,     3,     4,     5,     6,    -1,    -1,
+      -1,    -1,    26,    27,    28,    29,    30,    31,    32,    33,
+      -1,    35,    36,    37,    38,    39,    40,    26,    27,    28,
+      29,    30,    31,    32,    33,    -1,    35,    36,    37,    38,
+      39,    40,     3,     4,     5,     6,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,     3,     4,     5,
+       6,    -1,    -1,    -1,    -1,    26,    27,    28,    29,    30,
       31,    32,    33,    -1,    35,    36,    37,    38,    39,    40,
       26,    27,    28,    29,    30,    31,    32,    33,    -1,    35,
       36,    37,    38,    39,    40,     3,     4,     5,     6,    -1,
@@ -795,23 +811,7 @@ static const yytype_int8 yycheck[] =
       -1,    -1,    -1,    -1,    26,    27,    28,    29,    30,    31,
       32,    33,    -1,    35,    36,    37,    38,    39,    40,    26,
       27,    28,    29,    30,    31,    32,    33,    -1,    35,    36,
-      37,    38,    39,    40,     3,     4,     5,     6,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,     3,
-       4,     5,     6,    -1,    -1,    -1,    -1,    26,    27,    28,
-      29,    30,    31,    32,    33,    -1,    35,    36,    37,    38,
-      39,    40,    26,    27,    28,    29,    30,    31,    32,    33,
-      -1,    35,    36,    37,    38,    39,    40,     3,     4,     5,
-       6,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,     3,     4,     5,     6,    -1,    -1,    -1,    -1,
-      26,    27,    28,    29,    30,    31,    32,    33,    -1,    35,
-      36,    37,    38,    39,    40,    26,    27,    28,    29,    30,
-      31,    32,    33,    -1,    35,    36,    37,    38,    39,    40,
-       3,     4,     5,     6,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,     3,     4,     5,     6,    -1,
-      -1,    -1,    -1,    26,    27,    28,    29,    30,    31,    32,
-      33,    -1,    35,    36,    37,    38,    39,    40,    26,    27,
-      28,    29,    30,    31,    32,    33,    -1,    35,    36,    37,
-      38,    39,    40
+      37,    38,    39,    40
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
@@ -826,11 +826,11 @@ static const yytype_int8 yystos[] =
       29,    26,    28,    33,    32,    33,    33,    33,    33,    53,
       53,    53,    53,    53,     3,     4,     5,     6,    26,    27,
       28,    29,    30,    31,    32,    33,    35,    36,    37,    38,
-      39,    40,    54,     3,     3,     3,     3,    33,    33,    33,
-      53,    53,    53,    53,    53,    53,     3,     3,     3,     3,
-       3,    27,    30,    28,    53,     3,     3,     3,     3,     3,
-       3,    33,    33,    33,     3,    30,     3,    53,    33,     3,
-       3
+      39,    40,    54,     3,    33,     3,     3,     3,    33,    33,
+      33,    53,    53,    53,    53,    53,    53,     3,     3,     3,
+       3,     3,     3,    27,    30,    28,    53,     3,     3,     3,
+       3,     3,     3,    33,    33,    33,     3,    30,     3,    53,
+      33,     3,     3
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
@@ -838,23 +838,23 @@ static const yytype_int8 yyr1[] =
 {
        0,    41,    42,    42,    43,    43,    43,    43,    43,    43,
       43,    43,    43,    43,    43,    43,    43,    43,    43,    43,
-      43,    43,    43,    43,    43,    43,    43,    44,    44,    44,
-      45,    45,    46,    46,    47,    47,    48,    48,    49,    49,
-      50,    50,    51,    51,    52,    52,    53,    53,    54,    54,
+      43,    43,    43,    43,    43,    43,    43,    43,    44,    44,
+      44,    45,    45,    46,    46,    47,    47,    48,    48,    49,
+      49,    50,    50,    51,    51,    52,    52,    53,    53,    54,
       54,    54,    54,    54,    54,    54,    54,    54,    54,    54,
-      54,    54,    54,    54,    54
+      54,    54,    54,    54,    54,    54
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr2[] =
 {
        0,     2,     0,     2,     2,     4,     3,     6,     8,     3,
-       3,     5,     7,     3,     4,     3,     4,     4,     4,     4,
-       4,     3,     3,     3,     3,     1,     2,     1,     1,     1,
+       4,     3,     5,     7,     3,     4,     3,     4,     4,     4,
+       4,     4,     3,     3,     3,     3,     1,     2,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     1,     0,     2,     1,     1,
+       1,     1,     1,     1,     1,     1,     1,     0,     2,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1
+       1,     1,     1,     1,     1,     1
 };
 
 
@@ -1679,27 +1679,36 @@ yyreduce:
 #line 1680 "cmFortranParser.cxx"
     break;
 
-  case 10: /* stmt: END INTERFACE EOSTMT  */
+  case 10: /* stmt: END INTERFACE WORD EOSTMT  */
 #line 141 "cmFortranParser.y"
-                       {
+                            {
     cmFortranParser* parser = cmFortran_yyget_extra(yyscanner);
     cmFortranParser_SetInInterface(parser, false);
   }
 #line 1689 "cmFortranParser.cxx"
     break;
 
-  case 11: /* stmt: USE DCOLON WORD other EOSTMT  */
+  case 11: /* stmt: END INTERFACE EOSTMT  */
 #line 145 "cmFortranParser.y"
+                       {
+    cmFortranParser* parser = cmFortran_yyget_extra(yyscanner);
+    cmFortranParser_SetInInterface(parser, false);
+  }
+#line 1698 "cmFortranParser.cxx"
+    break;
+
+  case 12: /* stmt: USE DCOLON WORD other EOSTMT  */
+#line 149 "cmFortranParser.y"
                                {
     cmFortranParser* parser = cmFortran_yyget_extra(yyscanner);
     cmFortranParser_RuleUse(parser, (yyvsp[-2].string));
     free((yyvsp[-2].string));
   }
-#line 1699 "cmFortranParser.cxx"
+#line 1708 "cmFortranParser.cxx"
     break;
 
-  case 12: /* stmt: USE COMMA WORD DCOLON WORD other EOSTMT  */
-#line 150 "cmFortranParser.y"
+  case 13: /* stmt: USE COMMA WORD DCOLON WORD other EOSTMT  */
+#line 154 "cmFortranParser.y"
                                           {
     if (cmsysString_strcasecmp((yyvsp[-4].string), "non_intrinsic") == 0) {
       cmFortranParser* parser = cmFortran_yyget_extra(yyscanner);
@@ -1712,139 +1721,139 @@ yyreduce:
     free((yyvsp[-4].string));
     free((yyvsp[-2].string));
   }
-#line 1716 "cmFortranParser.cxx"
+#line 1725 "cmFortranParser.cxx"
     break;
 
-  case 13: /* stmt: INCLUDE STRING EOSTMT  */
-#line 162 "cmFortranParser.y"
+  case 14: /* stmt: INCLUDE STRING EOSTMT  */
+#line 166 "cmFortranParser.y"
                         {
     cmFortranParser* parser = cmFortran_yyget_extra(yyscanner);
     cmFortranParser_RuleInclude(parser, (yyvsp[-1].string));
     free((yyvsp[-1].string));
   }
-#line 1726 "cmFortranParser.cxx"
+#line 1735 "cmFortranParser.cxx"
     break;
 
-  case 14: /* stmt: CPP_LINE_DIRECTIVE STRING other EOSTMT  */
-#line 167 "cmFortranParser.y"
+  case 15: /* stmt: CPP_LINE_DIRECTIVE STRING other EOSTMT  */
+#line 171 "cmFortranParser.y"
                                          {
     cmFortranParser* parser = cmFortran_yyget_extra(yyscanner);
     cmFortranParser_RuleLineDirective(parser, (yyvsp[-2].string));
     free((yyvsp[-2].string));
   }
-#line 1736 "cmFortranParser.cxx"
+#line 1745 "cmFortranParser.cxx"
     break;
 
-  case 15: /* stmt: CPP_INCLUDE_ANGLE other EOSTMT  */
-#line 172 "cmFortranParser.y"
+  case 16: /* stmt: CPP_INCLUDE_ANGLE other EOSTMT  */
+#line 176 "cmFortranParser.y"
                                  {
     cmFortranParser* parser = cmFortran_yyget_extra(yyscanner);
     cmFortranParser_RuleInclude(parser, (yyvsp[-2].string));
     free((yyvsp[-2].string));
   }
-#line 1746 "cmFortranParser.cxx"
+#line 1755 "cmFortranParser.cxx"
     break;
 
-  case 16: /* stmt: include STRING other EOSTMT  */
-#line 177 "cmFortranParser.y"
+  case 17: /* stmt: include STRING other EOSTMT  */
+#line 181 "cmFortranParser.y"
                               {
     cmFortranParser* parser = cmFortran_yyget_extra(yyscanner);
     cmFortranParser_RuleInclude(parser, (yyvsp[-2].string));
     free((yyvsp[-2].string));
   }
-#line 1756 "cmFortranParser.cxx"
+#line 1765 "cmFortranParser.cxx"
     break;
 
-  case 17: /* stmt: define WORD other EOSTMT  */
-#line 182 "cmFortranParser.y"
+  case 18: /* stmt: define WORD other EOSTMT  */
+#line 186 "cmFortranParser.y"
                            {
     cmFortranParser* parser = cmFortran_yyget_extra(yyscanner);
     cmFortranParser_RuleDefine(parser, (yyvsp[-2].string));
     free((yyvsp[-2].string));
   }
-#line 1766 "cmFortranParser.cxx"
+#line 1775 "cmFortranParser.cxx"
     break;
 
-  case 18: /* stmt: undef WORD other EOSTMT  */
-#line 187 "cmFortranParser.y"
+  case 19: /* stmt: undef WORD other EOSTMT  */
+#line 191 "cmFortranParser.y"
                           {
     cmFortranParser* parser = cmFortran_yyget_extra(yyscanner);
     cmFortranParser_RuleUndef(parser, (yyvsp[-2].string));
     free((yyvsp[-2].string));
   }
-#line 1776 "cmFortranParser.cxx"
+#line 1785 "cmFortranParser.cxx"
     break;
 
-  case 19: /* stmt: ifdef WORD other EOSTMT  */
-#line 192 "cmFortranParser.y"
+  case 20: /* stmt: ifdef WORD other EOSTMT  */
+#line 196 "cmFortranParser.y"
                           {
     cmFortranParser* parser = cmFortran_yyget_extra(yyscanner);
     cmFortranParser_RuleIfdef(parser, (yyvsp[-2].string));
     free((yyvsp[-2].string));
   }
-#line 1786 "cmFortranParser.cxx"
+#line 1795 "cmFortranParser.cxx"
     break;
 
-  case 20: /* stmt: ifndef WORD other EOSTMT  */
-#line 197 "cmFortranParser.y"
+  case 21: /* stmt: ifndef WORD other EOSTMT  */
+#line 201 "cmFortranParser.y"
                            {
     cmFortranParser* parser = cmFortran_yyget_extra(yyscanner);
     cmFortranParser_RuleIfndef(parser, (yyvsp[-2].string));
     free((yyvsp[-2].string));
   }
-#line 1796 "cmFortranParser.cxx"
+#line 1805 "cmFortranParser.cxx"
     break;
 
-  case 21: /* stmt: if other EOSTMT  */
-#line 202 "cmFortranParser.y"
+  case 22: /* stmt: if other EOSTMT  */
+#line 206 "cmFortranParser.y"
                   {
     cmFortranParser* parser = cmFortran_yyget_extra(yyscanner);
     cmFortranParser_RuleIf(parser);
   }
-#line 1805 "cmFortranParser.cxx"
+#line 1814 "cmFortranParser.cxx"
     break;
 
-  case 22: /* stmt: elif other EOSTMT  */
-#line 206 "cmFortranParser.y"
+  case 23: /* stmt: elif other EOSTMT  */
+#line 210 "cmFortranParser.y"
                     {
     cmFortranParser* parser = cmFortran_yyget_extra(yyscanner);
     cmFortranParser_RuleElif(parser);
   }
-#line 1814 "cmFortranParser.cxx"
+#line 1823 "cmFortranParser.cxx"
     break;
 
-  case 23: /* stmt: else other EOSTMT  */
-#line 210 "cmFortranParser.y"
+  case 24: /* stmt: else other EOSTMT  */
+#line 214 "cmFortranParser.y"
                     {
     cmFortranParser* parser = cmFortran_yyget_extra(yyscanner);
     cmFortranParser_RuleElse(parser);
   }
-#line 1823 "cmFortranParser.cxx"
+#line 1832 "cmFortranParser.cxx"
     break;
 
-  case 24: /* stmt: endif other EOSTMT  */
-#line 214 "cmFortranParser.y"
+  case 25: /* stmt: endif other EOSTMT  */
+#line 218 "cmFortranParser.y"
                      {
     cmFortranParser* parser = cmFortran_yyget_extra(yyscanner);
     cmFortranParser_RuleEndif(parser);
   }
-#line 1832 "cmFortranParser.cxx"
+#line 1841 "cmFortranParser.cxx"
     break;
 
-  case 48: /* misc_code: WORD  */
-#line 236 "cmFortranParser.y"
+  case 49: /* misc_code: WORD  */
+#line 240 "cmFortranParser.y"
                       { free ((yyvsp[0].string)); }
-#line 1838 "cmFortranParser.cxx"
+#line 1847 "cmFortranParser.cxx"
     break;
 
-  case 55: /* misc_code: STRING  */
-#line 243 "cmFortranParser.y"
+  case 56: /* misc_code: STRING  */
+#line 247 "cmFortranParser.y"
                       { free ((yyvsp[0].string)); }
-#line 1844 "cmFortranParser.cxx"
+#line 1853 "cmFortranParser.cxx"
     break;
 
 
-#line 1848 "cmFortranParser.cxx"
+#line 1857 "cmFortranParser.cxx"
 
       default: break;
     }
@@ -2068,6 +2077,6 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 255 "cmFortranParser.y"
+#line 259 "cmFortranParser.y"
 
 /* End of grammar */
