@@ -10,6 +10,10 @@
 #include <QMessageBox>
 #include <QStandardItem>
 
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
+#  include <QRegularExpression>
+#endif
+
 EnvironmentItemModel::EnvironmentItemModel(
   const QProcessEnvironment& environment, QObject* parent)
   : QStandardItemModel(parent)
@@ -111,9 +115,13 @@ EnvironmentDialog::EnvironmentDialog(const QProcessEnvironment& environment,
   QObject::connect(this->RemoveEntry, &QAbstractButton::clicked, this,
                    &EnvironmentDialog::removeSelectedEntries);
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
-  QObject::connect(this->Search, &QLineEdit::textChanged, this->m_filter,
-                   QOverload<const QString&>::of(
-                     &EnvironmentSearchFilter::setFilterRegularExpression));
+  QObject::connect(this->Search, &QLineEdit::textChanged,
+                   [this](const QString& text) {
+                     QRegularExpression regex(text);
+                     if (regex.isValid()) {
+                       this->m_filter->setFilterRegularExpression(regex);
+                     }
+                   });
 #else
   QObject::connect(this->Search, &QLineEdit::textChanged, this->m_filter,
                    &EnvironmentSearchFilter::setFilterFixedString);

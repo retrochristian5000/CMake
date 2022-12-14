@@ -12,6 +12,10 @@
 #include <QSortFilterProxyModel>
 #include <QStyle>
 
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
+#  include <QRegularExpression>
+#endif
+
 // filter for searches
 class QCMakeSearchFilter : public QSortFilterProxyModel
 {
@@ -170,7 +174,10 @@ bool QCMakeCacheView::showAdvanced() const
 void QCMakeCacheView::setSearchFilter(const QString& s)
 {
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
-  this->SearchFilter->setFilterRegularExpression(s);
+  QRegularExpression regex(s);
+  if (regex.isValid()) {
+    this->SearchFilter->setFilterRegularExpression(regex);
+  }
 #else
   this->SearchFilter->setFilterFixedString(s);
 #endif
