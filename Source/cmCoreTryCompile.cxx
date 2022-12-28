@@ -1131,7 +1131,7 @@ cm::optional<cmTryCompileResult> cmCoreTryCompile::TryCompileCode(
   result.VariableCached = !arguments.NoCache;
   result.Output = std::move(output);
   result.ExitCode = res;
-  return result;
+  return std::move(result);
 }
 
 bool cmCoreTryCompile::IsTemporary(std::string const& path)
