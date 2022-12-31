@@ -1,1 +1,3 @@
-public let ThirtyTwo: Int = 32
+import SwiftOnly
+
+public let ThirtyTwo: Int = SwiftOnly.thirtyTwo()
