@@ -54,6 +54,9 @@ run_cmake(IgnorePrefixPath)
 run_cmake(REGISTRY_VIEW-no-view)
 run_cmake(REGISTRY_VIEW-wrong-view)
 run_cmake(REGISTRY_VIEW-propagated)
+run_cmake(CMP0144-OLD)
+run_cmake(CMP0144-WARN)
+run_cmake(CMP0144-NEW)
 
 file(
     GLOB SearchPaths_TEST_CASE_LIST

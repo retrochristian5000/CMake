@@ -225,7 +225,6 @@ They are normally called through the :command:`find_package` command.
    /module/FindPNG
    /module/FindPostgreSQL
    /module/FindProducer
-   /module/FindProtobuf
    /module/FindPython
    /module/FindPython2
    /module/FindPython3
@@ -295,6 +294,7 @@ Deprecated Find Modules
 
    /module/FindCUDA
    /module/FindITK
+   /module/FindProtobuf
    /module/FindPythonInterp
    /module/FindPythonLibs
    /module/FindQt

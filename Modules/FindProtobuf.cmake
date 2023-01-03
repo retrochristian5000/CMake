@@ -5,6 +5,9 @@
 FindProtobuf
 ------------
 
+.. deprecated:: 3.26
+  This module is available only if policy :policy:`CMP0144` is not set to ``NEW``.
+
 Locate and configure the Google Protocol Buffers library.
 
 .. versionadded:: 3.6
@@ -137,6 +140,11 @@ Example:
   ``ARGN``
     ``.proto`` files
 #]=======================================================================]
+
+if(_findprotobuf_testing)
+  set(_findprotobuf_included TRUE)
+  return()
+endif()
 
 function(protobuf_generate)
   set(_options APPEND_PATH DESCRIPTORS)

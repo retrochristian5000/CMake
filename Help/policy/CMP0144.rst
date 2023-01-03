@@ -1,0 +1,29 @@
+CMP0144
+-------
+
+.. versionadded:: 3.26
+
+The :module:`FindProtobuf` module does not exist for :command:`find_package`.
+
+The existence of :module:`FindProtobuf` means that for Protobuf upstream to
+provide package config files that can be found by ``find_package(Protobuf)``,
+the consuming project has to explicitly specify
+``find_package(Protobuf CONFIG)``. Removing this module gives Protobuf a path
+forward for exporting its own config files which can easily be found by
+consuming projects.
+
+This policy pretends that CMake's internal :module:`FindProtobuf` module does
+not exist for :command:`find_package`. If a project really wants to use
+Protobuf, it can call ``include(FindProtobuf)``, or add :module:`FindProtobuf`
+to their :variable:`CMAKE_MODULE_PATH`.
+
+The ``OLD`` behavior of this policy is for :module:`FindProtobuf` to exist for
+:command:`find_package`. The ``NEW`` behavior is to pretend that it doesn't
+exist for :command:`find_package`.
+
+This policy was introduced in CMake version 3.26.  CMake version
+|release| warns when the policy is not set and uses ``OLD`` behavior.
+Use the :command:`cmake_policy` command to set it to ``OLD`` or ``NEW``
+explicitly.
+
+.. include:: DEPRECATED.txt
