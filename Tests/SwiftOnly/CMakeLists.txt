@@ -29,8 +29,10 @@ set(CMAKE_Swift_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/swift)
 
 add_executable(SwiftOnly main.swift)
 target_compile_definitions(SwiftOnly PRIVATE SWIFTONLY)
+set_target_properties(SwiftOnly PROPERTIES ENABLE_EXPORTS TRUE)
 
 add_library(L L.swift)
+target_link_libraries(L PRIVATE SwiftOnly)
 
 add_library(M M.swift)
 target_link_libraries(M PUBLIC
