@@ -57,6 +57,7 @@ Policies Introduced by CMake 3.26
 .. toctree::
    :maxdepth: 1
 
+   CMP0144: The FindProtobuf module does not exist for find_package(). </policy/CMP0144>
    CMP0143: USE_FOLDERS global property is treated as ON by default. </policy/CMP0143>
 
 Policies Introduced by CMake 3.25

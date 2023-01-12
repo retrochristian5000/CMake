@@ -503,6 +503,7 @@ cmFindPackageCommand::cmFindPackageCommand(cmExecutionStatus& status)
   this->AppendSearchPathGroups();
 
   this->DeprecatedFindModules["Qt"] = cmPolicies::CMP0084;
+  this->DeprecatedFindModules["Protobuf"] = cmPolicies::CMP0144;
 }
 
 void cmFindPackageCommand::AppendSearchPathGroups()
