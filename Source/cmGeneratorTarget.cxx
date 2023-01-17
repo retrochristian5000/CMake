@@ -3562,7 +3562,7 @@ void cmGeneratorTarget::AddCUDAArchitectureFlags(cmBuildStep compileOrLink,
     if (ipoEnabled && compileOrLink == cmBuildStep::Link) {
       if (cmValue cudaIPOFlags =
             this->Makefile->GetDefinition("CMAKE_CUDA_LINK_OPTIONS_IPO")) {
-        flags += cudaIPOFlags;
+        flags += *cudaIPOFlags;
       }
     }
 
@@ -5984,7 +5984,7 @@ std::string valueAsString<std::string>(std::string value)
 template <>
 std::string valueAsString<cmValue>(cmValue value)
 {
-  return value ? value : std::string("(unset)");
+  return value ? *value : std::string("(unset)");
 }
 template <>
 std::string valueAsString<std::nullptr_t>(std::nullptr_t /*unused*/)
