@@ -1820,8 +1820,7 @@ void cmVisualStudio10TargetGenerator::WriteCustomRuleCpp(
   bool symbolic, bool uses_terminal)
 {
   const std::string cond = this->CalcCondition(config);
-  if (this->LocalGenerator->GetVersion() >=
-      cmGlobalVisualStudioGenerator::VSVersion::VS15) {
+  if (this->GlobalGenerator->IsBuildInParallelSupported() && !uses_terminal) {
     e2.WritePlatformConfigTag("BuildInParallel", cond, "true");
   }
   e2.WritePlatformConfigTag("Message", cond, comment);
