@@ -869,7 +869,7 @@ bool cmGlobalNinjaGenerator::CheckCxxModuleSupport()
       "using Ninja version \n"
       "  " << this->NinjaVersion << "\n"
       "due to lack of required features.  "
-      "Ninja " << RequiredNinjaVersionForDyndeps() << " or higher is required."
+      "Ninja " << RequiredNinjaVersionForDyndepsCxx() << " or higher is required."
       ;
     /* clang-format on */
     this->GetCMakeInstance()->IssueMessage(MessageType::FATAL_ERROR, e.str());
