@@ -390,6 +390,7 @@ public:
     return "1.9";
   }
   static std::string RequiredNinjaVersionForDyndeps() { return "1.10"; }
+  static std::string RequiredNinjaVersionForDyndepsCxx() { return "1.11"; }
   static std::string RequiredNinjaVersionForRestatTool() { return "1.10"; }
   static std::string RequiredNinjaVersionForUnconditionalRecompactTool()
   {
