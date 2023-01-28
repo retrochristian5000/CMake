@@ -305,7 +305,6 @@ public:
   std::map<std::string, BTs<std::string>> LanguageStandardProperties;
   std::map<cmTargetExport const*, std::vector<std::string>>
     InstallIncludeDirectoriesEntries;
-  std::vector<BT<std::string>> PrecompileHeadersEntries;
   std::vector<BT<std::string>> SourceEntries;
   std::vector<BT<std::string>> LinkOptionsEntries;
   std::vector<BT<std::string>> LinkDirectoriesEntries;
@@ -322,6 +321,7 @@ public:
   UsageRequirementProperty CompileOptions;
   UsageRequirementProperty CompileFeatures;
   UsageRequirementProperty CompileDefinitions;
+  UsageRequirementProperty PrecompileHeaders;
 
   FileSetType HeadersFileSets;
   FileSetType CxxModulesFileSets;
@@ -362,6 +362,7 @@ cmTargetInternals::cmTargetInternals()
   , CompileOptions("COMPILE_OPTIONS"_s)
   , CompileFeatures("COMPILE_FEATURES"_s)
   , CompileDefinitions("COMPILE_DEFINITIONS"_s)
+  , PrecompileHeaders("PRECOMPILE_HEADERS"_s)
   , HeadersFileSets("HEADERS"_s, "HEADER_DIRS"_s, "HEADER_SET"_s,
                     "HEADER_DIRS_"_s, "HEADER_SET_"_s, "Header"_s,
                     "The default header set"_s, "Header set"_s,
@@ -1480,7 +1481,7 @@ cmBTStringRange cmTarget::GetCompileDefinitionsEntries() const
 
 cmBTStringRange cmTarget::GetPrecompileHeadersEntries() const
 {
-  return cmMakeRange(this->impl->PrecompileHeadersEntries);
+  return cmMakeRange(this->impl->PrecompileHeaders.Entries);
 }
 
 cmBTStringRange cmTarget::GetSourceEntries() const
@@ -1645,10 +1646,9 @@ void cmTarget::StoreProperty(const std::string& prop, ValueType value)
   }
 
   UsageRequirementProperty* usageRequirements[] = {
-    &this->impl->IncludeDirectories,
-    &this->impl->CompileOptions,
-    &this->impl->CompileFeatures,
-    &this->impl->CompileDefinitions,
+    &this->impl->IncludeDirectories, &this->impl->CompileOptions,
+    &this->impl->CompileFeatures,    &this->impl->CompileDefinitions,
+    &this->impl->PrecompileHeaders,
   };
 
   for (auto* usageRequirement : usageRequirements) {
@@ -1682,12 +1682,6 @@ void cmTarget::StoreProperty(const std::string& prop, ValueType value)
     if (value) {
       cmListFileBacktrace lfbt = this->impl->Makefile->GetBacktrace();
       this->impl->LinkDirectoriesEntries.emplace_back(value, lfbt);
-    }
-  } else if (prop == propPRECOMPILE_HEADERS) {
-    this->impl->PrecompileHeadersEntries.clear();
-    if (value) {
-      cmListFileBacktrace lfbt = this->impl->Makefile->GetBacktrace();
-      this->impl->PrecompileHeadersEntries.emplace_back(value, lfbt);
     }
   } else if (prop == propLINK_LIBRARIES) {
     this->impl->LinkImplementationPropertyEntries.clear();
@@ -1825,12 +1819,20 @@ void cmTarget::AppendProperty(const std::string& prop,
     this->impl->Makefile->IssueMessage(MessageType::FATAL_ERROR, e.str());
     return;
   }
+  if (prop == propPRECOMPILE_HEADERS &&
+      this->GetProperty("PRECOMPILE_HEADERS_REUSE_FROM")) {
+    std::ostringstream e;
+    e << "PRECOMPILE_HEADERS_REUSE_FROM property is already set on target "
+         "(\""
+      << this->impl->Name << "\")\n";
+    this->impl->Makefile->IssueMessage(MessageType::FATAL_ERROR, e.str());
+    return;
+  }
 
   UsageRequirementProperty* usageRequirements[] = {
-    &this->impl->IncludeDirectories,
-    &this->impl->CompileOptions,
-    &this->impl->CompileFeatures,
-    &this->impl->CompileDefinitions,
+    &this->impl->IncludeDirectories, &this->impl->CompileOptions,
+    &this->impl->CompileFeatures,    &this->impl->CompileDefinitions,
+    &this->impl->PrecompileHeaders,
   };
 
   for (auto* usageRequirement : usageRequirements) {
@@ -1862,19 +1864,6 @@ void cmTarget::AppendProperty(const std::string& prop,
     if (!value.empty()) {
       cmListFileBacktrace lfbt = this->impl->GetBacktrace(bt);
       this->impl->LinkDirectoriesEntries.emplace_back(value, lfbt);
-    }
-  } else if (prop == "PRECOMPILE_HEADERS") {
-    if (this->GetProperty("PRECOMPILE_HEADERS_REUSE_FROM")) {
-      std::ostringstream e;
-      e << "PRECOMPILE_HEADERS_REUSE_FROM property is already set on target "
-           "(\""
-        << this->impl->Name << "\")\n";
-      this->impl->Makefile->IssueMessage(MessageType::FATAL_ERROR, e.str());
-      return;
-    }
-    if (!value.empty()) {
-      cmListFileBacktrace lfbt = this->impl->GetBacktrace(bt);
-      this->impl->PrecompileHeadersEntries.emplace_back(value, lfbt);
     }
   } else if (prop == "LINK_LIBRARIES") {
     if (!value.empty()) {
@@ -2182,7 +2171,8 @@ void cmTarget::InsertLinkDirectory(BT<std::string> const& entry, bool before)
 
 void cmTarget::InsertPrecompileHeader(BT<std::string> const& entry)
 {
-  this->impl->PrecompileHeadersEntries.push_back(entry);
+  this->impl->PrecompileHeaders.WriteDirect(
+    entry, UsageRequirementProperty::Action::Append);
 }
 
 namespace {
@@ -2329,10 +2319,9 @@ cmValue cmTarget::GetProperty(const std::string& prop) const
     }
 
     UsageRequirementProperty const* usageRequirements[] = {
-      &this->impl->IncludeDirectories,
-      &this->impl->CompileOptions,
-      &this->impl->CompileFeatures,
-      &this->impl->CompileDefinitions,
+      &this->impl->IncludeDirectories, &this->impl->CompileOptions,
+      &this->impl->CompileFeatures,    &this->impl->CompileDefinitions,
+      &this->impl->PrecompileHeaders,
     };
 
     for (auto const* usageRequirement : usageRequirements) {
@@ -2417,15 +2406,6 @@ cmValue cmTarget::GetProperty(const std::string& prop) const
           return item.Value.first;
         });
       output = cmJoin(utilities, ";");
-      return cmValue(output);
-    }
-    if (prop == propPRECOMPILE_HEADERS) {
-      if (this->impl->PrecompileHeadersEntries.empty()) {
-        return nullptr;
-      }
-
-      static std::string output;
-      output = cmJoin(this->impl->PrecompileHeadersEntries, ";");
       return cmValue(output);
     }
     if (prop == propIMPORTED) {
