@@ -303,7 +303,6 @@ public:
   std::set<std::string> SystemIncludeDirectories;
   cmTarget::LinkLibraryVectorType OriginalLinkLibraries;
   std::map<std::string, BTs<std::string>> LanguageStandardProperties;
-  std::vector<BT<std::string>> IncludeDirectoriesEntries;
   std::map<cmTargetExport const*, std::vector<std::string>>
     InstallIncludeDirectoriesEntries;
   std::vector<BT<std::string>> CompileOptionsEntries;
@@ -321,6 +320,8 @@ public:
     TLLCommands;
   std::map<std::string, cmFileSet> FileSets;
   cmListFileBacktrace Backtrace;
+
+  UsageRequirementProperty IncludeDirectories;
 
   FileSetType HeadersFileSets;
   FileSetType CxxModulesFileSets;
@@ -357,7 +358,8 @@ public:
 };
 
 cmTargetInternals::cmTargetInternals()
-  : HeadersFileSets("HEADERS"_s, "HEADER_DIRS"_s, "HEADER_SET"_s,
+  : IncludeDirectories("INCLUDE_DIRECTORIES"_s)
+  , HeadersFileSets("HEADERS"_s, "HEADER_DIRS"_s, "HEADER_SET"_s,
                     "HEADER_DIRS_"_s, "HEADER_SET_"_s, "Header"_s,
                     "The default header set"_s, "Header set"_s,
                     FileSetEntries("HEADER_SETS"_s),
@@ -830,8 +832,8 @@ cmTarget::cmTarget(std::string const& name, cmStateEnums::TargetType type,
   if (!this->IsImported()) {
     // Initialize the INCLUDE_DIRECTORIES property based on the current value
     // of the same directory property:
-    cm::append(this->impl->IncludeDirectoriesEntries,
-               this->impl->Makefile->GetIncludeDirectoriesEntries());
+    this->impl->IncludeDirectories.CopyFromDirectory(
+      this->impl->Makefile->GetIncludeDirectoriesEntries());
 
     {
       auto const& sysInc = this->impl->Makefile->GetSystemIncludeDirectories();
@@ -1455,7 +1457,7 @@ cmStringRange cmTarget::GetInstallIncludeDirectoriesEntries(
 
 cmBTStringRange cmTarget::GetIncludeDirectoriesEntries() const
 {
-  return cmMakeRange(this->impl->IncludeDirectoriesEntries);
+  return cmMakeRange(this->impl->IncludeDirectories.Entries);
 }
 
 cmBTStringRange cmTarget::GetCompileOptionsEntries() const
@@ -1639,6 +1641,17 @@ void cmTarget::StoreProperty(const std::string& prop, ValueType value)
     return;
   }
 
+  UsageRequirementProperty* usageRequirements[] = {
+    &this->impl->IncludeDirectories,
+  };
+
+  for (auto* usageRequirement : usageRequirements) {
+    if (usageRequirement->Write(this->impl.get(), {}, prop, value,
+                                UsageRequirementProperty::Action::Set)) {
+      return;
+    }
+  }
+
   FileSetType* fileSetTypes[] = {
     &this->impl->HeadersFileSets,
     &this->impl->CxxModulesFileSets,
@@ -1652,13 +1665,7 @@ void cmTarget::StoreProperty(const std::string& prop, ValueType value)
     }
   }
 
-  if (prop == propINCLUDE_DIRECTORIES) {
-    this->impl->IncludeDirectoriesEntries.clear();
-    if (value) {
-      cmListFileBacktrace lfbt = this->impl->Makefile->GetBacktrace();
-      this->impl->IncludeDirectoriesEntries.emplace_back(value, lfbt);
-    }
-  } else if (prop == propCOMPILE_OPTIONS) {
+  if (prop == propCOMPILE_OPTIONS) {
     this->impl->CompileOptionsEntries.clear();
     if (value) {
       cmListFileBacktrace lfbt = this->impl->Makefile->GetBacktrace();
@@ -1831,6 +1838,17 @@ void cmTarget::AppendProperty(const std::string& prop,
     return;
   }
 
+  UsageRequirementProperty* usageRequirements[] = {
+    &this->impl->IncludeDirectories,
+  };
+
+  for (auto* usageRequirement : usageRequirements) {
+    if (usageRequirement->Write(this->impl.get(), bt, prop, cmValue(value),
+                                UsageRequirementProperty::Action::Append)) {
+      return;
+    }
+  }
+
   FileSetType* fileSetTypes[] = {
     &this->impl->HeadersFileSets,
     &this->impl->CxxModulesFileSets,
@@ -1844,12 +1862,7 @@ void cmTarget::AppendProperty(const std::string& prop,
     }
   }
 
-  if (prop == "INCLUDE_DIRECTORIES") {
-    if (!value.empty()) {
-      cmListFileBacktrace lfbt = this->impl->GetBacktrace(bt);
-      this->impl->IncludeDirectoriesEntries.emplace_back(value, lfbt);
-    }
-  } else if (prop == "COMPILE_OPTIONS") {
+  if (prop == "COMPILE_OPTIONS") {
     if (!value.empty()) {
       cmListFileBacktrace lfbt = this->impl->GetBacktrace(bt);
       this->impl->CompileOptionsEntries.emplace_back(value, lfbt);
@@ -2155,10 +2168,10 @@ void cmTarget::FinalizeTargetConfiguration(
 
 void cmTarget::InsertInclude(BT<std::string> const& entry, bool before)
 {
-  auto position = before ? this->impl->IncludeDirectoriesEntries.begin()
-                         : this->impl->IncludeDirectoriesEntries.end();
-
-  this->impl->IncludeDirectoriesEntries.insert(position, entry);
+  this->impl->IncludeDirectories.WriteDirect(
+    entry,
+    before ? UsageRequirementProperty::Action::Prepend
+           : UsageRequirementProperty::Action::Append);
 }
 
 void cmTarget::InsertCompileOption(BT<std::string> const& entry, bool before)
@@ -2337,6 +2350,18 @@ cmValue cmTarget::GetProperty(const std::string& prop) const
       }
       return cmValue(propertyIter->second.Value);
     }
+
+    UsageRequirementProperty const* usageRequirements[] = {
+      &this->impl->IncludeDirectories,
+    };
+
+    for (auto const* usageRequirement : usageRequirements) {
+      auto value = usageRequirement->Read(prop);
+      if (value.first) {
+        return value.second;
+      }
+    }
+
     if (prop == propLINK_LIBRARIES) {
       if (this->impl->LinkImplementationPropertyEntries.empty()) {
         return nullptr;
@@ -2377,15 +2402,6 @@ cmValue cmTarget::GetProperty(const std::string& prop) const
     // the type property returns what type the target is
     if (prop == propTYPE) {
       return cmValue(cmState::GetTargetTypeName(this->GetType()));
-    }
-    if (prop == propINCLUDE_DIRECTORIES) {
-      if (this->impl->IncludeDirectoriesEntries.empty()) {
-        return nullptr;
-      }
-
-      static std::string output;
-      output = cmJoin(this->impl->IncludeDirectoriesEntries, ";");
-      return cmValue(output);
     }
     if (prop == propCOMPILE_FEATURES) {
       if (this->impl->CompileFeaturesEntries.empty()) {
