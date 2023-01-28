@@ -305,7 +305,6 @@ public:
   std::map<std::string, BTs<std::string>> LanguageStandardProperties;
   std::map<cmTargetExport const*, std::vector<std::string>>
     InstallIncludeDirectoriesEntries;
-  std::vector<BT<std::string>> LinkDirectoriesEntries;
   std::vector<BT<std::string>> LinkImplementationPropertyEntries;
   std::vector<BT<std::string>> LinkInterfacePropertyEntries;
   std::vector<BT<std::string>> LinkInterfaceDirectPropertyEntries;
@@ -322,6 +321,7 @@ public:
   UsageRequirementProperty PrecompileHeaders;
   UsageRequirementProperty Sources;
   UsageRequirementProperty LinkOptions;
+  UsageRequirementProperty LinkDirectories;
 
   FileSetType HeadersFileSets;
   FileSetType CxxModulesFileSets;
@@ -365,6 +365,7 @@ cmTargetInternals::cmTargetInternals()
   , PrecompileHeaders("PRECOMPILE_HEADERS"_s)
   , Sources("SOURCES"_s, UsageRequirementProperty::AppendEmpty::Yes)
   , LinkOptions("LINK_OPTIONS"_s)
+  , LinkDirectories("LINK_DIRECTORIES"_s)
   , HeadersFileSets("HEADERS"_s, "HEADER_DIRS"_s, "HEADER_SET"_s,
                     "HEADER_DIRS_"_s, "HEADER_SET_"_s, "Header"_s,
                     "The default header set"_s, "Header set"_s,
@@ -851,9 +852,8 @@ cmTarget::cmTarget(std::string const& name, cmStateEnums::TargetType type,
       this->impl->Makefile->GetCompileOptionsEntries());
     this->impl->LinkOptions.CopyFromDirectory(
       this->impl->Makefile->GetLinkOptionsEntries());
-
-    cm::append(this->impl->LinkDirectoriesEntries,
-               this->impl->Makefile->GetLinkDirectoriesEntries());
+    this->impl->LinkDirectories.CopyFromDirectory(
+      this->impl->Makefile->GetLinkDirectoriesEntries());
   }
 
   if (this->impl->TargetType == cmStateEnums::EXECUTABLE) {
@@ -1492,7 +1492,7 @@ cmBTStringRange cmTarget::GetLinkOptionsEntries() const
 
 cmBTStringRange cmTarget::GetLinkDirectoriesEntries() const
 {
-  return cmMakeRange(this->impl->LinkDirectoriesEntries);
+  return cmMakeRange(this->impl->LinkDirectories.Entries);
 }
 
 cmBTStringRange cmTarget::GetLinkImplementationEntries() const
@@ -1645,7 +1645,7 @@ void cmTarget::StoreProperty(const std::string& prop, ValueType value)
     &this->impl->IncludeDirectories, &this->impl->CompileOptions,
     &this->impl->CompileFeatures,    &this->impl->CompileDefinitions,
     &this->impl->PrecompileHeaders,  &this->impl->Sources,
-    &this->impl->LinkOptions,
+    &this->impl->LinkOptions,        &this->impl->LinkDirectories,
   };
 
   for (auto* usageRequirement : usageRequirements) {
@@ -1668,13 +1668,7 @@ void cmTarget::StoreProperty(const std::string& prop, ValueType value)
     }
   }
 
-  if (prop == propLINK_DIRECTORIES) {
-    this->impl->LinkDirectoriesEntries.clear();
-    if (value) {
-      cmListFileBacktrace lfbt = this->impl->Makefile->GetBacktrace();
-      this->impl->LinkDirectoriesEntries.emplace_back(value, lfbt);
-    }
-  } else if (prop == propLINK_LIBRARIES) {
+  if (prop == propLINK_LIBRARIES) {
     this->impl->LinkImplementationPropertyEntries.clear();
     if (value) {
       cmListFileBacktrace lfbt = this->impl->Makefile->GetBacktrace();
@@ -1818,7 +1812,7 @@ void cmTarget::AppendProperty(const std::string& prop,
     &this->impl->IncludeDirectories, &this->impl->CompileOptions,
     &this->impl->CompileFeatures,    &this->impl->CompileDefinitions,
     &this->impl->PrecompileHeaders,  &this->impl->Sources,
-    &this->impl->LinkOptions,
+    &this->impl->LinkOptions,        &this->impl->LinkDirectories,
   };
 
   for (auto* usageRequirement : usageRequirements) {
@@ -1841,12 +1835,7 @@ void cmTarget::AppendProperty(const std::string& prop,
     }
   }
 
-  if (prop == "LINK_DIRECTORIES") {
-    if (!value.empty()) {
-      cmListFileBacktrace lfbt = this->impl->GetBacktrace(bt);
-      this->impl->LinkDirectoriesEntries.emplace_back(value, lfbt);
-    }
-  } else if (prop == "LINK_LIBRARIES") {
+  if (prop == "LINK_LIBRARIES") {
     if (!value.empty()) {
       cmListFileBacktrace lfbt = this->impl->GetBacktrace(bt);
       this->impl->LinkImplementationPropertyEntries.emplace_back(value, lfbt);
@@ -2141,10 +2130,10 @@ void cmTarget::InsertLinkOption(BT<std::string> const& entry, bool before)
 
 void cmTarget::InsertLinkDirectory(BT<std::string> const& entry, bool before)
 {
-  auto position = before ? this->impl->LinkDirectoriesEntries.begin()
-                         : this->impl->LinkDirectoriesEntries.end();
-
-  this->impl->LinkDirectoriesEntries.insert(position, entry);
+  this->impl->LinkDirectories.WriteDirect(
+    entry,
+    before ? UsageRequirementProperty::Action::Prepend
+           : UsageRequirementProperty::Action::Append);
 }
 
 void cmTarget::InsertPrecompileHeader(BT<std::string> const& entry)
@@ -2300,7 +2289,7 @@ cmValue cmTarget::GetProperty(const std::string& prop) const
       &this->impl->IncludeDirectories, &this->impl->CompileOptions,
       &this->impl->CompileFeatures,    &this->impl->CompileDefinitions,
       &this->impl->PrecompileHeaders,  &this->impl->Sources,
-      &this->impl->LinkOptions,
+      &this->impl->LinkOptions,        &this->impl->LinkDirectories,
     };
 
     for (auto const* usageRequirement : usageRequirements) {
@@ -2350,16 +2339,6 @@ cmValue cmTarget::GetProperty(const std::string& prop) const
     // the type property returns what type the target is
     if (prop == propTYPE) {
       return cmValue(cmState::GetTargetTypeName(this->GetType()));
-    }
-    if (prop == propLINK_DIRECTORIES) {
-      if (this->impl->LinkDirectoriesEntries.empty()) {
-        return nullptr;
-      }
-
-      static std::string output;
-      output = cmJoin(this->impl->LinkDirectoriesEntries, ";");
-
-      return cmValue(output);
     }
     if (prop == propMANUALLY_ADDED_DEPENDENCIES) {
       if (this->impl->Utilities.empty()) {
