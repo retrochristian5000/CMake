@@ -1983,8 +1983,7 @@ void cmTarget::AppendBuildInterfaceIncludes()
 }
 
 namespace {
-bool CheckLinkLibraryPattern(cm::string_view property,
-                             const std::vector<BT<std::string>>& value,
+bool CheckLinkLibraryPattern(UsageRequirementProperty const& usage,
                              cmake* context)
 {
   // Look for <LINK_LIBRARY:> and </LINK_LIBRARY:> internal tags
@@ -1993,7 +1992,7 @@ bool CheckLinkLibraryPattern(cm::string_view property,
 
   bool isValid = true;
 
-  for (const auto& item : value) {
+  for (const auto& item : usage.Entries) {
     if (!linkPattern.find(item.Value)) {
       continue;
     }
@@ -2004,8 +2003,8 @@ bool CheckLinkLibraryPattern(cm::string_view property,
     context->IssueMessage(
       MessageType::FATAL_ERROR,
       cmStrCat(
-        "Property ", property, " contains the invalid item \"",
-        linkPattern.match(2), "\". The ", property,
+        "Property ", usage.Name, " contains the invalid item \"",
+        linkPattern.match(2), "\". The ", usage.Name,
         " property may contain the generator-expression \"$<LINK_",
         linkPattern.match(3),
         ":...>\" which may be used to specify how the libraries are linked."),
@@ -2024,16 +2023,12 @@ void cmTarget::FinalizeTargetConfiguration(
     return;
   }
 
-  if (!CheckLinkLibraryPattern("LINK_LIBRARIES"_s,
-                               this->impl->LinkLibraries.Entries,
+  if (!CheckLinkLibraryPattern(this->impl->LinkLibraries,
                                this->GetMakefile()->GetCMakeInstance()) ||
-      !CheckLinkLibraryPattern("INTERFACE_LINK_LIBRARIES"_s,
-                               this->impl->InterfaceLinkLibraries.Entries,
+      !CheckLinkLibraryPattern(this->impl->InterfaceLinkLibraries,
                                this->GetMakefile()->GetCMakeInstance()) ||
-      !CheckLinkLibraryPattern(
-        "INTERFACE_LINK_LIBRARIES_DIRECT"_s,
-        this->impl->InterfaceLinkLibrariesDirect.Entries,
-        this->GetMakefile()->GetCMakeInstance())) {
+      !CheckLinkLibraryPattern(this->impl->InterfaceLinkLibrariesDirect,
+                               this->GetMakefile()->GetCMakeInstance())) {
     return;
   }
 
