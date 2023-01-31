@@ -1,0 +1,14 @@
+--- a/sphinx/themes/basic/static/basic.css_t	2022-07-22 22:34:56.000000000 +0000
++++ b/sphinx/themes/basic/static/basic.css_t	2023-01-31 19:47:23.223322267 +0000
+@@ -686,9 +686,11 @@
+     padding-right: 5px;
+ }
+ 
++{%- if docutils_version_info[:2] < (0, 18) %}
+ dl.field-list > dt:after {
+     content: ":";
+ }
++{% endif %}
+ 
+ dl.field-list > dd {
+     padding-left: 0.5em;
