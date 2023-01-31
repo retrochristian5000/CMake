@@ -31,3 +31,9 @@ RUN tar -C /usr/include -xf /root/clang-tidy-headers.tar \
 COPY --from=iwyu /root/iwyu.tar /root/iwyu.tar
 RUN tar -C / -xf /root/iwyu.tar \
  && rm /root/iwyu.tar
+
+# Patch sphinx issue 10594 until Fedora packages Sphinx 5.0.3 or higher.
+# https://bugzilla.redhat.com/show_bug.cgi?id=2166116
+COPY sphinx-5.0.2-css.patch /root/sphinx-5.0.2-css.patch
+RUN cd /usr/lib/python3.11/site-packages \
+ && patch -p1 < /root/sphinx-5.0.2-css.patch
