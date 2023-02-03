@@ -647,6 +647,12 @@ cm::optional<cmTryCompileResult> cmCoreTryCompile::TryCompileCode(
       fprintf(fout, "cmake_policy(SET CMP0128 OLD)\n");
     }
 
+    /* Set CMAKE_INTDIR policy to match outer project. */
+    if (this->Makefile->GetPolicyStatus(cmPolicies::CMP0144) !=
+        cmPolicies::NEW) {
+      fprintf(fout, "cmake_policy(SET CMP0144 OLD)\n");
+    }
+
     std::string projectLangs;
     for (std::string const& li : testLangs) {
       projectLangs += " " + li;

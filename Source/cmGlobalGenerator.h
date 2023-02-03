@@ -602,6 +602,8 @@ public:
   cmInstallRuntimeDependencySet* GetNamedRuntimeDependencySet(
     const std::string& name);
 
+  bool CheckAndWarnCMP0144(cmGeneratorTarget* target);
+
 protected:
   // for a project collect all its targets by following depend
   // information, and also collect all the targets
@@ -733,6 +735,8 @@ private:
   std::map<std::string, std::string> LanguageToOriginalSharedLibFlags;
 
   mutable bool DiagnosedCxxModuleSupport = false;
+
+  bool WarnedCMP0144 = false;
 
   // Deferral id generation.
   size_t NextDeferId = 0;
