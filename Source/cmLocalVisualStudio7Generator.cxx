@@ -748,8 +748,10 @@ void cmLocalVisualStudio7Generator::WriteConfiguration(
     this->Makefile->IsOn("CMAKE_VERBOSE_MAKEFILE"));
 
   // Add a definition for the configuration name.
-  std::string configDefine = cmStrCat("CMAKE_INTDIR=\"", configName, '"');
-  targetOptions.AddDefine(configDefine);
+  if (this->GlobalGenerator->CheckAndWarnCMP0144(target)) {
+    std::string configDefine = cmStrCat("CMAKE_INTDIR=\"", configName, '"');
+    targetOptions.AddDefine(configDefine);
+  }
 
   // Add the export symbol definition for shared library objects.
   if (const std::string* exportMacro = target->GetExportMacro()) {

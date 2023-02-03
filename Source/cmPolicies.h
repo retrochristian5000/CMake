@@ -434,6 +434,9 @@ class cmMakefile;
          3, 25, 0, cmPolicies::WARN)                                          \
   SELECT(POLICY, CMP0143,                                                     \
          "Global property USE_FOLDERS treated as ON by default", 3, 26, 0,    \
+         cmPolicies::WARN)                                                    \
+  SELECT(POLICY, CMP0144,                                                     \
+         "CMAKE_INTDIR is not defined by multi-config generators.", 3, 27, 0, \
          cmPolicies::WARN)
 
 #define CM_SELECT_ID(F, A1, A2, A3, A4, A5, A6) F(A1)
@@ -472,7 +475,8 @@ class cmMakefile;
   F(CMP0113)                                                                  \
   F(CMP0119)                                                                  \
   F(CMP0131)                                                                  \
-  F(CMP0142)
+  F(CMP0142)                                                                  \
+  F(CMP0144)
 
 /** \class cmPolicies
  * \brief Handles changes in CMake behavior and policies
