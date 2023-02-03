@@ -1,0 +1,5 @@
+cmp0144
+-------
+
+* ``CMAKE_INTDIR`` is no longer defined by multi-config generators. See
+  :policy:`CMP0144` for details.

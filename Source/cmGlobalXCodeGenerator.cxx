@@ -2417,8 +2417,10 @@ void cmGlobalXCodeGenerator::CreateBuildSettings(cmGeneratorTarget* gtgt,
 
   // Add preprocessor definitions for this target and configuration.
   BuildObjectListOrString ppDefs(this, true);
-  this->AppendDefines(
-    ppDefs, "CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"");
+  if (binary && this->CheckAndWarnCMP0144(gtgt)) {
+    this->AppendDefines(
+      ppDefs, "CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"");
+  }
   if (const std::string* exportMacro = gtgt->GetExportMacro()) {
     // Add the export symbol definition for shared library objects.
     this->AppendDefines(ppDefs, exportMacro->c_str());

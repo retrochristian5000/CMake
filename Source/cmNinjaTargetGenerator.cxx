@@ -280,8 +280,8 @@ std::string cmNinjaTargetGenerator::ComputeDefines(cmSourceFile const* source,
   cmGeneratorExpressionInterpreter genexInterpreter(
     this->LocalGenerator, config, this->GeneratorTarget, language);
 
-  // Seriously??
-  if (this->GetGlobalGenerator()->IsMultiConfig()) {
+  if (this->GetGlobalGenerator()->IsMultiConfig() &&
+      this->GetGlobalGenerator()->CheckAndWarnCMP0144(this->GeneratorTarget)) {
     defines.insert(cmStrCat("CMAKE_INTDIR=\"", config, '"'));
   }
 

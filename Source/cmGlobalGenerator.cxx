@@ -3529,3 +3529,27 @@ cmInstallRuntimeDependencySet* cmGlobalGenerator::GetNamedRuntimeDependencySet(
   }
   return it->second;
 }
+
+bool cmGlobalGenerator::CheckAndWarnCMP0144(cmGeneratorTarget* target)
+{
+  switch (target->GetPolicyStatusCMP0144()) {
+    case cmPolicies::WARN:
+      if (!this->WarnedCMP0144 &&
+          target->Makefile->PolicyOptionalWarningEnabled(
+            "CMAKE_POLICY_WARNING_CMP0144")) {
+        this->WarnedCMP0144 = true;
+        this->CMakeInstance->IssueMessage(
+          MessageType::AUTHOR_WARNING,
+          cmPolicies::GetPolicyWarning(cmPolicies::CMP0144),
+          target->GetBacktrace());
+      }
+      CM_FALLTHROUGH;
+    case cmPolicies::OLD:
+      return true;
+    case cmPolicies::REQUIRED_IF_USED:
+    case cmPolicies::REQUIRED_ALWAYS:
+    case cmPolicies::NEW:
+      return false;
+  }
+  return false;
+}

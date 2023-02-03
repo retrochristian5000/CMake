@@ -1,0 +1,21 @@
+CMP0144
+-------
+
+.. versionadded:: 3.27
+
+``CMAKE_INTDIR`` is not defined by multi-config generators.
+
+CMake 3.26 and lower defined a macro, ``CMAKE_INTDIR``, on source files when a
+multi-config generator was in use. This macro was created before the
+:genex:`$<CONFIG> <CONFIG>` generator expression existed. Users should define
+their own macro that contains :genex:`$<CONFIG> <CONFIG>` to get equivalent
+behavior.
+
+The ``OLD`` behavior for this policy is to define ``CMAKE_INTDIR``. The
+``NEW`` behavior for this policy is to not define ``CMAKE_INTDIR``.
+
+This policy was introduced in CMake version 3.27.  Unlike most policies,
+CMake version |release| does *not* warn by default when this policy
+is not set and simply uses ``OLD`` behavior.  See documentation of the
+:variable:`CMAKE_POLICY_WARNING_CMP0144 <CMAKE_POLICY_WARNING_CMP<NNNN>>`
+variable to control the warning.

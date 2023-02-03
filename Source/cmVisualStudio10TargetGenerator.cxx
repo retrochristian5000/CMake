@@ -3342,8 +3342,10 @@ bool cmVisualStudio10TargetGenerator::ComputeClOptions(
   }
 
   // Add a definition for the configuration name.
-  std::string configDefine = cmStrCat("CMAKE_INTDIR=\"", configName, '"');
-  clOptions.AddDefine(configDefine);
+  if (this->GlobalGenerator->CheckAndWarnCMP0144(this->GeneratorTarget)) {
+    std::string configDefine = cmStrCat("CMAKE_INTDIR=\"", configName, '"');
+    clOptions.AddDefine(configDefine);
+  }
   if (const std::string* exportMacro =
         this->GeneratorTarget->GetExportMacro()) {
     clOptions.AddDefine(*exportMacro);
@@ -3662,8 +3664,10 @@ bool cmVisualStudio10TargetGenerator::ComputeCudaOptions(
   cudaOptions.AddDefines(targetDefines);
 
   // Add a definition for the configuration name.
-  std::string configDefine = cmStrCat("CMAKE_INTDIR=\"", configName, '"');
-  cudaOptions.AddDefine(configDefine);
+  if (this->GlobalGenerator->CheckAndWarnCMP0144(this->GeneratorTarget)) {
+    std::string configDefine = cmStrCat("CMAKE_INTDIR=\"", configName, '"');
+    cudaOptions.AddDefine(configDefine);
+  }
   if (const std::string* exportMacro =
         this->GeneratorTarget->GetExportMacro()) {
     cudaOptions.AddDefine(*exportMacro);
