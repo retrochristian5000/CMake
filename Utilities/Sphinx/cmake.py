@@ -348,9 +348,16 @@ class CMakeXRefRole(XRefRole):
         # to have an explicit target:
         #  `command_name(SUB_COMMAND) <command_name>`
         if typ == 'cmake:command':
-            match = CMakeXRefRole.SUBCOMMAND_RE.match(text)
-            if match:
-                text = '{0} <{1}>'.format(text, match.group(1))
+            # NOTE The leading `!` before the command name prevents
+            # link adding.
+            # NOTE For "refs" w/ links prevention the `<...>`
+            # part should be omitted.
+            if text[0] == '!':
+                self.fix_parens = text[-1] != ')'
+            else:
+                match = CMakeXRefRole.SUBCOMMAND_RE.match(text)
+                if match:
+                    text = '{0} <{1}>'.format(text, match.group(1))
         elif typ == 'cmake:genex':
             match = CMakeXRefRole.GENEX_RE.match(text)
             if match:
