@@ -1,0 +1,7 @@
+Token.Name.Function:`foo`
+Token.Name.Function:`(`
+Token.Name.Constant:`KEYWORD`
+Token.Text.Whitespace:` `
+Token.Name.Builtin:`param`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`

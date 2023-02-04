@@ -1,0 +1,24 @@
+Token.Name.Function:`foo`
+Token.Name.Function:`(`
+Token.Name.Attribute:`/usr/local/abs/path`
+Token.Text.Whitespace:` `
+Token.Name.Attribute:`etc/cmake/relative/path`
+Token.Text.Whitespace:` `
+Token.Name.Attribute:`/etc/resolv.conf`
+Token.Text.Whitespace:` `
+Token.Name.Attribute:`/`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`
+Token.Name.Function:`foo`
+Token.Name.Function:`(`
+Token.Operator:`${`
+Token.Name.Tag:`CMAKE_CURRENT_BINARY_DIR`
+Token.Operator:`}`
+Token.Name.Attribute:`/test/`
+Token.Operator:`${`
+Token.Name.Tag:`TEST_NAME`
+Token.Operator:`}`
+Token.Punctuation:`.`
+Token.Name.Builtin:`cpp`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`

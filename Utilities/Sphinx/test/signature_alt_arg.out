@@ -1,0 +1,11 @@
+Token.Name.Function:`foo`
+Token.Name.Function:`(`
+Token.Name.Constant:`KEYWORD`
+Token.Text.Whitespace:` `
+Token.Operator:`<`
+Token.Name.Builtin:`member`
+Token.Punctuation:`|`
+Token.Name.Builtin:`index`
+Token.Operator:`>`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`

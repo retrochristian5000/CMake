@@ -1,0 +1,5 @@
+Token.Name.Function:`foo`
+Token.Name.Function:`(`
+Token.Literal.String:`"${CMAKE_BUILD_TYPE}"`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`

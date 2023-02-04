@@ -1,0 +1,10 @@
+Token.Name.Function:`foo`
+Token.Name.Function:`(`
+Token.Operator:`${`
+Token.Name.Tag:`CMAKE_`
+Token.Operator:`${`
+Token.Name.Tag:`CONFIGURATION`
+Token.Operator:`}`
+Token.Operator:`}`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`

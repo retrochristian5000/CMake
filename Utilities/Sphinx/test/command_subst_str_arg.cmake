@@ -1,0 +1,1 @@
+foo("${CMAKE_BUILD_TYPE}")

@@ -1,0 +1,5 @@
+Token.Name.Function:`foo`
+Token.Name.Function:`(`
+Token.Literal.String:`"unit test"`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`

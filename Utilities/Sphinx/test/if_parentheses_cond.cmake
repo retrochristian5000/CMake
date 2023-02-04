@@ -1,0 +1,1 @@
+if((VAR1 AND VAR2) OR (VAR3 STREQUAL "literal ${SUBST}"))

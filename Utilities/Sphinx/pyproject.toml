@@ -1,6 +1,7 @@
 [tool.poe.tasks]
 dead-check = "vulture cmake.py"
-lint-check = "flakeheaven lint colors.py cmake.py cmakelexer.py"
+lint-check = "flakeheaven lint colors.py cmake.py cmakelexer.py test/cmakelexer_test.py"
+test = "pytest"
 
 [tool.poetry]
 name = "sphinx-cmake"
@@ -33,6 +34,7 @@ mypy = "*"
 poethepoet = "*"
 pycodestyle = "*"
 pylint = "*"
+pytest = "*"
 sphinx = "*"
 vulture = ">= 2.3"
 
@@ -95,6 +97,16 @@ logging-format-style = 'new'
 
 [tool.pylint.MISCELLANEOUS]
 notes = []
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["test"]
+python_files = ["*_test.py"]
+python_classes = ["*Test"]
+python_functions = ["*_test", "*_test_?", "*_test_??"]
+markers = [
+    "wip: work in progress"
+  ]
 
 [tool.vulture]
 min_confidence = 61

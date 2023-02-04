@@ -1,0 +1,37 @@
+Token.Name.Function:`foreach`
+Token.Name.Function:`(`
+Token.Name.Builtin:`arg`
+Token.Text.Whitespace:`<LF>`
+Token.Text.Whitespace:`    `
+Token.Name.Builtin:`NoSpace`
+Token.Text.Whitespace:`<LF>`
+Token.Text.Whitespace:`    `
+Token.Name.Builtin:`Escaped\ Space`
+Token.Text.Whitespace:`<LF>`
+Token.Text.Whitespace:`    `
+Token.Name.Builtin:`This`
+Token.Punctuation:`;`
+Token.Name.Builtin:`Divides`
+Token.Punctuation:`;`
+Token.Name.Builtin:`Into`
+Token.Punctuation:`;`
+Token.Name.Builtin:`Five`
+Token.Punctuation:`;`
+Token.Name.Builtin:`Arguments`
+Token.Text.Whitespace:`<LF>`
+Token.Text.Whitespace:`    `
+Token.Name.Builtin:`Escaped\;Semicolon`
+Token.Text.Whitespace:`<LF>`
+Token.Text.Whitespace:`    `
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`
+Token.Text.Whitespace:`  `
+Token.Name.Function:`message`
+Token.Name.Function:`(`
+Token.Literal.String:`"${arg}"`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`
+Token.Name.Function:`endforeach`
+Token.Name.Function:`(`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`

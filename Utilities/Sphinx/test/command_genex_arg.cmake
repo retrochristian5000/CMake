@@ -1,0 +1,2 @@
+foo($<BOOL:${HAVE_IOSTREAM}>)
+foo($<NOT:$<BOOL:${HAVE_IOSTREAM}>>)

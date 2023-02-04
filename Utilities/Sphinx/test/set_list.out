@@ -1,0 +1,10 @@
+Token.Name.Function:`set`
+Token.Name.Function:`(`
+Token.Name.Builtin:`x`
+Token.Text.Whitespace:` `
+Token.Name.Builtin:`a`
+Token.Text.Whitespace:` `
+Token.Literal.String:`"b;c"`
+Token.Name.Function:`)`
+Token.Text.Whitespace:` `
+Token.Comment:`# sets "x" to "a;b;c", not "a;b\;c"<LF>`

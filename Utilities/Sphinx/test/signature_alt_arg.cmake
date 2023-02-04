@@ -1,0 +1,1 @@
+foo(KEYWORD <member|index>)
