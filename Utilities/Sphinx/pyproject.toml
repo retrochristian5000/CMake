@@ -1,6 +1,6 @@
 [tool.poe.tasks]
 dead-check = "vulture cmake.py"
-lint-check = "flakeheaven lint cmake.py colors.py"
+lint-check = "flakeheaven lint colors.py cmake.py cmakelexer.py"
 
 [tool.poetry]
 name = "sphinx-cmake"
@@ -82,7 +82,7 @@ combine_star = true
 honor_noqa = true
 import_heading_stdlib = "Standard imports"
 import_heading_thirdparty = "Third party packages"
-import_heading_firstparty = "Project specific imports"
+import_heading_firstparty = "Project-specific imports"
 import_heading_localfolder = "Local imports"
 
 [tool.pylint.BASIC]
