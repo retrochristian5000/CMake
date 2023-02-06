@@ -1,2 +1,2 @@
-cmake_minimum_required(VERSION 3.24)
+cmake_policy(SET CMP0066 NEW)
 project(test C)
