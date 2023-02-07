@@ -1,29 +1,26 @@
 Token.Comment:`# Outer scope<LF>`
 Token.Name.Function:`foo`
 Token.Name.Function:`(`
-Token.Text.Whitespace:`<LF>`
-Token.Text.Whitespace:`  `
+Token.Text.Whitespace:`<LF>  `
 Token.Comment:`# Inner scope<LF>`
 Token.Name.Function:`)`
 Token.Text.Whitespace:`<LF>`
-Token.Comment:`#[[This is a bracket comment.<LF>`
-Token.Name.Builtin:`It`
-Token.Text.Whitespace:` `
-Token.Name.Builtin:`runs`
-Token.Text.Whitespace:` `
-Token.Name.Builtin:`until`
-Token.Text.Whitespace:` `
-Token.Name.Builtin:`the`
-Token.Text.Whitespace:` `
-Token.Name.Builtin:`close`
-Token.Text.Whitespace:` `
-Token.Name.Builtin:`bracket.`
-Token.Punctuation:`]`
-Token.Punctuation:`]`
-Token.Text.Whitespace:`<LF>`
-Token.Text.Whitespace:`<LF>`
+Token.Comment:`#[[`
+Token.Comment:`This is a bracket comment.<LF>It runs until the close bracket.`
+Token.Comment:`]]`
+Token.Text.Whitespace:`<LF><LF>`
 Token.Name.Function:`message`
 Token.Name.Function:`(`
-Token.Literal.String:`"First Argument\n"`
+Token.Literal.String:`"`
+Token.Literal.String:`First Argument`
+Token.Literal.String.Escape:`\n`
+Token.Literal.String:`"`
 Token.Text.Whitespace:` `
-Token.Comment:`#[[Bracket Comment]] "Second Argument")<LF>`
+Token.Comment:`#[[`
+Token.Comment:`Bracket Comment]]`
+Token.Text.Whitespace:` `
+Token.Literal.String:`"`
+Token.Literal.String:`Second Argument`
+Token.Literal.String:`"`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`

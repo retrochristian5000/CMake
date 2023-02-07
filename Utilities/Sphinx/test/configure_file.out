@@ -1,8 +1,8 @@
 Token.Name.Function:`configure_file`
 Token.Name.Function:`(`
-Token.Name.Builtin:`input.in`
+Token.Literal.String.Other:`input.in`
 Token.Text.Whitespace:` `
-Token.Name.Builtin:`output.out`
+Token.Literal.String.Other:`output.out`
 Token.Text.Whitespace:` `
 Token.Name.Constant:`@ONLY`
 Token.Name.Function:`)`

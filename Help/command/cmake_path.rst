@@ -623,7 +623,7 @@ equivalent to the following:
   cmake_path(HAS_FILENAME path has_filename)
   if(has_filename)
     cmake_path(REMOVE_FILENAME path)
-    cmake_path(APPEND path input);
+    cmake_path(APPEND path input)
   endif()
 
 .. _REMOVE_EXTENSION:

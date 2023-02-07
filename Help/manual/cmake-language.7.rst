@@ -448,7 +448,7 @@ A ``#`` immediately followed by a :token:`bracket_open` forms a
 
 For example:
 
-::
+.. code-block:: cmake
 
  #[[This is a bracket comment.
  It runs until the close bracket.]]

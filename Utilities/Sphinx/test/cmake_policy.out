@@ -1,0 +1,21 @@
+Token.Name.Function:`cmake_policy`
+Token.Name.Function:`(`
+Token.Name.Constant:`SET`
+Token.Text.Whitespace:` `
+Token.Name.Constant:`CMP`
+Token.Punctuation:`<`
+Token.Name.Label:`NNNN`
+Token.Punctuation:`>`
+Token.Text.Whitespace:` `
+Token.Name.Constant:`NEW`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`
+Token.Name.Function:`cmake_policy`
+Token.Name.Function:`(`
+Token.Name.Constant:`SET`
+Token.Text.Whitespace:` `
+Token.Name.Constant:`CMP1234`
+Token.Text.Whitespace:` `
+Token.Name.Constant:`NEW`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`

@@ -5,7 +5,7 @@ Add include directories to the build.
 
 .. code-block:: cmake
 
-  include_directories([AFTER|BEFORE] [SYSTEM] dir1 [dir2 ...])
+  include_directories([AFTER|BEFORE] [SYSTEM] <dir>...)
 
 Add the given directories to those the compiler uses to search for
 include files.  Relative paths are interpreted as relative to the

@@ -1,0 +1,5 @@
+# NOTE See `cmake-generator-expressions(7)`
+$<$<CONFIG:Debug>:DEBUG_MODE>
+$<$<BOOL:${HAVE_SOME_FEATURE}>:-DENABLE_SOME_FEATURE>
+$<PATH:HAS_PARENT_PATH,path>
+$<PATH:GET_EXTENSION[,LAST_ONLY],path>

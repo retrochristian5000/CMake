@@ -89,3 +89,5 @@ html_favicon = '@conf_path@/static/cmake-favicon.ico'
 # qthelp_qch_name = "CMake.qch"
 
 linkcheck_ignore = [r'about:|https://gitlab.kitware.com/cmake/community/-/wikis/doc/cpack']
+
+# kate: hl python;

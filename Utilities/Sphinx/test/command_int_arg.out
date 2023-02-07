@@ -3,3 +3,8 @@ Token.Name.Function:`(`
 Token.Literal.Number:`123`
 Token.Name.Function:`)`
 Token.Text.Whitespace:`<LF>`
+Token.Name.Function:`foo`
+Token.Name.Function:`(`
+Token.Literal.String.Other:`7z`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`

@@ -1,0 +1,16 @@
+Token.Name.Function:`cmake_language`
+Token.Name.Function:`(`
+Token.Name.Constant:`EVAL`
+Token.Text.Whitespace:` `
+Token.Name.Constant:`CODE`
+Token.Text.Whitespace:` `
+Token.Literal.String:`"`
+Token.Literal.String:`<LF>  if (`
+Token.Literal.String.Interpol:`${`
+Token.Name.Variable:`condition`
+Token.Literal.String.Interpol:`}`
+Token.Literal.String:`)<LF>    message(STATUS TRUE)<LF>  else()<LF>    message(STATUS FALSE)<LF>  endif()`
+Token.Literal.String:`"`
+Token.Text.Whitespace:`<LF>`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`

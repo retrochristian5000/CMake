@@ -52,7 +52,7 @@ be one of the following keywords:
 
   .. code-block:: cmake
 
-    separate_arguments (out UNIX_COMMAND PROGRAM "cc -c main.c")
+    separate_arguments(out UNIX_COMMAND PROGRAM "cc -c main.c")
 
   * First element of the list: ``/path/to/cc``
   * Second element of the list: ``" -c main.c"``
@@ -65,7 +65,7 @@ be one of the following keywords:
 
   .. code-block:: cmake
 
-    separate_arguments (out UNIX_COMMAND PROGRAM SEPARATE_ARGS "cc -c main.c")
+    separate_arguments(out UNIX_COMMAND PROGRAM SEPARATE_ARGS "cc -c main.c")
 
   The contents of ``out`` will be: ``/path/to/cc;-c;main.c``
 

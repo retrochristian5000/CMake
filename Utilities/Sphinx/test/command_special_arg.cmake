@@ -1,1 +1,1 @@
-foo($ENV{VAR} $CACHE{VAR} $DATA{param})
+foo($ENV{VAR} $CACHE{VAR} $DATA{file.name})

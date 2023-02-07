@@ -1,62 +1,16 @@
 Token.Name.Function:`check_source_compiles`
 Token.Name.Function:`(`
 Token.Name.Constant:`C`
-Token.Text.Whitespace:`<LF>`
-Token.Text.Whitespace:`  `
-Token.Punctuation:`[`
-Token.Punctuation:`=`
-Token.Punctuation:`[`
-Token.Text.Whitespace:`<LF>`
-Token.Text.Whitespace:`  `
-Token.Comment:`#include <stdlib.h><LF>`
-Token.Text.Whitespace:`  `
-Token.Comment:`#include <stdnoreturn.h><LF>`
-Token.Text.Whitespace:`  `
-Token.Name.Builtin:`noreturn`
-Token.Text.Whitespace:` `
-Token.Name.Builtin:`void`
-Token.Text.Whitespace:` `
-Token.Name.Function:`f`
-Token.Name.Function:`(`
-Token.Name.Function:`)`
-Token.Error:`{`
-Token.Text.Whitespace:` `
-Token.Name.Function:`exit`
-Token.Name.Function:`(`
-Token.Literal.Number:`0`
-Token.Name.Function:`)`
-Token.Punctuation:`;`
-Token.Text.Whitespace:` `
-Token.Error:`}`
-Token.Text.Whitespace:`<LF>`
-Token.Text.Whitespace:`  `
-Token.Name.Builtin:`int`
-Token.Text.Whitespace:` `
-Token.Name.Function:`main`
-Token.Name.Function:`(`
-Token.Name.Builtin:`void`
-Token.Name.Function:`)`
-Token.Text.Whitespace:` `
-Token.Error:`{`
-Token.Text.Whitespace:` `
-Token.Name.Function:`f`
-Token.Name.Function:`(`
-Token.Name.Function:`)`
-Token.Punctuation:`;`
-Token.Text.Whitespace:` `
-Token.Name.Builtin:`return`
-Token.Text.Whitespace:` `
-Token.Literal.Number:`1`
-Token.Punctuation:`;`
-Token.Text.Whitespace:` `
-Token.Error:`}`
-Token.Text.Whitespace:`<LF>`
-Token.Text.Whitespace:`  `
-Token.Punctuation:`]`
-Token.Punctuation:`=`
-Token.Punctuation:`]`
-Token.Text.Whitespace:`<LF>`
-Token.Text.Whitespace:`  `
+Token.Text.Whitespace:`<LF>  `
+Token.Literal.String.Heredoc:`[=[`
+Token.Literal.String.Heredoc:`
+  #include <stdlib.h>
+  #include <stdnoreturn.h>
+  noreturn void f(){ exit(0); }
+  int main(void) { f(); return 1; }
+  `
+Token.Literal.String.Heredoc:`]=]`
+Token.Text.Whitespace:`<LF>  `
 Token.Name.Constant:`HAVE_NORETURN`
 Token.Name.Function:`)`
 Token.Text.Whitespace:`<LF>`

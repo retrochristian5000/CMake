@@ -797,8 +797,10 @@ further file-copying capabilities.
        [DIRECTORY_PERMISSIONS <permissions>...]
        [FOLLOW_SYMLINK_CHAIN]
        [FILES_MATCHING]
-       [[PATTERN <pattern> | REGEX <regex>]
-        [EXCLUDE] [PERMISSIONS <permissions>...]] [...])
+       [
+        [PATTERN <pattern> | REGEX <regex>]
+        [EXCLUDE] [PERMISSIONS <permissions>...]
+       ] [...])
 
 .. note::
 

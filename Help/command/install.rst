@@ -129,9 +129,10 @@ Installing Targets
 
 .. code-block:: cmake
 
-  install(TARGETS targets... [EXPORT <export-name>]
+  install(TARGETS <target>... [EXPORT <export-name>]
           [RUNTIME_DEPENDENCIES args...|RUNTIME_DEPENDENCY_SET <set-name>]
-          [[ARCHIVE|LIBRARY|RUNTIME|OBJECTS|FRAMEWORK|BUNDLE|
+          [
+           [ARCHIVE|LIBRARY|RUNTIME|OBJECTS|FRAMEWORK|BUNDLE|
             PRIVATE_HEADER|PUBLIC_HEADER|RESOURCE|FILE_SET <set-name>|CXX_MODULES_BMI]
            [DESTINATION <dir>]
            [PERMISSIONS permissions...]
@@ -478,9 +479,10 @@ Installing Imported Runtime Artifacts
 
 .. code-block:: cmake
 
-  install(IMPORTED_RUNTIME_ARTIFACTS targets...
+  install(IMPORTED_RUNTIME_ARTIFACTS <target>...
           [RUNTIME_DEPENDENCY_SET <set-name>]
-          [[LIBRARY|RUNTIME|FRAMEWORK|BUNDLE]
+          [
+           [LIBRARY|RUNTIME|FRAMEWORK|BUNDLE]
            [DESTINATION <dir>]
            [PERMISSIONS permissions...]
            [CONFIGURATIONS [Debug|Release|...]]
@@ -522,7 +524,7 @@ Installing Files
 
 .. code-block:: cmake
 
-  install(<FILES|PROGRAMS> files...
+  install(<FILES|PROGRAMS> <file>...
           TYPE <type> | DESTINATION <dir>
           [PERMISSIONS permissions...]
           [CONFIGURATIONS [Debug|Release|...]]
@@ -625,7 +627,7 @@ Installing Directories
 
 .. code-block:: cmake
 
-  install(DIRECTORY dirs...
+  install(DIRECTORY <dir>...
           TYPE <type> | DESTINATION <dir>
           [FILE_PERMISSIONS permissions...]
           [DIRECTORY_PERMISSIONS permissions...]
@@ -633,8 +635,10 @@ Installing Directories
           [CONFIGURATIONS [Debug|Release|...]]
           [COMPONENT <component>] [EXCLUDE_FROM_ALL]
           [FILES_MATCHING]
-          [[PATTERN <pattern> | REGEX <regex>]
-           [EXCLUDE] [PERMISSIONS permissions...]] [...])
+          [
+           [PATTERN <pattern> | REGEX <regex>]
+           [EXCLUDE] [PERMISSIONS permissions...]
+          ] [...])
 
 The ``DIRECTORY`` form installs contents of one or more directories to a
 given destination.  The directory structure is copied verbatim to the
@@ -758,7 +762,7 @@ Custom Installation Logic
 
 .. code-block:: cmake
 
-  install([[SCRIPT <file>] [CODE <code>]]
+  install([ [SCRIPT <file>] [CODE <code>] ]
           [ALL_COMPONENTS | COMPONENT <component>]
           [EXCLUDE_FROM_ALL] [...])
 
@@ -904,7 +908,8 @@ Installing Runtime Dependencies
 .. code-block:: cmake
 
   install(RUNTIME_DEPENDENCY_SET <set-name>
-          [[LIBRARY|RUNTIME|FRAMEWORK]
+          [
+           [LIBRARY|RUNTIME|FRAMEWORK]
            [DESTINATION <dir>]
            [PERMISSIONS permissions...]
            [CONFIGURATIONS [Debug|Release|...]]

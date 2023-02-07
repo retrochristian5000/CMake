@@ -1,7 +1,7 @@
 Token.Name.Function:`foo`
 Token.Name.Function:`(`
-Token.Operator:`${`
-Token.Name.Tag:`CMAKE_BUILD_TYPE`
-Token.Operator:`}`
+Token.Literal.String.Interpol:`${`
+Token.Name.Variable:`CMAKE_BUILD_TYPE`
+Token.Literal.String.Interpol:`}`
 Token.Name.Function:`)`
 Token.Text.Whitespace:`<LF>`

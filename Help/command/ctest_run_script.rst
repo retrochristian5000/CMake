@@ -5,8 +5,7 @@ runs a :option:`ctest -S` script
 
 .. code-block:: cmake
 
-  ctest_run_script([NEW_PROCESS] script_file_name script_file_name1
-              script_file_name2 ... [RETURN_VALUE var])
+  ctest_run_script([NEW_PROCESS] <script-file-name>... [RETURN_VALUE var])
 
 Runs a script or scripts much like if it was run from :option:`ctest -S`.
 If no argument is provided then the current script is run using the current

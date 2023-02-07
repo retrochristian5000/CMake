@@ -1,10 +1,14 @@
 Token.Name.Function:`set`
 Token.Name.Function:`(`
-Token.Name.Builtin:`x`
+Token.Literal.String.Other:`x`
 Token.Text.Whitespace:` `
-Token.Name.Builtin:`a`
+Token.Literal.String.Other:`a`
 Token.Text.Whitespace:` `
-Token.Literal.String:`"b;c"`
+Token.Literal.String:`"`
+Token.Literal.String:`b`
+Token.Literal.String.Symbol:`;`
+Token.Literal.String:`c`
+Token.Literal.String:`"`
 Token.Name.Function:`)`
 Token.Text.Whitespace:` `
 Token.Comment:`# sets "x" to "a;b;c", not "a;b\;c"<LF>`

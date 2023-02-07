@@ -1,0 +1,164 @@
+Token.Name.Function:`try_compile`
+Token.Name.Function:`(`
+Token.Punctuation:`<`
+Token.Name.Label:`resultVar`
+Token.Punctuation:`>`
+Token.Text.Whitespace:`<LF>            `
+Token.Punctuation:`<`
+Token.Name.Constant:`SOURCES`
+Token.Text.Whitespace:` `
+Token.Punctuation:`<`
+Token.Name.Label:`srcfile`
+Token.Punctuation:`...`
+Token.Punctuation:`>`
+Token.Text.Whitespace:`                 `
+Token.Punctuation:`|`
+Token.Text.Whitespace:`<LF>             `
+Token.Name.Constant:`SOURCE_FROM_CONTENT`
+Token.Text.Whitespace:` `
+Token.Punctuation:`<`
+Token.Name.Label:`name`
+Token.Punctuation:`>`
+Token.Text.Whitespace:` `
+Token.Punctuation:`<`
+Token.Name.Label:`content`
+Token.Punctuation:`>`
+Token.Text.Whitespace:` `
+Token.Punctuation:`|`
+Token.Text.Whitespace:`<LF>             `
+Token.Name.Constant:`SOURCE_FROM_VAR`
+Token.Text.Whitespace:` `
+Token.Punctuation:`<`
+Token.Name.Label:`name`
+Token.Punctuation:`>`
+Token.Text.Whitespace:` `
+Token.Punctuation:`<`
+Token.Name.Label:`var`
+Token.Punctuation:`>`
+Token.Text.Whitespace:`         `
+Token.Punctuation:`|`
+Token.Text.Whitespace:`<LF>             `
+Token.Name.Constant:`SOURCE_FROM_FILE`
+Token.Text.Whitespace:` `
+Token.Punctuation:`<`
+Token.Name.Label:`name`
+Token.Punctuation:`>`
+Token.Text.Whitespace:` `
+Token.Punctuation:`<`
+Token.Name.Label:`path`
+Token.Punctuation:`>`
+Token.Text.Whitespace:`       `
+Token.Punctuation:`>`
+Token.Punctuation:`...`
+Token.Text.Whitespace:`<LF>            `
+Token.Punctuation:`[`
+Token.Name.Constant:`LOG_DESCRIPTION`
+Token.Text.Whitespace:` `
+Token.Punctuation:`<`
+Token.Name.Label:`text`
+Token.Punctuation:`>`
+Token.Punctuation:`]`
+Token.Text.Whitespace:`<LF>            `
+Token.Punctuation:`[`
+Token.Name.Constant:`NO_CACHE`
+Token.Punctuation:`]`
+Token.Text.Whitespace:`<LF>            `
+Token.Punctuation:`[`
+Token.Name.Constant:`NO_LOG`
+Token.Punctuation:`]`
+Token.Text.Whitespace:`<LF>            `
+Token.Punctuation:`[`
+Token.Name.Constant:`CMAKE_FLAGS`
+Token.Text.Whitespace:` `
+Token.Punctuation:`<`
+Token.Name.Label:`flags`
+Token.Punctuation:`>`
+Token.Punctuation:`...`
+Token.Punctuation:`]`
+Token.Text.Whitespace:`<LF>            `
+Token.Punctuation:`[`
+Token.Name.Constant:`COMPILE_DEFINITIONS`
+Token.Text.Whitespace:` `
+Token.Punctuation:`<`
+Token.Name.Label:`defs`
+Token.Punctuation:`>`
+Token.Punctuation:`...`
+Token.Punctuation:`]`
+Token.Text.Whitespace:`<LF>            `
+Token.Punctuation:`[`
+Token.Name.Constant:`LINK_OPTIONS`
+Token.Text.Whitespace:` `
+Token.Punctuation:`<`
+Token.Name.Label:`options`
+Token.Punctuation:`>`
+Token.Punctuation:`...`
+Token.Punctuation:`]`
+Token.Text.Whitespace:`<LF>            `
+Token.Punctuation:`[`
+Token.Name.Constant:`LINK_LIBRARIES`
+Token.Text.Whitespace:` `
+Token.Punctuation:`<`
+Token.Name.Label:`libs`
+Token.Punctuation:`>`
+Token.Punctuation:`...`
+Token.Punctuation:`]`
+Token.Text.Whitespace:`<LF>            `
+Token.Punctuation:`[`
+Token.Name.Constant:`OUTPUT_VARIABLE`
+Token.Text.Whitespace:` `
+Token.Punctuation:`<`
+Token.Name.Label:`var`
+Token.Punctuation:`>`
+Token.Punctuation:`]`
+Token.Text.Whitespace:`<LF>            `
+Token.Punctuation:`[`
+Token.Name.Constant:`COPY_FILE`
+Token.Text.Whitespace:` `
+Token.Punctuation:`<`
+Token.Name.Label:`fileName`
+Token.Punctuation:`>`
+Token.Text.Whitespace:` `
+Token.Punctuation:`[`
+Token.Name.Constant:`COPY_FILE_ERROR`
+Token.Text.Whitespace:` `
+Token.Punctuation:`<`
+Token.Name.Label:`var`
+Token.Punctuation:`>`
+Token.Punctuation:`]`
+Token.Punctuation:`]`
+Token.Text.Whitespace:`<LF>            `
+Token.Punctuation:`[`
+Token.Punctuation:`<`
+Token.Name.Label:`LANG`
+Token.Punctuation:`>`
+Token.Name.Constant:`_STANDARD`
+Token.Text.Whitespace:` `
+Token.Punctuation:`<`
+Token.Name.Label:`std`
+Token.Punctuation:`>`
+Token.Punctuation:`]`
+Token.Text.Whitespace:`<LF>            `
+Token.Punctuation:`[`
+Token.Punctuation:`<`
+Token.Name.Label:`LANG`
+Token.Punctuation:`>`
+Token.Name.Constant:`_STANDARD_REQUIRED`
+Token.Text.Whitespace:` `
+Token.Punctuation:`<`
+Token.Name.Label:`bool`
+Token.Punctuation:`>`
+Token.Punctuation:`]`
+Token.Text.Whitespace:`<LF>            `
+Token.Punctuation:`[`
+Token.Punctuation:`<`
+Token.Name.Label:`LANG`
+Token.Punctuation:`>`
+Token.Name.Constant:`_EXTENSIONS`
+Token.Text.Whitespace:` `
+Token.Punctuation:`<`
+Token.Name.Label:`bool`
+Token.Punctuation:`>`
+Token.Punctuation:`]`
+Token.Text.Whitespace:`<LF>            `
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`

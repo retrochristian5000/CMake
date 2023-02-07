@@ -1,9 +1,9 @@
 Token.Name.Function:`foo`
 Token.Name.Function:`(`
-Token.Name.Attribute:`http://foo.bar`
+Token.Literal.String.Other:`http://foo.bar`
 Token.Text.Whitespace:` `
-Token.Name.Attribute:`https://foo.bar`
+Token.Literal.String.Other:`https://foo.bar`
 Token.Text.Whitespace:` `
-Token.Name.Attribute:`git@foo.bar/path/to/repo`
+Token.Literal.String.Other:`git@foo.bar/path/to/repo`
 Token.Name.Function:`)`
 Token.Text.Whitespace:`<LF>`

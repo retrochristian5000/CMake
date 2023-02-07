@@ -5,7 +5,7 @@ Provide a boolean option that the user can optionally select.
 
 .. code-block:: cmake
 
-  option(<variable> "<help_text>" [value])
+  option(<variable> "help text" [<value>])
 
 If no initial ``<value>`` is provided, boolean ``OFF`` is the default value.
 If ``<variable>`` is already set as a normal or cache variable,

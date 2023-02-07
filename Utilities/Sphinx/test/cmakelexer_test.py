@@ -10,7 +10,7 @@ import pytest
 from pygments import highlight
 from pygments.formatter import Formatter
 from pygments.lexers import load_lexer_from_file
-from pygments.token import Comment, Whitespace
+from pygments.token import Comment, String, Whitespace
 
 _data_dir = pathlib.Path(__file__).parent
 
@@ -21,8 +21,10 @@ class TestFormatter(Formatter):
 
     def format(self, tokensource, outfile):  # NOQA disable=flake8-builtins
         for ttype, value in tokensource:
-            if ttype in [Comment, Whitespace] and '\n' in value:
+            if ttype in [Comment, Whitespace, String] and '\n' in value:
                 value = value.replace('\n', '<LF>')
+            if ttype in [String] and '`' in value:
+                value = value.replace('`', '\\`')
             outfile.write(f'{ttype}:`{value}`\n')
 
         outfile.flush()
@@ -66,6 +68,24 @@ class CMakeLexerTest:  # NOQA too-few-public-methods
           , 'foreach_items.cmake'
           , 'set_list.cmake'
           , 'check_source_compiles.cmake'
+            # Problems found after rewriting lexer
+          , 'add_custom_command.cmake'
+          , 'add_library.cmake'
+          , 'block.cmake'
+          , 'cmake_host_system_information.cmake'
+          , 'cmake_language.cmake'
+          , 'file.cmake'
+          , 'set_ENV.cmake'
+          , 'target_compile_definitions.cmake'
+          , 'genex_at_global_context.cmake'
+          , 'string_cont.cmake'
+          , 'CMAKE_CXX_CLANG_TIDY.cmake'
+          , 'ProcessorCount.cmake'
+          , 'message.cmake'
+          , 'add_custom_target_genex.cmake'
+          , 'cmake_policy.cmake'
+          , 'try_compile.cmake'
+          , 'project.cmake'
           ]
       )
     def simple_test(self, input_file):
@@ -79,6 +99,8 @@ class CMakeLexerTest:  # NOQA too-few-public-methods
         if expected_filename.exists():
             expected_lines = expected_filename.read_text().split('\n')[:-1]
             assert actual_lines == expected_lines
+            # Also, make sure there are no error tokens
+            assert all((lambda line: 'Token.Error' not in line, actual_lines))
 
         else:
             expected_filename.write_text('\n'.join(actual_lines) + '\n')
