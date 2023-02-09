@@ -1,0 +1,7 @@
+Token.Name.Function:`foo`
+Token.Name.Function:`(`
+Token.Name.Namespace:`Foo`
+Token.Operator:`::`
+Token.Name.Entity:`foo`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`

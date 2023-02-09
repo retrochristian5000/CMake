@@ -1,0 +1,50 @@
+Token.Name.Function:`include`
+Token.Name.Function:`(`
+Token.Literal.String.Other:`ProcessorCount`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`
+Token.Name.Function:`ProcessorCount`
+Token.Name.Function:`(`
+Token.Name.Constant:`N`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`
+Token.Name.Function:`if`
+Token.Name.Function:`(`
+Token.Name.Constant:`NOT`
+Token.Text.Whitespace:` `
+Token.Name.Constant:`N`
+Token.Text.Whitespace:` `
+Token.Name.Constant:`EQUAL`
+Token.Text.Whitespace:` `
+Token.Literal.Number:`0`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>  `
+Token.Name.Function:`set`
+Token.Name.Function:`(`
+Token.Name.Constant:`CTEST_BUILD_FLAGS`
+Token.Text.Whitespace:` `
+Token.Literal.String.Other:`-j`
+Token.Literal.String.Interpol:`${`
+Token.Name.Variable:`N`
+Token.Literal.String.Interpol:`}`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>  `
+Token.Name.Function:`set`
+Token.Name.Function:`(`
+Token.Literal.String.Other:`ctest_test_args`
+Token.Text.Whitespace:` `
+Token.Literal.String.Interpol:`${`
+Token.Name.Variable:`ctest_test_args`
+Token.Literal.String.Interpol:`}`
+Token.Text.Whitespace:` `
+Token.Name.Constant:`PARALLEL_LEVEL`
+Token.Text.Whitespace:` `
+Token.Literal.String.Interpol:`${`
+Token.Name.Variable:`N`
+Token.Literal.String.Interpol:`}`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`
+Token.Name.Function:`endif`
+Token.Name.Function:`(`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`

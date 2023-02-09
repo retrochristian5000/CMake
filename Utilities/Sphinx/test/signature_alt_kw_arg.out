@@ -1,0 +1,27 @@
+Token.Name.Function:`foo`
+Token.Name.Function:`(`
+Token.Text.Whitespace:`<LF>  `
+Token.Punctuation:`<`
+Token.Text.Whitespace:`<LF>    `
+Token.Name.Constant:`KEYWORD`
+Token.Text.Whitespace:` `
+Token.Punctuation:`<`
+Token.Name.Label:`param`
+Token.Punctuation:`>`
+Token.Text.Whitespace:`<LF>  `
+Token.Punctuation:`|`
+Token.Text.Whitespace:` `
+Token.Name.Constant:`ANOTHER`
+Token.Text.Whitespace:` `
+Token.Punctuation:`<`
+Token.Name.Label:`other-param`
+Token.Punctuation:`>`
+Token.Text.Whitespace:` `
+Token.Punctuation:`[`
+Token.Name.Constant:`OPTIONAL`
+Token.Punctuation:`]`
+Token.Text.Whitespace:`<LF>  `
+Token.Punctuation:`>`
+Token.Text.Whitespace:`<LF>  `
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`

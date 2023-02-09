@@ -1,0 +1,54 @@
+Token.Name.Function:`target_compile_definitions`
+Token.Name.Function:`(`
+Token.Literal.String.Other:`foo`
+Token.Text.Whitespace:` `
+Token.Name.Constant:`PUBLIC`
+Token.Text.Whitespace:` `
+Token.Name.Constant:`FOO`
+Token.Literal.String.Other:`=1`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`
+Token.Name.Function:`target_compile_definitions`
+Token.Name.Function:`(`
+Token.Literal.String.Other:`foo`
+Token.Text.Whitespace:` `
+Token.Name.Constant:`PUBLIC`
+Token.Text.Whitespace:` `
+Token.Name.Constant:`FOO`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`
+Token.Name.Function:`target_compile_definitions`
+Token.Name.Function:`(`
+Token.Literal.String.Other:`foo`
+Token.Text.Whitespace:` `
+Token.Name.Constant:`PUBLIC`
+Token.Text.Whitespace:` `
+Token.Literal.String.Other:`-DFOO`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`  `
+Token.Comment:`# -D removed<LF>`
+Token.Name.Function:`target_compile_definitions`
+Token.Name.Function:`(`
+Token.Literal.String.Other:`foo`
+Token.Text.Whitespace:` `
+Token.Name.Constant:`PUBLIC`
+Token.Text.Whitespace:` `
+Token.Literal.String:`"`
+Token.Literal.String:`"`
+Token.Text.Whitespace:` `
+Token.Name.Constant:`FOO`
+Token.Name.Function:`)`
+Token.Text.Whitespace:` `
+Token.Comment:`# "" ignored<LF>`
+Token.Name.Function:`target_compile_definitions`
+Token.Name.Function:`(`
+Token.Literal.String.Other:`foo`
+Token.Text.Whitespace:` `
+Token.Name.Constant:`PUBLIC`
+Token.Text.Whitespace:` `
+Token.Literal.String.Other:`-D`
+Token.Text.Whitespace:` `
+Token.Name.Constant:`FOO`
+Token.Name.Function:`)`
+Token.Text.Whitespace:` `
+Token.Comment:`# -D becomes "", then ignored<LF>`

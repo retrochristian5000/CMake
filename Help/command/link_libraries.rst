@@ -5,8 +5,12 @@ Link libraries to all targets added later.
 
 .. code-block:: cmake
 
-  link_libraries([item1 [item2 [...]]]
-                 [[debug|optimized|general] <item>] ...)
+  link_libraries(
+      [item1 [item2 [...]]]
+      [
+        [debug|optimized|general] <item>
+      ] ...
+    )
 
 Specify libraries or flags to use when linking any targets created later in
 the current directory or below by commands such as :command:`add_executable`

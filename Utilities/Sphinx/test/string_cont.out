@@ -1,0 +1,14 @@
+Token.Name.Function:`message`
+Token.Name.Function:`(`
+Token.Literal.String:`"`
+Token.Literal.String.Symbol:`\`
+Token.Literal.String:`<LF>This is the first line of a quoted argument. `
+Token.Literal.String.Symbol:`\`
+Token.Literal.String:`<LF>In fact it is the only line but since it is long `
+Token.Literal.String.Symbol:`\`
+Token.Literal.String:`<LF>the source code uses line continuation.`
+Token.Literal.String.Symbol:`\`
+Token.Literal.String:`<LF>`
+Token.Literal.String:`"`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`

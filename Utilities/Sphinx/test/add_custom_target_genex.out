@@ -1,0 +1,21 @@
+Token.Text.Whitespace:`  `
+Token.Name.Function:`add_custom_target`
+Token.Name.Function:`(`
+Token.Literal.String.Other:`run_some_tool`
+Token.Text.Whitespace:`<LF>    `
+Token.Name.Constant:`COMMAND`
+Token.Text.Whitespace:` `
+Token.Literal.String.Other:`some_tool`
+Token.Text.Whitespace:` `
+Token.Literal.String:`"`
+Token.Literal.String:`-I`
+Token.Literal.String:`$`
+Token.Literal.String:`<JOIN:`
+Token.Literal.String:`$`
+Token.Literal.String:`<TARGET_PROPERTY:tgt,INCLUDE_DIRECTORIES>, -I>`
+Token.Literal.String:`"`
+Token.Text.Whitespace:`<LF>    `
+Token.Name.Constant:`VERBATIM`
+Token.Text.Whitespace:`<LF>  `
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`

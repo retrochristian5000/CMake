@@ -1,0 +1,21 @@
+Token.Name.Function:`foo`
+Token.Name.Function:`(`
+Token.Literal.String.Interpol:`$`
+Token.Name.Tag:`ENV`
+Token.Literal.String.Interpol:`{`
+Token.Name.Variable:`VAR`
+Token.Literal.String.Interpol:`}`
+Token.Text.Whitespace:` `
+Token.Literal.String.Interpol:`$`
+Token.Name.Tag:`CACHE`
+Token.Literal.String.Interpol:`{`
+Token.Name.Variable:`VAR`
+Token.Literal.String.Interpol:`}`
+Token.Text.Whitespace:` `
+Token.Literal.String.Interpol:`$`
+Token.Name.Tag:`DATA`
+Token.Literal.String.Interpol:`{`
+Token.Name.Variable:`file.name`
+Token.Literal.String.Interpol:`}`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`

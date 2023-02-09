@@ -1,0 +1,39 @@
+Token.Name.Function:`foreach`
+Token.Name.Function:`(`
+Token.Literal.String.Other:`arg`
+Token.Text.Whitespace:`<LF>    `
+Token.Literal.String.Other:`NoSpace`
+Token.Text.Whitespace:`<LF>    `
+Token.Literal.String.Other:`Escaped`
+Token.Literal.String.Escape:`\ `
+Token.Literal.String.Other:`Space`
+Token.Text.Whitespace:`<LF>    `
+Token.Literal.String.Other:`This`
+Token.Punctuation:`;`
+Token.Literal.String.Other:`Divides`
+Token.Punctuation:`;`
+Token.Literal.String.Other:`Into`
+Token.Punctuation:`;`
+Token.Literal.String.Other:`Five`
+Token.Punctuation:`;`
+Token.Literal.String.Other:`Arguments`
+Token.Text.Whitespace:`<LF>    `
+Token.Literal.String.Other:`Escaped`
+Token.Literal.String.Escape:`\;`
+Token.Literal.String.Other:`Semicolon`
+Token.Text.Whitespace:`<LF>    `
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>  `
+Token.Name.Function:`message`
+Token.Name.Function:`(`
+Token.Literal.String:`"`
+Token.Literal.String.Interpol:`${`
+Token.Name.Variable:`arg`
+Token.Literal.String.Interpol:`}`
+Token.Literal.String:`"`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`
+Token.Name.Function:`endforeach`
+Token.Name.Function:`(`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`

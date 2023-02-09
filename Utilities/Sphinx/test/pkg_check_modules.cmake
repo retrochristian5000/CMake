@@ -1,0 +1,5 @@
+pkg_check_modules (GLIB2 glib-2.0)
+pkg_check_modules (GLIB2 glib-2.0>=2.10)
+pkg_check_modules (FOO glib-2.0>=2.10 gtk+-2.0)
+pkg_search_module (BAR libxml-2.0 libxml2 libxml>=2)
+pkg_get_variable(GI_GIRDIR gobject-introspection-1.0 girdir)

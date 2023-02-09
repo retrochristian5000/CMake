@@ -1,0 +1,1 @@
+foo(${CMAKE_${CONFIGURATION}})

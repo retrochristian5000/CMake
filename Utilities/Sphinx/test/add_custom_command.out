@@ -1,0 +1,80 @@
+Token.Text.Whitespace:`  `
+Token.Name.Function:`add_custom_command`
+Token.Name.Function:`(`
+Token.Name.Constant:`TARGET`
+Token.Text.Whitespace:` `
+Token.Punctuation:`<`
+Token.Name.Label:`target`
+Token.Punctuation:`>`
+Token.Text.Whitespace:`<LF>                     `
+Token.Name.Constant:`PRE_BUILD`
+Token.Text.Whitespace:` `
+Token.Punctuation:`|`
+Token.Text.Whitespace:` `
+Token.Name.Constant:`PRE_LINK`
+Token.Text.Whitespace:` `
+Token.Punctuation:`|`
+Token.Text.Whitespace:` `
+Token.Name.Constant:`POST_BUILD`
+Token.Text.Whitespace:`<LF>                     `
+Token.Name.Constant:`COMMAND`
+Token.Text.Whitespace:` `
+Token.Literal.String.Other:`command1`
+Token.Text.Whitespace:` `
+Token.Punctuation:`[`
+Token.Name.Constant:`ARGS`
+Token.Punctuation:`]`
+Token.Text.Whitespace:` `
+Token.Punctuation:`[`
+Token.Literal.String.Other:`args1...`
+Token.Punctuation:`]`
+Token.Text.Whitespace:`<LF>                     `
+Token.Punctuation:`[`
+Token.Name.Constant:`COMMAND`
+Token.Text.Whitespace:` `
+Token.Literal.String.Other:`command2`
+Token.Text.Whitespace:` `
+Token.Punctuation:`[`
+Token.Name.Constant:`ARGS`
+Token.Punctuation:`]`
+Token.Text.Whitespace:` `
+Token.Punctuation:`[`
+Token.Literal.String.Other:`args2...`
+Token.Punctuation:`]`
+Token.Text.Whitespace:` `
+Token.Punctuation:`...`
+Token.Punctuation:`]`
+Token.Text.Whitespace:`<LF>                     `
+Token.Punctuation:`[`
+Token.Name.Constant:`BYPRODUCTS`
+Token.Text.Whitespace:` `
+Token.Punctuation:`[`
+Token.Literal.String.Other:`files...`
+Token.Punctuation:`]`
+Token.Punctuation:`]`
+Token.Text.Whitespace:`<LF>                     `
+Token.Punctuation:`[`
+Token.Name.Constant:`WORKING_DIRECTORY`
+Token.Text.Whitespace:` `
+Token.Literal.String.Other:`dir`
+Token.Punctuation:`]`
+Token.Text.Whitespace:`<LF>                     `
+Token.Punctuation:`[`
+Token.Name.Constant:`COMMENT`
+Token.Text.Whitespace:` `
+Token.Literal.String.Other:`comment`
+Token.Punctuation:`]`
+Token.Text.Whitespace:`<LF>                     `
+Token.Punctuation:`[`
+Token.Name.Constant:`VERBATIM`
+Token.Punctuation:`]`
+Token.Text.Whitespace:` `
+Token.Punctuation:`[`
+Token.Name.Constant:`USES_TERMINAL`
+Token.Punctuation:`]`
+Token.Text.Whitespace:`<LF>                     `
+Token.Punctuation:`[`
+Token.Name.Constant:`COMMAND_EXPAND_LISTS`
+Token.Punctuation:`]`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`

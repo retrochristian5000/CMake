@@ -1,0 +1,16 @@
+Token.Name.Function:`check_source_compiles`
+Token.Name.Function:`(`
+Token.Name.Constant:`C`
+Token.Text.Whitespace:`<LF>  `
+Token.Literal.String.Heredoc:`[=[`
+Token.Literal.String.Heredoc:`
+  #include <stdlib.h>
+  #include <stdnoreturn.h>
+  noreturn void f(){ exit(0); }
+  int main(void) { f(); return 1; }
+  `
+Token.Literal.String.Heredoc:`]=]`
+Token.Text.Whitespace:`<LF>  `
+Token.Name.Constant:`HAVE_NORETURN`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`

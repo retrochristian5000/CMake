@@ -97,12 +97,12 @@ sections on this page.
 Basic Signature
 ^^^^^^^^^^^^^^^
 
-.. parsed-literal::
+.. code-block:: cmake
 
-  find_package(<PackageName> [version] [EXACT] [QUIET] [MODULE]
-               [REQUIRED] [[COMPONENTS] [components...]]
-               [OPTIONAL_COMPONENTS components...]
-               [REGISTRY_VIEW  (64|32|64_32|32_64|HOST|TARGET|BOTH)]
+  find_package(<PackageName> [<version>] [EXACT] [QUIET] [MODULE]
+               [REQUIRED] [ [COMPONENTS] [<components>...] ]
+               [OPTIONAL_COMPONENTS <components>...]
+               [REGISTRY_VIEW (64|32|64_32|32_64|HOST|TARGET|BOTH)]
                [GLOBAL]
                [NO_POLICY_SCOPE]
                [BYPASS_PROVIDER])
@@ -195,11 +195,11 @@ of the ``NO_POLICY_SCOPE`` option.
 Full Signature
 ^^^^^^^^^^^^^^
 
-.. parsed-literal::
+.. code-block:: cmake
 
-  find_package(<PackageName> [version] [EXACT] [QUIET]
-               [REQUIRED] [[COMPONENTS] [components...]]
-               [OPTIONAL_COMPONENTS components...]
+  find_package(<PackageName> [<version>] [EXACT] [QUIET]
+               [REQUIRED] [ [COMPONENTS] [<components>...] ]
+               [OPTIONAL_COMPONENTS <components>...]
                [CONFIG|NO_MODULE]
                [GLOBAL]
                [NO_POLICY_SCOPE]
@@ -208,7 +208,7 @@ Full Signature
                [CONFIGS config1 [config2 ...]]
                [HINTS path1 [path2 ... ]]
                [PATHS path1 [path2 ... ]]
-               [REGISTRY_VIEW  (64|32|64_32|32_64|HOST|TARGET|BOTH)]
+               [REGISTRY_VIEW (64|32|64_32|32_64|HOST|TARGET|BOTH)]
                [PATH_SUFFIXES suffix1 [suffix2 ...]]
                [NO_DEFAULT_PATH]
                [NO_PACKAGE_ROOT_PATH]
@@ -613,8 +613,8 @@ For instance in order to select the highest version one can set
 
 .. code-block:: cmake
 
-  SET(CMAKE_FIND_PACKAGE_SORT_ORDER NATURAL)
-  SET(CMAKE_FIND_PACKAGE_SORT_DIRECTION DEC)
+  set(CMAKE_FIND_PACKAGE_SORT_ORDER NATURAL)
+  set(CMAKE_FIND_PACKAGE_SORT_DIRECTION DEC)
 
 before calling ``find_package``.
 

@@ -1,0 +1,4 @@
+foo($<BOOL:${HAVE_IOSTREAM}>)
+foo($<NOT:$<BOOL:${HAVE_IOSTREAM}>>)
+foo($<$<CONFIG:Debug>:DEBUG_MODE>)
+foo($<CXX_COMPILER_VERSION>)

@@ -1,0 +1,16 @@
+Token.Name.Function:`source_group`
+Token.Name.Function:`(`
+Token.Literal.String.Other:`base/subdir`
+Token.Text.Whitespace:` `
+Token.Punctuation:`...`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`
+Token.Name.Function:`source_group`
+Token.Name.Function:`(`
+Token.Literal.String.Other:`outer`
+Token.Literal.String.Escape:`\\`
+Token.Literal.String.Other:`inner`
+Token.Text.Whitespace:` `
+Token.Punctuation:`...`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`

@@ -1,103 +1,64 @@
 # Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
 # file Copyright.txt or https://cmake.org/licensing for details.
 
+# Standard imports
 import os
 import re
 
-# Override much of pygments' CMakeLexer.
-# We need to parse CMake syntax definitions, not CMake code.
-
-# For hard test cases that use much of the syntax below, see
-# - module/FindPkgConfig.html (with "glib-2.0>=2.10 gtk+-2.0" and similar)
-# - module/ExternalProject.html (with http:// https:// git@; also has command options -E --build)
-# - manual/cmake-buildsystem.7.html (with nested $<..>; relative and absolute paths, "::")
-
-from pygments.lexers import CMakeLexer
-from pygments.token import Name, Operator, Punctuation, String, Text, Comment, Generic, Whitespace, Number
-from pygments.lexer import bygroups
-
-# Notes on regular expressions below:
-# - [\.\+-] are needed for string constants like gtk+-2.0
-# - Unix paths are recognized by '/'; support for Windows paths may be added if needed
-# - (\\.) allows for \-escapes (used in manual/cmake-language.7)
-# - $<..$<..$>..> nested occurrence in cmake-buildsystem
-# - Nested variable evaluations are only supported in a limited capacity. Only
-#   one level of nesting is supported and at most one nested variable can be present.
-
-CMakeLexer.tokens["root"] = [
-  (r'\b(\w+)([ \t]*)(\()', bygroups(Name.Function, Text, Name.Function), '#push'),     # fctn(
-  (r'\(', Name.Function, '#push'),
-  (r'\)', Name.Function, '#pop'),
-  (r'\[', Punctuation, '#push'),
-  (r'\]', Punctuation, '#pop'),
-  (r'[|;,.=*\-]', Punctuation),
-  (r'\\\\', Punctuation),                                   # used in commands/source_group
-  (r'[:]', Operator),
-  (r'[<>]=', Punctuation),                                  # used in FindPkgConfig.cmake
-  (r'\$<', Operator, '#push'),                              # $<...>
-  (r'<[^<|]+?>(\w*\.\.\.)?', Name.Variable),                # <expr>
-  (r'(\$\w*\{)([^\}\$]*)?(?:(\$\w*\{)([^\}]+?)(\}))?([^\}]*?)(\})',  # ${..} $ENV{..}, possibly nested
-    bygroups(Operator, Name.Tag, Operator, Name.Tag, Operator, Name.Tag, Operator)),
-  (r'([A-Z]+\{)(.+?)(\})', bygroups(Operator, Name.Tag, Operator)),  # DATA{ ...}
-  (r'[a-z]+(@|(://))((\\.)|[\w.+-:/\\])+', Name.Attribute),          # URL, git@, ...
-  (r'/\w[\w\.\+-/\\]*', Name.Attribute),                    # absolute path
-  (r'/', Name.Attribute),
-  (r'\w[\w\.\+-]*/[\w.+-/\\]*', Name.Attribute),            # relative path
-  (r'[A-Z]((\\.)|[\w.+-])*[a-z]((\\.)|[\w.+-])*', Name.Builtin), # initial A-Z, contains a-z
-  (r'@?[A-Z][A-Z0-9_]*', Name.Constant),
-  (r'[a-z_]((\\;)|(\\ )|[\w.+-])*', Name.Builtin),
-  (r'[0-9][0-9\.]*', Number),
-  (r'(?s)"(\\"|[^"])*"', String),                           # "string"
-  (r'\.\.\.', Name.Variable),
-  (r'<', Operator, '#push'),                                # <..|..> is different from <expr>
-  (r'>', Operator, '#pop'),
-  (r'\n', Whitespace),
-  (r'[ \t]+', Whitespace),
-  (r'#.*\n', Comment),
-  #  (r'[^<>\])\}\|$"# \t\n]+', Name.Exception),            # fallback, for debugging only
-]
-
+# Third party packages
+from docutils import io, nodes
 from docutils.parsers.rst import Directive, directives
 from docutils.transforms import Transform
-from docutils import io, nodes
-
+from pygments.lexers import CMakeLexer  # NOQA disable=no-name-in-module
+from sphinx import addnodes
 from sphinx.directives import ObjectDescription
 from sphinx.domains import Domain, ObjType
 from sphinx.roles import XRefRole
 from sphinx.util.nodes import make_refnode
-from sphinx import addnodes
 
-sphinx_before_1_4 = False
-sphinx_before_1_7_2 = False
+# Project-specific imports
+from cmakelexer import CMakeLexer as CMakeSignatureLexer
+
+SPHINX_BEFORE_1_4 = False
+SPHINX_BEFORE_1_7_2 = False
 try:
-    from sphinx import version_info
+    # Third party packages
+    from sphinx import version_info  # NOQA disable=ungrouped-imports
     if version_info < (1, 4):
-        sphinx_before_1_4 = True
+        SPHINX_BEFORE_1_4 = True
     if version_info < (1, 7, 2):
-        sphinx_before_1_7_2 = True
+        SPHINX_BEFORE_1_7_2 = True
 except ImportError:
     # The `sphinx.version_info` tuple was added in Sphinx v1.2:
-    sphinx_before_1_4 = True
-    sphinx_before_1_7_2 = True
+    SPHINX_BEFORE_1_4 = True
+    SPHINX_BEFORE_1_7_2 = True
 
-if sphinx_before_1_7_2:
-  # Monkey patch for sphinx generating invalid content for qcollectiongenerator
-  # https://github.com/sphinx-doc/sphinx/issues/1435
-  from sphinx.util.pycompat import htmlescape
-  from sphinx.builders.qthelp import QtHelpBuilder
-  old_build_keywords = QtHelpBuilder.build_keywords
-  def new_build_keywords(self, title, refs, subitems):
-    old_items = old_build_keywords(self, title, refs, subitems)
-    new_items = []
-    for item in old_items:
-      before, rest = item.split("ref=\"", 1)
-      ref, after = rest.split("\"")
-      if ("<" in ref and ">" in ref):
-        new_items.append(before + "ref=\"" + htmlescape(ref) + "\"" + after)
-      else:
-        new_items.append(item)
-    return new_items
-  QtHelpBuilder.build_keywords = new_build_keywords
+if SPHINX_BEFORE_1_7_2:
+    # Monkey patch for sphinx generating invalid content for qcollectiongenerator
+    # https://github.com/sphinx-doc/sphinx/issues/1435
+    # Third party packages
+    from sphinx.builders.qthelp import QtHelpBuilder  # NOQA disable=import-error
+    from sphinx.util.pycompat import htmlescape  # NOQA disable=import-error
+
+    old_build_keywords = QtHelpBuilder.build_keywords
+
+    def new_build_keywords(self, title, refs, subitems):
+        old_items = old_build_keywords(self, title, refs, subitems)
+        new_items = []
+        for item in old_items:
+            before, rest = item.split('ref="', 1)
+            ref, after = rest.split('"')
+            if '<' in ref and '>' in ref:
+                new_items.append(before + 'ref="' + htmlescape(ref) + '"' + after)
+            else:
+                new_items.append(item)
+        return new_items
+
+    QtHelpBuilder.build_keywords = new_build_keywords
+
+# Override pygments' `CMakeLexer` regex rules.
+CMakeLexer.tokens = CMakeSignatureLexer.tokens
+
 
 class CMakeModule(Directive):
     required_arguments = 1
@@ -109,30 +70,36 @@ class CMakeModule(Directive):
         self.re_start = re.compile(r'^#\[(?P<eq>=*)\[\.rst:$')
         Directive.__init__(self, *args, **keys)
 
-    def run(self):
+    def run(self):                                          # NOQA disable=too-many-branches
         settings = self.state.document.settings
         if not settings.file_insertion_enabled:
-            raise self.warning('"%s" directive disabled.' % self.name)
+            raise self.warning('"{0}" directive disabled.'.format(self.name))
 
         env = self.state.document.settings.env
-        rel_path, path = env.relfn2path(self.arguments[0])
+        _, path = env.relfn2path(self.arguments[0])
         path = os.path.normpath(path)
         encoding = self.options.get('encoding', settings.input_encoding)
         e_handler = settings.input_encoding_error_handler
         try:
             settings.record_dependencies.add(path)
-            f = io.FileInput(source_path=path, encoding=encoding,
-                             error_handler=e_handler)
-        except UnicodeEncodeError as error:
-            msg = ('Problems with "%s" directive path:\n'
-                   'Cannot encode input file path "%s" '
-                   '(wrong locale?).' % (self.name, path))
-            raise self.severe(msg)
+            stream = io.FileInput(source_path=path, encoding=encoding, error_handler=e_handler)
+        except UnicodeEncodeError:
+            raise self.severe(                              # NOQA disable=raise-missing-from
+                'Problems with "{0}" directive path:\n'
+                'Cannot encode input file path "{1}" (wrong locale?).'.format(
+                    self.name
+                  , path
+                  )
+              )
         except IOError as error:
-            msg = 'Problems with "%s" directive path:\n%s.' % (self.name, error)
-            raise self.severe(msg)
-        raw_lines = f.read().splitlines()
-        f.close()
+            raise self.severe(
+                'Problems with "{0}" directive path:\n{1}.'.format(
+                    self.name
+                  , error
+                  )
+              )
+        raw_lines = stream.read().splitlines()
+        stream.close()
         rst = None
         lines = []
         for line in raw_lines:
@@ -147,9 +114,9 @@ class CMakeModule(Directive):
                     rst = None
             else:
                 # Line mode: check for .rst start (bracket or line)
-                m = self.re_start.match(line)
-                if m:
-                    rst = ']%s]' % m.group('eq')
+                match = self.re_start.match(line)
+                if match:
+                    rst = ']{0}]'.format(match.group('eq'))
                     line = ''
                 elif line == '#.rst:':
                     rst = '#'
@@ -164,52 +131,61 @@ class CMakeModule(Directive):
                     line = ''
             lines.append(line)
         if rst is not None and rst != '#':
-            raise self.warning('"%s" found unclosed bracket "#[%s[.rst:" in %s' %
-                               (self.name, rst[1:-1], path))
+            raise self.warning(
+                '"{0}" found unclosed bracket "#[{1}[.rst:" in {2}'.format(
+                    self.name, rst[1:-1], path
+                  )
+              )
         self.state_machine.insert_input(lines, path)
         return []
 
-class _cmake_index_entry:
+
+class CMakeIndexEntry:                                      # NOQA disable=too-few-public-methods
     def __init__(self, desc):
         self.desc = desc
 
-    def __call__(self, title, targetid, main = 'main'):
+    def __call__(self, title, targetid, main='main'):
         # See https://github.com/sphinx-doc/sphinx/issues/2673
-        if sphinx_before_1_4:
-            return ('pair', u'%s ; %s' % (self.desc, title), targetid, main)
-        else:
-            return ('pair', u'%s ; %s' % (self.desc, title), targetid, main, None)
+        if SPHINX_BEFORE_1_4:
+            return ('pair', '{0} ; {1}'.format(self.desc, title), targetid, main)
+        return ('pair', '{0} ; {1}'.format(self.desc, title), targetid, main, None)
+
 
 _cmake_index_objs = {
-    'command':    _cmake_index_entry('command'),
-    'cpack_gen':  _cmake_index_entry('cpack generator'),
-    'envvar':     _cmake_index_entry('envvar'),
-    'generator':  _cmake_index_entry('generator'),
-    'genex':      _cmake_index_entry('genex'),
-    'guide':      _cmake_index_entry('guide'),
-    'manual':     _cmake_index_entry('manual'),
-    'module':     _cmake_index_entry('module'),
-    'policy':     _cmake_index_entry('policy'),
-    'prop_cache': _cmake_index_entry('cache property'),
-    'prop_dir':   _cmake_index_entry('directory property'),
-    'prop_gbl':   _cmake_index_entry('global property'),
-    'prop_inst':  _cmake_index_entry('installed file property'),
-    'prop_sf':    _cmake_index_entry('source file property'),
-    'prop_test':  _cmake_index_entry('test property'),
-    'prop_tgt':   _cmake_index_entry('target property'),
-    'variable':   _cmake_index_entry('variable'),
+    'command':    CMakeIndexEntry('command'),
+    'cpack_gen':  CMakeIndexEntry('cpack generator'),
+    'envvar':     CMakeIndexEntry('envvar'),
+    'generator':  CMakeIndexEntry('generator'),
+    'genex':      CMakeIndexEntry('genex'),
+    'guide':      CMakeIndexEntry('guide'),
+    'manual':     CMakeIndexEntry('manual'),
+    'module':     CMakeIndexEntry('module'),
+    'policy':     CMakeIndexEntry('policy'),
+    'prop_cache': CMakeIndexEntry('cache property'),
+    'prop_dir':   CMakeIndexEntry('directory property'),
+    'prop_gbl':   CMakeIndexEntry('global property'),
+    'prop_inst':  CMakeIndexEntry('installed file property'),
+    'prop_sf':    CMakeIndexEntry('source file property'),
+    'prop_test':  CMakeIndexEntry('test property'),
+    'prop_tgt':   CMakeIndexEntry('target property'),
+    'variable':   CMakeIndexEntry('variable'),
     }
+
 
 def _cmake_object_inventory(env, document, line, objtype, targetid):
     inv = env.domaindata['cmake']['objects']
     if targetid in inv:
         document.reporter.warning(
-            'CMake object "%s" also described in "%s".' %
-            (targetid, env.doc2path(inv[targetid][0])), line=line)
+            'CMake object "{0}" also described in "{1}".'.format(
+                targetid
+              , env.doc2path(inv[targetid][0])
+              )
+          , line=line
+          )
     inv[targetid] = (env.docname, objtype)
 
-class CMakeTransform(Transform):
 
+class CMakeTransform(Transform):
     # Run this transform early since we insert nodes we want
     # treated as if they were written in the documents.
     default_priority = 210
@@ -219,35 +195,38 @@ class CMakeTransform(Transform):
         self.titles = {}
 
     def parse_title(self, docname):
-        """Parse a document title as the first line starting in [A-Za-z0-9<$]
-           or fall back to the document basename if no such line exists.
-           The cmake --help-*-list commands also depend on this convention.
-           Return the title or False if the document file does not exist.
+        """
+            Parse a document title as the first line starting in [A-Za-z0-9<$]
+            or fall back to the document basename if no such line exists.
+            The cmake `--help-*-list` commands also depend on this convention.
+            Return the title or False if the document file does not exist.
         """
         env = self.document.settings.env
         title = self.titles.get(docname)
         if title is None:
-            fname = os.path.join(env.srcdir, docname+'.rst')
+            fname = os.path.join(env.srcdir, docname + '.rst')
             try:
-                f = open(fname, 'r')
+                fd = open(fname, 'r')                       # NOQA
             except IOError:
                 title = False
             else:
-                for line in f:
-                    if len(line) > 0 and (line[0].isalnum() or line[0] == '<' or line[0] == '$'):
+                for line in fd:
+                    if len(line) > 0 and (
+                        line[0].isalnum() or line[0] == '<' or line[0] == '$'
+                      ):
                         title = line.rstrip()
                         break
-                f.close()
+                fd.close()
                 if title is None:
                     title = os.path.basename(docname)
             self.titles[docname] = title
         return title
 
-    def apply(self):
+    def apply(self, *_args, **_kwargs):
         env = self.document.settings.env
 
         # Treat some documents as cmake domain objects.
-        objtype, sep, tail = env.docname.partition('/')
+        objtype, _, tail = env.docname.partition('/')
         make_index_entry = _cmake_index_objs.get(objtype)
         if make_index_entry:
             title = self.parse_title(env.docname)
@@ -258,11 +237,11 @@ class CMakeTransform(Transform):
                 targetname = tail
             else:
                 if objtype == 'genex':
-                    m = CMakeXRefRole._re_genex.match(title)
-                    if m:
-                        title = m.group(1)
+                    match = CMakeXRefRole.GENEX_RE.match(title)
+                    if match:
+                        title = match.group(1)
                 targetname = title
-            targetid = '%s:%s' % (objtype, targetname)
+            targetid = '{0}:{1}'.format(objtype, targetname)
             targetnode = nodes.target('', '', ids=[targetid])
             self.document.note_explicit_target(targetnode)
             self.document.insert(0, targetnode)
@@ -273,42 +252,43 @@ class CMakeTransform(Transform):
             # Add to cmake domain object inventory
             _cmake_object_inventory(env, self.document, 1, objtype, targetid)
 
-class CMakeObject(ObjectDescription):
 
+class CMakeObject(ObjectDescription):
     def handle_signature(self, sig, signode):
         # called from sphinx.directives.ObjectDescription.run()
         signode += addnodes.desc_name(sig, sig)
-        if self.objtype == 'genex':
-            m = CMakeXRefRole._re_genex.match(sig)
-            if m:
-                sig = m.group(1)
-        return sig
+        if self.objtype != 'genex':
+            return sig
+
+        match = CMakeXRefRole.GENEX_RE.match(sig)
+        return match.group(1) if match else sig
 
     def add_target_and_index(self, name, sig, signode):
         if self.objtype == 'command':
-           targetname = name.lower()
+            targetname = name.lower()
         else:
-           targetname = name
-        targetid = '%s:%s' % (self.objtype, targetname)
+            targetname = name
+        targetid = '{0}:{1}'.format(self.objtype, targetname)
         if targetid not in self.state.document.ids:
             signode['names'].append(targetid)
             signode['ids'].append(targetid)
-            signode['first'] = (not self.names)
+            signode['first'] = not self.names
             self.state.document.note_explicit_target(signode)
-            _cmake_object_inventory(self.env, self.state.document,
-                                    self.lineno, self.objtype, targetid)
+            _cmake_object_inventory(
+                self.env, self.state.document, self.lineno, self.objtype, targetid
+              )
 
         make_index_entry = _cmake_index_objs.get(self.objtype)
         if make_index_entry:
             self.indexnode['entries'].append(make_index_entry(name, targetid))
 
-class CMakeXRefRole(XRefRole):
 
+class CMakeXRefRole(XRefRole):
     # See sphinx.util.nodes.explicit_title_re; \x00 escapes '<'.
-    _re = re.compile(r'^(.+?)(\s*)(?<!\x00)<(.*?)>$', re.DOTALL)
-    _re_sub = re.compile(r'^([^()\s]+)\s*\(([^()]*)\)$', re.DOTALL)
-    _re_genex = re.compile(r'^\$<([^<>:]+)(:[^<>]+)?>$', re.DOTALL)
-    _re_guide = re.compile(r'^([^<>/]+)/([^<>]*)$', re.DOTALL)
+    ANGLE_BRACKETS_RE = re.compile(r'^(.+?)(\s*)(?<!\x00)<(.*?)>$', re.DOTALL)
+    SUBCOMMAND_RE = re.compile(r'^([^()\s]+)\s*\(([^()]*)\)$', re.DOTALL)
+    GENEX_RE = re.compile(r'^\$<([^<>:]+)(:[^<>]+)?>$', re.DOTALL)
+    GUIDE_RE = re.compile(r'^([^<>/]+)/([^<>]*)$', re.DOTALL)
 
     def __call__(self, typ, rawtext, text, *args, **keys):
         # Translate CMake command cross-references of the form:
@@ -316,23 +296,30 @@ class CMakeXRefRole(XRefRole):
         # to have an explicit target:
         #  `command_name(SUB_COMMAND) <command_name>`
         if typ == 'cmake:command':
-            m = CMakeXRefRole._re_sub.match(text)
-            if m:
-                text = '%s <%s>' % (text, m.group(1))
+            # NOTE The leading `!` before the command name prevents
+            # link adding.
+            # NOTE For "refs" w/ links prevention the `<...>`
+            # part should be omitted.
+            if text[0] == '!':
+                self.fix_parens = text[-1] != ')'
+            else:
+                match = CMakeXRefRole.SUBCOMMAND_RE.match(text)
+                if match:
+                    text = '{0} <{1}>'.format(text, match.group(1))
         elif typ == 'cmake:genex':
-            m = CMakeXRefRole._re_genex.match(text)
-            if m:
-                text = '%s <%s>' % (text, m.group(1))
+            match = CMakeXRefRole.GENEX_RE.match(text)
+            if match:
+                text = '{0} <{1}>'.format(text, match.group(1))
         elif typ == 'cmake:guide':
-            m = CMakeXRefRole._re_guide.match(text)
-            if m:
-                text = '%s <%s>' % (m.group(2), text)
+            match = CMakeXRefRole.GUIDE_RE.match(text)
+            if match:
+                text = '{0} <{1}>'.format(match.group(2), text)
         # CMake cross-reference targets frequently contain '<' so escape
         # any explicit `<target>` with '<' not preceded by whitespace.
         while True:
-            m = CMakeXRefRole._re.match(text)
-            if m and len(m.group(2)) == 0:
-                text = '%s\x00<%s>' % (m.group(1), m.group(3))
+            match = CMakeXRefRole.ANGLE_BRACKETS_RE.match(text)
+            if match and len(match.group(2)) == 0:
+                text = '{0}\x00<{1}>'.format(match.group(1), match.group(3))
             else:
                 break
         return XRefRole.__call__(self, typ, rawtext, text, *args, **keys)
@@ -348,20 +335,20 @@ class CMakeXRefRole(XRefRole):
     # def result_nodes(self, document, env, node, is_ref):
     #     pass
 
-class CMakeXRefTransform(Transform):
 
+class CMakeXRefTransform(Transform):                        # NOQA disable=too-few-public-methods
     # Run this transform early since we insert nodes we want
     # treated as if they were written in the documents, but
     # after the sphinx (210) and docutils (220) substitutions.
     default_priority = 221
 
-    def apply(self):
+    def apply(self, *_args, **_kwargs):
         env = self.document.settings.env
 
         # Find CMake cross-reference nodes and add index and target
         # nodes for them.
         for ref in self.document.traverse(addnodes.pending_xref):
-            if not ref['refdomain'] == 'cmake':
+            if ref['refdomain'] != 'cmake':
                 continue
 
             objtype = ref['reftype']
@@ -370,19 +357,20 @@ class CMakeXRefTransform(Transform):
                 continue
 
             objname = ref['reftarget']
-            if objtype == 'guide' and CMakeXRefRole._re_guide.match(objname):
+            if objtype == 'guide' and CMakeXRefRole.GUIDE_RE.match(objname):
                 # Do not index cross-references to guide sections.
                 continue
 
-            targetnum = env.new_serialno('index-%s:%s' % (objtype, objname))
+            targetnum = env.new_serialno('index-{0}:{1}'.format(objtype, objname))
 
-            targetid = 'index-%s-%s:%s' % (targetnum, objtype, objname)
+            targetid = 'index-{0}-{1}:{2}'.format(targetnum, objtype, objname)
             targetnode = nodes.target('', '', ids=[targetid])
             self.document.note_explicit_target(targetnode)
 
             indexnode = addnodes.index()
             indexnode['entries'] = [make_index_entry(objname, targetid, '')]
             ref.replace_self([indexnode, targetnode, ref])
+
 
 class CMakeDomain(Domain):
     """CMake domain."""
@@ -412,21 +400,10 @@ class CMakeDomain(Domain):
         'envvar':     CMakeObject,
         'genex':      CMakeObject,
         'variable':   CMakeObject,
-        # Other object types cannot be created except by the CMakeTransform
-        # 'generator':  CMakeObject,
-        # 'module':     CMakeObject,
-        # 'policy':     CMakeObject,
-        # 'prop_cache': CMakeObject,
-        # 'prop_dir':   CMakeObject,
-        # 'prop_gbl':   CMakeObject,
-        # 'prop_inst':  CMakeObject,
-        # 'prop_sf':    CMakeObject,
-        # 'prop_test':  CMakeObject,
-        # 'prop_tgt':   CMakeObject,
-        # 'manual':     CMakeObject,
+        # Other `object_types` cannot be created except by the `CMakeTransform`
     }
     roles = {
-        'command':    CMakeXRefRole(fix_parens = True, lowercase = True),
+        'command':    CMakeXRefRole(fix_parens=True, lowercase=True),
         'cpack_gen':  CMakeXRefRole(),
         'envvar':     CMakeXRefRole(),
         'generator':  CMakeXRefRole(),
@@ -450,29 +427,38 @@ class CMakeDomain(Domain):
 
     def clear_doc(self, docname):
         to_clear = set()
-        for fullname, (fn, _) in self.data['objects'].items():
+        for fullname, (fn, _) in self.data['objects'].items():  # NOQA disable=invalid-name
             if fn == docname:
                 to_clear.add(fullname)
         for fullname in to_clear:
             del self.data['objects'][fullname]
 
-    def resolve_xref(self, env, fromdocname, builder,
-                     typ, target, node, contnode):
-        targetid = '%s:%s' % (typ, target)
+    def resolve_xref(                                       # NOQA disable=too-many-arguments
+        self, env, fromdocname, builder, typ, target, _node, contnode
+      ):
+        targetid = '{0}:{1}'.format(typ, target)
         obj = self.data['objects'].get(targetid)
         if obj is None:
-            # TODO: warn somehow?
+            # NOTE Sphinx will report not found refs
             return None
-        return make_refnode(builder, fromdocname, obj[0], targetid,
-                            contnode, target)
+        return make_refnode(builder, fromdocname, obj[0], targetid, contnode, target)
 
     def get_objects(self):
-        for refname, (docname, type) in self.data['objects'].items():
-            yield (refname, refname, type, docname, refname, 1)
+        for refname, (docname, obj_type) in self.data['objects'].items():
+            yield (refname, refname, obj_type, docname, refname, 1)
+
+    def resolve_any_xref(                                   # NOQA disable=too-many-arguments
+        self, _env, _fromdocname, _builder, _target, _node, _contnode
+      ):
+        raise NotImplementedError
+
+    def merge_domaindata(self, _docnames, _otherdata):
+        raise NotImplementedError
+
 
 def setup(app):
     app.add_directive('cmake-module', CMakeModule)
     app.add_transform(CMakeTransform)
     app.add_transform(CMakeXRefTransform)
     app.add_domain(CMakeDomain)
-    return {"parallel_read_safe": True}
+    return {'parallel_read_safe': True}

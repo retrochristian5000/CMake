@@ -1,0 +1,53 @@
+Token.Name.Function:`pkg_check_modules`
+Token.Text.Whitespace:` `
+Token.Name.Function:`(`
+Token.Name.Constant:`GLIB2`
+Token.Text.Whitespace:` `
+Token.Literal.String.Other:`glib-2.0`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`
+Token.Name.Function:`pkg_check_modules`
+Token.Text.Whitespace:` `
+Token.Name.Function:`(`
+Token.Name.Constant:`GLIB2`
+Token.Text.Whitespace:` `
+Token.Literal.String.Other:`glib-2.0`
+Token.Literal.String.Other:`>=`
+Token.Literal.Number:`2.10`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`
+Token.Name.Function:`pkg_check_modules`
+Token.Text.Whitespace:` `
+Token.Name.Function:`(`
+Token.Name.Constant:`FOO`
+Token.Text.Whitespace:` `
+Token.Literal.String.Other:`glib-2.0`
+Token.Literal.String.Other:`>=`
+Token.Literal.Number:`2.10`
+Token.Text.Whitespace:` `
+Token.Literal.String.Other:`gtk+-2.0`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`
+Token.Name.Function:`pkg_search_module`
+Token.Text.Whitespace:` `
+Token.Name.Function:`(`
+Token.Name.Constant:`BAR`
+Token.Text.Whitespace:` `
+Token.Literal.String.Other:`libxml-2.0`
+Token.Text.Whitespace:` `
+Token.Literal.String.Other:`libxml2`
+Token.Text.Whitespace:` `
+Token.Literal.String.Other:`libxml`
+Token.Literal.String.Other:`>=`
+Token.Literal.Number:`2`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`
+Token.Name.Function:`pkg_get_variable`
+Token.Name.Function:`(`
+Token.Name.Constant:`GI_GIRDIR`
+Token.Text.Whitespace:` `
+Token.Literal.String.Other:`gobject-introspection-1.0`
+Token.Text.Whitespace:` `
+Token.Literal.String.Other:`girdir`
+Token.Name.Function:`)`
+Token.Text.Whitespace:`<LF>`
