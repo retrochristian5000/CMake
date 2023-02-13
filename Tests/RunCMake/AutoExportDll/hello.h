@@ -16,3 +16,11 @@ public:
   static void operator delete[](void*);
   static void operator delete(void*);
 };
+
+class VirtualHello
+{
+public:
+  VirtualHello();
+  virtual ~VirtualHello();
+  virtual int getI();
+};

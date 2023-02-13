@@ -12,3 +12,14 @@ void hello()
 }
 void Hello::operator delete[](void*){};
 void Hello::operator delete(void*){};
+
+VirtualHello::VirtualHello()
+{
+}
+VirtualHello::~VirtualHello()
+{
+}
+int VirtualHello::getI()
+{
+  return 10;
+}
