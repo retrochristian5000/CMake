@@ -37,6 +37,8 @@ int main()
   Hello::Data = 120;
   Hello h;
   h.real();
+  VirtualHello vh; // FIXME: How do we reference the MSVC ABI vftable symbol?
+  vh.getI();
   hello();
   printf(" ");
   world();
