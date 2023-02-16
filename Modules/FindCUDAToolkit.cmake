@@ -173,7 +173,7 @@ cuFile
 
 .. versionadded:: 3.25
 
-The NVIDIA GPUDirect Storage `cuFile <https://docs.nvidia.com/cuda/cufile-api/index.html>`_ library.
+The NVIDIA GPUDirect Storage `cuFile <https://docs.nvidia.com/gpudirect-storage/api-reference-guide/index.html>`_ library.
 
 Targets Created:
 
@@ -330,7 +330,7 @@ Targets Created:
 nvGRAPH
 """""""
 
-The `nvGRAPH <https://docs.nvidia.com/cuda/nvgraph/index.html>`_ library.
+The `nvGRAPH <https://web.archive.org/web/20201111171403/https://docs.nvidia.com/cuda/nvgraph/index.html>`_ library.
 Removed starting in CUDA 11.0
 
 Targets Created:
