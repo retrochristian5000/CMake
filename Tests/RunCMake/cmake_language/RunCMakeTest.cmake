@@ -84,6 +84,11 @@ run_cmake(defer_get_call_id_var)
 run_cmake(defer_missing_arg)
 run_cmake(defer_missing_call)
 run_cmake(defer_unknown_option)
+run_cmake(exit_0)
+run_cmake(exit_5)
+run_cmake_script(exit_0_script)
+run_cmake_script(exit_5_script)
+
 
 # Default log level
 run_cmake_command(
