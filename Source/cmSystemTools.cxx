@@ -163,6 +163,8 @@ static int cm_archive_read_open_file(struct archive* a, const char* file,
 #  define environ (*_NSGetEnviron())
 #endif
 
+int cmSystemTools::s_ProcessCustomExitCode = 0;
+bool cmSystemTools::s_ShouldReturnCustomExitCode = false;
 bool cmSystemTools::s_RunCommandHideConsole = false;
 bool cmSystemTools::s_DisableRunCommandOutput = false;
 bool cmSystemTools::s_ErrorOccurred = false;
