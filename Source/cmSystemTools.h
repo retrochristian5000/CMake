@@ -108,6 +108,30 @@ public:
     cmSystemTools::s_ErrorOccurred = false;
   }
 
+  //! Set the CMake process exit code. It will be used if the
+  //! \ref GetEnableCustomExitCode() returns true.
+  static void SetCustomExitCode(int value)
+  {
+    cmSystemTools::s_ProcessCustomExitCode = value;
+  }
+
+  static int GetCustomExitCode()
+  {
+    return cmSystemTools::s_ProcessCustomExitCode;
+  }
+
+  //! Toggles the ability to return custom exit code
+  //! on process exit.
+  static void SetEnableCustomExitCode(bool enable)
+  {
+    cmSystemTools::s_ShouldReturnCustomExitCode = enable;
+  }
+
+  static bool GetEnableCustomExitCode()
+  {
+    return cmSystemTools::s_ShouldReturnCustomExitCode;
+  }
+
   //! Return true if the path is a framework
   static bool IsPathToFramework(const std::string& path);
 
@@ -620,6 +644,8 @@ public:
   static char GetSystemPathlistSeparator();
 
 private:
+  static int s_ProcessCustomExitCode;
+  static bool s_ShouldReturnCustomExitCode;
   static bool s_ForceUnixPaths;
   static bool s_RunCommandHideConsole;
   static bool s_ErrorOccurred;

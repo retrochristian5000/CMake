@@ -388,8 +388,12 @@ int do_cmake(int ac, char const* const* av)
     }
   }
 
-  // Always return a non-negative value.  Windows tools do not always
-  // interpret negative return values as errors.
+  if (cmSystemTools::GetEnableCustomExitCode()) {
+    return cmSystemTools::GetCustomExitCode();
+  }
+
+  // Always return a non-negative value if no custom exit code is set.
+  // Windows tools do not always interpret negative return values as errors.
   if (res != 0) {
     return 1;
   }
