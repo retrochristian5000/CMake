@@ -3,7 +3,10 @@
 
 #include "cmBinUtilsWindowsPELinker.h"
 
+#include <algorithm>
+#include <iterator>
 #include <sstream>
+#include <utility>
 #include <vector>
 
 #include <cm/memory>
@@ -60,29 +63,43 @@ bool cmBinUtilsWindowsPELinker::ScanDependencies(
   if (!this->Tool->GetFileInfo(file, needed)) {
     return false;
   }
-  for (auto& n : needed) {
-    n = cmSystemTools::LowerCase(n);
-  }
+
+  struct WinPEDependency
+  {
+    WinPEDependency(std::string o)
+      : Original(std::move(o))
+      , LowerCase(cmSystemTools::LowerCase(Original))
+    {
+    }
+    std::string const Original;
+    std::string const LowerCase;
+  };
+
+  std::vector<WinPEDependency> depends;
+  depends.reserve(needed.size());
+  std::move(needed.begin(), needed.end(), std::back_inserter(depends));
   std::string origin = cmSystemTools::GetFilenamePath(file);
 
-  for (auto const& lib : needed) {
-    if (!this->Archive->IsPreExcluded(lib)) {
+  for (auto const& lib : depends) {
+    if (!this->Archive->IsPreExcluded(lib.LowerCase)) {
       std::string path;
       bool resolved = false;
-      if (!this->ResolveDependency(lib, origin, path, resolved)) {
+      if (!this->ResolveDependency(lib.LowerCase, origin, path, resolved)) {
         return false;
       }
       if (resolved) {
         if (!this->Archive->IsPostExcluded(path)) {
+          path =
+            cmStrCat(cmSystemTools::GetFilenamePath(path), '/', lib.Original);
           bool unique;
-          this->Archive->AddResolvedPath(lib, path, unique);
+          this->Archive->AddResolvedPath(lib.Original, path, unique);
           if (unique &&
               !this->ScanDependencies(path, cmStateEnums::SHARED_LIBRARY)) {
             return false;
           }
         }
       } else {
-        this->Archive->AddUnresolvedPath(lib);
+        this->Archive->AddUnresolvedPath(lib.Original);
       }
     }
   }
