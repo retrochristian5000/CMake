@@ -461,6 +461,12 @@ bool cmMakefile::ExecuteCommand(const cmListFileFunction& lff,
     if (cmStrToULong(depthStr.GetCStr(), &depthUL)) {
       depth = static_cast<int>(depthUL);
     }
+  } else if (cm::optional<std::string> depthEnv =
+               cmSystemTools::GetEnvVar("CMAKE_MAXIMUM_RECURSION_DEPTH")) {
+    unsigned long depthUL;
+    if (cmStrToULong(*depthEnv, &depthUL)) {
+      depth = static_cast<int>(depthUL);
+    }
   }
   if (this->RecursionDepth > depth) {
     std::ostringstream e;
