@@ -2,7 +2,7 @@
 # file Copyright.txt or https://cmake.org/licensing for details.
 
 include_guard(GLOBAL)
-include(CheckCXXSourceCompiles)
+include(CheckSourceCompiles)
 include(CMakeCheckCompilerFlagCommonPatterns)
 
 function(check_cxx_linker_flag _flag _var)
@@ -19,7 +19,7 @@ function(check_cxx_linker_flag _flag _var)
     set(ENV{${v}} C)
   endforeach()
   check_compiler_flag_common_patterns(_common_patterns)
-  check_cxx_source_compiles("int main() { return 0; }" ${_var}
+  check_source_compiles(CXX "int main() { return 0; }" ${_var}
     ${_common_patterns}
     )
   foreach(v IN LISTS _locale_vars)
