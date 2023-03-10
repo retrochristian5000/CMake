@@ -67,6 +67,24 @@
 #  include "cmVariableWatch.h"
 #endif
 
+#ifndef __has_feature
+#  define __has_feature(x) 0
+#endif
+
+// Select a recursion limit that fits within the stack size.
+// See stack size flags in '../CompileFlags.cmake'.
+#ifndef CMake_DEFAULT_RECURSION_LIMIT
+#  if __has_feature(address_sanitizer)
+#    define CMake_DEFAULT_RECURSION_LIMIT 400
+#  elif defined(_MSC_VER) && defined(_DEBUG)
+#    define CMake_DEFAULT_RECURSION_LIMIT 600
+#  elif defined(__IBMCPP__) && defined(__linux)
+#    define CMake_DEFAULT_RECURSION_LIMIT 600
+#  else
+#    define CMake_DEFAULT_RECURSION_LIMIT 1000
+#  endif
+#endif
+
 class cmMessenger;
 
 cmDirectoryId::cmDirectoryId(std::string s)
@@ -455,12 +473,17 @@ bool cmMakefile::ExecuteCommand(const cmListFileFunction& lff,
 
   // Check for maximum recursion depth.
   int depth = CMake_DEFAULT_RECURSION_LIMIT;
-  cmValue depthStr = this->GetDefinition("CMAKE_MAXIMUM_RECURSION_DEPTH");
-  if (depthStr) {
-    std::istringstream s(*depthStr);
-    int d;
-    if (s >> d) {
-      depth = d;
+  if (cmValue depthStr =
+        this->GetDefinition("CMAKE_MAXIMUM_RECURSION_DEPTH")) {
+    unsigned long depthUL;
+    if (cmStrToULong(depthStr.GetCStr(), &depthUL)) {
+      depth = static_cast<int>(depthUL);
+    }
+  } else if (cm::optional<std::string> depthEnv =
+               cmSystemTools::GetEnvVar("CMAKE_MAXIMUM_RECURSION_DEPTH")) {
+    unsigned long depthUL;
+    if (cmStrToULong(*depthEnv, &depthUL)) {
+      depth = static_cast<int>(depthUL);
     }
   }
   if (this->RecursionDepth > depth) {
