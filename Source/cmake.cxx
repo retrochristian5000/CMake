@@ -38,6 +38,10 @@
 #include "cmCMakePresetsGraph.h"
 #include "cmCommandLineArgument.h"
 #include "cmCommands.h"
+#ifndef CMAKE_BOOTSTRAP
+#  include "cmDebuggerAdapter.h"
+#  include "cmDebuggerPipeConnection.h"
+#endif
 #include "cmDocumentation.h"
 #include "cmDocumentationEntry.h"
 #include "cmDuration.h"
@@ -411,6 +415,7 @@ Json::Value cmake::ReportCapabilitiesJson() const
   obj["fileApi"] = cmFileAPI::ReportCapabilities();
   obj["serverMode"] = false;
   obj["tls"] = static_cast<bool>(curlVersion->features & CURL_VERSION_SSL);
+  obj["debugger"] = true;
 
   return obj;
 }
@@ -617,6 +622,13 @@ bool cmake::SetCacheArgs(const std::vector<std::string>& args)
   };
 
   auto ScriptLambda = [&](std::string const& path, cmake* state) -> bool {
+#ifndef CMAKE_BOOTSTRAP
+    // Script mode doesn't hit the usual code path in cmake::Run() that starts
+    // the debugger, so start it manually here instead.
+    if (!this->StartDebuggerIfEnabled()) {
+      return false;
+    }
+#endif
     // Register fake project commands that hint misuse in script mode.
     GetProjectCommandsInScriptMode(state->GetState());
     // Documented behavior of CMAKE{,_CURRENT}_{SOURCE,BINARY}_DIR is to be
@@ -1233,7 +1245,31 @@ void cmake::SetArgs(const std::vector<std::string>& args)
                      "CMAKE_COMPILE_WARNING_AS_ERROR variable.\n";
         state->SetIgnoreWarningAsError(true);
         return true;
-      } }
+      } },
+#ifndef CMAKE_BOOTSTRAP
+    CommandArgument{ "--debugger", CommandArgument::Values::Zero,
+                     [](std::string const&, cmake* state) -> bool {
+                       std::cout << "Running with debugger on.\n";
+                       state->SetDebuggerOn(true);
+                       return true;
+                     } },
+    CommandArgument{ "--debugger-pipe",
+                     "No path specified for --debugger-pipe",
+                     CommandArgument::Values::One,
+                     [](std::string const& value, cmake* state) -> bool {
+                       state->DebuggerPipe = value;
+                       return true;
+                     } },
+    CommandArgument{
+      "--debugger-dap-log", "No file specified for --debugger-dap-log",
+      CommandArgument::Values::One,
+      [](std::string const& value, cmake* state) -> bool {
+        std::string path = cmSystemTools::CollapseFullPath(value);
+        cmSystemTools::ConvertToUnixSlashes(path);
+        state->DebuggerDapLogFile = path;
+        return true;
+      } },
+#endif
   };
 
 #if defined(CMAKE_HAVE_VS_GENERATORS)
@@ -2620,6 +2656,52 @@ void cmake::PreLoadCMakeFiles()
   }
 }
 
+#ifndef CMAKE_BOOTSTRAP
+
+bool cmake::StartDebuggerIfEnabled()
+{
+  if (!this->GetDebuggerOn()) {
+    return true;
+  }
+
+  if (DebugAdapter == nullptr) {
+    if (this->GetDebuggerPipe().empty()) {
+      std::cerr
+        << "Error: --debugger-pipe must be set when debugging is enabled.\n";
+      return false;
+    }
+
+    try {
+      DebugAdapter = std::make_shared<cmDebugger::cmDebuggerAdapter>(
+        std::make_shared<cmDebugger::cmDebuggerPipeConnection>(
+          this->GetDebuggerPipe()),
+        this->GetDebuggerDapLogFile());
+    } catch (const std::runtime_error& error) {
+      std::cerr << "Error: Failed to create debugger adapter.\n";
+      std::cerr << error.what() << "\n";
+      return false;
+    }
+    Messenger->SetDebuggerAdapter(DebugAdapter);
+  }
+
+  return true;
+}
+
+void cmake::StopDebuggerIfNeeded(int exitCode)
+{
+  if (!this->GetDebuggerOn()) {
+    return;
+  }
+
+  // The debug adapter may have failed to start (e.g. invalid pipe path).
+  if (DebugAdapter != nullptr) {
+    DebugAdapter->ReportExitCode(exitCode);
+    DebugAdapter.reset();
+  }
+}
+
+#endif
+
 // handle a command line invocation
 int cmake::Run(const std::vector<std::string>& args, bool noconfigure)
 {
@@ -2708,6 +2790,12 @@ int cmake::Run(const std::vector<std::string>& args, bool noconfigure)
   if (!this->CheckBuildSystem()) {
     return 0;
   }
+
+#ifndef CMAKE_BOOTSTRAP
+  if (!this->StartDebuggerIfEnabled()) {
+    return -1;
+  }
+#endif
 
   int ret = this->Configure();
   if (ret) {

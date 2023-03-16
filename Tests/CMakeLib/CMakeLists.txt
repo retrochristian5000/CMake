@@ -11,6 +11,12 @@ set(CMakeLib_TESTS
   testCTestResourceAllocator.cxx
   testCTestResourceSpec.cxx
   testCTestResourceGroups.cxx
+  testDebuggerAdapter.cxx
+  testDebuggerAdapterPipe.cxx
+  testDebuggerBreakpointManager.cxx
+  testDebuggerVariables.cxx
+  testDebuggerVariablesHelper.cxx
+  testDebuggerVariablesManager.cxx
   testGccDepfileReader.cxx
   testGeneratedFileStream.cxx
   testJSONHelpers.cxx
@@ -77,3 +83,16 @@ add_subdirectory(PseudoMemcheck)
 
 add_executable(testAffinity testAffinity.cxx)
 target_link_libraries(testAffinity CMakeLib)
+
+add_executable(testDebuggerNamedPipe testDebuggerNamedPipe.cxx)
+target_link_libraries(testDebuggerNamedPipe PRIVATE CMakeLib)
+set(testDebuggerNamedPipe_Project_ARGS
+  "$<TARGET_FILE:cmake>" 20000 ${CMAKE_CURRENT_SOURCE_DIR}/DebuggerSample ${CMAKE_CURRENT_BINARY_DIR}/DebuggerSample
+  )
+set(testDebuggerNamedPipe_Script_ARGS
+  "$<TARGET_FILE:cmake>" 20000 ${CMAKE_CURRENT_SOURCE_DIR}/DebuggerSample/script.cmake
+  )
+foreach(case Project Script)
+  add_test(NAME CMakeLib.testDebuggerNamedPipe-${case} COMMAND testDebuggerNamedPipe ${testDebuggerNamedPipe_${case}_ARGS})
+  set_property(TEST CMakeLib.testDebuggerNamedPipe-${case} PROPERTY TIMEOUT 20)
+endforeach()
