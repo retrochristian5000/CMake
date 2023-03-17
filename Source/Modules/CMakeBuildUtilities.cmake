@@ -376,3 +376,17 @@ if(BUILD_CursesDialog)
     message(FATAL_ERROR "CMAKE_USE_SYSTEM_FORM in ON but CURSES_FORM_LIBRARY is not set!")
   endif()
 endif()
+
+#---------------------------------------------------------------------
+# Build nlohmann_json library.
+if(CMAKE_USE_SYSTEM_NLOHMANNJSON)
+  find_package(nlohmann_json 3.11.2 CONFIG)
+  if(NOT nlohmann_json_FOUND)
+    message(FATAL_ERROR
+      "CMAKE_USE_SYSTEM_NLOHMANNJSON is ON but a nlohmann_json is not found!")
+  endif()
+else()
+  add_subdirectory(Utilities/cmnlohmann_json)
+  add_library(nlohmann_json::nlohmann_json ALIAS cmnlohmann_json)
+  CMAKE_SET_TARGET_FOLDER(cmnlohmann_json "Utilities/3rdParty")
+endif()
