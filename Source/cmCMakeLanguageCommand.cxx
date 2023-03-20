@@ -4,7 +4,7 @@
 
 #include <algorithm>
 #include <array>
-#include <cstddef>
+#include <cstdlib>
 #include <memory>
 #include <string>
 #include <utility>
@@ -357,6 +357,31 @@ bool cmCMakeLanguageCommand(std::vector<cmListFileArgument> const& args,
 
   if (!moreArgs()) {
     return FatalError(status, "called with incorrect number of arguments");
+  }
+  if (expArgs[expArg] == "EXIT"_s) {
+    ++expArg; // consume "EXIT".
+
+    if (!moreArgs()) {
+      return FatalError(status, "EXIT requires one argument");
+    }
+
+    auto workingMode =
+      status.GetMakefile().GetCMakeInstance()->GetWorkingMode();
+    if (workingMode == cmake::SCRIPT_MODE) {
+      return FatalError(status, "EXIT can be used only in SCRIPT mode");
+    }
+
+    long retCode = 0;
+
+    if (!cmStrToLong(expArgs[expArg], &retCode)) {
+      return FatalError(status,
+                        cmStrCat("EXIT requires one integral argument, got \"",
+                                 expArgs[expArg], '\"'));
+    }
+
+    cmSystemTools::SetEnableCustomExitCode(workingMode != cmake::SCRIPT_MODE);
+    cmSystemTools::SetCustomExitCode(retCode);
+    return true;
   }
 
   if (expArgs[expArg] == "SET_DEPENDENCY_PROVIDER"_s) {
