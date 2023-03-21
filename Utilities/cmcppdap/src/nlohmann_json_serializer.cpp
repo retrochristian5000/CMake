@@ -19,7 +19,7 @@
 // Disable JSON exceptions. We should be guarding against any exceptions being
 // fired in this file.
 #define JSON_NOEXCEPTION 1
-#include <nlohmann/json.hpp>
+#include <cm3p/nlohmann/json.hpp>
 
 namespace dap {
 namespace json {

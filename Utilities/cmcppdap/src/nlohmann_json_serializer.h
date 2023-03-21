@@ -19,7 +19,7 @@
 #include "dap/serialization.h"
 #include "dap/types.h"
 
-#include <nlohmann/json_fwd.hpp>
+#include <cm3p/nlohmann/json_fwd.hpp>
 
 namespace dap {
 namespace json {
