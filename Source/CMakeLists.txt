@@ -331,6 +331,7 @@ add_library(
   cmInstallDirectoryGenerator.h
   cmInstallDirectoryGenerator.cxx
   cmJSONHelpers.h
+  cmJSONState.h
   cmLDConfigLDConfigTool.cxx
   cmLDConfigLDConfigTool.h
   cmLDConfigTool.cxx
