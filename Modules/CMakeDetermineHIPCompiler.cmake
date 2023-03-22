@@ -102,14 +102,6 @@ endif()
 if(NOT CMAKE_HIP_COMPILER_ROCM_ROOT)
   message(FATAL_ERROR "Failed to find ROCm root directory.")
 endif()
-if(NOT EXISTS "${CMAKE_HIP_COMPILER_ROCM_ROOT}/lib/cmake/hip-lang/hip-lang-config.cmake")
-  message(FATAL_ERROR
-    "The ROCm root directory:\n"
-    " ${CMAKE_HIP_COMPILER_ROCM_ROOT}\n"
-    "does not contain the HIP runtime CMake package, expected at:\n"
-    " ${CMAKE_HIP_COMPILER_ROCM_ROOT}/lib/cmake/hip-lang/hip-lang-config.cmake\n"
-    )
-endif()
 
 if (NOT _CMAKE_TOOLCHAIN_LOCATION)
   get_filename_component(_CMAKE_TOOLCHAIN_LOCATION "${CMAKE_HIP_COMPILER}" PATH)

@@ -1203,6 +1203,16 @@ std::vector<BT<std::string>> cmLocalGenerator::GetIncludeDirectoriesImplicit(
           cmSystemTools::ConvertToUnixSlashes(impDirVec[i]);
         }
       }
+
+      // The CMAKE_<LANG>_IMPLICIT_INCLUDE_DIRECTORIES are computed using
+      // try_compile in CMAKE_DETERMINE_COMPILER_ABI, but the implicit include
+      // directories aren't known during that try_compile. This can be a
+      // problem when the HIP runtime include path is /usr/include, because the
+      // runtime include path is always added to the userDirs and the compiler
+      // includes standard library headers via __clang_hip_runtime_wrapper.h
+      if (lang == "HIP" && impDirVec.size() == impDirVecOldSize) {
+        implicitExclude.emplace("/usr/include");
+      }
     }
 
     // The Platform/UnixPaths module used to hard-code /usr/include for C, CXX,

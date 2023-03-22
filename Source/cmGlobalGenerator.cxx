@@ -816,6 +816,15 @@ void cmGlobalGenerator::EnableLanguage(
       continue;
     }
 
+    // Warn if HIP will be enabled before the library architecture is known.
+    if (lang == "HIP" && !this->CMakeInstance->GetIsInTryCompile() &&
+        !this->GetLanguageEnabled("C") && !this->GetLanguageEnabled("CXX")) {
+      mf->IssueMessage(
+        MessageType::AUTHOR_WARNING,
+        "C or CXX should be enabled before HIP to ensure the library "
+        "architecture is considered when searching for the language runtime.");
+    }
+
     // Check that the compiler was found.
     std::string compilerName = cmStrCat("CMAKE_", lang, "_COMPILER");
     std::string compilerEnv = cmStrCat("CMAKE_", lang, "_COMPILER_ENV_VAR");
