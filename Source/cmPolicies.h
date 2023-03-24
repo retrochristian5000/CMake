@@ -444,7 +444,12 @@ class cmMakefile;
          cmPolicies::WARN)                                                    \
   SELECT(POLICY, CMP0147,                                                     \
          "Visual Studio generators build custom commands in parallel.", 3,    \
-         27, 0, cmPolicies::WARN)
+         27, 0, cmPolicies::WARN)                                             \
+  SELECT(POLICY, CMP0148,                                                     \
+         "ExternalProject_Add and FetchContent_Declare commands "             \
+         "treat relative GIT_REPOSITORY paths as being relative "             \
+         "to the parent project's remote.",                                   \
+         3, 27, 0, cmPolicies::WARN)
 
 #define CM_SELECT_ID(F, A1, A2, A3, A4, A5, A6) F(A1)
 #define CM_FOR_EACH_POLICY_ID(POLICY)                                         \
