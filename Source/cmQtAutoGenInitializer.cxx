@@ -43,6 +43,7 @@
 #include "cmSourceFile.h"
 #include "cmSourceFileLocationKind.h"
 #include "cmSourceGroup.h"
+#include "cmStandardLevelResolver.h"
 #include "cmState.h"
 #include "cmStateTypes.h"
 #include "cmStringAlgorithms.h"
@@ -1699,8 +1700,21 @@ bool cmQtAutoGenInitializer::SetupWriteAutogenInfo()
         jval[1u] = pair.second;
       });
     info.SetConfig("MOC_COMPILATION_FILE", this->Moc.CompilationFile);
-    info.SetArray("MOC_PREDEFS_CMD", this->Moc.PredefsCmd);
     info.SetConfig("MOC_PREDEFS_FILE", this->Moc.PredefsFile);
+
+    cmStandardLevelResolver resolver{ this->Makefile };
+    auto const& CompileOptionFlag =
+      resolver.GetCompileOptionDef(this->GenTarget, "CXX", "");
+    auto const& CompileOptitonValue =
+      this->GenTarget->Makefile->GetDefinition(CompileOptionFlag);
+
+    if (!CompileOptitonValue.IsEmpty()) {
+      if (this->Moc.PredefsCmd.size() >= 3) {
+        this->Moc.PredefsCmd.insert(this->Moc.PredefsCmd.begin() + 1,
+                                    CompileOptitonValue);
+      }
+    }
+    info.SetArray("MOC_PREDEFS_CMD", this->Moc.PredefsCmd);
   }
 
   // Write uic settings
