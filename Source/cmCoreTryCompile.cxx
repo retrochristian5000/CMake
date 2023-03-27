@@ -566,6 +566,18 @@ cm::optional<cmTryCompileResult> cmCoreTryCompile::TryCompileCode(
       }
     }
 
+    // The HIP language sometimes needs another language enabled first
+    // before it can be enabled, so if C or CXX is enabled in the global
+    // generator, enable it for the test.
+    if (testLangs.count("HIP") == 1) {
+      if (gg->GetLanguageEnabled("C")) {
+        testLangs.insert("C");
+      }
+      if (gg->GetLanguageEnabled("CXX")) {
+        testLangs.insert("CXX");
+      }
+    }
+
     // when the only language is ISPC we know that the output
     // type must by a static library
     if (testLangs.size() == 1 && testLangs.count("ISPC") == 1) {
