@@ -1,4 +1,3 @@
-cmake_policy(SET CMP0129 NEW)
 enable_language(CXX)
 
 find_package(Qt${with_qt_version} REQUIRED COMPONENTS Core)
@@ -10,10 +9,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_library(MocPredefs MocPredefs.cxx)
 
 if(NOT DEFINED CMAKE_CXX_COMPILER_PREDEFINES_COMMAND)
-  return()
-endif()
-
-if(CMAKE_CXX_COMPILER_ID STREQUAL "LCC" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "1.26")
   return()
 endif()
 

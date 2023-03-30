@@ -15,6 +15,9 @@ macro(add_RunCMake_test test)
   else()
     set(Test_Dir ${test})
   endif()
+  if(CMAKE_C_COMPILER_ID STREQUAL "LCC")
+    list(APPEND TEST_ARGS -DRunCMake_TEST_LCC=1)
+  endif()
   add_test(NAME RunCMake.${test} COMMAND ${CMAKE_CMAKE_COMMAND}
     -DCMAKE_MODULE_PATH=${CMAKE_CURRENT_SOURCE_DIR}
     -DRunCMake_GENERATOR_IS_MULTI_CONFIG=${_isMultiConfig}
