@@ -28,8 +28,10 @@
 #include "cmAlgorithms.h"
 #include "cmCustomCommand.h"
 #include "cmCustomCommandLines.h"
+#include "cmEvaluatedTargetProperty.h"
 #include "cmGeneratedFileStream.h"
 #include "cmGeneratorExpression.h"
+#include "cmGeneratorExpressionDAGChecker.h"
 #include "cmGeneratorTarget.h"
 #include "cmGlobalGenerator.h"
 #include "cmLinkItem.h"
@@ -1691,6 +1693,33 @@ bool cmQtAutoGenInitializer::SetupWriteAutogenInfo()
     info.SetArray("MOC_OPTIONS", this->Moc.Options);
     info.SetBool("MOC_RELAXED_MODE", this->Moc.RelaxedMode);
     info.SetBool("MOC_PATH_PREFIX", this->Moc.PathPrefix);
+
+    cmGeneratorExpressionDAGChecker dagChecker(
+      this->GenTarget, "AUTOMOC_MACRO_NAMES", nullptr, nullptr);
+    EvaluatedTargetPropertyEntries InterfaceAutoMocMacroNamesEntries;
+
+    AddInterfaceEntries(this->GenTarget, this->ConfigDefault,
+                        "INTERFACE_AUTOMOC_MACRO_NAMES", "CXX", &dagChecker,
+                        InterfaceAutoMocMacroNamesEntries,
+                        IncludeRuntimeInterface::Yes);
+
+    std::vector<std::string> InterfaceAutoMocMacroNames;
+    for (auto const& entry : InterfaceAutoMocMacroNamesEntries.Entries) {
+      for (auto const& value : entry.Values) {
+        InterfaceAutoMocMacroNames.emplace_back(value);
+      }
+    }
+
+    this->Moc.MacroNames.reserve(this->Moc.MacroNames.size() +
+                                 InterfaceAutoMocMacroNames.size());
+    for (auto& entry : InterfaceAutoMocMacroNames) {
+      this->Moc.MacroNames.emplace_back(std::move(entry));
+    }
+
+    // eliminate duplicates
+    this->Moc.MacroNames.erase(cmRemoveDuplicates(this->Moc.MacroNames),
+                               this->Moc.MacroNames.end());
+
     info.SetArray("MOC_MACRO_NAMES", this->Moc.MacroNames);
     info.SetArrayArray(
       "MOC_DEPEND_FILTERS", this->Moc.DependFilters,
