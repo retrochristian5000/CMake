@@ -32,4 +32,32 @@ if("${RunCMake_GENERATOR}" MATCHES "^Visual Studio (1[4567])( 20[0-9][0-9])?$")
   run_cmake(BadFieldNoComma)
   set(RunCMake_GENERATOR_PLATFORM "Test Platform,unknown=")
   run_cmake(BadFieldUnknown)
+  set(RunCMake_GENERATOR_PLATFORM "version=")
+  run_cmake(BadVersionEmpty)
+  set(RunCMake_GENERATOR_PLATFORM "version=1.2.3.4")
+  run_cmake(BadVersionMissing)
+  set(RunCMake_GENERATOR_PLATFORM "version=8.1")
+  run_cmake_with_options(BadVersionPlatform -DCMAKE_SYSTEM_VERSION=8.1)
+
+  cmake_host_system_information(RESULT kitsRoot10
+    QUERY WINDOWS_REGISTRY "HKLM/SOFTWARE/Microsoft/Windows Kits/Installed Roots"
+    VALUE "KitsRoot10"
+    VIEW 64_32
+    ERROR_VARIABLE kitsRoot10Error
+    )
+  if(NOT kitsRoot10Error AND IS_DIRECTORY "${kitsRoot10}/include")
+    cmake_path(SET kitsInclude "${kitsRoot10}/include")
+    file(GLOB kits RELATIVE "${kitsInclude}" "${kitsInclude}/*/um/windows.h")
+    foreach(kit IN LISTS kits)
+      if(kit MATCHES "^([0-9.]+)/")
+        set(expect_version "${CMAKE_MATCH_1}")
+        set(RunCMake_GENERATOR_PLATFORM "version=${expect_version}")
+        set(RunCMake_TEST_VARIANT_DESCRIPTION "-${expect_version}")
+        run_cmake(VersionExists)
+        unset(RunCMake_GENERATOR_PLATFORM)
+      endif()
+    endforeach()
+  else()
+    message(FATAL_ERROR "Could not find any Windows SDKs to drive test cases.")
+  endif()
 endif()
