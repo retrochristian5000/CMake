@@ -52,6 +52,42 @@ macro(__compiler_gnu lang)
     set(CMAKE_DEPFILE_FLAGS_${lang} "-MD -MT <DEP_TARGET> -MF <DEP_FILE>")
   endif()
 
+  # define flags for linker depfile generation
+  if (NOT DEFINED _CMAKE_GNU_LINKER_DEPFILE_SUPPORTED)
+    ## Ensure ninja tool is recent enough...
+    if(CMAKE_GENERATOR MATCHES "^Ninja")
+      # Ninja 1.10 or upper is required
+      execute_process(COMMAND "${CMAKE_MAKE_PROGRAM}" --version
+        OUTPUT_VARIABLE _ninja_version
+        ERROR_VARIABLE _ninja_version)
+      if (_ninja_version MATCHES "[0-9]+(\\.[0-9]+)*")
+        set (_ninja_version "${CMAKE_MATCH_0}")
+      endif()
+      if (_ninja_version VERSION_LESS "1.10")
+        set(_CMAKE_GNU_LINKER_DEPFILE_SUPPORTED FALSE CACHE INTERNAL "linker supports dependency file")
+      endif()
+      unset(_ninja_version)
+    endif()
+
+    if (NOT DEFINED _CMAKE_GNU_LINKER_DEPFILE_SUPPORTED)
+      ## check if this feature is supported by the linker
+      execute_process(COMMAND "${CMAKE_LINKER}" --help
+        OUTPUT_VARIABLE _linker_capabilities
+        ERROR_VARIABLE _linker_capabilities)
+      if(_linker_capabilities MATCHES "--dependency-file")
+        set(_CMAKE_GNU_LINKER_DEPFILE_SUPPORTED TRUE CACHE INTERNAL "linker supports dependency file")
+      else()
+        set(_CMAKE_GNU_LINKER_DEPFILE_SUPPORTED FALSE CACHE INTERNAL "linker supports dependency file")
+      endif()
+      unset(_linker_capabilities)
+    endif()
+  endif()
+  if (_CMAKE_GNU_LINKER_DEPFILE_SUPPORTED)
+    set(CMAKE_${lang}_LINKER_DEPFILE_FLAGS "LINKER:--dependency-file,<DEP_FILE>")
+    set(CMAKE_${lang}_LINKER_DEPFILE_FORMAT gcc)
+    set(CMAKE_${lang}_LINK_DEPENDS_USE_LINKER TRUE)
+  endif()
+
   # Initial configuration flags.
   string(APPEND CMAKE_${lang}_FLAGS_INIT " ")
   string(APPEND CMAKE_${lang}_FLAGS_DEBUG_INIT " -g")
