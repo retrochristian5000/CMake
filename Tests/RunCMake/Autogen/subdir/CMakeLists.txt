@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.22)
+project(resolve_variables LANGUAGES CXX)
+
+message(STATUS "CMAKE_INCLUDE_SYSTEM_FLAG_CXX:|${CMAKE_INCLUDE_SYSTEM_FLAG_CXX}|")
+message(STATUS "CMAKE_INCLUDE_FLAG_CXX:|${CMAKE_INCLUDE_FLAG_CXX}|")
