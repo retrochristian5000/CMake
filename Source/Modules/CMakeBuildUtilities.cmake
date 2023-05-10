@@ -390,3 +390,17 @@ else()
   add_library(nlohmann_json::nlohmann_json ALIAS cmnlohmann_json)
   CMAKE_SET_TARGET_FOLDER(cmnlohmann_json "Utilities/3rdParty")
 endif()
+
+#---------------------------------------------------------------------
+# Build cppdap library.
+if(CMAKE_USE_SYSTEM_CPPDAP)
+  find_package(cppdap CONFIG)
+  if(NOT cppdap_FOUND)
+    message(FATAL_ERROR
+      "CMAKE_USE_SYSTEM_CPPDAP is ON but a cppdap is not found!")
+  endif()
+else()
+  add_subdirectory(Utilities/cmcppdap)
+  add_library(cppdap::cppdap ALIAS cmcppdap)
+  CMAKE_SET_TARGET_FOLDER(cppdap "Utilities/3rdParty")
+endif()
