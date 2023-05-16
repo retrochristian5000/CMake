@@ -170,6 +170,30 @@ add_library(
   cmCustomCommandTypes.h
   cmCxxModuleMapper.cxx
   cmCxxModuleMapper.h
+  cmDebuggerAdapter.cxx
+  cmDebuggerAdapter.h
+  cmDebuggerBreakpointManager.cxx
+  cmDebuggerBreakpointManager.h
+  cmDebuggerExceptionManager.cxx
+  cmDebuggerExceptionManager.h
+  cmDebuggerPipeConnection.cxx
+  cmDebuggerPipeConnection.h
+  cmDebuggerProtocol.cxx
+  cmDebuggerProtocol.h
+  cmDebuggerSourceBreakpoint.cxx
+  cmDebuggerSourceBreakpoint.h
+  cmDebuggerStackFrame.cxx
+  cmDebuggerStackFrame.h
+  cmDebuggerThread.cxx
+  cmDebuggerThread.h
+  cmDebuggerThreadManager.cxx
+  cmDebuggerThreadManager.h
+  cmDebuggerVariables.cxx
+  cmDebuggerVariables.h
+  cmDebuggerVariablesHelper.cxx
+  cmDebuggerVariablesHelper.h
+  cmDebuggerVariablesManager.cxx
+  cmDebuggerVariablesManager.h
   cmDefinitions.cxx
   cmDefinitions.h
   cmDependencyProvider.h
@@ -752,6 +776,7 @@ target_link_libraries(
     cmstd
     cmsys
     CURL::libcurl
+    cppdap::cppdap
     EXPAT::EXPAT
     JsonCpp::JsonCpp
     $<TARGET_NAME_IF_EXISTS:kwiml::kwiml>

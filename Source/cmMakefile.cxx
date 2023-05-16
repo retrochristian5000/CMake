@@ -64,6 +64,7 @@
 #include "cmake.h"
 
 #ifndef CMAKE_BOOTSTRAP
+#  include "cmDebuggerAdapter.h"
 #  include "cmMakefileProfilingData.h"
 #  include "cmVariableWatch.h"
 #endif
@@ -423,6 +424,11 @@ public:
             cmStrCat(lfc.FilePath, ':', std::to_string(lfc.Line));
           return argsValue;
         });
+    if (this->Makefile->GetCMakeInstance()->GetDebugAdapter() != nullptr) {
+      this->Makefile->GetCMakeInstance()
+        ->GetDebugAdapter()
+        ->OnBeginFunctionCall(mf, lfc.FilePath, lff);
+    }
 #endif
   }
 
@@ -434,6 +440,13 @@ public:
     this->Makefile->ExecutionStatusStack.pop_back();
     --this->Makefile->RecursionDepth;
     this->Makefile->Backtrace = this->Makefile->Backtrace.Pop();
+#ifndef CMAKE_BOOTSTRAP
+    if (this->Makefile->GetCMakeInstance()->GetDebugAdapter() != nullptr) {
+      this->Makefile->GetCMakeInstance()
+        ->GetDebugAdapter()
+        ->OnEndFunctionCall();
+    }
+#endif
   }
 
   cmMakefileCall(const cmMakefileCall&) = delete;
@@ -663,11 +676,32 @@ bool cmMakefile::ReadDependentFile(const std::string& filename,
 
   IncludeScope incScope(this, filenametoread, noPolicyScope);
 
+#ifndef CMAKE_BOOTSTRAP
+  if (this->GetCMakeInstance()->GetDebugAdapter() != nullptr) {
+    this->GetCMakeInstance()->GetDebugAdapter()->OnBeginFileParse(
+      this, filenametoread);
+  }
+#endif
+
   cmListFile listFile;
   if (!listFile.ParseFile(filenametoread.c_str(), this->GetMessenger(),
                           this->Backtrace)) {
+#ifndef CMAKE_BOOTSTRAP
+    if (this->GetCMakeInstance()->GetDebugAdapter() != nullptr) {
+      this->GetCMakeInstance()->GetDebugAdapter()->OnEndFileParse();
+    }
+#endif
+
     return false;
   }
+
+#ifndef CMAKE_BOOTSTRAP
+  if (this->GetCMakeInstance()->GetDebugAdapter() != nullptr) {
+    this->GetCMakeInstance()->GetDebugAdapter()->OnEndFileParse();
+    this->GetCMakeInstance()->GetDebugAdapter()->OnFileParsedSuccessfully(
+      filenametoread, listFile.Functions);
+  }
+#endif
 
   this->RunListFile(listFile, filenametoread);
   if (cmSystemTools::GetFatalErrorOccurred()) {
@@ -764,11 +798,32 @@ bool cmMakefile::ReadListFile(const std::string& filename)
 
   ListFileScope scope(this, filenametoread);
 
+#ifndef CMAKE_BOOTSTRAP
+  if (this->GetCMakeInstance()->GetDebugAdapter() != nullptr) {
+    this->GetCMakeInstance()->GetDebugAdapter()->OnBeginFileParse(
+      this, filenametoread);
+  }
+#endif
+
   cmListFile listFile;
   if (!listFile.ParseFile(filenametoread.c_str(), this->GetMessenger(),
                           this->Backtrace)) {
+#ifndef CMAKE_BOOTSTRAP
+    if (this->GetCMakeInstance()->GetDebugAdapter() != nullptr) {
+      this->GetCMakeInstance()->GetDebugAdapter()->OnEndFileParse();
+    }
+#endif
+
     return false;
   }
+
+#ifndef CMAKE_BOOTSTRAP
+  if (this->GetCMakeInstance()->GetDebugAdapter() != nullptr) {
+    this->GetCMakeInstance()->GetDebugAdapter()->OnEndFileParse();
+    this->GetCMakeInstance()->GetDebugAdapter()->OnFileParsedSuccessfully(
+      filenametoread, listFile.Functions);
+  }
+#endif
 
   this->RunListFile(listFile, filenametoread);
   if (cmSystemTools::GetFatalErrorOccurred()) {
@@ -790,6 +845,13 @@ bool cmMakefile::ReadListFileAsString(const std::string& content,
                             this->GetMessenger(), this->Backtrace)) {
     return false;
   }
+
+#ifndef CMAKE_BOOTSTRAP
+  if (this->GetCMakeInstance()->GetDebugAdapter() != nullptr) {
+    this->GetCMakeInstance()->GetDebugAdapter()->OnFileParsedSuccessfully(
+      filenametoread, listFile.Functions);
+  }
+#endif
 
   this->RunListFile(listFile, filenametoread);
   if (cmSystemTools::GetFatalErrorOccurred()) {
@@ -1658,11 +1720,33 @@ void cmMakefile::Configure()
   assert(cmSystemTools::FileExists(currentStart, true));
   this->AddDefinition("CMAKE_PARENT_LIST_FILE", currentStart);
 
+#ifndef CMAKE_BOOTSTRAP
+  if (this->GetCMakeInstance()->GetDebugAdapter() != nullptr) {
+    this->GetCMakeInstance()->GetDebugAdapter()->OnBeginFileParse(
+      this, currentStart);
+  }
+#endif
+
   cmListFile listFile;
   if (!listFile.ParseFile(currentStart.c_str(), this->GetMessenger(),
                           this->Backtrace)) {
+#ifndef CMAKE_BOOTSTRAP
+    if (this->GetCMakeInstance()->GetDebugAdapter() != nullptr) {
+      this->GetCMakeInstance()->GetDebugAdapter()->OnEndFileParse();
+    }
+#endif
+
     return;
   }
+
+#ifndef CMAKE_BOOTSTRAP
+  if (this->GetCMakeInstance()->GetDebugAdapter() != nullptr) {
+    this->GetCMakeInstance()->GetDebugAdapter()->OnEndFileParse();
+    this->GetCMakeInstance()->GetDebugAdapter()->OnFileParsedSuccessfully(
+      currentStart, listFile.Functions);
+  }
+#endif
+
   if (this->IsRootMakefile()) {
     bool hasVersion = false;
     // search for the right policy command
@@ -3769,6 +3853,12 @@ void cmMakefile::DisplayStatus(const std::string& message, float s) const
     return;
   }
   cm->UpdateProgress(message, s);
+
+#ifndef CMAKE_BOOTSTRAP
+  if (cm->GetDebugAdapter() != nullptr) {
+    cm->GetDebugAdapter()->OnMessageOutput(MessageType::MESSAGE, message);
+  }
+#endif
 }
 
 std::string cmMakefile::GetModulesFile(const std::string& filename,
