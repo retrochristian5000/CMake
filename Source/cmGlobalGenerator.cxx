@@ -47,6 +47,7 @@
 #include "cmMSVC60LinkLineComputer.h"
 #include "cmMakefile.h"
 #include "cmMessageType.h"
+#include "cmOutputConverter.h"
 #include "cmPolicies.h"
 #include "cmRange.h"
 #include "cmSourceFile.h"
@@ -72,6 +73,23 @@ const std::string kCMAKE_PLATFORM_INFO_INITIALIZED =
   "CMAKE_PLATFORM_INFO_INITIALIZED";
 
 class cmInstalledFile;
+
+namespace detail {
+std::string GeneratedMakeCommand::QuotedPrintable() const
+{
+  std::string output;
+  const char* sep = "";
+  int flags = 0;
+#if !defined(_WIN32)
+  flags |= cmOutputConverter::Shell_Flag_IsUnix;
+#endif
+  for (auto const& arg : this->PrimaryCommand) {
+    output += cmStrCat(sep, cmOutputConverter::EscapeForShell(arg, flags));
+    sep = " ";
+  }
+  return output;
+}
+}
 
 bool cmTarget::StrictTargetComparison::operator()(cmTarget const* t1,
                                                   cmTarget const* t2) const
@@ -2096,16 +2114,13 @@ int cmGlobalGenerator::Build(
    * Run an executable command and put the stdout in output.
    */
   cmWorkingDirectory workdir(bindir);
-  output += "Change Dir: ";
-  output += bindir;
-  output += "\n";
+  output += cmStrCat("Change Dir: '", bindir, "'\n");
   if (workdir.Failed()) {
     cmSystemTools::SetRunCommandHideConsole(hideconsole);
     std::string err = cmStrCat("Failed to change directory: ",
                                std::strerror(workdir.GetLastResult()));
     cmSystemTools::Error(err);
-    output += err;
-    output += "\n";
+    output += cmStrCat(err, '\n');
     return 1;
   }
   std::string realConfig = config;
@@ -2134,9 +2149,8 @@ int cmGlobalGenerator::Build(
       this->GenerateBuildCommand(makeCommandCSTR, projectName, bindir,
                                  { "clean" }, realConfig, jobs, verbose,
                                  buildOptions);
-    output += "\nRun Clean Command:";
-    output += cleanCommand.front().Printable();
-    output += "\n";
+    output += cmStrCat(
+      "\nRun Clean Command: ", cleanCommand.front().QuotedPrintable(), '\n');
     if (cleanCommand.size() != 1) {
       this->GetCMakeInstance()->IssueMessage(MessageType::INTERNAL_ERROR,
                                              "The generator did not produce "
@@ -2149,8 +2163,8 @@ int cmGlobalGenerator::Build(
                                          nullptr, outputflag, timeout)) {
       cmSystemTools::SetRunCommandHideConsole(hideconsole);
       cmSystemTools::Error("Generator: execution of make clean failed.");
-      output += *outputPtr;
-      output += "\nGenerator: execution of make clean failed.\n";
+      output +=
+        cmStrCat(*outputPtr, "\nGenerator: execution of make clean failed.\n");
 
       return 1;
     }
@@ -2159,17 +2173,20 @@ int cmGlobalGenerator::Build(
 
   // now build
   std::string makeCommandStr;
-  output += "\nRun Build Command(s):";
+  std::string outputMakeCommandStr;
+  output += "\nRun Build Command(s): ";
 
   retVal = 0;
   for (auto command = makeCommand.begin();
        command != makeCommand.end() && retVal == 0; ++command) {
     makeCommandStr = command->Printable();
-    if (command != makeCommand.end()) {
+    outputMakeCommandStr = command->QuotedPrintable();
+    if ((command + 1) != makeCommand.end()) {
       makeCommandStr += " && ";
+      outputMakeCommandStr += " && ";
     }
 
-    output += makeCommandStr;
+    output += outputMakeCommandStr;
     if (!cmSystemTools::RunSingleCommand(command->PrimaryCommand, outputPtr,
                                          outputPtr, &retVal, nullptr,
                                          outputflag, timeout)) {
@@ -2177,9 +2194,10 @@ int cmGlobalGenerator::Build(
       cmSystemTools::Error(
         "Generator: execution of make failed. Make command was: " +
         makeCommandStr);
-      output += *outputPtr;
-      output += "\nGenerator: execution of make failed. Make command was: " +
-        makeCommandStr + "\n";
+      output +=
+        cmStrCat(*outputPtr,
+                 "\nGenerator: execution of make failed. Make command was: ",
+                 outputMakeCommandStr, '\n');
 
       return 1;
     }
