@@ -32,6 +32,16 @@ set(CMakeLib_TESTS
   testCMExtEnumSet.cxx
   testList.cxx
   )
+if(CMake_ENABLE_DEBUGGER)
+  list(APPEND CMakeLib_TESTS
+    testDebuggerAdapter.cxx
+    testDebuggerAdapterPipe.cxx
+    testDebuggerBreakpointManager.cxx
+    testDebuggerVariables.cxx
+    testDebuggerVariablesHelper.cxx
+    testDebuggerVariablesManager.cxx
+    )
+endif()
 if (CMake_TEST_FILESYSTEM_PATH OR NOT CMake_HAVE_CXX_FILESYSTEM)
   list(APPEND CMakeLib_TESTS testCMFilesystemPath.cxx)
 endif()
@@ -77,3 +87,18 @@ add_subdirectory(PseudoMemcheck)
 
 add_executable(testAffinity testAffinity.cxx)
 target_link_libraries(testAffinity CMakeLib)
+
+if(CMake_ENABLE_DEBUGGER)
+  add_executable(testDebuggerNamedPipe testDebuggerNamedPipe.cxx)
+  target_link_libraries(testDebuggerNamedPipe PRIVATE CMakeLib)
+  set(testDebuggerNamedPipe_Project_ARGS
+    "$<TARGET_FILE:cmake>" 20000 ${CMAKE_CURRENT_SOURCE_DIR}/DebuggerSample ${CMAKE_CURRENT_BINARY_DIR}/DebuggerSample
+    )
+  set(testDebuggerNamedPipe_Script_ARGS
+    "$<TARGET_FILE:cmake>" 20000 ${CMAKE_CURRENT_SOURCE_DIR}/DebuggerSample/script.cmake
+    )
+  foreach(case Project Script)
+    add_test(NAME CMakeLib.testDebuggerNamedPipe-${case} COMMAND testDebuggerNamedPipe ${testDebuggerNamedPipe_${case}_ARGS})
+    set_property(TEST CMakeLib.testDebuggerNamedPipe-${case} PROPERTY TIMEOUT 20)
+  endforeach()
+endif()
