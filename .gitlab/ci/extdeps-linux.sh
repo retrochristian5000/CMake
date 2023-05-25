@@ -69,9 +69,9 @@ rm -rf jsoncpp-1.6.0*
 #----------------------------------------------------------------------------
 # cppdap
 
-git clone https://github.com/google/cppdap.git
+git clone https://github.com/bradking/cppdap.git
 cd cppdap
-git checkout 1344b56dc5b6de2d18ad44ff764dba11f3bc59a0 # 2023-05-23
+git checkout 6bccb27e58a215be8be869c6d3bd6a9d09954354 # 2023-05-23 + xlclang fix
 cd ..
 cmake -S cppdap -B cppdap-build \
   -DCPPDAP_USE_EXTERNAL_JSONCPP_PACKAGE=ON \

@@ -7,8 +7,8 @@ shopt -s dotglob
 readonly name="cppdap"
 readonly ownership="cppdap Upstream <kwrobot@kitware.com>"
 readonly subtree="Utilities/cmcppdap"
-readonly repo="https://github.com/google/cppdap.git"
-readonly tag="1344b56dc5b6de2d18ad44ff764dba11f3bc59a0" # 2023-05-23
+readonly repo="https://github.com/bradking/cppdap.git"
+readonly tag="6bccb27e58a215be8be869c6d3bd6a9d09954354" # 2023-05-23 + xlclang fix
 readonly shortlog=false
 readonly paths="
   LICENSE
