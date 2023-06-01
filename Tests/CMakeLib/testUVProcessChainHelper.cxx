@@ -61,10 +61,10 @@ int main(int argc, char** argv)
     }
 
     // On Windows, the exit code of abort() is different between debug and
-    // release builds, and does not yield a term_signal in libuv in either
-    // case. For the sake of simplicity, we just return another non-zero code.
+    // release builds. Instead, trigger an access violation.
 #ifdef _WIN32
-    return 2;
+    int* ptr = nullptr;
+    *ptr = 0;
 #else
     std::abort();
 #endif
