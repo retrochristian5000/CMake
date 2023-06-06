@@ -1,0 +1,9 @@
+set(WIN32 1)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "WindowsCE")
+  set(WINCE 1)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "WindowsPhone")
+  set(WINDOWS_PHONE 1)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
+  set(WINDOWS_STORE 1)
+endif()
