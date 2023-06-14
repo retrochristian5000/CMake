@@ -2390,10 +2390,10 @@ bool cmQtAutoMocUicT::InitFromInfo(InfoT const& info)
       !info.GetArray("CMAKE_LIST_FILES", this->BaseConst_.ListFiles, true) ||
       !info.GetArray("HEADER_EXTENSIONS", this->BaseConst_.HeaderExtensions,
                      true) ||
-      !info.GetString("QT_MOC_EXECUTABLE", this->MocConst_.Executable,
-                      false) ||
-      !info.GetString("QT_UIC_EXECUTABLE", this->UicConst_.Executable,
-                      false)) {
+      !info.GetStringConfig("QT_MOC_EXECUTABLE", this->MocConst_.Executable,
+                            false) ||
+      !info.GetStringConfig("QT_UIC_EXECUTABLE", this->UicConst_.Executable,
+                            false)) {
     return false;
   }
 
