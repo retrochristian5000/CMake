@@ -1517,18 +1517,26 @@ bool cmQtAutoGenInitializer::InitRccTargets()
     ccDepends.push_back(qrc.QrcFile);
     ccDepends.push_back(qrc.InfoFile);
 
+    std::vector<std::string> configs;
+    this->GlobalGen->GetQtAutoGenConfigs(configs);
     cmCustomCommandLines commandLines;
-    if (this->MultiConfig) {
+    if (this->Makefile->GetSafeDefinition("CMAKE_CROSS_CONFIGS").empty()) {
+      std::string autorccInfoFileConfig;
+      if (this->MultiConfig) {
+        autorccInfoFileConfig = "$<CONFIG>";
+      } else {
+        autorccInfoFileConfig = configs[0];
+      }
+      commandLines.push_back(cmMakeCommandLine(
+        { cmSystemTools::GetCMakeCommand(), "-E", "cmake_autorcc",
+          qrc.InfoFile, autorccInfoFileConfig }));
+    } else {
       // Build for all configurations
       for (std::string const& config : this->ConfigsList) {
         commandLines.push_back(
           cmMakeCommandLine({ cmSystemTools::GetCMakeCommand(), "-E",
                               "cmake_autorcc", qrc.InfoFile, config }));
       }
-    } else {
-      commandLines.push_back(
-        cmMakeCommandLine({ cmSystemTools::GetCMakeCommand(), "-E",
-                            "cmake_autorcc", qrc.InfoFile, "$<CONFIG>" }));
     }
     std::string ccComment =
       cmStrCat("Automatic RCC for ",
