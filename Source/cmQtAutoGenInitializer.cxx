@@ -2,6 +2,7 @@
    file Copyright.txt or https://cmake.org/licensing for details.  */
 #include "cmQtAutoGenInitializer.h"
 
+#include <array>
 #include <cstddef>
 #include <deque>
 #include <initializer_list>
@@ -301,15 +302,22 @@ bool InfoWriter::Save(std::string const& filename)
   return fileStream.Close();
 }
 
-void AddAutogenExecutableToDependencies(
-  cmQtAutoGenInitializer::GenVarsT const& genVars,
-  std::vector<std::string>& dependencies)
+cmQtAutoGen::ConfigStrings<std::vector<std::string>> generateListOptions(
+  cmQtAutoGen::ConfigStrings<cmQtAutoGen::CompilerFeaturesHandle> const&
+    executableFeatures,
+  bool IsMultiConfig)
 {
-  if (genVars.ExecutableTarget != nullptr) {
-    dependencies.push_back(genVars.ExecutableTarget->Target->GetName());
-  } else if (!genVars.Executable.empty()) {
-    dependencies.push_back(genVars.Executable);
+  cmQtAutoGen::ConfigStrings<std::vector<std::string>> tempListOptions;
+  if (IsMultiConfig) {
+    for (auto const& executableFeature : executableFeatures.Config) {
+      tempListOptions.Config[executableFeature.first] =
+        executableFeature.second->ListOptions;
+    }
+  } else {
+    tempListOptions.Default = executableFeatures.Default->ListOptions;
   }
+
+  return tempListOptions;
 }
 
 } // End of unnamed namespace
@@ -332,6 +340,37 @@ cmQtAutoGenInitializer::cmQtAutoGenInitializer(
   this->Uic.Enabled = uicEnabled;
   this->Rcc.Enabled = rccEnabled;
   this->Rcc.GlobalTarget = globalAutoRccTarget;
+}
+
+void cmQtAutoGenInitializer::AddAutogenExecutableToDependencies(
+  cmQtAutoGenInitializer::GenVarsT const& genVars,
+  std::vector<std::string>& dependencies) const
+{
+  if (genVars.ExecutableTarget != nullptr) {
+    dependencies.push_back(genVars.ExecutableTarget->Target->GetName());
+  } else if (this->MultiConfig) {
+    if (this->Makefile->GetSafeDefinition("CMAKE_CROSS_CONFIGS").empty()) {
+      for (auto const& config : genVars.Executable.Config) {
+        auto executableWithConfig =
+          cmStrCat("$<$<CONFIG:", config.first, ">:", config.second, '>');
+        dependencies.push_back(executableWithConfig);
+      }
+    } else {
+      // add all executables for all configs because cross-configs are enabled
+      cmList executablesList;
+      for (auto const& config : genVars.Executable.Config) {
+        executablesList.push_back(config.second);
+      }
+      for (auto const& config : genVars.Executable.Config) {
+        dependencies.emplace_back(cmStrCat("$<$<CONFIG:", config.first, ">:",
+                                           executablesList.to_string(), '>'));
+      }
+    }
+  } else {
+    if (!genVars.Executable.Default.empty()) {
+      dependencies.push_back(genVars.Executable.Default);
+    }
+  }
 }
 
 bool cmQtAutoGenInitializer::InitCustomTargets()
@@ -777,18 +816,30 @@ bool cmQtAutoGenInitializer::InitRcc()
       return false;
     }
     // Evaluate test output on demand
-    CompilerFeatures& features = *this->Rcc.ExecutableFeatures;
-    if (!features.Evaluated) {
-      // Look for list options
-      if (this->QtVersion.Major == 5 || this->QtVersion.Major == 6) {
-        if (features.HelpOutput.find("--list") != std::string::npos) {
-          features.ListOptions.emplace_back("--list");
-        } else if (features.HelpOutput.find("-list") != std::string::npos) {
-          features.ListOptions.emplace_back("-list");
+    auto& features = this->Rcc.ExecutableFeatures;
+    auto checkAndAddOptions = [this](CompilerFeaturesHandle& feature) {
+      if (!feature->Evaluated) {
+        // Look for list options
+        if (this->QtVersion.Major == 5 || this->QtVersion.Major == 6) {
+          static std::array<std::string, 2> const listOptions{ "--list",
+                                                               "-list" };
+          for (std::string const& opt : listOptions) {
+            if (feature->HelpOutput.find(opt) != std::string::npos) {
+              feature->ListOptions.emplace_back(opt);
+              break;
+            }
+          }
         }
+        // Evaluation finished
+        feature->Evaluated = true;
       }
-      // Evaluation finished
-      features.Evaluated = true;
+    };
+    if (this->MultiConfig) {
+      for (auto const& config : this->ConfigsList) {
+        checkAndAddOptions(features.Config[config]);
+      }
+    } else {
+      checkAndAddOptions(features.Default);
     }
   }
 
@@ -1158,11 +1209,24 @@ bool cmQtAutoGenInitializer::InitScanFiles()
     for (Qrc& qrc : this->Rcc.Qrcs) {
       if (!qrc.Generated) {
         std::string error;
-        RccLister const lister(this->Rcc.Executable,
-                               this->Rcc.ExecutableFeatures->ListOptions);
-        if (!lister.list(qrc.QrcFile, qrc.Resources, error)) {
-          cmSystemTools::Error(error);
-          return false;
+        if (this->MultiConfig) {
+          for (auto const& config : this->ConfigsList) {
+            RccLister const lister(
+              this->Rcc.Executable.Config[config],
+              this->Rcc.ExecutableFeatures.Config[config]->ListOptions);
+            if (!lister.list(qrc.QrcFile, qrc.Resources, error)) {
+              cmSystemTools::Error(error);
+              return false;
+            }
+          }
+        } else {
+          RccLister const lister(
+            this->Rcc.Executable.Default,
+            this->Rcc.ExecutableFeatures.Default->ListOptions);
+          if (!lister.list(qrc.QrcFile, qrc.Resources, error)) {
+            cmSystemTools::Error(error);
+            return false;
+          }
         }
       }
     }
@@ -1596,6 +1660,9 @@ bool cmQtAutoGenInitializer::InitRccTargets()
         if (!this->Rcc.ExecutableTargetName.empty()) {
           ccDepends.push_back(this->Rcc.ExecutableTargetName);
         }
+
+        AddAutogenExecutableToDependencies(this->Rcc, ccDepends);
+
         cc->SetOutputs(ccOutput);
         cc->SetByproducts(ccByproducts);
         cc->SetDepends(ccDepends);
@@ -1709,8 +1776,8 @@ bool cmQtAutoGenInitializer::SetupWriteAutogenInfo()
 
   info.SetUInt("QT_VERSION_MAJOR", this->QtVersion.Major);
   info.SetUInt("QT_VERSION_MINOR", this->QtVersion.Minor);
-  info.Set("QT_MOC_EXECUTABLE", this->Moc.Executable);
-  info.Set("QT_UIC_EXECUTABLE", this->Uic.Executable);
+  info.SetConfig("QT_MOC_EXECUTABLE", this->Moc.Executable);
+  info.SetConfig("QT_UIC_EXECUTABLE", this->Uic.Executable);
 
   info.Set("CMAKE_EXECUTABLE", cmSystemTools::GetCMakeCommand());
   info.SetConfig("SETTINGS_FILE", this->AutogenTarget.SettingsFile);
@@ -1858,9 +1925,10 @@ bool cmQtAutoGenInitializer::SetupWriteRccInfo()
     info.SetConfig("INCLUDE_DIR", this->Dir.Include);
 
     // rcc executable
-    info.Set("RCC_EXECUTABLE", this->Rcc.Executable);
-    info.SetArray("RCC_LIST_OPTIONS",
-                  this->Rcc.ExecutableFeatures->ListOptions);
+    info.SetConfig("RCC_EXECUTABLE", this->Rcc.Executable);
+    info.SetConfigArray(
+      "RCC_LIST_OPTIONS",
+      generateListOptions(this->Rcc.ExecutableFeatures, this->MultiConfig));
 
     // qrc file
     info.Set("SOURCE", qrc.QrcFile);
@@ -2211,16 +2279,32 @@ bool cmQtAutoGenInitializer::GetQtExecutable(GenVarsT& genVars,
         cmListFileBacktrace lfbt = this->Makefile->GetBacktrace();
         cmGeneratorExpression ge(*this->Makefile->GetCMakeInstance(), lfbt);
         std::unique_ptr<cmCompiledGeneratorExpression> cge = ge.Parse(val);
-        genVars.Executable = cge->Evaluate(this->LocalGen, "");
+        if (this->MultiConfig) {
+          for (auto const& config : this->ConfigsList) {
+            genVars.Executable.Config[config] =
+              cge->Evaluate(this->LocalGen, config);
+          }
+        } else {
+          genVars.Executable.Default = cge->Evaluate(this->LocalGen, "");
+        }
       }
-      if (genVars.Executable.empty() && !ignoreMissingTarget) {
+
+      if (genVars.Executable.Default.empty() &&
+          genVars.Executable.Config.empty() && !ignoreMissingTarget) {
         print_err(prop + " evaluates to an empty value");
         return false;
       }
 
       // Create empty compiler features.
-      genVars.ExecutableFeatures =
-        std::make_shared<cmQtAutoGen::CompilerFeatures>();
+      if (this->MultiConfig) {
+        for (auto const& config : this->ConfigsList) {
+          genVars.ExecutableFeatures.Config[config] =
+            std::make_shared<cmQtAutoGen::CompilerFeatures>();
+        }
+      } else {
+        genVars.ExecutableFeatures.Default =
+          std::make_shared<cmQtAutoGen::CompilerFeatures>();
+      }
       return true;
     }
   }
@@ -2245,15 +2329,39 @@ bool cmQtAutoGenInitializer::GetQtExecutable(GenVarsT& genVars,
       genVars.ExecutableTargetName = targetName;
       genVars.ExecutableTarget = genTarget;
       if (genTarget->IsImported()) {
-        genVars.Executable = genTarget->ImportedGetLocation("");
+        if (this->MultiConfig) {
+          for (auto const& config : this->ConfigsList) {
+            genVars.Executable.Config[config] =
+              genTarget->ImportedGetLocation(config);
+          }
+        } else {
+          genVars.Executable.Default =
+            genTarget->ImportedGetLocation(this->ConfigDefault);
+        }
+
       } else {
-        genVars.Executable = genTarget->GetLocation("");
+        if (this->MultiConfig) {
+          for (auto const& config : this->ConfigsList) {
+            genVars.Executable.Config[config] = genTarget->GetLocation(config);
+          }
+        } else {
+          genVars.Executable.Default =
+            genTarget->GetLocation(this->ConfigDefault);
+        }
       }
     } else {
       if (ignoreMissingTarget) {
         // Create empty compiler features.
-        genVars.ExecutableFeatures =
-          std::make_shared<cmQtAutoGen::CompilerFeatures>();
+        if (this->MultiConfig) {
+          for (auto const& config : this->ConfigsList) {
+            genVars.ExecutableFeatures.Config[config] =
+              std::make_shared<cmQtAutoGen::CompilerFeatures>();
+          }
+        } else {
+          genVars.ExecutableFeatures.Default =
+            std::make_shared<cmQtAutoGen::CompilerFeatures>();
+        }
+
         return true;
       }
       print_err(cmStrCat("Could not find ", executable, " executable target ",
@@ -2266,10 +2374,21 @@ bool cmQtAutoGenInitializer::GetQtExecutable(GenVarsT& genVars,
   {
     std::string err;
     genVars.ExecutableFeatures = this->GlobalInitializer->GetCompilerFeatures(
-      executable, genVars.Executable, err);
-    if (!genVars.ExecutableFeatures) {
-      print_err(err);
-      return false;
+      executable, genVars.Executable, err, this->MultiConfig);
+    if (this->MultiConfig) {
+      for (auto const& config : this->ConfigsList) {
+        if (!genVars.ExecutableFeatures.Config[config]) {
+          if (!genVars.ExecutableFeatures.Config[config]) {
+            print_err(err);
+            return false;
+          }
+        }
+      }
+    } else {
+      if (!genVars.ExecutableFeatures.Default) {
+        print_err(err);
+        return false;
+      }
     }
   }
 
