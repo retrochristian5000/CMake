@@ -391,6 +391,24 @@ The following variables are for advanced uses of CPack:
   :variable:`CPACK_PACKAGE_VERSION_MINOR`, and
   :variable:`CPACK_PACKAGE_VERSION_PATCH`.
 
+.. variable:: CPACK_OUTPUT_FILE_PATH
+
+  The full absolute path of the package file which is being created.
+
+.. variable:: CPACK_TEMPORARY_INSTALL_DIRECTORY
+
+  The staging directory in which CPack is installing the files from where the
+  package(s) will be produced.
+
+.. variable:: CPACK_TEMPORARY_DIRECTORY
+
+  Deprecated, use :variable:`CPACK_TEMPORARY_INSTALL_DIRECTORY` instead.
+
+.. variable:: CPACK_TOPLEVEL_DIRECTORY
+
+  The top level directory for the current cpack generator where
+  the staging directories for the temporary installations will be created.
+
 .. variable:: CPACK_TOPLEVEL_TAG
 
   Directory for the installed files.
@@ -411,7 +429,9 @@ The following variables are for advanced uses of CPack:
   For every script, the following variables will be set:
   :variable:`CMAKE_CURRENT_SOURCE_DIR`, :variable:`CMAKE_CURRENT_BINARY_DIR`
   and :variable:`CMAKE_INSTALL_PREFIX` (which is set to the staging install
-  directory).  The singular form ``CMAKE_INSTALL_SCRIPT`` is supported as
+  directory, which is also available from
+  :variable:`CPACK_TEMPORARY_INSTALL_DIRECTORY`).
+  The singular form ``CMAKE_INSTALL_SCRIPT`` is supported as
   an alternative variable for historical reasons, but its value is ignored if
   ``CMAKE_INSTALL_SCRIPTS`` is set and a warning will be issued.
 
@@ -425,8 +445,9 @@ The following variables are for advanced uses of CPack:
 
   List of CMake scripts to execute after CPack has installed the files to
   be packaged into a staging directory and before producing the package(s)
-  from those files. See also :variable:`CPACK_INSTALL_SCRIPTS` and
-  :variable:`CPACK_POST_BUILD_SCRIPTS`.
+  from those files. See also :variable:`CPACK_INSTALL_SCRIPTS`,
+  :variable:`CPACK_POST_BUILD_SCRIPTS` and
+  :variable:`CPACK_TEMPORARY_INSTALL_DIRECTORY`.
 
 .. variable:: CPACK_POST_BUILD_SCRIPTS
 
