@@ -131,6 +131,14 @@ if(CMake_BUILD_LTO)
   endif()
 endif()
 
+include(CMakeDependentOption)
+
+# CMake benefits from PCH...
+# - on Windows regardless of the compiler, due to the heavy use of the expensive windows.h header
+# - when using the Clang or MSVC compiler on any other Platform
+cmake_dependent_option(CMake_BUILD_PCH "Compile CMake with precompiled headers"
+    ON "COMMAND target_precompile_headers;WIN32 OR MSVC OR CMAKE_CXX_COMPILER_ID STREQUAL Clang" OFF)
+
 # Check whether to build support for the debugger mode.
 if(NOT CMake_TEST_EXTERNAL_CMAKE)
   if(NOT DEFINED CMake_ENABLE_DEBUGGER)
@@ -153,9 +161,6 @@ endif()
 # simply to improve readability of the main script
 #-----------------------------------------------------------------------
 macro(CMAKE_HANDLE_SYSTEM_LIBRARIES)
-  # Options have dependencies.
-  include(CMakeDependentOption)
-
   # Allow the user to enable/disable all system utility library options by
   # defining CMAKE_USE_SYSTEM_LIBRARIES or CMAKE_USE_SYSTEM_LIBRARY_${util}.
   set(UTILITIES BZIP2 CPPDAP CURL EXPAT FORM JSONCPP LIBARCHIVE LIBLZMA LIBRHASH LIBUV NGHTTP2 ZLIB ZSTD)
@@ -324,6 +329,9 @@ configure_file(.clang-tidy .clang-tidy COPYONLY)
 
 option(CMake_RUN_IWYU "Run include-what-you-use with the compiler." OFF)
 if(CMake_RUN_IWYU)
+  if(CMake_BUILD_PCH)
+    message(FATAL_ERROR "CMake_RUN_IWYU and CMake_BUILD_PCH are ON, but they are incompatible!")
+  endif()
   find_program(IWYU_COMMAND NAMES include-what-you-use iwyu)
   if(NOT IWYU_COMMAND)
     message(FATAL_ERROR "CMake_RUN_IWYU is ON but include-what-you-use is not found!")
