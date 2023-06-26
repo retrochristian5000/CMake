@@ -95,8 +95,8 @@ bool cmQtAutoRccT::InitFromInfo(InfoT const& info)
   if (!info.GetBool("MULTI_CONFIG", this->MultiConfig_, true) ||
       !info.GetString("BUILD_DIR", this->AutogenBuildDir_, true) ||
       !info.GetStringConfig("INCLUDE_DIR", this->IncludeDir_, true) ||
-      !info.GetString("RCC_EXECUTABLE", this->RccExecutable_, true) ||
-      !info.GetArray("RCC_LIST_OPTIONS", this->RccListOptions_, false) ||
+      !info.GetStringConfig("RCC_EXECUTABLE", this->RccExecutable_, true) ||
+      !info.GetArrayConfig("RCC_LIST_OPTIONS", this->RccListOptions_, false) ||
       !info.GetString("LOCK_FILE", this->LockFile_, true) ||
       !info.GetStringConfig("SETTINGS_FILE", this->SettingsFile_, true) ||
       !info.GetString("SOURCE", this->QrcFile_, true) ||
