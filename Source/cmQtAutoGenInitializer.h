@@ -32,23 +32,6 @@ class cmTarget;
 class cmQtAutoGenInitializer : public cmQtAutoGen
 {
 public:
-  /** String value with per configuration variants.  */
-  class ConfigString
-  {
-  public:
-    std::string Default;
-    std::unordered_map<std::string, std::string> Config;
-  };
-
-  /** String values with per configuration variants.  */
-  template <typename C>
-  class ConfigStrings
-  {
-  public:
-    C Default;
-    std::unordered_map<std::string, C> Config;
-  };
-
   /** rcc job.  */
   class Qrc
   {
@@ -90,8 +73,8 @@ public:
     // Executable
     std::string ExecutableTargetName;
     cmGeneratorTarget* ExecutableTarget = nullptr;
-    std::string Executable;
-    CompilerFeaturesHandle ExecutableFeatures;
+    ConfigString Executable;
+    ConfigStrings<CompilerFeaturesHandle> ExecutableFeatures;
 
     GenVarsT(GenT gen)
       : Gen(gen)
@@ -155,6 +138,9 @@ private:
                        bool ignoreMissingTarget) const;
 
   void handleSkipPch(cmSourceFile* sf);
+  void AddAutogenExecutableToDependencies(
+    cmQtAutoGenInitializer::GenVarsT const& genVars,
+    std::vector<std::string>& dependencies) const;
 
   cmQtAutoGenGlobalInitializer* GlobalInitializer = nullptr;
   cmGeneratorTarget* GenTarget = nullptr;
