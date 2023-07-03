@@ -1213,10 +1213,10 @@ private:
 
     return std::accumulate(
       std::next(std::begin(r)), std::end(r), cmList::ToString(*std::begin(r)),
-      [&sep](std::string const& a,
+      [&sep](std::string& a,
              typename std::iterator_traits<decltype(std::begin(
                r))>::value_type const& b) -> std::string {
-        return a + sep + cmList::ToString(b);
+        return std::move(a) + sep + cmList::ToString(b);
       });
   }
 
