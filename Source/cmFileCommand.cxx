@@ -30,6 +30,7 @@
 
 #include "cmArgumentParser.h"
 #include "cmArgumentParserTypes.h"
+#include "cmCMakePath.h"
 #include "cmCryptoHash.h"
 #include "cmELF.h"
 #include "cmExecutionStatus.h"
@@ -1278,11 +1279,14 @@ bool HandleRealPathCommand(std::vector<std::string> const& args,
     }
   }
 
-  auto realPath =
-    cmSystemTools::CollapseFullPath(input, *arguments.BaseDirectory);
-  realPath = cmSystemTools::GetRealPath(realPath);
-
-  status.GetMakefile().AddDefinition(args[2], realPath);
+  auto path = cmCMakePath{ input };
+  if (path.IsRelative()) {
+    auto basePath = cmCMakePath{ *arguments.BaseDirectory };
+    path = basePath.Append(path);
+  }
+  auto realPath = cmSystemTools::GetRealPath(path.String());
+  status.GetMakefile().AddDefinition(
+    args[2], cmSystemTools::GetActualCaseForPath(realPath));
 
   return true;
 }
