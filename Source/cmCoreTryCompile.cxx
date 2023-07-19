@@ -1078,7 +1078,8 @@ cm::optional<cmTryCompileResult> cmCoreTryCompile::TryCompileCode(
          i++) {
       auto const& data = cmExperimental::DataForFeature(
         static_cast<cmExperimental::Feature>(i));
-      if (data.ForwardThroughTryCompile) {
+      if (data.ForwardThroughTryCompile ==
+          cmExperimental::TryCompileCondition::Always) {
         vars.insert(data.Variable);
       }
     }
