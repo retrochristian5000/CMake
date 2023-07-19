@@ -23,6 +23,7 @@ public:
   enum class TryCompileCondition
   {
     Always,
+    SkipAbiCheck,
     Never,
   };
 
