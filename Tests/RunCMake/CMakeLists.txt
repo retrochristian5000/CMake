@@ -697,6 +697,10 @@ endif()
 if(CMAKE_C_COMPILER_ID STREQUAL "AppleClang"
     AND NOT CMAKE_C_COMPILER_VERSION VERSION_LESS 6.0)
   add_RunCMake_test(Framework)
+  if(NOT CMAKE_C_COMPILER_VERSION VERSION_LESS 11.0)
+    set(XcFramework_ARGS -DCMAKE_C_COMPILER_VERSION=${CMAKE_C_COMPILER_VERSION})
+    add_RunCMake_test(XcFramework)
+  endif()
 endif()
 
 add_RunCMake_test(File_Archive)
