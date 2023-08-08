@@ -41,6 +41,20 @@ if("${RunCMake_GENERATOR}" MATCHES "^Visual Studio (1[4567])( 20[0-9][0-9])?$")
   set(RunCMake_GENERATOR_PLATFORM "version=1.2.3.4")
   run_cmake(BadVersionUnsupported)
 
+  cmake_host_system_information(RESULT kitsRoot81
+    QUERY WINDOWS_REGISTRY "HKLM/SOFTWARE/Microsoft/Windows Kits/Installed Roots"
+    VALUE "KitsRoot81"
+    VIEW 64_32
+    ERROR_VARIABLE kitsRoot81Error
+    )
+  if(NOT kitsRoot81Error AND EXISTS "${kitsRoot81}/include/um/windows.h")
+    set(expect_version "8.1")
+    set(RunCMake_GENERATOR_PLATFORM "version=${expect_version}")
+    set(RunCMake_TEST_VARIANT_DESCRIPTION "-${expect_version}")
+    run_cmake_with_options(VersionExists -DCMAKE_SYSTEM_VERSION=8.0)
+    unset(RunCMake_GENERATOR_PLATFORM)
+  endif()
+
   if(RunCMake_GENERATOR MATCHES "^Visual Studio (1[45]) ")
     set(RunCMake_GENERATOR_PLATFORM "version=10.0")
     run_cmake(BadVersionPre2019)
