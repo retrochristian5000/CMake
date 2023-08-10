@@ -13,20 +13,22 @@
 #define MAX_MESSAGE_LENGTH 1023
 #define USAGE "Usage: %s [--present|--absent] <output_file>\n"
 
-// Extracts --jobserver-auth=<string> or --jobserver-fds=<string> from
-// MAKEFLAGS. The returned pointer points to the start of <string> Returns NULL
-// if MAKEFLAGS is not set or does not contain --jobserver-auth or
-// --jobserver-fds
+// Extracts the jobserver details from the MAKEFLAGS environment variable.
+//
+// Returns a pointer to either a string of the form "R,W" where R and W are fds
+// or "fifo:PATH".
+//
+// Returns NULL if MAKEFLAGS is not set or does not contain recognized
+// jobserver flags.
 char* jobserver_auth(char* message)
 {
-  const char* jobserver_auth = "--jobserver-auth=";
-  const char* jobserver_fds = "--jobserver-fds=";
-  char* auth;
-  char* fds;
+  const char* jobserver_flags[3] = { "--jobserver-auth=", "--jobserver-fds=",
+                                     "-J" };
   char* start;
   char* end;
   char* result;
   size_t len;
+  int i;
 
   char* makeflags = getenv("MAKEFLAGS");
   if (makeflags == NULL) {
@@ -34,18 +36,24 @@ char* jobserver_auth(char* message)
     return NULL;
   }
 
-  // write MAKEFLAGS to stdout for debugging
   fprintf(stdout, "MAKEFLAGS: %s\n", makeflags);
 
-  auth = strstr(makeflags, jobserver_auth);
-  fds = strstr(makeflags, jobserver_fds);
-  if (auth == NULL && fds == NULL) {
-    strncpy(message, "No jobserver found", MAX_MESSAGE_LENGTH);
+  for (i = 0; i < 3; i++) {
+    start = strstr(makeflags, jobserver_flags[i]);
+    if (start != NULL) {
+      start += strlen(jobserver_flags[i]);
+      break;
+    }
+  }
+
+  if (start == NULL) {
+    strncpy(message, "No jobserver flags found", MAX_MESSAGE_LENGTH);
     return NULL;
-  } else if (auth != NULL) {
-    start = auth + strlen(jobserver_auth);
-  } else {
-    start = fds + strlen(jobserver_fds);
+  }
+
+  // Skip leading white space
+  while (*start == ' ' || *start == '\t') {
+    start++;
   }
 
   end = strchr(start, ' ');
