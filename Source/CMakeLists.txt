@@ -783,8 +783,6 @@ if(CMake_ENABLE_DEBUGGER)
       cmDebuggerBreakpointManager.h
       cmDebuggerExceptionManager.cxx
       cmDebuggerExceptionManager.h
-      cmDebuggerPipeConnection.cxx
-      cmDebuggerPipeConnection.h
       cmDebuggerProtocol.cxx
       cmDebuggerProtocol.h
       cmDebuggerSourceBreakpoint.cxx
@@ -802,6 +800,21 @@ if(CMake_ENABLE_DEBUGGER)
       cmDebuggerVariablesManager.cxx
       cmDebuggerVariablesManager.h
     )
+  if(WIN32)
+    target_sources(
+    CMakeLib
+    PRIVATE
+      cmDebuggerWindowsPipeConnection.cxx
+      cmDebuggerWindowsPipeConnection.h
+    )
+  else()
+    target_sources(
+    CMakeLib
+    PRIVATE
+      cmDebuggerPosixPipeConnection.cxx
+      cmDebuggerPosixPipeConnection.h
+    )
+  endif()
   target_link_libraries(CMakeLib PUBLIC cppdap::cppdap)
 endif()
 
