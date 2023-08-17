@@ -1511,15 +1511,6 @@ int uv_os_gethostname(char* buffer, size_t* size) {
 }
 
 
-int uv_cpumask_size(void) {
-#if defined(__linux__) || defined(__FreeBSD__)
-  return CPU_SETSIZE;
-#else
-  return UV_ENOTSUP;
-#endif
-}
-
-
 uv_os_fd_t uv_get_osfhandle(int fd) {
   return fd;
 }
