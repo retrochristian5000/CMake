@@ -94,6 +94,10 @@ void uv_once(uv_once_t* guard, void (*callback)(void)) {
 }
 
 #if defined(__linux__)
+unsigned uv__kernel_version(void) {
+  return 0;
+}
+
 int uv__accept4(int fd, struct sockaddr* addr, socklen_t* addrlen, int flags) {
   errno = ENOSYS;
   return -1;
@@ -123,15 +127,6 @@ ssize_t uv__pwritev(int fd, const struct iovec *iov, int iovcnt,
 
 int uv__utimesat(int dirfd, const char* path, const struct timespec times[2],
                  int flags) {
-  errno = ENOSYS;
-  return -1;
-}
-
-int uv__statx(int dirfd,
-              const char* path,
-              int flags,
-              unsigned int mask,
-              struct uv__statx* statxbuf) {
   errno = ENOSYS;
   return -1;
 }
