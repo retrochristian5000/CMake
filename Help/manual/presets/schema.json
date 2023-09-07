@@ -5,6 +5,7 @@
   "oneOf": [
     {
       "properties": {
+        "$schema": { "$ref": "#/definitions/$schema" },
         "version": {
           "const": 1,
           "description": "A required integer representing the version of the JSON schema."
@@ -17,6 +18,7 @@
     },
     {
       "properties": {
+        "$schema": { "$ref": "#/definitions/$schema" },
         "version": {
           "const": 2,
           "description": "A required integer representing the version of the JSON schema."
@@ -31,6 +33,7 @@
     },
     {
       "properties": {
+        "$schema": { "$ref": "#/definitions/$schema" },
         "version": {
           "const": 3,
           "description": "A required integer representing the version of the JSON schema."
@@ -45,6 +48,7 @@
     },
     {
       "properties": {
+        "$schema": { "$ref": "#/definitions/$schema" },
         "version": {
           "const": 4,
           "description": "A required integer representing the version of the JSON schema."
@@ -60,6 +64,7 @@
     },
     {
       "properties": {
+        "$schema": { "$ref": "#/definitions/$schema" },
         "version": {
           "const": 5,
           "description": "A required integer representing the version of the JSON schema."
@@ -75,6 +80,7 @@
     },
     {
       "properties": {
+        "$schema": { "$ref": "#/definitions/$schema" },
         "version": {
           "const": 6,
           "description": "A required integer representing the version of the JSON schema."
@@ -92,6 +98,7 @@
     },
     {
       "properties": {
+        "$schema": { "$ref": "#/definitions/$schema" },
         "version": {
           "const": 7,
           "description": "A required integer representing the version of the JSON schema."
@@ -112,6 +119,11 @@
     "version"
   ],
   "definitions": {
+    "$schema": {
+      "type": "string",
+      "description": "The schema against which to verify this document.",
+      "format": "uri-reference"
+    },
     "cmakeMinimumRequired": {
       "type": "object",
       "description": "An optional object representing the minimum version of CMake needed to build this project.",
