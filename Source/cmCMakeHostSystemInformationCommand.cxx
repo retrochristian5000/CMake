@@ -414,6 +414,70 @@ cm::optional<std::string> GetDistribValue(cmExecutionStatus& status,
 }
 
 #ifdef _WIN32
+std::string FindMSYSTEM_PREFIX(std::vector<std::string> prefixes)
+{
+  for (std::string const& prefix : prefixes) {
+    std::string out;
+    std::string err;
+    int ret;
+    // In a modern MSYSTEM environment we expect cygpath to be in PATH.
+    std::vector<std::string> cygpath_cmd{ "cygpath", "-w", prefix };
+    if (cmSystemTools::RunSingleCommand(cygpath_cmd, &out, &err, &ret, nullptr,
+                                        cmSystemTools::OUTPUT_NONE)) {
+      if (ret == 0) {
+        out = cmTrimWhitespace(out);
+        cmSystemTools::ConvertToUnixSlashes(out);
+        if (cmSystemTools::FileIsDirectory(out)) {
+          return std::move(out);
+        }
+      }
+    } else {
+      // In a legacy MSYSTEM environment (MinGW/MSYS 1.0) there is no
+      // cygpath but we expect 'sh' to be in PATH.
+      std::vector<std::string> sh_cmd{
+        "sh", "-c", cmStrCat("cd \"", prefix, "\" && cmd //c cd")
+      };
+      if (cmSystemTools::RunSingleCommand(sh_cmd, &out, &err, &ret, nullptr,
+                                          cmSystemTools::OUTPUT_NONE)) {
+        if (ret == 0) {
+          out = cmTrimWhitespace(out);
+          cmSystemTools::ConvertToUnixSlashes(out);
+          if (cmSystemTools::FileIsDirectory(out)) {
+            return std::move(out);
+          }
+        }
+      }
+    }
+  }
+  return {};
+}
+
+std::string FallbackMSYSTEM_PREFIX(cm::string_view msystem)
+{
+  // These layouts are used by distributions such as
+  // MSYS2 and classic MinGW/MSYS 1.0.
+  if (msystem == "MSYS"_s) {
+    static std::string const msystem_msys = FindMSYSTEM_PREFIX({ "/usr" });
+    return msystem_msys;
+  }
+  if (msystem == "MINGW32"_s) {
+    static std::string const msystem_mingw32 =
+      FindMSYSTEM_PREFIX({ "/mingw32", "/mingw" });
+    return msystem_mingw32;
+  }
+  if (msystem == "MINGW64"_s) {
+    static std::string const msystem_mingw64 =
+      FindMSYSTEM_PREFIX({ "/mingw64" });
+    return msystem_mingw64;
+  }
+  if (msystem == "UCRT64"_s) {
+    static std::string const msystem_ucrt64 =
+      FindMSYSTEM_PREFIX({ "/ucrt64" });
+    return msystem_ucrt64;
+  }
+  return {};
+}
+
 cm::optional<std::string> GetWindowsValue(cmExecutionStatus& status,
                                           std::string const& key)
 {
@@ -446,6 +510,23 @@ cm::optional<std::string> GetWindowsValue(cmExecutionStatus& status,
     return vs10gen->FindMSBuildCommandEarly(&status.GetMakefile());
   }
 
+  if (key == "MSYSTEM_PREFIX") {
+    // MSYSTEM_PREFIX is meaningful only under a MSYSTEM environment.
+    cm::optional<std::string> ms = cmSystemTools::GetEnvVar("MSYSTEM");
+    if (!ms || ms->empty()) {
+      return std::string();
+    }
+    // Prefer the MSYSTEM_PREFIX environment variable.
+    if (cm::optional<std::string> msp =
+          cmSystemTools::GetEnvVar("MSYSTEM_PREFIX")) {
+      cmSystemTools::ConvertToUnixSlashes(*msp);
+      if (cmSystemTools::FileIsDirectory(*msp)) {
+        return std::move(msp);
+      }
+    }
+    // Fall back to known distribution layouts.
+    return FallbackMSYSTEM_PREFIX(*ms);
+  }
   return {};
 }
 #endif
