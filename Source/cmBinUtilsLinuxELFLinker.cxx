@@ -73,6 +73,9 @@ bool cmBinUtilsLinuxELFLinker::Prepare()
   if (ldConfigTool == "ldconfig") {
     this->LDConfigTool =
       cm::make_unique<cmLDConfigLDConfigTool>(this->Archive);
+    if (!this->LDConfigTool->GetLDConfigPaths(LDConfigPaths)) {
+      return false;
+    }
   } else {
     std::ostringstream e;
     e << "Invalid value for CMAKE_LDCONFIG_TOOL: " << ldConfigTool;
@@ -132,10 +135,7 @@ bool cmBinUtilsLinuxELFLinker::ScanDependencies(
                        parentRpaths.end());
   }
 
-  std::vector<std::string> ldConfigPaths;
-  if (!this->LDConfigTool->GetLDConfigPaths(ldConfigPaths)) {
-    return false;
-  }
+  std::vector<std::string> ldConfigPaths(LDConfigPaths);
   searchPaths.insert(searchPaths.end(), ldConfigPaths.begin(),
                      ldConfigPaths.end());
 
