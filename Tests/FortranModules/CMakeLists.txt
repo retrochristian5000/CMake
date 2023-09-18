@@ -128,3 +128,4 @@ endif()
 
 add_subdirectory(Issue25112)
 add_subdirectory(Issue25223)
+add_subdirectory(Issue25252)
