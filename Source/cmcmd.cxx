@@ -79,6 +79,9 @@ int cmcmd_cmake_ninja_depends(std::vector<std::string>::const_iterator argBeg,
                               std::vector<std::string>::const_iterator argEnd);
 int cmcmd_cmake_ninja_dyndep(std::vector<std::string>::const_iterator argBeg,
                              std::vector<std::string>::const_iterator argEnd);
+int cmcmd_cmake_module_compile_db(
+  std::vector<std::string>::const_iterator argBeg,
+  std::vector<std::string>::const_iterator argEnd);
 
 namespace {
 void CMakeCommandUsage(std::string const& program)
@@ -1409,6 +1412,11 @@ int cmcmd::ExecuteCMakeCommand(std::vector<std::string> const& args,
       return cmcmd_cmake_ninja_dyndep(args.begin() + 2, args.end());
     }
 #endif
+
+    // Internal CMake C++ module compilation database support.
+    if (args[1] == "cmake_module_compile_db") {
+      return cmcmd_cmake_module_compile_db(args.begin() + 2, args.end());
+    }
 
     // Internal CMake unimplemented feature notification.
     if (args[1] == "cmake_unimplemented_variable") {
