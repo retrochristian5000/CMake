@@ -12,6 +12,23 @@ a scanning strategy where the dependencies of source files is discovered
 during the build and these dependencies communicated to the build tool using
 the appropriate facilities.
 
+Scanning Control
+================
+
+Whether or not sources get scanned for C++ module usage is dependent on the
+following queries. The first query that provides a yes/no answer is used.
+
+- If the source file belongs to a file set of type ``CXX_MODULES``, it will
+  be scanned.
+- If the target does not use at least C++ 20, it will not be scanned.
+- If the source file is not the language ``CXX``, it will not be scanned.
+- If the :prop_sf:`CXX_SCAN_FOR_MODULES` source file property is set, its
+  value will be used.
+- If the :prop_tgt:`CXX_SCAN_FOR_MODULES` target property is set, its value
+  will be used.  This target property is initialized by the
+  :variable:`CMAKE_CXX_SCAN_FOR_MODULES` variable.
+- Otherwise the source will be scanned.
+
 Compiler Support
 ================
 
