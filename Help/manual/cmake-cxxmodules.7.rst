@@ -27,7 +27,8 @@ following queries. The first query that provides a yes/no answer is used.
 - If the :prop_tgt:`CXX_SCAN_FOR_MODULES` target property is set, its value
   will be used.  This target property is initialized by the
   :variable:`CMAKE_CXX_SCAN_FOR_MODULES` variable.
-- Otherwise the source will be scanned.
+- Otherwise, it will be scanned (unless policy :policy:`CMP0155` is not set to
+  ``NEW``).
 
 Compiler Support
 ================
