@@ -1,0 +1,23 @@
+CMP0156
+-------
+
+.. versionadded:: 3.29
+
+:command:`if(EXISTS)` does not require readability.
+
+CMake 3.28 and below checks if the named file or directory exists and is
+readable. This produces incorrect result if an existing file does not have read
+permission.
+
+The ``OLD`` behavior for this policy is to check if the named file or directory
+exists and is readable.
+
+The ``NEW`` behavior for this policy is to not require readability to check if
+the named file or directory exists.
+
+This policy was introduced in CMake version 3.29.  Use the
+:command:`cmake_policy` command to set it to ``OLD`` or ``NEW`` explicitly.
+Unlike many policies, CMake version |release| does *not* warn
+when this policy is not set and simply uses ``OLD`` behavior.
+
+.. include:: DEPRECATED.txt
