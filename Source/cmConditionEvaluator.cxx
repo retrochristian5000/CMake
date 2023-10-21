@@ -568,8 +568,12 @@ bool cmConditionEvaluator::HandleLevel1(cmArgumentList& newArgs, std::string&,
 
     // does a file exist
     if (this->IsKeyword(keyEXISTS, *args.current)) {
-      newArgs.ReduceOneArg(cmSystemTools::FileExists(args.next->GetValue()),
-                           args);
+      newArgs.ReduceOneArg(
+        this->Makefile.GetPolicyStatus(cmPolicies::CMP0156) >= cmPolicies::NEW
+          ? cmSystemTools::TestFileAccess(args.next->GetValue(),
+                                          cmsys::TEST_FILE_OK)
+          : cmSystemTools::FileExists(args.next->GetValue()),
+        args);
     }
     // check if a file is readable
     else if (this->IsKeyword(keyIS_READABLE, *args.current)) {
