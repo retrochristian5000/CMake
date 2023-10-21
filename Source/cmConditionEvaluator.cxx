@@ -568,8 +568,38 @@ bool cmConditionEvaluator::HandleLevel1(cmArgumentList& newArgs, std::string&,
 
     // does a file exist
     if (this->IsKeyword(keyEXISTS, *args.current)) {
-      newArgs.ReduceOneArg(cmSystemTools::FileExists(args.next->GetValue()),
-                           args);
+      auto policyStatus = this->Makefile.GetPolicyStatus(cmPolicies::CMP0156);
+      switch (policyStatus) {
+        case cmPolicies::WARN:
+          if (cmSystemTools::TestFileAccess(args.next->GetValue(),
+                                            cmsys::TEST_FILE_OK) &&
+              !cmSystemTools::TestFileAccess(args.next->GetValue(),
+                                             cmsys::TEST_FILE_READ)) {
+            this->Makefile.IssueMessage(
+              MessageType::AUTHOR_WARNING,
+              cmStrCat(cmPolicies::GetPolicyWarning(cmPolicies::CMP0156),
+                       "\nThe following path exists but is not readable:\n  ",
+                       args.next->GetValue(),
+                       "\nSince the policy is not set, if(EXISTS) evaluates "
+                       "to false for compatibility.\n"));
+          }
+          CM_FALLTHROUGH;
+        case cmPolicies::OLD:
+          newArgs.ReduceOneArg(
+            cmSystemTools::FileExists(args.next->GetValue()), args);
+          break;
+        case cmPolicies::REQUIRED_IF_USED:
+        case cmPolicies::REQUIRED_ALWAYS: {
+          this->Makefile.IssueMessage(
+            MessageType::FATAL_ERROR,
+            cmPolicies::GetRequiredPolicyError(cmPolicies::CMP0156));
+        } break;
+        case cmPolicies::NEW: {
+          newArgs.ReduceOneArg(cmSystemTools::TestFileAccess(
+                                 args.next->GetValue(), cmsys::TEST_FILE_OK),
+                               args);
+        } break;
+      }
     }
     // check if a file is readable
     else if (this->IsKeyword(keyIS_READABLE, *args.current)) {

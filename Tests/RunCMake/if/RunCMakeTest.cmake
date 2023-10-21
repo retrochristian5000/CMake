@@ -1,23 +1,30 @@
 include(RunCMake)
 
-run_cmake(InvalidArgument1)
-run_cmake(exists)
-if(NOT MSYS)
+unset(uid)
+unset(status)
+if(UNIX AND NOT MSYS)
   # permissions and symbolic links are broken on MSYS
-  unset(uid)
-  unset(status)
-  if(UNIX)
-    set(ID "id")
-    if (CMAKE_SYSTEM_NAME STREQUAL "SunOS" AND EXISTS "/usr/xpg4/bin/id")
-      set (ID "/usr/xpg4/bin/id")
-    endif()
-    # if real user is root, tests are irrelevant
-    execute_process(COMMAND ${ID} -u $ENV{USER} OUTPUT_VARIABLE uid ERROR_QUIET
-                    RESULT_VARIABLE status OUTPUT_STRIP_TRAILING_WHITESPACE)
+  set(ID "id")
+  if (CMAKE_SYSTEM_NAME STREQUAL "SunOS" AND EXISTS "/usr/xpg4/bin/id")
+    set (ID "/usr/xpg4/bin/id")
   endif()
-  if(NOT status AND NOT uid STREQUAL "0")
-    run_cmake(FilePermissions)
+  # if real user is root, tests are irrelevant
+  execute_process(COMMAND ${ID} -u $ENV{USER} OUTPUT_VARIABLE uid ERROR_QUIET
+    RESULT_VARIABLE status OUTPUT_STRIP_TRAILING_WHITESPACE)
+endif()
+
+
+run_cmake(InvalidArgument1)
+block(SCOPE_FOR VARIABLES)
+  unset(CHECK_CMP0156)
+  if(UNIX AND NOT MSYS AND NOT status AND NOT uid STREQUAL "0")
+    set(CHECK_CMP0156 TRUE)
+    file(READ "${RunCMake_SOURCE_DIR}/exists-stderr-input.txt" RunCMake_TEST_EXPECT_stderr)
   endif()
+  run_cmake_with_options(exists -DCHECK_CMP0156=${CHECK_CMP0156})
+endblock()
+if(NOT MSYS AND NOT status AND NOT uid STREQUAL "0")
+  run_cmake(FilePermissions)
 endif()
 run_cmake(IsDirectory)
 run_cmake(IsDirectoryLong)
