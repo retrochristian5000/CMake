@@ -8,7 +8,7 @@ __declspec(dllimport)
   void func_c();
 #endif
 
-int main()
+int main(void)
 {
 #if defined(C_USE_CXX)
   func_c_cxx();
