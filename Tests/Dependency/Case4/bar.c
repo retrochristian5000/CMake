@@ -1,4 +1,4 @@
-extern int foo();
+extern int foo(void);
 int main(void)
 {
   return foo();
