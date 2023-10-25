@@ -4,7 +4,7 @@ __declspec(dllimport)
 #endif
   void func_c();
 
-int main()
+int main(void)
 {
   func_c();
 

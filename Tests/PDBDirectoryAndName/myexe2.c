@@ -1,6 +1,6 @@
 extern int mylibA();
 extern int mylibD();
-int main()
+int main(void)
 {
   return mylibA() + mylibD();
 }

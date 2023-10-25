@@ -1,5 +1,5 @@
 extern int bar1();
-int main()
+int main(void)
 {
   return bar1();
 }
