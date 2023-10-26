@@ -2,6 +2,17 @@ include(RunCMake)
 
 run_cmake(InvalidArgument1)
 run_cmake(exists)
+if(NOT MSYS)
+  # permissions and symbolic links are broken on MSYS
+  unset(uid)
+  if(UNIX)
+    # if real user is root, tests are irrelevant
+    execute_process(COMMAND id -u $ENV{USER} OUTPUT_VARIABLE uid OUTPUT_STRIP_TRAILING_WHITESPACE)
+  endif()
+  if (NOT uid STREQUAL "0")
+    run_cmake(FilePermissions)
+  endif()
+endif()
 run_cmake(IsDirectory)
 run_cmake(IsDirectoryLong)
 run_cmake(duplicate-deep-else)
