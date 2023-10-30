@@ -1,0 +1,42 @@
+CMP0156
+-------
+
+.. versionadded:: 3.29
+
+Link step: Deduplicate all libraries and/or change libraries order.
+
+Traditional linkers maintain a set of undefined symbols during linking. The
+linker processes each file in the order in which it appears on the command
+line, until the set of undefined symbols becomes empty. An object file is
+linked into the output object when it is encountered, with its undefined
+symbols added to the set. Upon encountering an archive file a traditional
+linker searches the objects contained therein, and processes those that satisfy
+symbols in the unresolved set.
+
+Handling mutually dependent archives may be awkward when using a traditional
+linker. Archive files may have to be specified multiple times.
+
+Some linkers (for instance ``Apple`` or ``Windows`` linkers, as well as
+``LLVM LLD``) records all symbols found in objects and archives as it iterates
+over command line arguments. When one of these linkers encounters an undefined
+symbol that can be resolved by an object file contained in a previously
+processed archive file, it immediately extracts and links it into the output
+object.
+
+CMake 3.28 and below can duplicate static libraries and reorganized libraries
+order for the link step to ensure successful link even with traditional
+linkers. CMake 3.29 and above apply different strategies depending of the
+linker capabilities. So, ``Apple`` and ``Windows`` platforms, all libraries are
+deduplicated. Moreover, on ``Windows`` platform, libraries order specified by
+the user is now respected.
+
+The ``OLD`` behavior for this policy is to possibly duplicate static libraries
+and reorganize libraries order.  The ``NEW`` behavior for this policy is to
+apply different strategies depending of the linker capabilities.
+
+This policy was introduced in CMake version 3.29.  Use the
+:command:`cmake_policy` command to set it to ``OLD`` or ``NEW`` explicitly.
+Unlike many policies, CMake version |release| does *not* warn
+when this policy is not set and simply uses ``OLD`` behavior.
+
+.. include:: DEPRECATED.txt
