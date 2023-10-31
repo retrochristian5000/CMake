@@ -1,3 +1,40 @@
 if(EXISTS "")
   message(FATAL_ERROR "EXISTS \"\" should not exist")
 endif()
+
+if (CHECK_CMP0156)
+  file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/file.txt")
+  file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/dir")
+
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/file.txt" "foo")
+  file(CHMOD "${CMAKE_CURRENT_BINARY_DIR}/file.txt" PERMISSIONS OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE)
+
+  file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/dir")
+  file(CHMOD "${CMAKE_CURRENT_BINARY_DIR}/dir" PERMISSIONS OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE)
+
+  block(SCOPE_FOR POLICIES)
+    # warning must be emitted when policy is not set
+    if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/file.txt")
+      message(FATAL_ERROR "EXISTS \"${CMAKE_CURRENT_BINARY_DIR}/file.txt\" should not return true with CMP0156 set to OLD")
+    endif()
+    if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/dir")
+      message(FATAL_ERROR "EXISTS \"${CMAKE_CURRENT_BINARY_DIR}/dir\" should not return true with CMP0156 set to OLD")
+    endif()
+
+    cmake_policy(SET CMP0156 OLD)
+    if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/file.txt")
+      message(FATAL_ERROR "EXISTS \"${CMAKE_CURRENT_BINARY_DIR}/file.txt\" should not return true with CMP0156 set to OLD")
+    endif()
+    if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/dir")
+      message(FATAL_ERROR "EXISTS \"${CMAKE_CURRENT_BINARY_DIR}/dir\" should not return true with CMP0156 set to OLD")
+    endif()
+
+    cmake_policy(SET CMP0156 NEW)
+    if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/file.txt")
+      message(FATAL_ERROR "EXISTS \"${CMAKE_CURRENT_BINARY_DIR}/file.txt\" should return true with CMP0156 set to NEW")
+    endif()
+    if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/dir")
+      message(FATAL_ERROR "EXISTS \"${CMAKE_CURRENT_BINARY_DIR}/dir\" should return true with CMP0156 set to NEW")
+    endif()
+  endblock()
+endif()
