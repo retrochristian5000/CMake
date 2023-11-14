@@ -625,15 +625,17 @@ std::pair<size_t, bool> cmComputeLinkDepends::AddLinkEntry(
   // Allocate a spot for the item entry.
   auto lei = this->AllocateLinkEntry(item);
 
-  // Check if the item entry has already been added.
-  if (!lei.second) {
+  // Initialize the item entry.
+  size_t index = lei.first->second;
+  LinkEntry& entry = this->EntryList[index];
+
+  // Check if the item entry has already been added. But perform the
+  // initialization if it was only Object-used before.
+  if (!lei.second && entry.Kind != LinkEntry::Object) {
     // Yes.  We do not need to follow the item's dependencies again.
     return { lei.first->second, false };
   }
 
-  // Initialize the item entry.
-  size_t index = lei.first->second;
-  LinkEntry& entry = this->EntryList[index];
   entry.Item = BT<std::string>(item.AsStr(), item.Backtrace);
   entry.Target = item.Target;
   if (!entry.Target && entry.Item.Value[0] == '-' &&
@@ -643,6 +645,8 @@ std::pair<size_t, bool> cmComputeLinkDepends::AddLinkEntry(
   } else if (cmHasPrefix(entry.Item.Value, LG_BEGIN) &&
              cmHasSuffix(entry.Item.Value, '>')) {
     entry.Kind = LinkEntry::Group;
+  } else {
+    entry.Kind = LinkEntry::Library;
   }
 
   if (entry.Kind != LinkEntry::Group) {
