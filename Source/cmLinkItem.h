@@ -25,14 +25,20 @@ class cmLinkItem
   std::string String;
 
 public:
+  // default feature: link library without decoration
+  static const std::string DEFAULT;
+
   cmLinkItem();
-  cmLinkItem(std::string s, bool c, cmListFileBacktrace bt);
-  cmLinkItem(cmGeneratorTarget const* t, bool c, cmListFileBacktrace bt);
+  cmLinkItem(std::string s, bool c, cmListFileBacktrace bt,
+             std::string feature = DEFAULT);
+  cmLinkItem(cmGeneratorTarget const* t, bool c, cmListFileBacktrace bt,
+             std::string feature = DEFAULT);
   std::string const& AsStr() const;
   cmGeneratorTarget const* Target = nullptr;
   // The source file representing the external object (used when linking
   // `$<TARGET_OBJECTS>`)
   cmSourceFile const* ObjectSource = nullptr;
+  std::string Feature;
   bool Cross = false;
   cmListFileBacktrace Backtrace;
   friend bool operator<(cmLinkItem const& l, cmLinkItem const& r);

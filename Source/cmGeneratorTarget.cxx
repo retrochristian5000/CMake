@@ -69,6 +69,16 @@ const std::string kINTERFACE_LINK_LIBRARIES_DIRECT =
   "INTERFACE_LINK_LIBRARIES_DIRECT";
 const std::string kINTERFACE_LINK_LIBRARIES_DIRECT_EXCLUDE =
   "INTERFACE_LINK_LIBRARIES_DIRECT_EXCLUDE";
+
+// LINK_LIBRARY helpers
+const auto LL_BEGIN = "<LINK_LIBRARY:"_s;
+const auto LL_END = "</LINK_LIBRARY:"_s;
+
+inline std::string ExtractLinkFeature(std::string const& item)
+{
+  return item.substr(LL_BEGIN.length(),
+                     item.find('>', LL_BEGIN.length()) - LL_BEGIN.length());
+}
 }
 
 template <>
@@ -6901,7 +6911,8 @@ bool cmGeneratorTarget::IsLinkLookupScope(std::string const& n,
 
 cm::optional<cmLinkItem> cmGeneratorTarget::LookupLinkItem(
   std::string const& n, cmListFileBacktrace const& bt,
-  LookupLinkItemScope* scope, LookupSelf lookupSelf) const
+  std::string const& linkFeature, LookupLinkItemScope* scope,
+  LookupSelf lookupSelf) const
 {
   cm::optional<cmLinkItem> maybeItem;
   if (this->IsLinkLookupScope(n, scope->LG)) {
@@ -6913,7 +6924,8 @@ cm::optional<cmLinkItem> cmGeneratorTarget::LookupLinkItem(
       (lookupSelf == LookupSelf::No && name == this->GetName())) {
     return maybeItem;
   }
-  maybeItem = this->ResolveLinkItem(BT<std::string>(name, bt), scope->LG);
+  maybeItem =
+    this->ResolveLinkItem(BT<std::string>(name, bt), scope->LG, linkFeature);
   return maybeItem;
 }
 
@@ -6944,9 +6956,20 @@ void cmGeneratorTarget::ExpandLinkItems(
     cmList libs{ cge->Evaluate(this->LocalGenerator, config, headTarget,
                                &dagChecker, this,
                                headTarget->LinkerLanguage) };
+
+    auto linkFeature = cmLinkItem::DEFAULT;
     for (auto const& lib : libs) {
+      if (cmHasPrefix(lib, LL_BEGIN) && cmHasSuffix(lib, '>')) {
+        linkFeature = ExtractLinkFeature(lib);
+        continue;
+      }
+      if (cmHasPrefix(lib, LL_END) && cmHasSuffix(lib, '>')) {
+        linkFeature = cmLinkItem::DEFAULT;
+        continue;
+      }
+
       if (cm::optional<cmLinkItem> maybeItem = this->LookupLinkItem(
-            lib, cge->GetBacktrace(), &scope,
+            lib, cge->GetBacktrace(), linkFeature, &scope,
             field == LinkInterfaceField::Libraries ? LookupSelf::No
                                                    : LookupSelf::Yes)) {
         cmLinkItem item = std::move(*maybeItem);
@@ -7692,9 +7715,20 @@ const cmLinkInterface* cmGeneratorTarget::GetImportLinkInterface(
                           LinkInterfaceField::Libraries, iface);
     cmList deps{ info->SharedDeps };
     LookupLinkItemScope scope{ this->LocalGenerator };
+
+    auto linkFeature = cmLinkItem::DEFAULT;
     for (auto const& dep : deps) {
+      if (cmHasPrefix(dep, LL_BEGIN) && cmHasSuffix(dep, '>')) {
+        linkFeature = ExtractLinkFeature(dep);
+        continue;
+      }
+      if (cmHasPrefix(dep, LL_END) && cmHasSuffix(dep, '>')) {
+        linkFeature = cmLinkItem::DEFAULT;
+        continue;
+      }
+
       if (cm::optional<cmLinkItem> maybeItem = this->LookupLinkItem(
-            dep, cmListFileBacktrace(), &scope, LookupSelf::No)) {
+            dep, cmListFileBacktrace(), linkFeature, &scope, LookupSelf::No)) {
         iface.SharedDeps.emplace_back(std::move(*maybeItem));
       }
     }
@@ -8494,7 +8528,17 @@ void cmGeneratorTarget::ComputeLinkImplementationLibraries(
       impl.HadLinkLanguageSensitiveCondition = true;
     }
 
+    auto linkFeature = cmLinkItem::DEFAULT;
     for (auto const& lib : llibs) {
+      if (cmHasPrefix(lib, LL_BEGIN) && cmHasSuffix(lib, '>')) {
+        linkFeature = ExtractLinkFeature(lib);
+        continue;
+      }
+      if (cmHasPrefix(lib, LL_END) && cmHasSuffix(lib, '>')) {
+        linkFeature = cmLinkItem::DEFAULT;
+        continue;
+      }
+
       if (this->IsLinkLookupScope(lib, lg)) {
         continue;
       }
@@ -8541,8 +8585,8 @@ void cmGeneratorTarget::ComputeLinkImplementationLibraries(
       }
 
       // The entry is meant for this configuration.
-      cmLinkItem item =
-        this->ResolveLinkItem(BT<std::string>(name, entry.Backtrace), lg);
+      cmLinkItem item = this->ResolveLinkItem(
+        BT<std::string>(name, entry.Backtrace), lg, linkFeature);
       if (item.Target) {
         auto depsForTarget = synthTargetsForConfig.find(item.Target);
         if (depsForTarget != synthTargetsForConfig.end()) {
@@ -8590,7 +8634,20 @@ void cmGeneratorTarget::ComputeLinkImplementationLibraries(
     CMP0003_ComputeLinkType(config, debugConfigs);
   cmTarget::LinkLibraryVectorType const& oldllibs =
     this->Target->GetOriginalLinkLibraries();
+
+  auto linkFeature = cmLinkItem::DEFAULT;
   for (cmTarget::LibraryID const& oldllib : oldllibs) {
+    if (cmHasPrefix(oldllib.first, LL_BEGIN) &&
+        cmHasSuffix(oldllib.first, '>')) {
+      linkFeature = ExtractLinkFeature(oldllib.first);
+      continue;
+    }
+    if (cmHasPrefix(oldllib.first, LL_END) &&
+        cmHasSuffix(oldllib.first, '>')) {
+      linkFeature = cmLinkItem::DEFAULT;
+      continue;
+    }
+
     if (oldllib.second != GENERAL_LibraryType && oldllib.second != linkType) {
       std::string name = this->CheckCMP0004(oldllib.first);
       if (name == this->GetName() || name.empty()) {
@@ -8598,7 +8655,7 @@ void cmGeneratorTarget::ComputeLinkImplementationLibraries(
       }
       // Support OLD behavior for CMP0003.
       impl.WrongConfigLibraries.push_back(
-        this->ResolveLinkItem(BT<std::string>(name)));
+        this->ResolveLinkItem(BT<std::string>(name), linkFeature));
     }
   }
 }
@@ -8624,19 +8681,20 @@ cmGeneratorTarget::TargetOrString cmGeneratorTarget::ResolveTargetReference(
 }
 
 cmLinkItem cmGeneratorTarget::ResolveLinkItem(
-  BT<std::string> const& name) const
+  BT<std::string> const& name, std::string const& linkFeature) const
 {
-  return this->ResolveLinkItem(name, this->LocalGenerator);
+  return this->ResolveLinkItem(name, this->LocalGenerator, linkFeature);
 }
 
-cmLinkItem cmGeneratorTarget::ResolveLinkItem(BT<std::string> const& name,
-                                              cmLocalGenerator const* lg) const
+cmLinkItem cmGeneratorTarget::ResolveLinkItem(
+  BT<std::string> const& name, cmLocalGenerator const* lg,
+  std::string const& linkFeature) const
 {
   auto bt = name.Backtrace;
   TargetOrString resolved = this->ResolveTargetReference(name.Value, lg);
 
   if (!resolved.Target) {
-    return cmLinkItem(resolved.String, false, bt);
+    return cmLinkItem(resolved.String, false, bt, linkFeature);
   }
 
   // Check deprecation, issue message with `bt` backtrace.
@@ -8657,10 +8715,10 @@ cmLinkItem cmGeneratorTarget::ResolveLinkItem(BT<std::string> const& name,
   // within the project.
   if (resolved.Target->GetType() == cmStateEnums::EXECUTABLE &&
       !resolved.Target->IsExecutableWithExports()) {
-    return cmLinkItem(resolved.Target->GetName(), false, bt);
+    return cmLinkItem(resolved.Target->GetName(), false, bt, linkFeature);
   }
 
-  return cmLinkItem(resolved.Target, false, bt);
+  return cmLinkItem(resolved.Target, false, bt, linkFeature);
 }
 
 bool cmGeneratorTarget::HasPackageReferences() const
