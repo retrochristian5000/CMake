@@ -459,7 +459,28 @@ class cmMakefile;
   SELECT(POLICY, CMP0151,                                                     \
          "AUTOMOC include directory is a system include directory by "        \
          "default.",                                                          \
-         3, 27, 0, cmPolicies::WARN)
+         3, 27, 0, cmPolicies::WARN)                                          \
+  SELECT(                                                                     \
+    POLICY, CMP0152,                                                          \
+    "file(REAL_PATH) resolves symlinks before collapsing ../ components.", 3, \
+    28, 0, cmPolicies::WARN)                                                  \
+  SELECT(POLICY, CMP0153, "The exec_program command should not be called.",   \
+         3, 28, 0, cmPolicies::WARN)                                          \
+  SELECT(                                                                     \
+    POLICY, CMP0154,                                                          \
+    "Generated files are private by default in targets using file sets.", 3,  \
+    28, 0, cmPolicies::WARN)                                                  \
+  SELECT(POLICY, CMP0155,                                                     \
+         "C++ sources in targets with at least C++20 are scanned for "        \
+         "imports when supported.",                                           \
+         3, 28, 0, cmPolicies::WARN)                                          \
+  SELECT(                                                                     \
+    POLICY, CMP0156,                                                          \
+    "De-duplicate libraries on link lines based on linker capabilities.", 3,  \
+    29, 0, cmPolicies::WARN)                                                  \
+  SELECT(POLICY, CMP0157,                                                     \
+         "Swift compilation mode selected by an abstraction.", 3, 29, 0,      \
+         cmPolicies::WARN)
 
 #define CM_SELECT_ID(F, A1, A2, A3, A4, A5, A6) F(A1)
 #define CM_FOR_EACH_POLICY_ID(POLICY)                                         \
@@ -497,7 +518,11 @@ class cmMakefile;
   F(CMP0113)                                                                  \
   F(CMP0119)                                                                  \
   F(CMP0131)                                                                  \
-  F(CMP0142)
+  F(CMP0142)                                                                  \
+  F(CMP0154)                                                                  \
+  F(CMP0155)                                                                  \
+  F(CMP0156)                                                                  \
+  F(CMP0157)
 
 #define CM_FOR_EACH_CUSTOM_COMMAND_POLICY(F)                                  \
   F(CMP0116)                                                                  \

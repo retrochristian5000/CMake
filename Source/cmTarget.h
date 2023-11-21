@@ -15,7 +15,7 @@
 #include <cm/optional>
 
 #include "cmAlgorithms.h"
-#include "cmFileSet.h"
+#include "cmListFileCache.h"
 #include "cmPolicies.h"
 #include "cmStateTypes.h"
 #include "cmStringAlgorithms.h"
@@ -23,20 +23,17 @@
 #include "cmValue.h"
 
 class cmCustomCommand;
+class cmFileSet;
+class cmFindPackageStack;
 class cmGlobalGenerator;
 class cmInstallTargetGenerator;
-class cmListFileBacktrace;
-class cmListFileContext;
 class cmMakefile;
 class cmPropertyMap;
 class cmSourceFile;
 class cmTargetExport;
 class cmTargetInternals;
 
-template <typename T>
-class BT;
-template <typename T>
-class BTs;
+enum class cmFileSetVisibility;
 
 /** \class cmTarget
  * \brief Represent a library or executable target loaded from a makefile.
@@ -216,6 +213,7 @@ public:
   bool IsImported() const;
   bool IsImportedGloballyVisible() const;
   bool IsPerConfig() const;
+  bool IsRuntimeBinary() const;
   bool CanCompileSources() const;
 
   bool GetMappedConfig(std::string const& desired_config, cmValue& loc,
@@ -241,6 +239,9 @@ public:
 
   //! Get a backtrace from the creation of the target.
   cmListFileBacktrace const& GetBacktrace() const;
+
+  //! Get a find_package call stack from the creation of the target.
+  cmFindPackageStack const& GetFindPackageStack() const;
 
   void InsertInclude(BT<std::string> const& entry, bool before = false);
   void InsertCompileOption(BT<std::string> const& entry, bool before = false);
@@ -294,6 +295,10 @@ public:
   cmBTStringRange GetLinkInterfaceDirectEntries() const;
   cmBTStringRange GetLinkInterfaceDirectExcludeEntries() const;
 
+  void CopyPolicyStatuses(cmTarget const* tgt);
+  void CopyImportedCxxModulesEntries(cmTarget const* tgt);
+  void CopyImportedCxxModulesProperties(cmTarget const* tgt);
+
   cmBTStringRange GetHeaderSetsEntries() const;
   cmBTStringRange GetCxxModuleSetsEntries() const;
 
@@ -319,6 +324,8 @@ public:
 
   static std::string GetFileSetsPropertyName(const std::string& type);
   static std::string GetInterfaceFileSetsPropertyName(const std::string& type);
+
+  bool HasFileSets() const;
 
 private:
   template <typename ValueType>

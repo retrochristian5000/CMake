@@ -88,6 +88,7 @@ public:
   std::vector<std::string> const& GetDepends() const;
   std::vector<std::string> const& GetFrameworkPaths() const;
   std::set<std::string> const& GetFrameworkPathsEmitted() const;
+  std::vector<std::string> const& GetXcFrameworkHeaderPaths() const;
   std::string GetLinkLanguage() const { return this->LinkLanguage; }
   std::vector<std::string> const& GetRuntimeSearchPath() const;
   std::string const& GetRuntimeFlag() const { return this->RuntimeFlag; }
@@ -96,8 +97,6 @@ public:
   std::string GetRPathString(bool for_install) const;
   std::string GetChrpathString() const;
   std::set<cmGeneratorTarget const*> const& GetSharedLibrariesLinked() const;
-  std::vector<cmGeneratorTarget const*> const& GetObjectLibrariesLinked()
-    const;
   std::vector<cmGeneratorTarget const*> const& GetExternalObjectTargets()
     const;
   std::vector<cmGeneratorTarget const*> const& GetRuntimeDLLs() const
@@ -134,9 +133,9 @@ private:
   std::vector<std::string> Directories;
   std::vector<std::string> Depends;
   std::vector<std::string> FrameworkPaths;
+  std::vector<std::string> XcFrameworkHeaderPaths;
   std::vector<std::string> RuntimeSearchPath;
   std::set<cmGeneratorTarget const*> SharedLibrariesLinked;
-  std::vector<cmGeneratorTarget const*> ObjectLibrariesLinked;
   std::vector<cmGeneratorTarget const*> ExternalObjectTargets;
   std::vector<cmGeneratorTarget const*> RuntimeDLLs;
 
@@ -207,6 +206,7 @@ private:
   bool CheckImplicitDirItem(LinkEntry const& entry);
   void AddUserItem(LinkEntry const& entry, bool pathNotKnown);
   void AddFrameworkItem(LinkEntry const& entry);
+  void AddXcFrameworkItem(LinkEntry const& entry);
   void DropDirectoryItem(BT<std::string> const& item);
   bool CheckSharedLibNoSOName(LinkEntry const& entry);
   void AddSharedLibNoSOName(LinkEntry const& entry);
@@ -216,6 +216,8 @@ private:
   void ComputeFrameworkInfo();
   void AddFrameworkPath(std::string const& p);
   std::set<std::string> FrameworkPathsEmitted;
+
+  void AddXcFrameworkHeaderPath(std::string const& p);
 
   // Linker search path computation.
   std::unique_ptr<cmOrderDirectories> OrderLinkerSearchPath;

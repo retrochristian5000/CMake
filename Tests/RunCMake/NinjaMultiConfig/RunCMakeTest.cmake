@@ -17,7 +17,7 @@ function(check_files dir)
   list(SORT expected)
 
   file(GLOB_RECURSE actual "${dir}/*")
-  list(FILTER actual EXCLUDE REGEX "/CMakeFiles/|\\.ninja$|/CMakeCache\\.txt$|/target_files[^/]*\\.cmake$|/\\.ninja_[^/]*$|/cmake_install\\.cmake$|\\.ilk$|\\.manifest$|\\.pdb$|\\.exp$|/install_manifest\\.txt$|/\\.qt/QtDeploySupport[^/]*\\.cmake$")
+  list(FILTER actual EXCLUDE REGEX "/CMakeFiles/|\\.ninja$|/CMakeCache\\.txt$|/target_files[^/]*\\.cmake$|/\\.ninja_[^/]*$|/cmake_install\\.cmake$|\\.ilk$|\\.manifest$|\\.odx$|\\.pdb$|\\.exp$|/install_manifest\\.txt$|/\\.qt/QtDeploySupport[^/]*\\.cmake$")
   foreach(f IN LISTS _check_files_INCLUDE _check_files_EXCLUDE)
     if(EXISTS ${f})
       list(APPEND actual ${f})
@@ -388,6 +388,8 @@ unset(RunCMake_TEST_NO_CLEAN)
 unset(RunCMake_TEST_BINARY_DIR)
 
 run_cmake(CustomCommandDepfile)
+run_cmake(CustomCommandDepfileAsOutput)
+run_cmake(CustomCommandDepfileAsByproduct)
 
 set(RunCMake_TEST_OPTIONS "-DCMAKE_CROSS_CONFIGS=all")
 run_cmake(PerConfigSources)

@@ -25,9 +25,10 @@
 
 #include "cmAlgorithms.h"
 #include "cmCustomCommand.h"
-#include "cmCustomCommandTypes.h"
+#include "cmFindPackageStack.h"
+#include "cmFunctionBlocker.h"
 #include "cmListFileCache.h"
-#include "cmMessageType.h"
+#include "cmMessageType.h" // IWYU pragma: keep
 #include "cmNewLineStyle.h"
 #include "cmPolicies.h"
 #include "cmSourceFileLocationKind.h"
@@ -43,12 +44,14 @@
 #  include "cmSourceGroup.h"
 #endif
 
+enum class cmCustomCommandType;
+enum class cmObjectLibraryCommands;
+
 class cmCompiledGeneratorExpression;
 class cmCustomCommandLines;
 class cmExecutionStatus;
 class cmExpandedCommandArgument;
 class cmExportBuildFileGenerator;
-class cmFunctionBlocker;
 class cmGeneratorExpressionEvaluationFile;
 class cmGlobalGenerator;
 class cmInstallGenerator;
@@ -561,6 +564,8 @@ public:
     AppleTVSimulator,
     WatchOS,
     WatchSimulator,
+    XROS,
+    XRSimulator,
   };
 
   /** What SDK type points CMAKE_OSX_SYSROOT to? */
@@ -568,6 +573,9 @@ public:
 
   /** Return whether the target platform is Apple iOS.  */
   bool PlatformIsAppleEmbedded() const;
+
+  /** Return whether the target platform is an Apple simulator.  */
+  bool PlatformIsAppleSimulator() const;
 
   /** Return whether the target platform supports generation of text base stubs
      (.tbd file) describing exports (Apple specific). */
@@ -651,6 +659,11 @@ public:
    * Get the current context backtrace.
    */
   cmListFileBacktrace GetBacktrace() const;
+
+  /**
+   * Get the current stack of find_package calls.
+   */
+  cmFindPackageStack GetFindPackageStack() const;
 
   /**
    * Get the vector of  files created by this makefile
@@ -1013,6 +1026,15 @@ public:
   // searches
   std::deque<std::vector<std::string>> FindPackageRootPathStack;
 
+  class FindPackageStackRAII
+  {
+    cmMakefile* Makefile;
+
+  public:
+    FindPackageStackRAII(cmMakefile* mf, std::string const& pkg);
+    ~FindPackageStackRAII();
+  };
+
   class DebugFindPkgRAII
   {
     cmMakefile* Makefile;
@@ -1202,6 +1224,9 @@ private:
 
   std::vector<BT<GeneratorAction>> GeneratorActions;
   bool GeneratorActionsInvoked = false;
+
+  cmFindPackageStack FindPackageStack;
+  unsigned int FindPackageStackNextIndex = 0;
 
   bool DebugFindPkg = false;
 

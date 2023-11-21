@@ -2,6 +2,7 @@
    file Copyright.txt or https://cmake.org/licensing for details.  */
 #include "cmExportBuildAndroidMKGenerator.h"
 
+#include <map>
 #include <sstream>
 #include <utility>
 #include <vector>
@@ -56,8 +57,8 @@ void cmExportBuildAndroidMKGenerator::GenerateImportTargetCode(
 }
 
 void cmExportBuildAndroidMKGenerator::GenerateImportPropertyCode(
-  std::ostream&, const std::string&, cmGeneratorTarget const*,
-  ImportPropertyMap const&)
+  std::ostream&, const std::string&, const std::string&,
+  cmGeneratorTarget const*, ImportPropertyMap const&, const std::string&)
 {
 }
 

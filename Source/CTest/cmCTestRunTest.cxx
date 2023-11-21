@@ -25,13 +25,17 @@
 #include "cmProcess.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
+#include "cmUVHandlePtr.h"
 #include "cmWorkingDirectory.h"
 
-cmCTestRunTest::cmCTestRunTest(cmCTestMultiProcessHandler& multiHandler)
+cmCTestRunTest::cmCTestRunTest(cmCTestMultiProcessHandler& multiHandler,
+                               int index)
   : MultiTestHandler(multiHandler)
+  , Index(index)
+  , CTest(MultiTestHandler.CTest)
+  , TestHandler(MultiTestHandler.TestHandler)
+  , TestProperties(MultiTestHandler.Properties[Index])
 {
-  this->CTest = multiHandler.CTest;
-  this->TestHandler = multiHandler.TestHandler;
 }
 
 void cmCTestRunTest::CheckOutput(std::string const& line)
@@ -152,6 +156,18 @@ cmCTestRunTest::EndTestResult cmCTestRunTest::EndTest(size_t completed,
       }
     }
   }
+  std::string resourceSpecParseError;
+  if (!this->TestProperties->GeneratedResourceSpecFile.empty()) {
+    this->MultiTestHandler.ResourceSpecFile =
+      this->TestProperties->GeneratedResourceSpecFile;
+    if (!this->MultiTestHandler.InitResourceAllocator(
+          resourceSpecParseError)) {
+      reason = "Invalid resource spec file";
+      forceFail = true;
+    } else {
+      this->MultiTestHandler.CheckResourceAvailability();
+    }
+  }
   std::ostringstream outputStream;
   if (res == cmProcess::State::Exited) {
     bool success = !forceFail &&
@@ -258,6 +274,16 @@ cmCTestRunTest::EndTestResult cmCTestRunTest::EndTest(size_t completed,
 
   if (outputTestErrorsToConsole) {
     cmCTestLog(this->CTest, HANDLER_OUTPUT, this->ProcessOutput << std::endl);
+  }
+
+  if (!resourceSpecParseError.empty()) {
+    cmCTestLog(this->CTest, ERROR_MESSAGE,
+               resourceSpecParseError << std::endl);
+  } else if (!this->TestProperties->GeneratedResourceSpecFile.empty()) {
+    cmCTestLog(this->CTest, HANDLER_VERBOSE_OUTPUT,
+               "Using generated resource spec file "
+                 << this->TestProperties->GeneratedResourceSpecFile
+                 << std::endl);
   }
 
   if (this->TestHandler->LogFile) {
@@ -372,7 +398,8 @@ bool cmCTestRunTest::StartAgain(std::unique_ptr<cmCTestRunTest> runner,
   // change to tests directory
   cmWorkingDirectory workdir(testRun->TestProperties->Directory);
   if (workdir.Failed()) {
-    testRun->StartFailure("Failed to change working directory to " +
+    testRun->StartFailure(testRun->TotalNumberOfTests,
+                          "Failed to change working directory to " +
                             testRun->TestProperties->Directory + " : " +
                             std::strerror(workdir.GetLastResult()),
                           "Failed to change working directory");
@@ -437,25 +464,25 @@ void cmCTestRunTest::MemCheckPostProcess()
 }
 
 void cmCTestRunTest::StartFailure(std::unique_ptr<cmCTestRunTest> runner,
-                                  std::string const& output,
+                                  size_t total, std::string const& output,
                                   std::string const& detail)
 {
   auto* testRun = runner.get();
 
   testRun->TestProcess = cm::make_unique<cmProcess>(std::move(runner));
-  testRun->StartFailure(output, detail);
+  testRun->StartFailure(total, output, detail);
 
   testRun->FinalizeTest(false);
 }
 
-void cmCTestRunTest::StartFailure(std::string const& output,
+void cmCTestRunTest::StartFailure(size_t total, std::string const& output,
                                   std::string const& detail)
 {
   // Still need to log the Start message so the test summary records our
   // attempt to start this test
   if (!this->CTest->GetTestProgressOutput()) {
     cmCTestLog(this->CTest, HANDLER_OUTPUT,
-               std::setw(2 * getNumWidth(this->TotalNumberOfTests) + 8)
+               std::setw(2 * getNumWidth(total) + 8)
                  << "Start "
                  << std::setw(getNumWidth(this->TestHandler->GetMaxIndex()))
                  << this->TestProperties->Index << ": "
@@ -864,7 +891,7 @@ bool cmCTestRunTest::ForkProcess()
   this->TestResult.Environment.erase(this->TestResult.Environment.length() -
                                      1);
 
-  return this->TestProcess->StartProcess(this->MultiTestHandler.Loop,
+  return this->TestProcess->StartProcess(*this->MultiTestHandler.Loop,
                                          &this->TestProperties->Affinity);
 }
 

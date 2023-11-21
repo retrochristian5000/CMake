@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <sstream>
+#include <type_traits>
 #include <utility>
 
 #include <cm/string_view>
@@ -196,9 +197,6 @@ std::vector<std::string> cmCommonTargetGenerator::GetLinkedTargetDirectories(
     };
     for (auto const& item : cli->GetItems()) {
       addLinkedTarget(item.Target);
-    }
-    for (cmGeneratorTarget const* target : cli->GetObjectLibrariesLinked()) {
-      addLinkedTarget(target);
     }
     for (cmGeneratorTarget const* target : cli->GetExternalObjectTargets()) {
       addLinkedTarget(target);
