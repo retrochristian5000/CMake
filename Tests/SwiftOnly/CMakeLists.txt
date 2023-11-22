@@ -43,6 +43,11 @@ add_library(N N.swift)
 target_link_libraries(N PUBLIC
   M)
 
+# TODO: Add a wholemodule object-library test once that is working
+add_library(O OBJECT O.swift)
+target_link_libraries(N PUBLIC O)
+set_target_properties(O PROPERTIES Swift_COMPILATION_MODE "incremental")
+
 # Dummy to make sure generation works with such targets.
 add_library(SwiftIface INTERFACE)
 target_link_libraries(SwiftOnly PRIVATE SwiftIface)
