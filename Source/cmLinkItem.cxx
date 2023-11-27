@@ -6,18 +6,23 @@
 
 #include "cmGeneratorTarget.h"
 
+const std::string cmLinkItem::DEFAULT = "DEFAULT";
+
 cmLinkItem::cmLinkItem() = default;
 
-cmLinkItem::cmLinkItem(std::string n, bool c, cmListFileBacktrace bt)
+cmLinkItem::cmLinkItem(std::string n, bool c, cmListFileBacktrace bt,
+                       std::string feature)
   : String(std::move(n))
+  , Feature(std::move(feature))
   , Cross(c)
   , Backtrace(std::move(bt))
 {
 }
 
 cmLinkItem::cmLinkItem(cmGeneratorTarget const* t, bool c,
-                       cmListFileBacktrace bt)
+                       cmListFileBacktrace bt, std::string feature)
   : Target(t)
+  , Feature(std::move(feature))
   , Cross(c)
   , Backtrace(std::move(bt))
 {
