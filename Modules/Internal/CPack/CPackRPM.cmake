@@ -282,7 +282,7 @@ function(cpack_rpm_prepare_content_list)
         # even if using a wildcard causes duplicates as those are
         # handled by RPM and we still keep the same file list
         # in spec file - wildcard only represents file type (e.g. .gz)
-        list(INSERT CPACK_RPM_INSTALL_FILES ${INDEX} "${PACK_LOCATION}*")
+        list(INSERT CPACK_RPM_INSTALL_FILES ${INDEX} "${PACK_LOCATION}<__CMAKE_MAN_GLOB>")
         # remove file location that doesn't cover compressed man pages
         math(EXPR INDEX ${INDEX}+1)
         list(REMOVE_AT CPACK_RPM_INSTALL_FILES ${INDEX})
@@ -596,7 +596,15 @@ function(cpack_rpm_prepare_install_files INSTALL_FILES_LIST WDIR PACKAGE_PREFIXE
       set(DIRECTIVE "%dir ")
     endif()
 
-    string(APPEND INSTALL_FILES "${DIRECTIVE}\"${F}\"\n")
+    if (F MATCHES "<__CMAKE_MAN_GLOB>")
+      # Make sure that globs for manpages occur outside of the quoting. RPM
+      # 4.19 now parses quotes like a shell. See
+      # https://github.com/rpm-software-management/rpm/commit/d44114f007f54f205ffa13d22724199fe50a137a
+      string(REPLACE "<__CMAKE_MAN_GLOB>" "" F "${F}")
+      string(APPEND INSTALL_FILES "${DIRECTIVE}${F}*\n")
+    else ()
+      string(APPEND INSTALL_FILES "${DIRECTIVE}\"${F}\"\n")
+    endif ()
   endforeach()
 
   if(REQUIRES_SYMLINK_RELOCATION_SCRIPT)
