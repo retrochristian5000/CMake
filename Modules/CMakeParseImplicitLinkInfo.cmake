@@ -74,7 +74,7 @@ function(cmake_parse_implicit_link_info2 text log_var obj_regex)
   # whole line and just the command (argv[0]).
   set(linker_regex "^( *|.*[/\\])(${linker}|${startfile}|([^/\\]+-)?ld|collect2)[^/\\]*( |$)")
   set(linker_exclude_regex "collect2 version |^[A-Za-z0-9_]+=|/ldfe ")
-  set(linker_tool_regex "^[ \t]*(->|exec:|\")?[ \t]*(.*[/\\](${linker}))(\"|,| |$)")
+  set(linker_tool_regex "^[ \t]*(->|\")?[ \t]*(([^\"]*[/\\])?(${linker}))(\"|,| |$)")
   set(linker_tool_exclude_regex "cuda-fake-ld|-fuse-ld=|--with-ld=")
   set(linker_tool "NOTFOUND")
   set(link_line_parsed 0)
@@ -85,15 +85,26 @@ function(cmake_parse_implicit_link_info2 text log_var obj_regex)
   string(REGEX REPLACE "\r?\n" ";" output_lines "${text}")
   foreach(line IN LISTS output_lines)
     if(EXTRA_PARSE_COMPUTE_LINKER AND
-        NOT linker_tool AND NOT "${line}" MATCHES "${linker_tool_exclude_regex}"
-        AND "${line}" MATCHES "${linker_tool_regex}")
-      set(linker_tool "${CMAKE_MATCH_2}")
-      if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
-        # pick-up last path
-        string(REGEX REPLACE "^.*([A-Za-z]:[/\\][^:]+)$" "\\1" linker_tool "${linker_tool}")
-        cmake_path(SET linker_tool "${linker_tool}")
+        NOT linker_tool AND NOT "${line}" MATCHES "${linker_tool_exclude_regex}")
+      if("${line}" MATCHES "exec: ([^()]*/(${linker}))") # IBM XL as nvcc host compiler
+        set(linker_tool "${CMAKE_MATCH_1}")
+      elseif("${line}" MATCHES "^export XL_LINKER=(.*/${linker})$") # IBM XL
+        set(linker_tool "${CMAKE_MATCH_1}")
+      elseif("${line}" MATCHES "vs_link.*-- +([^\"]*[/\\](${linker})) ") # cmake -E vs_link_exe
+        if(CMAKE_LINKER)
+          set(linker_tool "${CMAKE_LINKER}")
+        else()
+          set(linker_tool "${CMAKE_MATCH_1}")
+        endif()
+      elseif("${line}" MATCHES "${linker_tool_regex}")
+        set(linker_tool "${CMAKE_MATCH_2}")
       endif()
-      string(APPEND log "  linker tool for '${EXTRA_PARSE_LANGUAGE}': ${linker_tool}\n")
+      if(linker_tool)
+        if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
+          cmake_path(NORMAL_PATH linker_tool)
+        endif()
+        string(APPEND log "  linker tool for '${EXTRA_PARSE_LANGUAGE}': ${linker_tool}\n")
+      endif()
     endif()
     if(NOT (EXTRA_PARSE_COMPUTE_IMPLICIT_LIBS OR EXTRA_PARSE_COMPUTE_IMPLICIT_DIRS
           OR EXTRA_PARSE_COMPUTE_IMPLICIT_FWKS OR EXTRA_PARSE_COMPUTE_IMPLICIT_OBJECTS))
