@@ -1,2 +1,2 @@
 set(platform_name ios-simulator)
-include(apple-export-common.cmake)
+include(apple-export-ios-simulator-common.cmake)
