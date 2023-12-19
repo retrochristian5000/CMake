@@ -1,0 +1,3 @@
+libs=
+dirs=
+linker_tool=C:/DoesNotExist/intel/compiler/latest/windows/bin/intel64/xilink.exe
