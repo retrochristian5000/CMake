@@ -2784,7 +2784,7 @@ void cmVisualStudio10TargetGenerator::OutputSourceSpecificFlags(
           isCppModule = true;
           if (shouldScanForModules &&
               this->GlobalGenerator->IsScanDependenciesSupported()) {
-            // ScanSourceforModuleDependencies uses 'cl /scanDependencies' and
+            // ScanSourceForModuleDependencies uses 'cl /scanDependencies' and
             // can distinguish module interface units and internal partitions.
             compileAsPerConfig = "CompileAsCpp";
           } else {
@@ -2823,122 +2823,113 @@ void cmVisualStudio10TargetGenerator::OutputSourceSpecificFlags(
     const bool needsPCHFlags =
       (makePCH || useSharedPCH || useDifferentLangPCH || useNoPCH);
 
-    // if we have flags or defines for this config then
-    // use them
-    if (!flags.empty() || !options.empty() || !configDefines.empty() ||
-        !includes.empty() || compileAsPerConfig || noWinRT ||
-        !options.empty() || needsPCHFlags) {
-      cmGlobalVisualStudio10Generator* gg = this->GlobalGenerator;
-      cmIDEFlagTable const* flagtable = nullptr;
-      const std::string& srclang = source->GetLanguage();
-      if (srclang == "C"_s || srclang == "CXX"_s) {
-        flagtable = gg->GetClFlagTable();
-      } else if (srclang == "ASM_MARMASM"_s &&
-                 this->GlobalGenerator->IsMarmasmEnabled()) {
-        flagtable = gg->GetMarmasmFlagTable();
-      } else if (srclang == "ASM_MASM"_s &&
-                 this->GlobalGenerator->IsMasmEnabled()) {
-        flagtable = gg->GetMasmFlagTable();
-      } else if (lang == "ASM_NASM"_s &&
-                 this->GlobalGenerator->IsNasmEnabled()) {
-        flagtable = gg->GetNasmFlagTable();
-      } else if (srclang == "RC"_s) {
-        flagtable = gg->GetRcFlagTable();
-      } else if (srclang == "CSharp"_s) {
-        flagtable = gg->GetCSharpFlagTable();
-      }
-      cmGeneratorExpressionInterpreter genexInterpreter(
-        this->LocalGenerator, config, this->GeneratorTarget, lang);
-      cmVS10GeneratorOptions clOptions(
-        this->LocalGenerator, cmVisualStudioGeneratorOptions::Compiler,
-        flagtable, this);
-      if (compileAsPerConfig) {
-        clOptions.AddFlag("CompileAs", compileAsPerConfig);
-      }
-      if (shouldScanForModules) {
-        clOptions.AddFlag("ScanSourceforModuleDependencies", "true");
-      } else {
-        clOptions.AddFlag("ScanSourceforModuleDependencies", "false");
-      }
-      if (noWinRT) {
-        clOptions.AddFlag("CompileAsWinRT", "false");
-      }
-      if (configDependentFlags) {
-        clOptions.Parse(genexInterpreter.Evaluate(flags, "COMPILE_FLAGS"));
-      } else {
-        clOptions.Parse(flags);
-      }
-
-      if (needsPCHFlags) {
-        // Add precompile headers compile options.
-        if (makePCH) {
-          clOptions.AddFlag("PrecompiledHeader", "Create");
-          std::string pchHeader =
-            this->GeneratorTarget->GetPchHeader(config, lang);
-          clOptions.AddFlag("PrecompiledHeaderFile", pchHeader);
-          std::string pchFile =
-            this->GeneratorTarget->GetPchFile(config, lang);
-          clOptions.AddFlag("PrecompiledHeaderOutputFile", pchFile);
-          clOptions.AddFlag("ForcedIncludeFiles", pchHeader);
-        } else if (useNoPCH) {
-          clOptions.AddFlag("PrecompiledHeader", "NotUsing");
-        } else if (useSharedPCH) {
-          std::string pchHeader =
-            this->GeneratorTarget->GetPchHeader(config, lang);
-          clOptions.AddFlag("ForcedIncludeFiles", pchHeader);
-        } else if (useDifferentLangPCH) {
-          clOptions.AddFlag("PrecompiledHeader", "Use");
-          std::string pchHeader =
-            this->GeneratorTarget->GetPchHeader(config, lang);
-          clOptions.AddFlag("PrecompiledHeaderFile", pchHeader);
-          std::string pchFile =
-            this->GeneratorTarget->GetPchFile(config, lang);
-          clOptions.AddFlag("PrecompiledHeaderOutputFile", pchFile);
-          clOptions.AddFlag("ForcedIncludeFiles", pchHeader);
-        }
-      }
-
-      if (!options.empty()) {
-        std::string expandedOptions;
-        if (configDependentOptions) {
-          this->LocalGenerator->AppendCompileOptions(
-            expandedOptions,
-            genexInterpreter.Evaluate(options, "COMPILE_OPTIONS"));
-        } else {
-          this->LocalGenerator->AppendCompileOptions(expandedOptions, options);
-        }
-        clOptions.Parse(expandedOptions);
-      }
-      if (clOptions.HasFlag("DisableSpecificWarnings")) {
-        clOptions.AppendFlag("DisableSpecificWarnings",
-                             "%(DisableSpecificWarnings)");
-      }
-      if (clOptions.HasFlag("ForcedIncludeFiles")) {
-        clOptions.AppendFlag("ForcedIncludeFiles", "%(ForcedIncludeFiles)");
-      }
-      if (configDependentDefines) {
-        clOptions.AddDefines(
-          genexInterpreter.Evaluate(configDefines, "COMPILE_DEFINITIONS"));
-      } else {
-        clOptions.AddDefines(configDefines);
-      }
-      std::vector<std::string> includeList;
-      if (configDependentIncludes) {
-        this->LocalGenerator->AppendIncludeDirectories(
-          includeList,
-          genexInterpreter.Evaluate(includes, "INCLUDE_DIRECTORIES"), *source);
-      } else {
-        this->LocalGenerator->AppendIncludeDirectories(includeList, includes,
-                                                       *source);
-      }
-      clOptions.AddIncludes(includeList);
-      clOptions.SetConfiguration(config);
-      OptionsHelper oh(clOptions, e2);
-      oh.PrependInheritedString("AdditionalOptions");
-      oh.OutputAdditionalIncludeDirectories(lang);
-      oh.OutputFlagMap();
-      oh.OutputPreprocessorDefinitions(lang);
+    cmGlobalVisualStudio10Generator* gg = this->GlobalGenerator;
+    cmIDEFlagTable const* flagtable = nullptr;
+    const std::string& srclang = source->GetLanguage();
+    if (srclang == "C"_s || srclang == "CXX"_s) {
+      flagtable = gg->GetClFlagTable();
+    } else if (srclang == "ASM_MARMASM"_s &&
+               this->GlobalGenerator->IsMarmasmEnabled()) {
+      flagtable = gg->GetMarmasmFlagTable();
+    } else if (srclang == "ASM_MASM"_s &&
+               this->GlobalGenerator->IsMasmEnabled()) {
+      flagtable = gg->GetMasmFlagTable();
+    } else if (lang == "ASM_NASM"_s &&
+               this->GlobalGenerator->IsNasmEnabled()) {
+      flagtable = gg->GetNasmFlagTable();
+    } else if (srclang == "RC"_s) {
+      flagtable = gg->GetRcFlagTable();
+    } else if (srclang == "CSharp"_s) {
+      flagtable = gg->GetCSharpFlagTable();
     }
+    cmGeneratorExpressionInterpreter genexInterpreter(
+      this->LocalGenerator, config, this->GeneratorTarget, lang);
+    cmVS10GeneratorOptions clOptions(this->LocalGenerator,
+                                     cmVisualStudioGeneratorOptions::Compiler,
+                                     flagtable, this);
+    if (compileAsPerConfig) {
+      clOptions.AddFlag("CompileAs", compileAsPerConfig);
+    }
+    // Always add this flag as MSBuild defaults to extension-based detection
+    // and CMake uses its own mechanisms independent of the extension.
+    clOptions.AddFlag("ScanSourceForModuleDependencies",
+                      shouldScanForModules ? "true" : "false");
+    if (noWinRT) {
+      clOptions.AddFlag("CompileAsWinRT", "false");
+    }
+    if (configDependentFlags) {
+      clOptions.Parse(genexInterpreter.Evaluate(flags, "COMPILE_FLAGS"));
+    } else {
+      clOptions.Parse(flags);
+    }
+
+    if (needsPCHFlags) {
+      // Add precompile headers compile options.
+      if (makePCH) {
+        clOptions.AddFlag("PrecompiledHeader", "Create");
+        std::string pchHeader =
+          this->GeneratorTarget->GetPchHeader(config, lang);
+        clOptions.AddFlag("PrecompiledHeaderFile", pchHeader);
+        std::string pchFile = this->GeneratorTarget->GetPchFile(config, lang);
+        clOptions.AddFlag("PrecompiledHeaderOutputFile", pchFile);
+        clOptions.AddFlag("ForcedIncludeFiles", pchHeader);
+      } else if (useNoPCH) {
+        clOptions.AddFlag("PrecompiledHeader", "NotUsing");
+      } else if (useSharedPCH) {
+        std::string pchHeader =
+          this->GeneratorTarget->GetPchHeader(config, lang);
+        clOptions.AddFlag("ForcedIncludeFiles", pchHeader);
+      } else if (useDifferentLangPCH) {
+        clOptions.AddFlag("PrecompiledHeader", "Use");
+        std::string pchHeader =
+          this->GeneratorTarget->GetPchHeader(config, lang);
+        clOptions.AddFlag("PrecompiledHeaderFile", pchHeader);
+        std::string pchFile = this->GeneratorTarget->GetPchFile(config, lang);
+        clOptions.AddFlag("PrecompiledHeaderOutputFile", pchFile);
+        clOptions.AddFlag("ForcedIncludeFiles", pchHeader);
+      }
+    }
+
+    if (!options.empty()) {
+      std::string expandedOptions;
+      if (configDependentOptions) {
+        this->LocalGenerator->AppendCompileOptions(
+          expandedOptions,
+          genexInterpreter.Evaluate(options, "COMPILE_OPTIONS"));
+      } else {
+        this->LocalGenerator->AppendCompileOptions(expandedOptions, options);
+      }
+      clOptions.Parse(expandedOptions);
+    }
+    if (clOptions.HasFlag("DisableSpecificWarnings")) {
+      clOptions.AppendFlag("DisableSpecificWarnings",
+                           "%(DisableSpecificWarnings)");
+    }
+    if (clOptions.HasFlag("ForcedIncludeFiles")) {
+      clOptions.AppendFlag("ForcedIncludeFiles", "%(ForcedIncludeFiles)");
+    }
+    if (configDependentDefines) {
+      clOptions.AddDefines(
+        genexInterpreter.Evaluate(configDefines, "COMPILE_DEFINITIONS"));
+    } else {
+      clOptions.AddDefines(configDefines);
+    }
+    std::vector<std::string> includeList;
+    if (configDependentIncludes) {
+      this->LocalGenerator->AppendIncludeDirectories(
+        includeList,
+        genexInterpreter.Evaluate(includes, "INCLUDE_DIRECTORIES"), *source);
+    } else {
+      this->LocalGenerator->AppendIncludeDirectories(includeList, includes,
+                                                     *source);
+    }
+    clOptions.AddIncludes(includeList);
+    clOptions.SetConfiguration(config);
+    OptionsHelper oh(clOptions, e2);
+    oh.PrependInheritedString("AdditionalOptions");
+    oh.OutputAdditionalIncludeDirectories(lang);
+    oh.OutputFlagMap();
+    oh.OutputPreprocessorDefinitions(lang);
   }
 
   if (isCppModule && !objectName.empty()) {
