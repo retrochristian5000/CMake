@@ -26,6 +26,11 @@ add_CMakeOnly_test(CheckCXXCompilerFlag)
 
 add_CMakeOnly_test(CheckLanguage)
 
+if (CMake_TEST_HIP)
+  add_CMakeOnly_test(CheckLanguageHIPPlatform)
+  add_CMakeOnly_test(CheckLanguageHIPPlatform2)
+endif()
+
 add_CMakeOnly_test(CheckStructHasMember)
 
 add_CMakeOnly_test(CompilerIdC)
