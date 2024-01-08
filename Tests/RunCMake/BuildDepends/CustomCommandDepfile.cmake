@@ -23,6 +23,7 @@ add_custom_command(
 add_library(toplib STATIC toplib.c)
 
 add_subdirectory(DepfileSubdir)
+add_subdirectory(DepfileSubdirWithSpace)
 
 add_custom_command(
   OUTPUT toplib2.c
