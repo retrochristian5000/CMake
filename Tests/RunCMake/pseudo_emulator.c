@@ -1,8 +1,10 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 int main(int argc, char* argv[])
 {
   int ii;
+  const char* fail = getenv("PSEUDO_EMULATOR_FAIL");
 
   printf("Command:");
   for (ii = 1; ii < argc; ++ii) {
@@ -10,5 +12,9 @@ int main(int argc, char* argv[])
   }
   printf("\n");
 
-  return 42;
+  if (fail && *fail) {
+    return 42;
+  }
+
+  return 0;
 }
