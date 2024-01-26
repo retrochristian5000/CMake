@@ -174,7 +174,8 @@ void cmTestGenerator::GenerateScriptForConfig(std::ostream& os,
       if (!cmNonempty(launcher)) {
         return;
       }
-      cmList launcherWithArgs{ *launcher };
+      cmList launcherWithArgs{ ge.Parse(*launcher)->Evaluate(this->LG,
+                                                             config) };
       if (!launcherWithArgs.empty() && !launcherWithArgs[0].empty()) {
         std::string launcherExe(launcherWithArgs[0]);
         cmSystemTools::ConvertToUnixSlashes(launcherExe);
