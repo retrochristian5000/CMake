@@ -1,0 +1,6 @@
+#ifndef PROJECTINFO_HPP
+#define PROJECTINFO_HPP
+
+constexpr int VersionMajor{0};
+
+#endif // PROJECTINFO_HPP
