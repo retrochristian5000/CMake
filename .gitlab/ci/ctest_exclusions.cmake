@@ -4,6 +4,13 @@ set(test_exclusions
   "^BundleGeneratorTest$"
 )
 
+if ("$ENV{CMAKE_CONFIGURATION}" MATCHES "windows_" AND NOT "$ENV{CI_MERGE_REQUEST_ID}" STREQUAL "")
+  # This test times out frequently.  Skip it in merge requests.
+  list(APPEND test_exclusions
+    "^CommandLength$"
+    )
+endif()
+
 if (CTEST_CMAKE_GENERATOR MATCHES "Visual Studio")
   list(APPEND test_exclusions
     # This test takes around 5 minutes with Visual Studio.
