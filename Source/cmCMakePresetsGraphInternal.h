@@ -11,6 +11,7 @@
 
 #include "cmCMakePresetsGraph.h"
 #include "cmJSONHelpers.h"
+#include "cmSystemTools.h"
 
 #define CHECK_OK(expr)                                                        \
   do {                                                                        \
@@ -27,17 +28,24 @@ enum class ExpandMacroResult
   Error,
 };
 
-using MacroExpander = std::function<ExpandMacroResult(
-  const std::string&, const std::string&, std::string&, int version)>;
+class MacroExpander
+{
+public:
+  virtual ExpandMacroResult operator()(const std::string& macroNamespace,
+                                       const std::string& macroName,
+                                       std::string& macroOut, int version) = 0;
+  virtual ~MacroExpander() = default;
+};
+using MacroExpanderVector = std::vector<std::unique_ptr<MacroExpander>>;
 
-ExpandMacroResult ExpandMacros(
-  std::string& out, const std::vector<MacroExpander>& macroExpanders,
-  int version);
+ExpandMacroResult ExpandMacros(std::string& out,
+                               const MacroExpanderVector& macroExpanders,
+                               int version);
 
 ExpandMacroResult ExpandMacro(std::string& out,
                               const std::string& macroNamespace,
                               const std::string& macroName,
-                              const std::vector<MacroExpander>& macroExpanders,
+                              const MacroExpanderVector& macroExpanders,
                               int version);
 }
 
@@ -47,17 +55,77 @@ public:
   virtual ~Condition() = default;
 
   virtual bool Evaluate(
-    const std::vector<cmCMakePresetsGraphInternal::MacroExpander>& expanders,
+    const cmCMakePresetsGraphInternal::MacroExpanderVector& expanders,
     int version, cm::optional<bool>& out) const = 0;
   virtual bool IsNull() const { return false; }
 };
 
 namespace cmCMakePresetsGraphInternal {
+class BaseMacroExpander : public MacroExpander
+{
+  const cmCMakePresetsGraph& Graph;
+  const cm::optional<std::string> File;
+
+public:
+  BaseMacroExpander(const cmCMakePresetsGraph& graph)
+    : Graph{ graph }
+  {
+  }
+  BaseMacroExpander(const cmCMakePresetsGraph& graph, const std::string& file)
+    : Graph{ graph }
+    , File(file)
+  {
+  }
+  ExpandMacroResult operator()(const std::string& macroNamespace,
+                               const std::string& macroName,
+                               std::string& macroOut, int version) override;
+};
+
+template <class T>
+class PresetMacroExpander : public MacroExpander
+{
+  const cmCMakePresetsGraph& Graph;
+  const T& Preset;
+
+public:
+  PresetMacroExpander(const cmCMakePresetsGraph& graph, const T& preset)
+    : Graph{ graph }
+    , Preset{ preset }
+  {
+  }
+  ExpandMacroResult operator()(const std::string& macroNamespace,
+                               const std::string& macroName,
+                               std::string& macroOut, int version) override
+  {
+    if (macroNamespace.empty()) {
+      if (macroName == "presetName") {
+        macroOut += Preset.Name;
+        return ExpandMacroResult::Ok;
+      }
+      if (macroName == "generator") {
+        // Generator only makes sense if preset is not hidden.
+        if (!Preset.Hidden) {
+          macroOut += Graph.GetGeneratorForPreset(Preset.Name);
+        }
+        return ExpandMacroResult::Ok;
+      }
+      if (macroName == "fileDir") {
+        if (version < 4) {
+          return ExpandMacroResult::Error;
+        }
+        macroOut +=
+          cmSystemTools::GetParentDirectory(Preset.OriginFile->Filename);
+        return ExpandMacroResult::Ok;
+      }
+    }
+    return ExpandMacroResult::Ignore;
+  }
+};
 
 class NullCondition : public cmCMakePresetsGraph::Condition
 {
-  bool Evaluate(const std::vector<MacroExpander>& /*expanders*/,
-                int /*version*/, cm::optional<bool>& out) const override
+  bool Evaluate(const MacroExpanderVector& /*expanders*/, int /*version*/,
+                cm::optional<bool>& out) const override
   {
     out = true;
     return true;
@@ -69,8 +137,8 @@ class NullCondition : public cmCMakePresetsGraph::Condition
 class ConstCondition : public cmCMakePresetsGraph::Condition
 {
 public:
-  bool Evaluate(const std::vector<MacroExpander>& /*expanders*/,
-                int /*version*/, cm::optional<bool>& out) const override
+  bool Evaluate(const MacroExpanderVector& /*expanders*/, int /*version*/,
+                cm::optional<bool>& out) const override
   {
     out = this->Value;
     return true;
@@ -82,7 +150,7 @@ public:
 class EqualsCondition : public cmCMakePresetsGraph::Condition
 {
 public:
-  bool Evaluate(const std::vector<MacroExpander>& expanders, int version,
+  bool Evaluate(const MacroExpanderVector& expanders, int version,
                 cm::optional<bool>& out) const override;
 
   std::string Lhs;
@@ -92,7 +160,7 @@ public:
 class InListCondition : public cmCMakePresetsGraph::Condition
 {
 public:
-  bool Evaluate(const std::vector<MacroExpander>& expanders, int version,
+  bool Evaluate(const MacroExpanderVector& expanders, int version,
                 cm::optional<bool>& out) const override;
 
   std::string String;
@@ -102,7 +170,7 @@ public:
 class MatchesCondition : public cmCMakePresetsGraph::Condition
 {
 public:
-  bool Evaluate(const std::vector<MacroExpander>& expanders, int version,
+  bool Evaluate(const MacroExpanderVector& expanders, int version,
                 cm::optional<bool>& out) const override;
 
   std::string String;
@@ -112,7 +180,7 @@ public:
 class AnyAllOfCondition : public cmCMakePresetsGraph::Condition
 {
 public:
-  bool Evaluate(const std::vector<MacroExpander>& expanders, int version,
+  bool Evaluate(const MacroExpanderVector& expanders, int version,
                 cm::optional<bool>& out) const override;
 
   std::vector<std::unique_ptr<Condition>> Conditions;
@@ -122,7 +190,7 @@ public:
 class NotCondition : public cmCMakePresetsGraph::Condition
 {
 public:
-  bool Evaluate(const std::vector<MacroExpander>& expanders, int version,
+  bool Evaluate(const MacroExpanderVector& expanders, int version,
                 cm::optional<bool>& out) const override;
 
   std::unique_ptr<Condition> SubCondition;
