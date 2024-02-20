@@ -25,4 +25,5 @@ calls to the :command:`try_compile` command into its test project.
 
 If this variable is not set then the :prop_tgt:`VS_USE_DEBUG_LIBRARIES`
 property will not be set automatically.  If that property is not set
-then CMake does not generate any ``UseDebugLibraries`` indicator.
+then CMake generates ``UseDebugLibraries`` using heuristics documented
+by that property.
