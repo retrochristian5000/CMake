@@ -23,5 +23,14 @@ to be non-debug configurations.
 
 The property is initialized from the value of the
 :variable:`CMAKE_VS_USE_DEBUG_LIBRARIES` variable, if it is set.
-If the property is not set, then CMake does not generate any
-``UseDebugLibraries`` indicator.
+If the property is not set, then CMake generates ``UseDebugLibraries``
+for each configuration of a target as follows:
+
+* If the target compiles sources for a known MSVC runtime library
+  (such as that specified by :prop_tgt:`MSVC_RUNTIME_LIBRARY`),
+  then ``UseDebugLibraries`` is ``true`` for configurations that
+  compile for a "Debug" runtime library, and ``false`` for others.
+
+* Otherwise, such as in targets created by :command:`add_custom_target`,
+  ``UseDebugLibraries`` is ``true`` for the ``Debug`` configuration,
+  and ``false`` for others.
