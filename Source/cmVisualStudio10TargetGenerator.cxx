@@ -3528,6 +3528,9 @@ bool cmVisualStudio10TargetGenerator::ComputeClOptions(
     if (!clOptions.HasFlag("BasicRuntimeChecks")) {
       clOptions.AddFlag("BasicRuntimeChecks", "Default");
     }
+    if (!clOptions.HasFlag("MinimalRebuild")) {
+      clOptions.AddFlag("MinimalRebuild", "");
+    }
     if (!clOptions.HasFlag("Optimization")) {
       clOptions.AddFlag("Optimization", "");
     }
@@ -4513,6 +4516,15 @@ bool cmVisualStudio10TargetGenerator::ComputeLinkOptions(
     if (const char* debug = linkOptions.GetFlag("GenerateDebugInformation")) {
       if (strcmp(debug, "DebugFastLink") == 0) {
         linkOptions.AddFlag("GenerateDebugInformation", "Debug");
+      }
+    }
+
+    if (this->ProjectType == VsProjectType::vcxproj && this->MSTools) {
+      // Suppress Microsoft.Cpp.ManagedExtensions*.props default settings for
+      // which the project specifies no flags.  Do not let UseDebugLibraries
+      // affect them.
+      if (!linkOptions.HasFlag("AssemblyDebug")) {
+        linkOptions.AddFlag("AssemblyDebug", "");
       }
     }
   }
