@@ -105,6 +105,17 @@ function(cmake_determine_compiler_support lang)
       )
     endif()
 
+    # Create targets for use with `import std;` here.
+    set(CMAKE_CXX_IMPORT_STD "")
+    if (CMAKE_CXX23_COMPILE_FEATURES)
+      set(_cmake_cxx_import_std23 "")
+      cmake_create_cxx_import_std(23 _cmake_cxx_import_std23)
+      if (_cmake_cxx_import_std23)
+        string(APPEND CMAKE_CXX_IMPORT_STD "### Imported target for C++23 standard library\n")
+        string(APPEND CMAKE_CXX_IMPORT_STD "${_cmake_cxx_import_std23}\n\n")
+      endif ()
+    endif ()
+
     set(CMAKE_CXX_COMPILE_FEATURES ${CMAKE_CXX_COMPILE_FEATURES} PARENT_SCOPE)
     set(CMAKE_CXX98_COMPILE_FEATURES ${CMAKE_CXX98_COMPILE_FEATURES} PARENT_SCOPE)
     set(CMAKE_CXX11_COMPILE_FEATURES ${CMAKE_CXX11_COMPILE_FEATURES} PARENT_SCOPE)
@@ -113,6 +124,7 @@ function(cmake_determine_compiler_support lang)
     set(CMAKE_CXX20_COMPILE_FEATURES ${CMAKE_CXX20_COMPILE_FEATURES} PARENT_SCOPE)
     set(CMAKE_CXX23_COMPILE_FEATURES ${CMAKE_CXX23_COMPILE_FEATURES} PARENT_SCOPE)
     set(CMAKE_CXX26_COMPILE_FEATURES ${CMAKE_CXX26_COMPILE_FEATURES} PARENT_SCOPE)
+    set(CMAKE_CXX_IMPORT_STD ${CMAKE_CXX_IMPORT_STD} PARENT_SCOPE)
 
     message(CHECK_PASS "done")
 
