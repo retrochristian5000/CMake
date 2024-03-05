@@ -83,6 +83,11 @@ foreach (fileset_type IN LISTS fileset_types)
   run_cmake("NotCXXSource${fileset_type}")
 endforeach ()
 
+run_cmake(CXXImportStdConfig)
+run_cmake(CXXImportStdHeadTarget)
+run_cmake(CXXImportStdLinkLanguage)
+run_cmake(CXXImportStdInvalidGenex)
+
 run_cmake(InstallBMI)
 run_cmake(InstallBMIGenericArgs)
 run_cmake(InstallBMIIgnore)
