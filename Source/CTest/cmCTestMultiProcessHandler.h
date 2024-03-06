@@ -204,7 +204,24 @@ protected:
     ResourceAvailabilityErrors;
   cmCTestResourceAllocator ResourceAllocator;
   std::vector<cmCTestTestHandler::cmCTestTestResult>* TestResults;
-  size_t ParallelLevel; // max number of process that can be run at once
+
+  // Get the maximum number of processors that may be used at once.
+  size_t GetParallelLevel() const;
+
+  // With no '-j' option, default to serial testing.
+  cm::optional<size_t> ParallelLevel = 1;
+
+  // Without a job server, limit parallelism to the number of processors,
+  // but with a minimum greater than 1 so there is some parallelism.
+  static constexpr unsigned int kParallelLevelMinimum = 2u;
+
+  // With a job server, use a high parallelism limit so that it is
+  // effectively limited only by available job server tokens.
+  static constexpr unsigned int kParallelLevelWithJobserver = 0x10000u;
+
+  // Fallback parallelism limit when '-j' is given with 0 or no value.
+  // This may be replaced later by the number of processors.
+  size_t ParallelLevelDefault = kParallelLevelMinimum;
 
   // 'make' jobserver client.  If connected, we acquire a token
   // for each test before running its process.
