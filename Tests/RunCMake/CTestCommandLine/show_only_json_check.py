@@ -12,10 +12,16 @@ def is_list(x):
     return isinstance(x, list)
 
 def is_int(x):
-    return isinstance(x, int) or isinstance(x, long)
+    if sys.version_info[0] >= 3:
+        return isinstance(x, int)
+    else:
+        return isinstance(x, long)
 
 def is_string(x):
-    return isinstance(x, str) or isinstance(x, unicode)
+    if sys.version_info[0] >= 3:
+        return isinstance(x, str)
+    else:
+        return isinstance(x, unicode)
 
 def check_re(x, regex):
     assert re.search(regex, x)
