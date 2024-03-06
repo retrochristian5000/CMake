@@ -54,6 +54,12 @@ run_ctest_submit_FailDrop(https)
 block()
   set(CASE_TEST_PREFIX_CODE "set(CTEST_TLS_VERSION 1.1)")
   run_ctest(FailDrop-TLSVersion-1.1 -VV)
+  set(CASE_TEST_PREFIX_CODE "set(CMAKE_TLS_VERSION 1.1)") # Test fallback to CMake variable.
+  run_ctest(FailDrop-TLSVersion-1.1-cmake -VV)
+  set(ENV{CMAKE_TLS_VERSION} 1.1) # Test fallback to env variable.
+  set(CASE_TEST_PREFIX_CODE "")
+  run_ctest(FailDrop-TLSVersion-1.1-env -VV)
+  unset(ENV{CMAKE_TLS_VERSION})
   set(CASE_TEST_PREFIX_CODE "set(CTEST_TLS_VERIFY ON)")
   run_ctest(FailDrop-TLSVerify-ON -VV)
   set(CASE_TEST_PREFIX_CODE "set(CMAKE_TLS_VERIFY OFF)") # Test fallback to CMake variable.
