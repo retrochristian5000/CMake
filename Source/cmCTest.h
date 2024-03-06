@@ -116,8 +116,8 @@ public:
   cmDuration GetGlobalTimeout() const;
 
   /** how many test to run at the same time */
-  int GetParallelLevel() const;
-  void SetParallelLevel(int);
+  unsigned long GetParallelLevel() const;
+  void SetParallelLevel(unsigned long);
 
   unsigned long GetTestLoad() const;
   void SetTestLoad(unsigned long);

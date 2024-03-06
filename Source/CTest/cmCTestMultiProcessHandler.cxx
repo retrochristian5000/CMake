@@ -68,7 +68,6 @@ private:
 
 cmCTestMultiProcessHandler::cmCTestMultiProcessHandler()
 {
-  this->ParallelLevel = 1;
   this->TestLoad = 0;
   this->FakeLoadForTesting = 0;
   this->Completed = 0;
@@ -105,7 +104,27 @@ bool cmCTestMultiProcessHandler::SetTests(TestMap tests,
 // Set the max number of tests that can be run at the same time.
 void cmCTestMultiProcessHandler::SetParallelLevel(size_t level)
 {
-  this->ParallelLevel = level < 1 ? 1 : level;
+  if (level > 0) {
+    this->ParallelLevel = level;
+  } else {
+    // '-j' was given with 0 or no value.  Limit by number of processors.
+    cmsys::SystemInformation info;
+    info.RunCPUCheck();
+    this->ParallelLevelDefault =
+      std::max(kParallelLevelMinimum, info.GetNumberOfLogicalCPU());
+    this->ParallelLevel.reset();
+  }
+}
+
+size_t cmCTestMultiProcessHandler::GetParallelLevel() const
+{
+  if (this->ParallelLevel) {
+    return *this->ParallelLevel;
+  }
+  if (this->JobServerClient) {
+    return kParallelLevelWithJobserver;
+  }
+  return this->ParallelLevelDefault;
 }
 
 void cmCTestMultiProcessHandler::SetTestLoad(unsigned long load)
@@ -452,10 +471,11 @@ void cmCTestMultiProcessHandler::UnlockResources(int index)
 inline size_t cmCTestMultiProcessHandler::GetProcessorsUsed(int test)
 {
   size_t processors = static_cast<int>(this->Properties[test]->Processors);
+  size_t const parallelLevel = this->GetParallelLevel();
   // If processors setting is set higher than the -j
   // setting, we default to using all of the process slots.
-  if (processors > this->ParallelLevel) {
-    processors = this->ParallelLevel;
+  if (processors > parallelLevel) {
+    processors = parallelLevel;
   }
   // Cap tests that want affinity to the maximum affinity available.
   if (this->HaveAffinity && processors > this->HaveAffinity &&
@@ -509,8 +529,9 @@ void cmCTestMultiProcessHandler::StartNextTests()
 
   size_t numToStart = 0;
 
-  if (this->RunningCount < this->ParallelLevel) {
-    numToStart = this->ParallelLevel - this->RunningCount;
+  size_t const parallelLevel = this->GetParallelLevel();
+  if (this->RunningCount < parallelLevel) {
+    numToStart = parallelLevel - this->RunningCount;
   }
 
   if (numToStart == 0) {
@@ -524,7 +545,7 @@ void cmCTestMultiProcessHandler::StartNextTests()
   }
 
   bool allTestsFailedTestLoadCheck = false;
-  size_t minProcessorsRequired = this->ParallelLevel;
+  size_t minProcessorsRequired = this->GetParallelLevel();
   std::string testWithMinProcessors;
 
   cmsys::SystemInformation info;
@@ -819,7 +840,7 @@ void cmCTestMultiProcessHandler::ReadCostData()
 
       this->Properties[index]->PreviousRuns = prev;
       // When not running in parallel mode, don't use cost data
-      if (this->ParallelLevel > 1 && this->Properties[index] &&
+      if (this->GetParallelLevel() > 1 && this->Properties[index] &&
           this->Properties[index]->Cost == 0) {
         this->Properties[index]->Cost = cost;
       }
@@ -848,7 +869,7 @@ int cmCTestMultiProcessHandler::SearchByName(std::string const& name)
 
 void cmCTestMultiProcessHandler::CreateTestCostList()
 {
-  if (this->ParallelLevel > 1) {
+  if (this->GetParallelLevel() > 1) {
     this->CreateParallelTestCostList();
   } else {
     this->CreateSerialTestCostList();

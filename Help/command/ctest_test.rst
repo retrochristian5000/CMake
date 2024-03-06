@@ -105,8 +105,12 @@ The options are:
   Same as ``EXCLUDE_FIXTURE`` except only matching cleanup tests are excluded.
 
 ``PARALLEL_LEVEL <level>``
-  Specify a positive number representing the number of tests to
-  be run in parallel.
+  Run tests in parallel, limited to a given level of parallelism.
+
+  .. versionadded:: 3.29
+
+    Specify ``0`` to let ctest choose a default limit of parallelism
+    as documented by the :option:`ctest --parallel` option.
 
 ``RESOURCE_SPEC_FILE <file>``
   .. versionadded:: 3.16

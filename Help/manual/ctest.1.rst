@@ -118,17 +118,25 @@ Run Tests
  previously interrupted.  If no interruption occurred, the ``-F`` option
  will have no effect.
 
-.. option:: -j <jobs>, --parallel <jobs>
+.. option:: -j [<level>], --parallel [<level>]
 
- Run the tests in parallel using the given number of jobs.
+ Run tests in parallel, optionally limited to a given level of parallelism.
 
- This option tells CTest to run the tests in parallel using given
- number of jobs. This option can also be set by setting the
- :envvar:`CTEST_PARALLEL_LEVEL` environment variable.
+ .. versionadded:: 3.29
+
+    The ``<level>`` may be omitted, or given ``0``, in which case:
+
+    * Under `Job Server Integration`_, parallelism is limited only
+      by available job tokens.
+
+    * Otherwise, parallelism is limited by the number of processors,
+      or 2, whichever is larger.
+
+ This option may instead be specified by the :envvar:`CTEST_PARALLEL_LEVEL`
+ environment variable.
 
  This option can be used with the :prop_test:`PROCESSORS` test property.
-
- See `Label and Subproject Summary`_.
+ See the `Label and Subproject Summary`_.
 
 .. option:: --resource-spec-file <file>
 

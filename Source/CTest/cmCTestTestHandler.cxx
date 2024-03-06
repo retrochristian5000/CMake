@@ -548,9 +548,11 @@ bool cmCTestTestHandler::ProcessOptions()
       return false;
     }
   }
-  if (this->GetOption("ParallelLevel")) {
-    this->CTest->SetParallelLevel(
-      std::stoi(*this->GetOption("ParallelLevel")));
+  if (cmValue parallelLevel = this->GetOption("ParallelLevel")) {
+    unsigned long plevel = 0;
+    if (cmStrToULong(*parallelLevel, &plevel)) {
+      this->CTest->SetParallelLevel(plevel);
+    }
   }
 
   if (this->GetOption("StopOnFailure")) {
