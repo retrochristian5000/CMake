@@ -45,6 +45,6 @@ add_library(cmzstd STATIC
   )
 
 # BMI2 instructions are not supported in older environments.
-set_property(TARGET cmzstd PROPERTY COMPILE_DEFINITIONS DYNAMIC_BMI2=0)
+set_property(TARGET cmzstd PROPERTY COMPILE_DEFINITIONS DYNAMIC_BMI2=0 ZSTD_DISABLE_ASM=1)
 
 install(FILES LICENSE DESTINATION ${CMAKE_DOC_DIR}/cmzstd)
