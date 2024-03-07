@@ -26,8 +26,8 @@ run_ctest_test(TestLoadPass TEST_LOAD 8)
 
 # Verify that new tests are not started when the load average exceeds
 # our threshold and that they then run once the load average drops.
-run_ctest_test(TestLoadWait0 TEST_LOAD 4 PARALLEL_LEVEL 8)
-run_ctest_test(TestLoadWait1 TEST_LOAD 8 PARALLEL_LEVEL 8)
+run_ctest_test(TestLoadWait0 TEST_LOAD 4 PARALLEL_LEVEL 0)
+run_ctest_test(TestLoadWait1 TEST_LOAD 8 PARALLEL_LEVEL 0)
 
 # Verify that when an invalid "TEST_LOAD" value is given, a warning
 # message is displayed and the value is ignored.
@@ -41,9 +41,9 @@ run_ctest_test(CTestTestLoadPass)
 # Verify that new tests are not started when the load average exceeds
 # our threshold and that they then run once the load average drops.
 set(CASE_CTEST_TEST_LOAD 6)
-run_ctest_test(CTestTestLoadWait0 PARALLEL_LEVEL 8)
+run_ctest_test(CTestTestLoadWait0 PARALLEL_LEVEL 0)
 set(CASE_CTEST_TEST_LOAD 8)
-run_ctest_test(CTestTestLoadWait1 PARALLEL_LEVEL 8)
+run_ctest_test(CTestTestLoadWait1 PARALLEL_LEVEL 0)
 
 # Verify that when an invalid "CTEST_TEST_LOAD" value is given,
 # a warning message is displayed and the value is ignored.
