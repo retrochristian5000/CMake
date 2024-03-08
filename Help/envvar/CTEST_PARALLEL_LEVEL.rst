@@ -8,4 +8,9 @@ For example, if ``CTEST_PARALLEL_LEVEL`` is set to 8, CTest will run
 up to 8 tests concurrently as if ``ctest`` were invoked with the
 :option:`--parallel 8 <ctest --parallel>` option.
 
+.. versionadded:: 3.29
+
+  Specify ``0`` to let ctest use unbounded parallelism as
+  documented by the :option:`ctest --parallel` option.
+
 See :manual:`ctest(1)` for more information on parallel test execution.
