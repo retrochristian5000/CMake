@@ -87,6 +87,48 @@ macro(_determine_compile_features language_name standard_list)
   message(CHECK_PASS "done")
 endmacro()
 
+macro(_determine_latest_standard_from_compile_features language_name standard_list)
+  string(TOUPPER "${language_name}" upper_language_name)
+
+  set(latest_standard_name "CMAKE_${upper_language_name}_STANDARD_LATEST")
+  set(${latest_standard_name})
+
+  # Search each of the CMAKE_<LANG><STANDARD>_COMPILE_FEATURES lists from newest standard to oldest standard.
+  # When we find a non-empty list, we assume that the corresponding standard level represents the latest
+  # supported standard.
+  set(reversed_standard_list ${standard_list})
+  list(REVERSE reversed_standard_list)
+
+  foreach(current_standard IN LISTS reversed_standard_list)
+    set(current_compile_features_name "CMAKE_${upper_language_name}${current_standard}_COMPILE_FEATURES")
+
+    if(${current_compile_features_name})
+      set(${latest_standard_name} ${current_standard})
+      break()
+    endif()
+  endforeach()
+
+  # Propagate the CMAKE_<LANG>_STANDARD_LATEST variable to the parent scope.
+  set(${latest_standard_name} ${${latest_standard_name}} PARENT_SCOPE)
+endmacro()
+
+macro(_determine_compiler_support language_name standard_list)
+  string(TOUPPER "${language_name}" upper_language_name)
+
+  _determine_compile_features("${language_name}" "${standard_list}")
+
+  # If the CMAKE_<LANG>_STANDARD_LATEST variable is not already given a value, then attempt to calculate
+  # it from the various compile features lists associated with the language <LANG>.
+  #
+  # This is not always possible. For example, we cannot set CMAKE_OBJC_STANDARD_LATEST in this manner
+  # because CMake does not maintain a list of compile features for Objective C (OBJC). Instead, it is
+  # the responsibility of the various [Compiler Name]-[Language Name].cmake scripts contained within
+  # ${CMAKE_ROOT}/Modules/Compiler to set the variable appropriately.
+  if(NOT CMAKE_${upper_language_name}_STANDARD_LATEST)
+    _determine_latest_standard_from_compile_features("${language_name}" "${standard_list}")
+  endif()
+endmacro()
+
 function(cmake_determine_compiler_support lang)
   if("x${lang}" STREQUAL "xC" AND COMMAND cmake_record_c_compile_features)
     set(c_standard_list
@@ -97,7 +139,7 @@ function(cmake_determine_compiler_support lang)
       23
     )
 
-    _determine_compile_features(C "${c_standard_list}")
+    _determine_compiler_support(C "${c_standard_list}")
   elseif("x${lang}" STREQUAL "xCXX" AND COMMAND cmake_record_cxx_compile_features)
     set(cxx_standard_list
       98
@@ -109,7 +151,7 @@ function(cmake_determine_compiler_support lang)
       26
     )
 
-    _determine_compile_features(CXX "${cxx_standard_list}")
+    _determine_compiler_support(CXX "${cxx_standard_list}")
   elseif("x${lang}" STREQUAL "xCUDA" AND COMMAND cmake_record_cuda_compile_features)
     set(cuda_standard_list
       03
@@ -121,7 +163,7 @@ function(cmake_determine_compiler_support lang)
       26
     )
 
-    _determine_compile_features(CUDA "${cuda_standard_list}")
+    _determine_compiler_support(CUDA "${cuda_standard_list}")
   elseif(lang STREQUAL HIP AND COMMAND cmake_record_hip_compile_features)
     set(hip_standard_list
       98
@@ -133,6 +175,6 @@ function(cmake_determine_compiler_support lang)
       26
     )
 
-    _determine_compile_features(HIP "${hip_standard_list}")
+    _determine_compiler_support(HIP "${hip_standard_list}")
   endif()
 endfunction()
