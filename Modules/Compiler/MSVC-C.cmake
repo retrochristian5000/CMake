@@ -41,6 +41,7 @@ else()
   set(CMAKE_C99_EXTENSION_COMPILE_OPTION "")
   set(CMAKE_C11_STANDARD_COMPILE_OPTION "")
   set(CMAKE_C11_EXTENSION_COMPILE_OPTION "")
+  set(CMAKE_C_STANDARD_LATEST 11)
 
   # There is no meaningful default for this
   set(CMAKE_C_STANDARD_DEFAULT "")
