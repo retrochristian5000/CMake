@@ -313,6 +313,16 @@ bool HandleAndValidateSourceFilePropertyGENERATED(
     return false;
   };
 
+  const auto cmp0163PolicyStatus = mf.GetPolicyStatus(cmPolicies::CMP0163);
+  const bool cmp0163PolicyNEW = cmp0163PolicyStatus != cmPolicies::OLD &&
+    cmp0163PolicyStatus != cmPolicies::WARN;
+  if (cmp0163PolicyNEW) {
+    if (!isProblematic("CMP0163")) {
+      sf->MarkAsGenerated();
+    }
+    return true;
+  }
+
   const auto cmp0118PolicyStatus = mf.GetPolicyStatus(cmPolicies::CMP0118);
   const bool cmp0118PolicyWARN = cmp0118PolicyStatus == cmPolicies::WARN;
   const bool cmp0118PolicyNEW =
