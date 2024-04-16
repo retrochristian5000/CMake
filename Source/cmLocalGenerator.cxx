@@ -595,7 +595,7 @@ void cmLocalGenerator::GenerateInstallRules()
         "CMAKE_GET_RUNTIME_DEPENDENCIES_PLATFORM")) {
     /* clang-format off */
     fout <<
-      "# Set default install directory permissions.\n"
+      "# Set OS and executable format for runtime-dependencies.\n"
       "if(NOT DEFINED CMAKE_GET_RUNTIME_DEPENDENCIES_PLATFORM)\n"
       "  set(CMAKE_GET_RUNTIME_DEPENDENCIES_PLATFORM \""
          << *platform << "\")\n"
@@ -611,7 +611,7 @@ void cmLocalGenerator::GenerateInstallRules()
         this->Makefile->GetDefinition("CMAKE_GET_RUNTIME_DEPENDENCIES_TOOL")) {
     /* clang-format off */
     fout <<
-      "# Set default install directory permissions.\n"
+      "# Set tool for dependency-resolution of runtime-dependencies.\n"
       "if(NOT DEFINED CMAKE_GET_RUNTIME_DEPENDENCIES_TOOL)\n"
       "  set(CMAKE_GET_RUNTIME_DEPENDENCIES_TOOL \""
          << *command << "\")\n"
@@ -627,7 +627,7 @@ void cmLocalGenerator::GenerateInstallRules()
         "CMAKE_GET_RUNTIME_DEPENDENCIES_COMMAND")) {
     /* clang-format off */
     fout <<
-      "# Set default install directory permissions.\n"
+      "# Set path to tool for dependency-resolution of runtime-dependencies.\n"
       "if(NOT DEFINED CMAKE_GET_RUNTIME_DEPENDENCIES_COMMAND)\n"
       "  set(CMAKE_GET_RUNTIME_DEPENDENCIES_COMMAND \""
          << *command << "\")\n"
@@ -644,7 +644,7 @@ void cmLocalGenerator::GenerateInstallRules()
   if (cmValue command = this->Makefile->GetDefinition("CMAKE_OBJDUMP")) {
     /* clang-format off */
     fout <<
-      "# Set default install directory permissions.\n"
+      "# Set path to fallback-tool for dependency-resolution.\n"
       "if(NOT DEFINED CMAKE_OBJDUMP)\n"
       "  set(CMAKE_OBJDUMP \""
          << *command << "\")\n"
@@ -717,8 +717,15 @@ void cmLocalGenerator::GenerateInstallRules()
     /* clang-format off */
     fout <<
       "if(CMAKE_INSTALL_COMPONENT)\n"
-      "  set(CMAKE_INSTALL_MANIFEST \"install_manifest_"
+      "  if(CMAKE_INSTALL_COMPONENT MATCHES \"^[a-zA-Z0-9_.+-]+$\")\n"
+      "    set(CMAKE_INSTALL_MANIFEST \"install_manifest_"
       "${CMAKE_INSTALL_COMPONENT}.txt\")\n"
+      "  else()\n"
+      "    string(MD5 CMAKE_INST_COMP_HASH \"${CMAKE_INSTALL_COMPONENT}\")\n"
+      "    set(CMAKE_INSTALL_MANIFEST \"install_manifest_"
+      "${CMAKE_INST_COMP_HASH}.txt\")\n"
+      "    unset(CMAKE_INST_COMP_HASH)\n"
+      "  endif()\n"
       "else()\n"
       "  set(CMAKE_INSTALL_MANIFEST \"install_manifest.txt\")\n"
       "endif()\n"
