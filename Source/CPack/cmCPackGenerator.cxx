@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstring>
 #include <memory>
+#include <regex>
 #include <utility>
 
 #include <cmext/string_view>
@@ -751,7 +752,23 @@ int cmCPackGenerator::InstallCMakeProject(
     //  one install directory for each component **GROUP**
     // instead of the default
     //  one install directory for each component.
-    tempInstallDirectory += this->GetComponentInstallDirNameSuffix(component);
+    auto suffix = this->GetComponentInstallDirNameSuffix(component);
+    // Use its hash instead if the suffix contains invalid characters or
+    // prepend an underscore if it resembles reserved filenames (on Windows).
+    std::string permitted_chars("_.+-"
+                                "abcdefghijklmnopqrstuvwxyz"
+                                "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                "0123456789");
+    std::regex reserved_pattern("^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])([.].+)?",
+                                std::regex_constants::icase);
+    if (suffix.find_first_not_of(permitted_chars, 0) != std::string::npos) {
+      cmCryptoHash hasher(cmCryptoHash::AlgoMD5);
+      tempInstallDirectory += hasher.HashString(suffix);
+    } else if (std::regex_match(suffix, reserved_pattern)) {
+      tempInstallDirectory += "_" + suffix;
+    } else {
+      tempInstallDirectory += suffix;
+    }
     if (this->IsOn("CPACK_COMPONENT_INCLUDE_TOPLEVEL_DIRECTORY")) {
       tempInstallDirectory += "/";
       tempInstallDirectory += *this->GetOption("CPACK_PACKAGE_FILE_NAME");
