@@ -23,6 +23,33 @@ static unsigned int const cmCryptoHashAlgoToId[] = {
   RHASH_SHA3_512
 };
 
+static cmCryptoHash::Algo idToCmCryptoHashAlgo(unsigned int id)
+{
+  switch (id) {
+    case RHASH_MD5:
+      return cmCryptoHash::AlgoMD5;
+    case RHASH_SHA1:
+      return cmCryptoHash::AlgoSHA1;
+    case RHASH_SHA224:
+      return cmCryptoHash::AlgoSHA224;
+    case RHASH_SHA256:
+      return cmCryptoHash::AlgoSHA256;
+    case RHASH_SHA384:
+      return cmCryptoHash::AlgoSHA384;
+    case RHASH_SHA512:
+      return cmCryptoHash::AlgoSHA512;
+    case RHASH_SHA3_224:
+      return cmCryptoHash::AlgoSHA3_224;
+    case RHASH_SHA3_256:
+      return cmCryptoHash::AlgoSHA3_256;
+    case RHASH_SHA3_384:
+      return cmCryptoHash::AlgoSHA3_384;
+    case RHASH_SHA3_512:
+      return cmCryptoHash::AlgoSHA3_512;
+  }
+  return cmCryptoHash::Algo(-1);
+};
+
 static int cmCryptoHash_rhash_library_initialized;
 
 static rhash cmCryptoHash_rhash_init(unsigned int id)
@@ -78,6 +105,33 @@ std::unique_ptr<cmCryptoHash> cmCryptoHash::New(cm::string_view algo)
     return cm::make_unique<cmCryptoHash>(AlgoSHA3_512);
   }
   return std::unique_ptr<cmCryptoHash>(nullptr);
+}
+
+std::string cmCryptoHash::GetHashAlgoName() const
+{
+  switch (idToCmCryptoHashAlgo(this->Id)) {
+    case AlgoMD5:
+      return "MD5";
+    case AlgoSHA1:
+      return "SHA1";
+    case AlgoSHA224:
+      return "SHA224";
+    case AlgoSHA256:
+      return "SHA256";
+    case AlgoSHA384:
+      return "SHA384";
+    case AlgoSHA512:
+      return "SHA512";
+    case AlgoSHA3_224:
+      return "SHA3_224";
+    case AlgoSHA3_256:
+      return "SHA3_256";
+    case AlgoSHA3_384:
+      return "SHA3_384";
+    case AlgoSHA3_512:
+      return "SHA3_512";
+  }
+  return "UNKNOWN";
 }
 
 bool cmCryptoHash::IntFromHexDigit(char input, char& output)
