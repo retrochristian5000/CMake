@@ -281,6 +281,9 @@ cmVisualStudio10TargetGenerator::cmVisualStudio10TargetGenerator(
     this->Makefile->GetGeneratorConfigs(cmMakefile::ExcludeEmptyConfig);
   this->NsightTegra = gg->IsNsightTegra();
   this->Android = gg->TargetsAndroid();
+  auto scanProp = target->GetProperty("CXX_SCAN_FOR_MODULES");
+  this->ScanSourceForModuleDependencies =
+    scanProp.IsSet() ? scanProp.IsOn() : true;
   for (unsigned int& version : this->NsightTegraVersion) {
     version = 0;
   }
@@ -2888,8 +2891,9 @@ void cmVisualStudio10TargetGenerator::OutputSourceSpecificFlags(
       if (compileAsPerConfig) {
         clOptions.AddFlag("CompileAs", compileAsPerConfig);
       }
-      if (shouldScanForModules) {
-        clOptions.AddFlag("ScanSourceForModuleDependencies", "true");
+      if (shouldScanForModules != this->ScanSourceForModuleDependencies) {
+        clOptions.AddFlag("ScanSourceForModuleDependencies",
+                          shouldScanForModules ? "true" : "false");
       }
       if (noWinRT) {
         clOptions.AddFlag("CompileAsWinRT", "false");
@@ -3629,8 +3633,8 @@ void cmVisualStudio10TargetGenerator::WriteClOptions(
     }
   }
 
-  // Disable C++ source scanning by default.
-  e2.Element("ScanSourceForModuleDependencies", "false");
+  e2.Element("ScanSourceForModuleDependencies",
+             this->ScanSourceForModuleDependencies ? "true" : "false");
 }
 
 bool cmVisualStudio10TargetGenerator::ComputeRcOptions()
