@@ -240,6 +240,7 @@ private:
   bool NsightTegra;
   bool Android;
   bool HaveCustomCommandDepfile = false;
+  bool ScanSourceForModuleDependencies;
   unsigned int NsightTegraVersion[4];
   bool TargetCompileAsWinRT;
   std::set<std::string> IPOEnabledConfigurations;
