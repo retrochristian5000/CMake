@@ -911,8 +911,8 @@ std::string cmGeneratorTarget::GetLinkerTypeProperty(
   std::string propName{ "LINKER_TYPE" };
   auto linkerType = this->GetProperty(propName);
   if (!linkerType.IsEmpty()) {
-    cmGeneratorExpressionDAGChecker dagChecker(this, propName, nullptr,
-                                               nullptr, this->LocalGenerator);
+    cmGeneratorExpressionDAGChecker dagChecker(
+      this, propName, nullptr, nullptr, this->LocalGenerator, config);
     auto ltype =
       cmGeneratorExpression::Evaluate(*linkerType, this->GetLocalGenerator(),
                                       config, this, &dagChecker, this, lang);
@@ -1378,7 +1378,7 @@ bool cmGeneratorTarget::IsSystemIncludeDirectory(
   if (iter == this->SystemIncludesCache.end()) {
     cmGeneratorExpressionDAGChecker dagChecker(
       this, "SYSTEM_INCLUDE_DIRECTORIES", nullptr, nullptr,
-      this->LocalGenerator);
+      this->LocalGenerator, config);
 
     bool excludeImported = this->GetPropertyAsBool("NO_SYSTEM_FROM_IMPORTED");
 
@@ -1483,9 +1483,9 @@ std::string cmGeneratorTarget::EvaluateInterfaceProperty(
   // Evaluate $<TARGET_PROPERTY:this,prop> as if it were compiled.  This is
   // a subset of TargetPropertyNode::Evaluate without stringify/parse steps
   // but sufficient for transitive interface properties.
-  cmGeneratorExpressionDAGChecker dagChecker(context->Backtrace, this, prop,
-                                             nullptr, dagCheckerParent,
-                                             this->LocalGenerator);
+  cmGeneratorExpressionDAGChecker dagChecker(
+    context->Backtrace, this, prop, nullptr, dagCheckerParent,
+    this->LocalGenerator, context->Config);
   switch (dagChecker.Check()) {
     case cmGeneratorExpressionDAGChecker::SELF_REFERENCE:
       dagChecker.ReportError(
@@ -1597,8 +1597,8 @@ std::string AddLangSpecificInterfaceIncludeDirectories(
   cmGeneratorExpressionDAGChecker* context)
 {
   cmGeneratorExpressionDAGChecker dag{
-    target->GetBacktrace(),     target, propertyName, nullptr, context,
-    target->GetLocalGenerator()
+    target->GetBacktrace(),      target, propertyName, nullptr, context,
+    target->GetLocalGenerator(), config
   };
   switch (dag.Check()) {
     case cmGeneratorExpressionDAGChecker::SELF_REFERENCE:
@@ -1650,8 +1650,8 @@ void AddLangSpecificImplicitIncludeDirectories(
   if (const auto* libraries =
         target->GetLinkImplementationLibraries(config, UseTo::Compile)) {
     cmGeneratorExpressionDAGChecker dag{
-      target->GetBacktrace(),     target, propertyName, nullptr, nullptr,
-      target->GetLocalGenerator()
+      target->GetBacktrace(),      target, propertyName, nullptr, nullptr,
+      target->GetLocalGenerator(), config
     };
 
     for (const cmLinkImplItem& library : libraries->Libraries) {
@@ -1904,7 +1904,7 @@ std::vector<BT<std::string>> cmGeneratorTarget::GetSourceFilePaths(
   }
 
   cmGeneratorExpressionDAGChecker dagChecker(this, "SOURCES", nullptr, nullptr,
-                                             this->LocalGenerator);
+                                             this->LocalGenerator, config);
 
   EvaluatedTargetPropertyEntries entries = EvaluateTargetPropertyEntries(
     this, config, std::string(), &dagChecker, this->SourceEntries);
@@ -3117,8 +3117,8 @@ void cmGeneratorTarget::GetAutoUicOptions(std::vector<std::string>& result,
     return;
   }
 
-  cmGeneratorExpressionDAGChecker dagChecker(this, "AUTOUIC_OPTIONS", nullptr,
-                                             nullptr, this->LocalGenerator);
+  cmGeneratorExpressionDAGChecker dagChecker(
+    this, "AUTOUIC_OPTIONS", nullptr, nullptr, this->LocalGenerator, config);
   cmExpandList(cmGeneratorExpression::Evaluate(prop, this->LocalGenerator,
                                                config, this, &dagChecker),
                result);
@@ -3921,8 +3921,9 @@ std::vector<BT<std::string>> cmGeneratorTarget::GetIncludeDirectories(
   std::vector<BT<std::string>> includes;
   std::unordered_set<std::string> uniqueIncludes;
 
-  cmGeneratorExpressionDAGChecker dagChecker(
-    this, "INCLUDE_DIRECTORIES", nullptr, nullptr, this->LocalGenerator);
+  cmGeneratorExpressionDAGChecker dagChecker(this, "INCLUDE_DIRECTORIES",
+                                             nullptr, nullptr,
+                                             this->LocalGenerator, config);
 
   cmList debugProperties{ this->Makefile->GetDefinition(
     "CMAKE_DEBUG_TARGET_PROPERTIES") };
@@ -4184,8 +4185,8 @@ std::vector<BT<std::string>> cmGeneratorTarget::GetCompileOptions(
   std::vector<BT<std::string>> result;
   std::unordered_set<std::string> uniqueOptions;
 
-  cmGeneratorExpressionDAGChecker dagChecker(this, "COMPILE_OPTIONS", nullptr,
-                                             nullptr, this->LocalGenerator);
+  cmGeneratorExpressionDAGChecker dagChecker(
+    this, "COMPILE_OPTIONS", nullptr, nullptr, this->LocalGenerator, config);
 
   cmList debugProperties{ this->Makefile->GetDefinition(
     "CMAKE_DEBUG_TARGET_PROPERTIES") };
@@ -4225,8 +4226,8 @@ std::vector<BT<std::string>> cmGeneratorTarget::GetCompileFeatures(
   std::vector<BT<std::string>> result;
   std::unordered_set<std::string> uniqueFeatures;
 
-  cmGeneratorExpressionDAGChecker dagChecker(this, "COMPILE_FEATURES", nullptr,
-                                             nullptr, this->LocalGenerator);
+  cmGeneratorExpressionDAGChecker dagChecker(
+    this, "COMPILE_FEATURES", nullptr, nullptr, this->LocalGenerator, config);
 
   cmList debugProperties{ this->Makefile->GetDefinition(
     "CMAKE_DEBUG_TARGET_PROPERTIES") };
@@ -4275,8 +4276,9 @@ std::vector<BT<std::string>> cmGeneratorTarget::GetCompileDefinitions(
   std::vector<BT<std::string>> list;
   std::unordered_set<std::string> uniqueOptions;
 
-  cmGeneratorExpressionDAGChecker dagChecker(
-    this, "COMPILE_DEFINITIONS", nullptr, nullptr, this->LocalGenerator);
+  cmGeneratorExpressionDAGChecker dagChecker(this, "COMPILE_DEFINITIONS",
+                                             nullptr, nullptr,
+                                             this->LocalGenerator, config);
 
   cmList debugProperties{ this->Makefile->GetDefinition(
     "CMAKE_DEBUG_TARGET_PROPERTIES") };
@@ -4339,8 +4341,9 @@ std::vector<BT<std::string>> cmGeneratorTarget::GetPrecompileHeaders(
   }
   std::unordered_set<std::string> uniqueOptions;
 
-  cmGeneratorExpressionDAGChecker dagChecker(
-    this, "PRECOMPILE_HEADERS", nullptr, nullptr, this->LocalGenerator);
+  cmGeneratorExpressionDAGChecker dagChecker(this, "PRECOMPILE_HEADERS",
+                                             nullptr, nullptr,
+                                             this->LocalGenerator, config);
 
   cmList debugProperties{ this->Makefile->GetDefinition(
     "CMAKE_DEBUG_TARGET_PROPERTIES") };
@@ -4742,8 +4745,8 @@ std::vector<BT<std::string>> cmGeneratorTarget::GetLinkOptions(
   std::vector<BT<std::string>> result;
   std::unordered_set<std::string> uniqueOptions;
 
-  cmGeneratorExpressionDAGChecker dagChecker(this, "LINK_OPTIONS", nullptr,
-                                             nullptr, this->LocalGenerator);
+  cmGeneratorExpressionDAGChecker dagChecker(
+    this, "LINK_OPTIONS", nullptr, nullptr, this->LocalGenerator, config);
 
   cmList debugProperties{ this->Makefile->GetDefinition(
     "CMAKE_DEBUG_TARGET_PROPERTIES") };
@@ -4911,8 +4914,9 @@ std::vector<BT<std::string>> cmGeneratorTarget::GetStaticLibraryLinkOptions(
   std::vector<BT<std::string>> result;
   std::unordered_set<std::string> uniqueOptions;
 
-  cmGeneratorExpressionDAGChecker dagChecker(
-    this, "STATIC_LIBRARY_OPTIONS", nullptr, nullptr, this->LocalGenerator);
+  cmGeneratorExpressionDAGChecker dagChecker(this, "STATIC_LIBRARY_OPTIONS",
+                                             nullptr, nullptr,
+                                             this->LocalGenerator, config);
 
   EvaluatedTargetPropertyEntries entries;
   if (cmValue linkOptions = this->GetProperty("STATIC_LIBRARY_OPTIONS")) {
@@ -5024,8 +5028,8 @@ std::vector<BT<std::string>> cmGeneratorTarget::GetLinkDirectories(
   std::vector<BT<std::string>> result;
   std::unordered_set<std::string> uniqueDirectories;
 
-  cmGeneratorExpressionDAGChecker dagChecker(this, "LINK_DIRECTORIES", nullptr,
-                                             nullptr, this->LocalGenerator);
+  cmGeneratorExpressionDAGChecker dagChecker(
+    this, "LINK_DIRECTORIES", nullptr, nullptr, this->LocalGenerator, config);
 
   cmList debugProperties{ this->Makefile->GetDefinition(
     "CMAKE_DEBUG_TARGET_PROPERTIES") };
@@ -5068,8 +5072,8 @@ std::vector<BT<std::string>> cmGeneratorTarget::GetLinkDepends(
 {
   std::vector<BT<std::string>> result;
   std::unordered_set<std::string> uniqueOptions;
-  cmGeneratorExpressionDAGChecker dagChecker(this, "LINK_DEPENDS", nullptr,
-                                             nullptr, this->LocalGenerator);
+  cmGeneratorExpressionDAGChecker dagChecker(
+    this, "LINK_DEPENDS", nullptr, nullptr, this->LocalGenerator, config);
 
   EvaluatedTargetPropertyEntries entries;
   if (cmValue linkDepends = this->GetProperty("LINK_DEPENDS")) {
@@ -7058,7 +7062,7 @@ void cmGeneratorTarget::ExpandLinkItems(std::string const& prop,
   }
   // Keep this logic in sync with ComputeLinkImplementationLibraries.
   cmGeneratorExpressionDAGChecker dagChecker(this, prop, nullptr, nullptr,
-                                             this->LocalGenerator);
+                                             this->LocalGenerator, config);
   // The $<LINK_ONLY> expression may be in a link interface to specify
   // private link dependencies that are otherwise excluded from usage
   // requirements.
@@ -8732,8 +8736,8 @@ void cmGeneratorTarget::ComputeLinkImplementationLibraries(
   // Collect libraries directly linked in this configuration.
   for (auto const& entry : entryRange) {
     // Keep this logic in sync with ExpandLinkItems.
-    cmGeneratorExpressionDAGChecker dagChecker(this, "LINK_LIBRARIES", nullptr,
-                                               nullptr, this->LocalGenerator);
+    cmGeneratorExpressionDAGChecker dagChecker(
+      this, "LINK_LIBRARIES", nullptr, nullptr, this->LocalGenerator, config);
     // The $<LINK_ONLY> expression may be used to specify link dependencies
     // that are otherwise excluded from usage requirements.
     if (usage == UseTo::Compile) {
