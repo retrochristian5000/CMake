@@ -14,4 +14,6 @@ Any leading ``INTERFACE_`` prefix is ignored, e.g., ``INTERFACE_PROP`` is
 treated as just ``PROP``.
 
 See documentation of the :genex:`TARGET_PROPERTY` generator expression
-for details of custom transitive property evaluation.
+for details of custom transitive property evaluation.  See also the
+:prop_tgt:`TRANSITIVE_LINK_PROPERTIES` target property, which includes
+entries guarded by :genex:`LINK_ONLY`.
