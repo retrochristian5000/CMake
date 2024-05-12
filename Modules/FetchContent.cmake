@@ -1269,6 +1269,7 @@ function(FetchContent_Declare contentName)
   # handle the URL keyword differently.
   set(oneValueArgs
     GIT_REPOSITORY
+    GIT_SUBMODULES   # Doesn't properly handle empty value, see further below
     SVN_REPOSITORY
     DOWNLOAD_NO_EXTRACT
     DOWNLOAD_EXTRACT_TIMESTAMP
@@ -1309,6 +1310,30 @@ function(FetchContent_Declare contentName)
         "${ARG_GIT_REPOSITORY}" "${cmp0150}" "${FETCHCONTENT_BASE_DIR}"
       )
       set(ARG_GIT_REPOSITORY "${_resolved_git_repository}")
+
+      # We handle CMP0097 now and always use its NEW behavior during population.
+      # Note that we can't handle GIT_SUBMODULES like other options because
+      # cmake_parse_arguments() doesn't properly handle empty values in a way
+      # that allows us to distinguish between the option being missing and it
+      # being given with an empty value. We still list it as a keyword to parse
+      # because it makes some things convenient here, but we have to detect the
+      # situation we've got in a more careful way.
+      list(FIND ARGN GIT_SUBMODULES index)
+      if("${ARG_GIT_SUBMODULES}" STREQUAL "" AND ${index} GREATER_EQUAL 0)
+        # GIT_SUBMODULES was given with an empty value
+        cmake_policy(GET CMP0097 cmp0097
+          PARENT_SCOPE # undocumented, do not use outside of CMake
+        )
+        if(cmp0097 STREQUAL "NEW")
+          set(ARG_GIT_SUBMODULES "")
+        else()
+          # OLD behavior treats this the same as GIT_SUBMODULES not being given.
+          # Explicitly unset ARG_GIT_SUBMODULES in case cmake_parse_arguments()
+          # behavior is updated to define the variable with an empty value in
+          # this scenario.
+          unset(ARG_GIT_SUBMODULES)
+        endif()
+      endif()
     endif()
   endif()
 
