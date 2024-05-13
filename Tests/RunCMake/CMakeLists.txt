@@ -515,11 +515,12 @@ add_RunCMake_test(add_subdirectory -DCMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMP
 set_property(TEST RunCMake.add_subdirectory APPEND PROPERTY LABELS "Fortran")
 add_RunCMake_test(add_test -DPSEUDO_EMULATOR=$<TARGET_FILE:pseudo_emulator>)
 add_RunCMake_test(build_command)
+add_executable(exit_abort exit_abort.c)
 add_executable(exit_code exit_code.c)
 set(execute_process_ARGS
   -DEXIT_CODE_EXE=$<TARGET_FILE:exit_code>
+  -DEXIT_ABORT_EXE=$<TARGET_FILE:exit_abort>
   -DPRINT_STDIN_EXE=$<TARGET_FILE:print_stdin>
-  -DPython_EXECUTABLE=${Python_EXECUTABLE}
   -DCYGWIN=${CYGWIN}
   )
 if(NOT CMake_TEST_EXTERNAL_CMAKE)
