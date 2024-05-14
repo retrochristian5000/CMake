@@ -898,7 +898,8 @@ public:
     BuiltinTransitiveProperties;
 
   cm::optional<TransitiveProperty> IsTransitiveProperty(
-    cm::string_view prop, cmLocalGenerator const* lg) const;
+    cm::string_view prop, cmLocalGenerator const* lg,
+    std::string const& config, bool evaluatingLinkLibraries) const;
 
   bool HaveInstallTreeRPATH(const std::string& config) const;
 
@@ -980,6 +981,30 @@ public:
   bool DiscoverSyntheticTargets(cmSyntheticTargetCache& cache,
                                 std::string const& config);
 
+  class CustomTransitiveProperty : public TransitiveProperty
+  {
+    std::unique_ptr<std::string> InterfaceNameBuf;
+    CustomTransitiveProperty(std::unique_ptr<std::string> interfaceNameBuf,
+                             UseTo usage);
+
+  public:
+    CustomTransitiveProperty(std::string interfaceName, UseTo usage);
+  };
+  struct CustomTransitiveProperties
+    : public std::map<std::string, CustomTransitiveProperty>
+  {
+    void Add(cmValue props, UseTo usage);
+  };
+
+  enum class PropertyFor
+  {
+    Build,
+    Interface,
+  };
+
+  CustomTransitiveProperties const& GetCustomTransitiveProperties(
+    std::string const& config, PropertyFor propertyFor) const;
+
 private:
   void AddSourceCommon(const std::string& src, bool before = false);
 
@@ -1047,6 +1072,11 @@ private:
                             std::string const& base, std::string const& suffix,
                             std::string const& name, cmValue version) const;
 
+  mutable std::map<std::string, CustomTransitiveProperties>
+    CustomTransitiveBuildPropertiesMap;
+  mutable std::map<std::string, CustomTransitiveProperties>
+    CustomTransitiveInterfacePropertiesMap;
+
   struct CompatibleInterfacesBase
   {
     std::set<std::string> PropsBool;
@@ -1078,7 +1108,8 @@ private:
   {
     bool Done = false;
   };
-  mutable std::map<std::string, LinkImplClosure> LinkImplClosureMap;
+  mutable std::map<std::string, LinkImplClosure> LinkImplClosureForLinkMap;
+  mutable std::map<std::string, LinkImplClosure> LinkImplClosureForUsageMap;
 
   using LinkInterfaceMapType = std::map<std::string, cmHeadToLinkInterfaceMap>;
   mutable LinkInterfaceMapType LinkInterfaceMap;
@@ -1298,7 +1329,7 @@ private:
 
 public:
   const std::vector<const cmGeneratorTarget*>& GetLinkImplementationClosure(
-    const std::string& config) const;
+    const std::string& config, UseTo usage) const;
 
   mutable std::map<std::string, std::string> MaxLanguageStandards;
   std::map<std::string, std::string> const& GetMaxLanguageStandards() const

@@ -457,7 +457,8 @@ cmComputeLinkDepends::cmComputeLinkDepends(const cmGeneratorTarget* target,
               "LINK_LIBRARY_OVERRIDE",
               nullptr,
               nullptr,
-              this->Target->GetLocalGenerator()
+              this->Target->GetLocalGenerator(),
+              config
             };
             auto overrideFeature = cmGeneratorExpression::Evaluate(
               *feature, this->Target->GetLocalGenerator(), config,
@@ -475,7 +476,8 @@ cmComputeLinkDepends::cmComputeLinkDepends(const cmGeneratorTarget* target,
                                          "LINK_LIBRARY_OVERRIDE",
                                          nullptr,
                                          nullptr,
-                                         target->GetLocalGenerator() };
+                                         target->GetLocalGenerator(),
+                                         config };
     auto overrideValue = cmGeneratorExpression::Evaluate(
       *linkLibraryOverride, target->GetLocalGenerator(), config, target, &dag,
       target, linkLanguage);
