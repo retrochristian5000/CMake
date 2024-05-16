@@ -1661,15 +1661,23 @@ void AddLangSpecificImplicitIncludeDirectories(
           auto* lg = dependency->GetLocalGenerator();
           EvaluatedTargetPropertyEntry entry{ library, library.Backtrace };
 
+          std::string base_path;
+
           if (cmValue val = dependency->GetProperty(propertyName)) {
-            entry.Values.emplace_back(*val);
+            base_path = *val;
           } else {
             if (mode == IncludeDirectoryFallBack::BINARY) {
-              entry.Values.emplace_back(lg->GetCurrentBinaryDirectory());
+              base_path = lg->GetCurrentBinaryDirectory();
             } else if (mode == IncludeDirectoryFallBack::OBJECT) {
               entry.Values.emplace_back(
                 dependency->GetObjectDirectory(config));
             }
+          }
+
+          if (!base_path.empty() && propertyName == "Swift_MODULE_DIRECTORY") {
+            lg->GetGlobalGenerator()->AppendDirectoryForConfig("/", config, "",
+                                                               base_path);
+            entry.Values.emplace_back(std::move(base_path));
           }
 
           cmExpandList(
