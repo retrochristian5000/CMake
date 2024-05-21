@@ -1191,7 +1191,9 @@ if(BUILD_TESTING)
         if(NOT SHLIBDEPS_EXECUTABLE_VERSION VERSION_LESS 1.19 OR
           (NOT SHLIBDEPS_EXECUTABLE_VERSION VERSION_LESS 1.17 AND NOT CMAKE_BINARY_DIR MATCHES ".*[ ].*"))
             list(APPEND DEB_CONFIGURATIONS_TO_TEST "shlibdeps-with-private-lib-failure"
-                                                   "shlibdeps-with-private-lib-success")
+                                                   "shlibdeps-with-private-lib-success"
+                                                   "shlibdeps-with-ORIGIN-RPATH-failure"
+                                                   "shlibdeps-with-ORIGIN-RPATH-success")
         endif()
         # Check if distro has symbols or shlibs data
         file(GLOB SHLIBS_FILES_EXIST "/var/lib/dpkg/info/*.shlibs" "/var/lib/dpkg/info/*.symbols")
