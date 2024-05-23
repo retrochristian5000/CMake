@@ -540,10 +540,15 @@ public:
   /** Return the swift module name for this target. */
   std::string GetSwiftModuleName() const;
 
+  /** Return the directory containing the `.swiftmodule` file for this
+      target in the given configuration.  */
+  std::string GetSwiftModuleFileDirectory(std::string const& config) const;
+
   /** Return the path of the `.swiftmodule` file for this target in
       the given configuration.  */
   std::string GetSwiftModulePath(std::string const& config) const;
 
+private:
   /** Return the given property of this target if it exists; otherwise
       return defaultValue. */
   std::string GetPropertyOrDefault(std::string const& property,
@@ -551,11 +556,6 @@ public:
 
   /** Return the name of the `.swiftmodule` file for this target. */
   std::string GetSwiftModuleFileName() const;
-
-private:
-  /** Return the directory containing the `.swiftmodule` file for this
-      target in the given configuration.  */
-  std::string GetSwiftModuleFileDirectory(std::string const& config) const;
 
   using ConfigAndLanguage = std::pair<std::string, std::string>;
   using ConfigAndLanguageToBTStrings =
