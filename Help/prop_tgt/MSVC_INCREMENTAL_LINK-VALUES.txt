@@ -1,0 +1,15 @@
+``Default``
+  Pass no incremental link flags to the MSVC linker.
+``Force``
+  Link with ``/INCREMENTAL`` or equivalent flags to require incremental linking or emit a warning.
+``Never``
+  Link with ``/INCREMENTAL:NO`` or equivalent flags to disable incremental linking.
+
+The value is ignored on linkers other than the MSVC linker, but an
+unsupported value will be rejected as an error when using the
+MSVC linker.
+
+The value may also be the empty string (``""``) in which case no incremental
+linker flags will be added explicitly by CMake.  Note that with
+:ref:`Visual Studio Generators` the native build system may choose to
+add its own default incremental linker flag.

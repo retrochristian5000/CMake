@@ -170,6 +170,9 @@ void cmMakefileLibraryTargetGenerator::WriteSharedLibraryRules(bool relink)
     cmStrCat("CMAKE_", linkLanguage, "_CREATE_SHARED_LIBRARY");
 
   std::string extraFlags;
+  this->LocalGenerator->AppendIncrementalLinkFlags(
+    extraFlags, this->GeneratorTarget, this->GetConfigName(), linkLanguage);
+
   this->GetTargetLinkFlags(extraFlags, linkLanguage);
   this->LocalGenerator->AddConfigVariableFlags(
     extraFlags, "CMAKE_SHARED_LINKER_FLAGS", this->GetConfigName());

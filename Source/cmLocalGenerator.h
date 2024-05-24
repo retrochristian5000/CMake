@@ -189,6 +189,10 @@ public:
   void AppendLinkerTypeFlags(std::string& flags, cmGeneratorTarget* target,
                              const std::string& config,
                              const std::string& linkLanguage);
+  void AppendIncrementalLinkFlags(std::string& flags,
+                                  cmGeneratorTarget* target,
+                                  const std::string& config,
+                                  const std::string& linkLanguage);
   void AppendIPOLinkerFlags(std::string& flags, cmGeneratorTarget* target,
                             const std::string& config,
                             const std::string& lang);

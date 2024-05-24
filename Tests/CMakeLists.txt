@@ -2169,6 +2169,11 @@ if(BUILD_TESTING)
       ADD_TEST_MACRO(MSVCRuntimeLibrary.Fortran)
       set_property(TEST MSVCRuntimeLibrary.Fortran APPEND PROPERTY LABELS "Fortran")
     endif()
+
+    set(MSVCIncrementalLink_BUILD_OPTIONS -DCMake_TEST_CUDA=${CMake_TEST_CUDA})
+    ADD_TEST_MACRO(MSVCIncrementalLink)
+    set_property(TEST MSVCIncrementalLink APPEND
+      PROPERTY LABELS "CUDA")
   endif()
   if(MSVC OR
       "${CMAKE_GENERATOR}" MATCHES "(MSYS|MinGW) Makefiles")

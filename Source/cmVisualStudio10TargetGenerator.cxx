@@ -3941,6 +3941,12 @@ bool cmVisualStudio10TargetGenerator::ComputeCudaLinkOptions(
   // LINK_OPTIONS are escaped.
   this->LocalGenerator->AppendCompileOptions(linkFlags, linkOpts);
 
+  cmGeneratorTarget::LinkClosure const* linkClosure =
+    this->GeneratorTarget->GetLinkClosure(configName);
+
+  this->LocalGenerator->AppendIncrementalLinkFlags(
+    linkFlags, this->GeneratorTarget, configName, linkClosure->LinkerLanguage);
+
   cmComputeLinkInformation* pcli =
     this->GeneratorTarget->GetLinkInformation(configName);
   if (doDeviceLinking && pcli) {
@@ -4407,6 +4413,14 @@ bool cmVisualStudio10TargetGenerator::ComputeLinkOptions(
   if (cmValue flagsConfig = this->GeneratorTarget->GetProperty(flagsProp)) {
     flags += ' ';
     flags += *flagsConfig;
+  }
+
+  std::string linkIncrementalFlag;
+  this->LocalGenerator->AppendIncrementalLinkFlags(
+    linkIncrementalFlag, this->GeneratorTarget, config, linkLanguage);
+
+  if (!linkIncrementalFlag.empty()) {
+    linkOptions.Parse(linkIncrementalFlag);
   }
 
   std::vector<std::string> opts;

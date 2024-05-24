@@ -1497,6 +1497,9 @@ void cmLocalGenerator::GetTargetFlags(
         }
       }
 
+      this->AppendIncrementalLinkFlags(sharedLibFlags, target, config,
+                                       linkLanguage);
+
       cmValue targetLinkFlags = target->GetProperty("LINK_FLAGS");
       if (targetLinkFlags) {
         sharedLibFlags += *targetLinkFlags;
@@ -1574,6 +1577,8 @@ void cmLocalGenerator::GetTargetFlags(
         exeFlags += this->Makefile->GetSafeDefinition(sFlagVar);
         exeFlags += " ";
       }
+
+      this->AppendIncrementalLinkFlags(exeFlags, target, config, linkLanguage);
 
       std::string cmp0065Flags =
         this->GetLinkLibsCMP0065(linkLanguage, *target);
@@ -3380,6 +3385,46 @@ void cmLocalGenerator::AppendLinkerTypeFlags(std::string& flags,
         cmStrCat("LINKER_TYPE '", linkerType,
                  "' is unknown. Did you forget to define the '", usingLinker,
                  "' variable?"));
+    }
+  }
+}
+
+void cmLocalGenerator::AppendIncrementalLinkFlags(
+  std::string& flags, cmGeneratorTarget* target, const std::string& config,
+  const std::string& linkLanguage)
+{
+  // Add MSVC incremental linking flags.  This is activated by the presence
+  // of a default selection whether or not it is overridden by a property.
+  // Make sure to add these first, as we want to ensure that the IPO link
+  // options can override the incremental liking options as incremental
+  // linking and IPO are incompatible.
+  cmValue msvcIncrementalLinkDefault =
+    this->Makefile->GetDefinition("CMAKE_MSVC_INCREMENTAL_LINK_DEFAULT");
+  if (cmNonempty(msvcIncrementalLinkDefault)) {
+    cmValue msvcIncrementalLinkValue =
+      target->GetProperty("MSVC_INCREMENTAL_LINK");
+    if (!msvcIncrementalLinkValue) {
+      msvcIncrementalLinkValue = msvcIncrementalLinkDefault;
+    }
+    std::string const msvcIncrementalLink = cmGeneratorExpression::Evaluate(
+      *msvcIncrementalLinkValue, this, config, target);
+
+    if (!msvcIncrementalLink.empty()) {
+      if (cmValue msvcIncrementalLinkOptions = this->Makefile->GetDefinition(
+            "CMAKE_" + linkLanguage + "_LINK_OPTIONS_MSVC_INCREMENTAL_LINK_" +
+            msvcIncrementalLink)) {
+        this->AppendCompileOptions(flags, *msvcIncrementalLinkOptions);
+      } else if ((this->Makefile->GetSafeDefinition("CMAKE_" + linkLanguage +
+                                                    "_COMPILER_LINKER_ID") ==
+                  "MSVC") &&
+                 !cmSystemTools::GetErrorOccurredFlag()) {
+        // The compiler uses the MSVC ABI so it needs a known incremental link
+        // option.
+        this->IssueMessage(MessageType::FATAL_ERROR,
+                           "MSVC_INCREMENTAL_LINK value '" +
+                             msvcIncrementalLink + "' not known for this " +
+                             linkLanguage + " linker.");
+      }
     }
   }
 }

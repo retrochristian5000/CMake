@@ -1,0 +1,55 @@
+CMP0171
+-------
+
+.. versionadded:: 3.31
+
+MSVC incremental linking flags are selected by an abstraction.
+
+Compilers targeting the MSVC linker have flags to enable or disable incremental
+linking. Incremental linking selection typicallys varies by configuration.
+
+In CMake 3.30 and below, incremental linking flags are added to
+the default :variable:`CMAKE_EXE_LINKER_FLAGS_<CONFIG>` and
+:variable:`CMAKE_SHARED_LINKER_FLAGS_<CONFIG>`
+cache entries by CMake automatically.  This allows users to edit their
+cache entries to adjust the flags.  However, the presence of such default
+flags is problematic for projects that want to choose a different flags
+programmatically. In particular, it requires string editing of the
+:variable:`CMAKE_<LANG>_FLAGS_<CONFIG>` variables with knowledge of the
+CMake builtin defaults so they can be replaced.
+
+CMake 3.31 and above prefer to leave the incremental linking flags
+out of the default:variable:`CMAKE_EXE_LINKER_FLAGS_<CONFIG>` and
+:variable:`CMAKE_SHARED_LINKER_FLAGS_<CONFIG>` values and instead
+offer a first-class abstraction.  The
+:variable:`CMAKE_MSVC_INCREMENTAL_LINK` variable and
+:prop_tgt:`MSVC_INCREMENTAL_LINK` target property may be set to
+select the incremental linking flags.  If they are not set, CMake
+enables incremental linking in debug configurations using the default value
+``$<IF:$<CONFIG:Debug,RelWithDebInfo>,Force,Never>``, if supported
+by the target system and otherwise ``Never``.
+
+This policy provides compatibility with projects that have not been updated
+to be aware of the abstraction.  The policy setting takes effect as of the
+first :command:`project` or :command:`enable_language` command that enables
+a language whose compiler targets the MSVC ABI.
+
+.. note::
+
+  Once the policy has taken effect at the top of a project, that choice
+  will be used throughout the tree.  In projects that have nested projects
+  in subdirectories, be sure to confirm if everything is working with the
+  selected policy behavior.
+
+The ``OLD`` behavior for this policy is to place MSVC incremental linker
+flags in the default :variable:`CMAKE_<LANG>_FLAGS_<CONFIG>` cache
+entries and ignore the :variable:`CMAKE_MSVC_INCREMENTAL_LINK`
+abstraction.  The ``NEW`` behavior for this policy is to *not* place MSVC
+debug information format flags in the default cache entries and use
+the abstraction instead.
+
+.. |INTRODUCED_IN_CMAKE_VERSION| replace:: 3.31
+.. |WARNS_OR_DOES_NOT_WARN| replace:: does *not* warn
+.. include:: STANDARD_ADVICE.txt
+
+.. include:: DEPRECATED.txt

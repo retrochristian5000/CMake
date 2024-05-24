@@ -1,0 +1,5 @@
+set(CMAKE_C_LINK_OPTIONS_MSVC_INCREMENTAL_LINK_Default "/ALTERNATENAME:defaultLinkIncremental=linkIncremental;/ALTERNATENAME:_defaultLinkIncremental=_linkIncremental")
+set(var "CMAKE_C_LINK_OPTIONS_MSVC_INCREMENTAL_LINK_Force")
+string(REPLACE "/INCREMENTAL" "/ALTERNATENAME:forceLinkIncremental=linkIncremental;/ALTERNATENAME:_forceLinkIncremental=_linkIncremental;/INCREMENTAL" "${var}" "${${var}}")
+set(var "CMAKE_C_LINK_OPTIONS_MSVC_INCREMENTAL_LINK_Never")
+string(REPLACE "/INCREMENTAL:NO" "/ALTERNATENAME:neverLinkIncremental=linkIncremental;/ALTERNATENAME:_neverLinkIncremental=_linkIncremental;/INCREMENTAL:NO" "${var}" "${${var}}")

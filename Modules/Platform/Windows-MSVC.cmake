@@ -305,8 +305,7 @@ elseif(MSVC_Fortran_ARCHITECTURE_ID)
   set(_MACHINE_ARCH_FLAG "${_Wl}/machine:${MSVC_Fortran_ARCHITECTURE_ID}")
 endif()
 
-# add /debug and /INCREMENTAL:YES to DEBUG and RELWITHDEBINFO also add pdbtype
-# on versions that support it
+
 set( MSVC_INCREMENTAL_YES_FLAG "")
 if(NOT WINDOWS_PHONE AND NOT WINDOWS_STORE AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsKernelModeDriver")
   if(NOT MSVC_INCREMENTAL_DEFAULT)
@@ -316,18 +315,37 @@ if(NOT WINDOWS_PHONE AND NOT WINDOWS_STORE AND NOT CMAKE_SYSTEM_NAME STREQUAL "W
   endif()
 endif()
 
+cmake_policy(GET CMP0171 __WINDOWS_MSVC_CMP0171)
+if (__WINDOWS_MSVC_CMP0171 STREQUAL "NEW")
+  if(NOT WINDOWS_PHONE AND NOT WINDOWS_STORE AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsKernelModeDriver")
+    set(CMAKE_MSVC_INCREMENTAL_LINK_DEFAULT "$<IF:$<CONFIG:Debug,RelWithDebInfo>,Force,Never>")
+  else()
+    set(CMAKE_MSVC_INCREMENTAL_LINK_DEFAULT "Never")
+  endif()
+else()
+  set(CMAKE_MSVC_INCREMENTAL_LINK_DEFAULT "")
+endif()
+unset(__WINDOWS_MSVC_CMP0171)
+
+# add /debug to DEBUG and RELWITHDEBINFO also add pdbtype
+# on versions that support it
 foreach(t EXE SHARED MODULE)
   string(APPEND CMAKE_${t}_LINKER_FLAGS_INIT " ${_MACHINE_ARCH_FLAG}")
   if (CMAKE_COMPILER_SUPPORTS_PDBTYPE)
-    string(APPEND CMAKE_${t}_LINKER_FLAGS_DEBUG_INIT " ${_Wl}/debug ${_Wl}/pdbtype:sept ${MSVC_INCREMENTAL_YES_FLAG}")
-    string(APPEND CMAKE_${t}_LINKER_FLAGS_RELWITHDEBINFO_INIT " ${_Wl}/debug ${_Wl}/pdbtype:sept ${MSVC_INCREMENTAL_YES_FLAG}")
+    string(APPEND CMAKE_${t}_LINKER_FLAGS_DEBUG_INIT " ${_Wl}/debug ${_Wl}/pdbtype:sept")
+    string(APPEND CMAKE_${t}_LINKER_FLAGS_RELWITHDEBINFO_INIT " ${_Wl}/debug ${_Wl}/pdbtype:sept")
   else ()
-    string(APPEND CMAKE_${t}_LINKER_FLAGS_DEBUG_INIT " ${_Wl}/debug ${MSVC_INCREMENTAL_YES_FLAG}")
-    string(APPEND CMAKE_${t}_LINKER_FLAGS_RELWITHDEBINFO_INIT " ${_Wl}/debug ${MSVC_INCREMENTAL_YES_FLAG}")
+    string(APPEND CMAKE_${t}_LINKER_FLAGS_DEBUG_INIT " ${_Wl}/debug")
+    string(APPEND CMAKE_${t}_LINKER_FLAGS_RELWITHDEBINFO_INIT " ${_Wl}/debug")
   endif ()
-  # for release and minsize release default to no incremental linking
-  string(APPEND CMAKE_${t}_LINKER_FLAGS_MINSIZEREL_INIT " ${_Wl}/INCREMENTAL:NO")
-  string(APPEND CMAKE_${t}_LINKER_FLAGS_RELEASE_INIT " ${_Wl}/INCREMENTAL:NO")
+
+  # When CMP0171 is not NEW, we need to append the incremental flags to the linker flags
+  if(CMAKE_MSVC_INCREMENTAL_LINK_DEFAULT STREQUAL "")
+    string(APPEND CMAKE_${t}_LINKER_FLAGS_DEBUG_INIT " ${MSVC_INCREMENTAL_YES_FLAG}")
+    string(APPEND CMAKE_${t}_LINKER_FLAGS_RELWITHDEBINFO_INIT " ${MSVC_INCREMENTAL_YES_FLAG}")
+    string(APPEND CMAKE_${t}_LINKER_FLAGS_MINSIZEREL_INIT " ${_Wl}/INCREMENTAL:NO")
+    string(APPEND CMAKE_${t}_LINKER_FLAGS_RELEASE_INIT " ${_Wl}/INCREMENTAL:NO")
+  endif()
 endforeach()
 
 if((_MSVC_C_ARCHITECTURE_FAMILY STREQUAL "ARM64EC") OR (_MSVC_CXX_ARCHITECTURE_FAMILY STREQUAL "ARM64EC"))
@@ -503,6 +521,9 @@ macro(__windows_compiler_msvc lang)
     set(CMAKE_${lang}_COMPILE_OPTIONS_MSVC_DEBUG_INFORMATION_FORMAT_Embedded        -Z7)
     set(CMAKE_${lang}_COMPILE_OPTIONS_MSVC_DEBUG_INFORMATION_FORMAT_ProgramDatabase -Zi)
     set(CMAKE_${lang}_COMPILE_OPTIONS_MSVC_DEBUG_INFORMATION_FORMAT_EditAndContinue -ZI)
+    set(CMAKE_${lang}_LINK_OPTIONS_MSVC_INCREMENTAL_LINK_Force "${MSVC_INCREMENTAL_YES_FLAG}")
+    set(CMAKE_${lang}_LINK_OPTIONS_MSVC_INCREMENTAL_LINK_Default "")
+    set(CMAKE_${lang}_LINK_OPTIONS_MSVC_INCREMENTAL_LINK_Never "${_Wl}/INCREMENTAL:NO")
   endif()
   set(CMAKE_${lang}_LINKER_SUPPORTS_PDB ON)
 
