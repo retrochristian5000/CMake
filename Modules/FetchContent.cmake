@@ -1148,6 +1148,12 @@ current working directory.
 
 #]=======================================================================]
 
+# Control policies for most of the things defined here. This will apply
+# to everything except FetchContent_MakeAvailable() (see the corresponding
+# endblock() for details).
+block(SCOPE_FOR POLICIES)
+cmake_policy(VERSION 3.29)
+
 include(${CMAKE_CURRENT_LIST_DIR}/ExternalProject/shared_internal_commands.cmake)
 
 #=======================================================================
@@ -2150,6 +2156,15 @@ function(__FetchContent_setupFindPackageRedirection contentName)
   )
 
 endfunction()
+
+# We must end the policies block here before FetchContent_MakeAvailable().
+# We can't change the policy settings seen by code in a dependency provider,
+# or by a call to find_package() or add_subdirectory(). Therefore, we can
+# never really change the policy settings of FetchContent_MakeAvailable().
+# We can't even factor out all the potentially affected calls from
+# FetchContent_MakeAvailable() due to the way macros evaluate arguments that
+# look like ${...} variable expressions, and custom commands might have those.
+endblock()
 
 # Arguments are assumed to be the names of dependencies that have been
 # declared previously and should be populated. It is not an error if
