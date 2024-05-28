@@ -1246,3 +1246,9 @@ if(CMake_TEST_TICLANG_TOOLCHAINS)
   add_RunCMake_test(TIClang "-DCMake_TEST_TICLANG_TOOLCHAINS=${TOOLCHAINS}")
   set_property(TEST RunCMake.TIClang APPEND PROPERTY LABELS "TIClang")
 endif()
+
+if(${CMAKE_GENERATOR} MATCHES "Make|Ninja")
+  add_RunCMake_test(Codegen)
+endif()
+
+add_RunCMake_test(CMP0171)
