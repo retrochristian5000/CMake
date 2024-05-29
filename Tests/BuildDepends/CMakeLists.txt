@@ -12,6 +12,8 @@ project(BuildDepends)
 # project is built.
 set(CMAKE_SUPPRESS_REGENERATION 1)
 
+set(CMAKE_TRY_COMPILE_CONFIGURATION Release)
+
 # Xcode needs some help with the fancy dependencies in this test.
 if(XCODE AND XCODE_VERSION VERSION_LESS 5)
   set(HELP_XCODE 1)
@@ -117,10 +119,10 @@ endif()
 # find and save the ninjadep executable
 set(ninjadep ${BuildDepends_BINARY_DIR}/Project/ninjadep${CMAKE_EXECUTABLE_SUFFIX})
 if(EXISTS
-    "${BuildDepends_BINARY_DIR}/Project/Debug/ninjadep${CMAKE_EXECUTABLE_SUFFIX}" )
-  message("found debug")
+    "${BuildDepends_BINARY_DIR}/Project/Release/ninjadep${CMAKE_EXECUTABLE_SUFFIX}" )
+  message("found release")
   set(ninjadep
-    "${BuildDepends_BINARY_DIR}/Project/Debug/ninjadep${CMAKE_EXECUTABLE_SUFFIX}")
+    "${BuildDepends_BINARY_DIR}/Project/Release/ninjadep${CMAKE_EXECUTABLE_SUFFIX}")
 endif()
 message("Running ${ninjadep}  ")
 execute_process(COMMAND ${ninjadep} OUTPUT_VARIABLE out RESULT_VARIABLE runResult)
@@ -136,17 +138,17 @@ endif()
 
 set(bar ${BuildDepends_BINARY_DIR}/Project/bar${CMAKE_EXECUTABLE_SUFFIX})
 if(EXISTS
-    "${BuildDepends_BINARY_DIR}/Project/Debug/bar${CMAKE_EXECUTABLE_SUFFIX}" )
-  message("found debug")
+    "${BuildDepends_BINARY_DIR}/Project/Release/bar${CMAKE_EXECUTABLE_SUFFIX}" )
+  message("found release")
   set(bar
-    "${BuildDepends_BINARY_DIR}/Project/Debug/bar${CMAKE_EXECUTABLE_SUFFIX}")
+    "${BuildDepends_BINARY_DIR}/Project/Release/bar${CMAKE_EXECUTABLE_SUFFIX}")
 endif()
 set(zot ${BuildDepends_BINARY_DIR}/Project/zot${CMAKE_EXECUTABLE_SUFFIX})
 if(EXISTS
-    "${BuildDepends_BINARY_DIR}/Project/Debug/zot${CMAKE_EXECUTABLE_SUFFIX}" )
-  message("found debug")
+    "${BuildDepends_BINARY_DIR}/Project/Release/zot${CMAKE_EXECUTABLE_SUFFIX}" )
+  message("found release")
   set(zot
-    "${BuildDepends_BINARY_DIR}/Project/Debug/zot${CMAKE_EXECUTABLE_SUFFIX}")
+    "${BuildDepends_BINARY_DIR}/Project/Release/zot${CMAKE_EXECUTABLE_SUFFIX}")
 endif()
 
 message("Running ${bar}  ")
@@ -305,12 +307,12 @@ if(NOT RESULT)
   message(SEND_ERROR "Could not build test project (2)!")
 endif()
 if(EXISTS
-    "${BuildDepends_BINARY_DIR}/Project/Debug/bar${CMAKE_EXECUTABLE_SUFFIX}" )
-  message("found debug")
+    "${BuildDepends_BINARY_DIR}/Project/Release/bar${CMAKE_EXECUTABLE_SUFFIX}" )
+  message("found release")
 endif()
 if(EXISTS
-    "${BuildDepends_BINARY_DIR}/Project/Debug/zot${CMAKE_EXECUTABLE_SUFFIX}" )
-  message("found debug")
+    "${BuildDepends_BINARY_DIR}/Project/Release/zot${CMAKE_EXECUTABLE_SUFFIX}" )
+  message("found release")
 endif()
 
 message("Running ${ninjadep}  ")
