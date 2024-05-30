@@ -89,7 +89,11 @@ _cmake()
             ;;
     esac
 
-    _split_longopt && split=true
+    if [[ $(type -t _comp__split_longopt) == "function" ]]; then
+        _comp__split_longopt && split = true
+    else
+        _split_longopt && split=true
+    fi
 
     case "$prev" in
         -C|-P|--graphviz|--system-information)
