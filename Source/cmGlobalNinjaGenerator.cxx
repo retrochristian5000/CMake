@@ -3155,6 +3155,11 @@ bool cmGlobalNinjaGenerator::IsSingleConfigUtility(
     !this->PerConfigUtilityTargets.count(target->GetName());
 }
 
+std::string cmGlobalNinjaGenerator::ConvertToOutputPath(std::string path) const
+{
+  return this->ConvertToNinjaPath(path);
+}
+
 const char* cmGlobalNinjaMultiGenerator::NINJA_COMMON_FILE =
   "CMakeFiles/common.ninja";
 const char* cmGlobalNinjaMultiGenerator::NINJA_FILE_EXTENSION = ".ninja";
