@@ -202,6 +202,7 @@ if (Tiff_FOUND)
       endif ()
     endif ()
   endif ()
+  set(TIFF_LIBRARY "${TIFF_LIBRARIES}") # legacy undocumented variable
   set(TIFF_VERSION_STRING "${Tiff_VERSION}")
   foreach (_TIFF_component IN LISTS TIFF_FIND_COMPONENTS)
     set(TIFF_${_TIFF_component}_FOUND "${Tiff_${_TIFF_component}_FOUND}")
