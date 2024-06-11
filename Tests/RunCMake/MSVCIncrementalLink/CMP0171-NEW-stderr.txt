@@ -1,0 +1,4 @@
+^CMake Error in CMakeLists.txt:
+  MSVC_INCREMENTAL_LINK value 'BogusValue' not known for this (C|CXX) linker.
++
+CMake Generate step failed\.  Build files cannot be regenerated correctly\.$

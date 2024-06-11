@@ -110,6 +110,8 @@ std::string const kCMAKE_WATCOM_RUNTIME_LIBRARY_DEFAULT =
   "CMAKE_WATCOM_RUNTIME_LIBRARY_DEFAULT";
 std::string const kCMAKE_MSVC_DEBUG_INFORMATION_FORMAT_DEFAULT =
   "CMAKE_MSVC_DEBUG_INFORMATION_FORMAT_DEFAULT";
+std::string const kCMAKE_MSVC_INCREMENTAL_LINK_DEFAULT =
+  "CMAKE_MSVC_INCREMENTAL_LINK_DEFAULT";
 
 /* GHS Multi platform variables */
 std::set<std::string> const ghs_platform_vars{
@@ -683,6 +685,13 @@ cm::optional<cmTryCompileResult> cmCoreTryCompile::TryCompileCode(
               !msvcDebugInformationFormatDefault->empty() ? "NEW" : "OLD");
     }
 
+    /* Set MSVC incremental linking policy to match our selection */
+    if (cmValue msvcIncrementalLinkDefault = this->Makefile->GetDefinition(
+          kCMAKE_MSVC_INCREMENTAL_LINK_DEFAULT)) {
+      fprintf(fout, "cmake_policy(SET CMP0171 %s)\n",
+              !msvcIncrementalLinkDefault->empty() ? "NEW" : "OLD");
+    }
+
     /* Set cache/normal variable policy to match outer project.
        It may affect toolchain files.  */
     if (this->Makefile->GetPolicyStatus(cmPolicies::CMP0126) !=
@@ -1152,6 +1161,7 @@ cm::optional<cmTryCompileResult> cmCoreTryCompile::TryCompileCode(
     vars.emplace("CMAKE_MSVC_DEBUG_INFORMATION_FORMAT"_s);
     vars.emplace("CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS"_s);
     vars.emplace("CMAKE_VS_USE_DEBUG_LIBRARIES"_s);
+    vars.emplace("CMAKE_MSVC_INCREMENTAL_LINK"_s);
 
     if (cmValue varListStr = this->Makefile->GetDefinition(
           kCMAKE_TRY_COMPILE_PLATFORM_VARIABLES)) {

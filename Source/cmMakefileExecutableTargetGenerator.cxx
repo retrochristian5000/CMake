@@ -400,6 +400,9 @@ void cmMakefileExecutableTargetGenerator::WriteExecutableRule(bool relink)
   this->UseLWYU = this->LocalGenerator->AppendLWYUFlags(
     linkFlags, this->GeneratorTarget, linkLanguage);
 
+  this->LocalGenerator->AppendIncrementalLinkFlags(
+    linkFlags, this->GeneratorTarget, this->GetConfigName(), linkLanguage);
+
   // Add language feature flags.
   this->LocalGenerator->AddLanguageFlagsForLinking(
     flags, this->GeneratorTarget, linkLanguage, this->GetConfigName());
