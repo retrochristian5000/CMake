@@ -377,7 +377,7 @@ public:
         if (auto libProcessing = makefile->GetDefinition(cmStrCat(
               "CMAKE_", linkLanguage, "_LINK_LIBRARIES_PROCESSING"))) {
           cmsys::RegularExpression processingOption{
-            "^(ORDER|UNICITY)=(FORWARD|REVERSE|ALL|NONE|SHARED)$"
+            "^(ORDER|UNICITY|DEDUPLICATION)=(FORWARD|REVERSE|ALL|NONE|SHARED)$"
           };
           std::string errorMessage;
           for (auto const& option : cmList{ libProcessing }) {
@@ -390,13 +390,14 @@ public:
                 } else {
                   errorMessage += cmStrCat("  ", option, '\n');
                 }
-              } else if (processingOption.match(1) == "UNICITY") {
+              } else if (processingOption.match(1) == "UNICITY" ||
+                         processingOption.match(1) == "DEDUPLICATION") {
                 if (processingOption.match(2) == "ALL") {
-                  this->Unicity = All;
+                  this->Deduplication = All;
                 } else if (processingOption.match(2) == "NONE") {
-                  this->Unicity = None;
+                  this->Deduplication = None;
                 } else if (processingOption.match(2) == "SHARED") {
-                  this->Unicity = Shared;
+                  this->Deduplication = Shared;
                 } else {
                   errorMessage += cmStrCat("  ", option, '\n');
                 }
@@ -499,7 +500,7 @@ private:
     Reverse
   };
 
-  enum UnicityKind
+  enum DeduplicationKind
   {
     None,
     Shared,
@@ -520,11 +521,11 @@ private:
       }
     }
 
-    return this->Unicity == None ||
-      (this->Unicity == Shared &&
+    return this->Deduplication == None ||
+      (this->Deduplication == Shared &&
        (entry.Target == nullptr ||
         entry.Target->GetType() != cmStateEnums::SHARED_LIBRARY)) ||
-      (this->Unicity == All && entry.Kind != LinkEntry::Library);
+      (this->Deduplication == All && entry.Kind != LinkEntry::Library);
   }
 
   template <typename Range>
@@ -539,7 +540,7 @@ private:
   }
 
   OrderKind Order = Reverse;
-  UnicityKind Unicity = Shared;
+  DeduplicationKind Deduplication = Shared;
   const cmGeneratorTarget* Target;
   const std::string& LinkLanguage;
   EntryVector& Entries;
