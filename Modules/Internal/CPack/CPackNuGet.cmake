@@ -295,7 +295,12 @@ function(_cpack_nuget_render_spec)
     # considered optional, they are not independent. Currently unsupported.
 
     # NuGet >= 5.10
-    _cpack_nuget_variable_fallback_and_wrap_into_element(readme README)
+    _cpack_nuget_variable_fallback_and_wrap_into_element(
+        readme
+        README
+        FALLBACK_VARS
+            CPACK_RESOURCE_FILE_README
+      )
 
     set(_CPACK_NUGET_REPOSITORY_TAG)
     _cpack_nuget_variable_fallback(_repo_type REPOSITORY_TYPE)
