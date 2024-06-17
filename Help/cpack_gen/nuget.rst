@@ -193,7 +193,7 @@ Optional metadata variables
  Supported file formats include only Markdown (``*.md``).
 
  :Mandatory: No
- :Default: None
+ :Default: :variable:`CPACK_RESOURCE_FILE_README`
  :Supported: NuGet 5.10.0 preview 2 and above
 
 .. variable:: CPACK_NUGET_PACKAGE_REQUIRE_LICENSE_ACCEPTANCE
