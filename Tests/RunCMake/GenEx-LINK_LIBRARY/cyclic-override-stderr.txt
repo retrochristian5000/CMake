@@ -1,0 +1,6 @@
+CMake Error at cyclic-override.cmake:[0-9]+ \(add_library\):
+  Impossible to link target 'lib' because the link item 'dep' is specified
+  with the features 'feature2' and 'feature1', each have an 'OVERRIDE'
+  attribute creating a cycle, which is not allowed.
+Call Stack \(most recent call first\):
+  CMakeLists.txt:[0-9]+ \(include\)
