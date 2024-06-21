@@ -153,7 +153,7 @@ function(FIND_IMAGEMAGICK_API component header)
     )
 
   # old version have only indep dir
-  if(ImageMagick_${component}_INCLUDE_DIR AND ImageMagick_${component}_LIBRARY)
+  if(NOT TARGET ImageMagick::${component} AND ImageMagick_${component}_INCLUDE_DIR AND ImageMagick_${component}_LIBRARY)
     set(ImageMagick_${component}_FOUND TRUE PARENT_SCOPE)
 
     # Construct per-component include directories.
