@@ -251,6 +251,8 @@ void cmMakefileTargetGenerator::WriteTargetBuildRules()
   std::vector<cmSourceFile const*> customCommands;
   this->GeneratorTarget->GetCustomCommands(customCommands,
                                            this->GetConfigName());
+  std::vector<std::string> codegen_depends;
+  codegen_depends.reserve(customCommands.size());
   for (cmSourceFile const* sf : customCommands) {
     if (this->CMP0113New &&
         !this->LocalGenerator->GetCommandsVisited(this->GeneratorTarget)
@@ -273,6 +275,25 @@ void cmMakefileTargetGenerator::WriteTargetBuildRules()
           this->LocalGenerator->MaybeRelativeToCurBinDir(byproduct));
       }
     }
+
+    if (ccg.GetCC().GetCodegen()) {
+      std::string const& output = ccg.GetOutputs().front();
+
+      // We always attach the actual commands to the first output.
+      codegen_depends.push_back(output);
+    }
+  }
+
+  // Construct the codegen target.
+  {
+    std::string const codegenTarget = cmStrCat(
+      this->LocalGenerator->GetRelativeTargetDirectory(this->GeneratorTarget),
+      "/codegen");
+
+    // Write the rule.
+    this->LocalGenerator->WriteMakeRule(*this->BuildFileStream, nullptr,
+                                        codegenTarget, codegen_depends, {},
+                                        true);
   }
 
   // Add byproducts from build events to the clean rules
