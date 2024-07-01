@@ -68,7 +68,7 @@ const cmDocumentationEntry cmDocumentationUsageNote = {
   "Run 'cmake --help' for more information."
 };
 
-const cmDocumentationEntry cmDocumentationOptions[31] = {
+const cmDocumentationEntry cmDocumentationOptions[32] = {
   { "--preset <preset>,--preset=<preset>", "Specify a configure preset." },
   { "--list-presets[=<type>]", "List available presets." },
   { "-E", "CMake command mode." },
@@ -78,6 +78,7 @@ const cmDocumentationEntry cmDocumentationOptions[31] = {
   { "--build <dir>", "Build a CMake-generated project binary tree." },
   { "--install <dir>", "Install a CMake-generated project binary tree." },
   { "--open <dir>", "Open generated project in the associated application." },
+  { "--workflow [<options>]", "Run a workflow preset." },
   { "-N", "View mode only." },
   { "-P <file>", "Process script mode." },
   { "--find-package", "Legacy pkg-config like mode.  Do not use." },
