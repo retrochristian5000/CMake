@@ -11,6 +11,7 @@
 #include <cstring>
 #include <functional>
 #include <iostream>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -1071,6 +1072,13 @@ int main(int ac, char const* const* av)
     }
     if (strcmp(av[1], "-E") == 0) {
       return do_command(ac, av, std::move(consoleBuf));
+    }
+    if (strcmp(av[1], "--print-config-dir") == 0) {
+      std::cout << cmSystemTools::ConvertToOutputPath(
+                     cmSystemTools::GetCMakeConfigDirectory().value_or(
+                       std::string()))
+                << std::endl;
+      return 0;
     }
   }
   int ret = do_cmake(ac, av);
