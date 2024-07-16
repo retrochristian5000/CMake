@@ -47,6 +47,26 @@ static_assert(CURL_SSLVERSION_LAST == 8,
               "A new CURL_SSLVERSION_ may be available!");
 #endif
 
+void cmCurlInitOnce()
+{
+#if defined(__APPLE__) && defined(CMAKE_USE_SYSTEM_CURL)
+  static bool initialized = false;
+  if (initialized) {
+    return;
+  }
+  initialized = true;
+
+  cm::optional<std::string> curl_ssl_backend =
+    cmSystemTools::GetEnvVar("CURL_SSL_BACKEND");
+  if (!curl_ssl_backend || curl_ssl_backend->empty()) {
+    curl_version_info_data* cv = curl_version_info(CURLVERSION_FIRST);
+    if (cv->version_num >= 0x080300 && cv->version_num < 0x080600) {
+      curl_global_sslset(CURLSSLBACKEND_SECURETRANSPORT, NULL, NULL);
+    }
+  }
+#endif
+}
+
 cm::optional<int> cmCurlParseTLSVersion(cm::string_view tls_version)
 {
   cm::optional<int> v;
