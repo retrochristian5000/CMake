@@ -1815,7 +1815,7 @@ else
     cmake_c_flags="${cmake_c_flags} ${use_uv_flags}"
     cmake_cxx_flags="${cmake_cxx_flags} ${use_uv_flags}"
   else
-    use_librhash_ldflags="-luv"
+    use_uv_ldflags="-luv"
   fi
   libs="${libs} ${use_uv_ldflags}"
 fi
@@ -1842,7 +1842,7 @@ else
     use_jsoncpp_ldflags="`pkg-config --libs jsoncpp`"
     cmake_cxx_flags="${cmake_cxx_flags} ${use_jsoncpp_flags}"
   else
-    use_librhash_ldflags="-ljsoncpp"
+    use_jsoncpp_ldflags="-ljsoncpp"
   fi
   libs="${libs} ${use_jsoncpp_ldflags}"
 fi
