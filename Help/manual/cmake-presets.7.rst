@@ -274,9 +274,8 @@ that may contain the following fields:
   for more details.
 
   This field supports `macro expansion`_. If a relative path is specified,
-  it is calculated relative to the build directory, and if not found,
-  relative to the source directory. It is allowed in preset files
-  specifying version ``10`` or above.
+  it is calculated relative to the current working directory. It is allowed
+  in preset files specifying version ``10`` or above.
 
 ``binaryDir``
   An optional string representing the path to the output binary directory.
