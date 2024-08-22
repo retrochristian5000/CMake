@@ -254,3 +254,12 @@ Changes made since CMake 3.30.0 include the following.
 * These versions made no changes to documented features or interfaces.
   Some implementation updates were made to support ecosystem changes
   and/or fix regressions.
+
+3.30.3
+------
+
+* The :module:`FindPython` and :module:`FindPython3` modules now define on
+  Windows, respectively, the ``Python_DEFINITIONS`` and  ``Python3_DEFINITIONS``
+  variables to support the development for the free threaded version of Python.
+  The :prop_tgt:`INTERFACE_COMPILE_DEFINITIONS` property is defined as well for
+  the various targets provided by these modules.
