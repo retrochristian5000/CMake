@@ -19,12 +19,25 @@ elseif (TRANSITIVE_MODULES)
   set(package_name "export_transitive_modules")
 elseif (WITH_HEADERS)
   set(package_name "export_with_headers")
+elseif (BUILD_DATABASE)
+  include("${CMAKE_SOURCE_DIR}/../export-build-database-setup.cmake")
+  set(package_name "export_build_database")
 else ()
   set(package_name "export_interfaces")
 endif ()
 set(target_name "CXXModules::${package_name}")
 
 find_package("${package_name}" REQUIRED)
+if (BUILD_DATABASE)
+  # Remove `-isystem` flags for better flag checking consistency.
+  set_property(TARGET "CXXModules::${package_name}" "CXXModules::provide_flags"
+    PROPERTY SYSTEM 0)
+  # Disable debug and runtime flag injection.
+  set_property(TARGET "CXXModules::${package_name}"
+    PROPERTY MSVC_DEBUG_INFORMATION_FORMAT "")
+  set_property(TARGET "CXXModules::${package_name}"
+    PROPERTY MSVC_RUNTIME_LIBRARY "")
+endif ()
 
 add_executable(use_import_interfaces)
 target_sources(use_import_interfaces
