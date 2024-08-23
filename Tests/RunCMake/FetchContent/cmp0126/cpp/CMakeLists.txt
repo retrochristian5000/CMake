@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 3.21)
+
+project(cmp0126 LANGUAGES NONE)
+
+set_property(GLOBAL PROPERTY project_cmp0126 YES)
+if(NOT cmp0126_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+  message(FATAL_ERROR "
+  cmp0126_SOURCE_DIR: ${cmp0126_SOURCE_DIR}
+  PROJECT_SOURCE_DIR: ${PROJECT_SOURCE_DIR}
+  ")
+endif()
