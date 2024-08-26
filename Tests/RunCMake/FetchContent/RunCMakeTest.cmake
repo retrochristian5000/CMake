@@ -35,6 +35,7 @@ run_cmake_with_cmp0168(UsesTerminalOverride)
 run_cmake_with_cmp0168(MakeAvailable)
 run_cmake_with_cmp0168(MakeAvailableTwice)
 run_cmake_with_cmp0168(MakeAvailableUndeclared)
+run_cmake_with_cmp0168(MakeAvailableSourceDirVar)
 run_cmake_with_cmp0168(VerifyHeaderSet)
 
 run_cmake_with_cmp0168(FindDependencyExport

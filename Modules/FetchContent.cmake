@@ -2421,6 +2421,22 @@ macro(FetchContent_MakeAvailable)
           list(APPEND __cmake_add_subdirectory_args SYSTEM)
         endif()
 
+        # We need to unset the <lowercase_package>_SOURCE_DIR variable before
+        # we call add subdirectory.
+        # When the project() name is one that is all lower case and the
+        # `cmake_minimum_required` enables policy CMP0126 the FetchContent
+        # variable will not be cleared and therefore be wrong when the
+        # project is executing.
+        #
+        # Since the FetchContent version of the variable doesn't include `SOURCE_SUBDIR`
+        # it doesn't match the value computed by the project() version
+        #
+        # We can't check the policy state of CMP0126 here, since the caller
+        # could have it disabled, but the subdirectory have it enabled.
+        if(__cmake_arg_SOURCE_SUBDIR)
+          unset(${__cmake_contentName}_SOURCE_DIR)
+        endif()
+
         # We pass a variable name rather than its contents so as to avoid any
         # potential problems with macro argument parsing. It's highly unlikely
         # in this case, but still theoretically possible someone might try to
