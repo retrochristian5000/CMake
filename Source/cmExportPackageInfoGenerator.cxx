@@ -26,7 +26,9 @@
 #include "cmTarget.h"
 #include "cmValue.h"
 
+#ifdef __SUNPRO_CC
 constexpr char const* cmExportPackageInfoGenerator::CPS_VERSION_STR;
+#endif
 
 cmExportPackageInfoGenerator::cmExportPackageInfoGenerator(
   std::string packageName, std::string version, std::string versionCompat,
