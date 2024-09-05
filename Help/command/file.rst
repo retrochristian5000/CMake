@@ -901,8 +901,9 @@ Archiving
     PATHS <paths>...
     [FORMAT <format>]
     [COMPRESSION <compression>
-     [COMPRESSION_LEVEL <compression-level>]]
+    [COMPRESSION_LEVEL <compression-level>]]
     [MTIME <mtime>]
+    [WORKING_DIRECTORY <dir>]
     [VERBOSE])
   :target: ARCHIVE_CREATE
   :break: verbatim
@@ -937,10 +938,16 @@ Archiving
     With ``FORMAT`` set to ``raw``, only one file will be compressed with the
     compression type specified by ``COMPRESSION``.
 
-  The ``VERBOSE`` option enables verbose output for the archive operation.
+  .. versionadded:: 3.31
+    The ``WORKING_DIRECTORY`` option specifies the directory in which the archive
+    creation operation will be executed. Paths in the ``<paths>`` argument can be
+    relative to this directory. If this option is not provided, the current
+    working directory will be used by default.
 
   To specify the modification time recorded in tarball entries, use
   the ``MTIME`` option.
+
+  The ``VERBOSE`` option enables verbose output for the archive operation.
 
 .. signature::
   file(ARCHIVE_EXTRACT
