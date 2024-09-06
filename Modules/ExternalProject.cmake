@@ -2064,6 +2064,7 @@ function(ExternalProject_Add_Step name step)
   if(NOT exclude_from_main)
     add_custom_command(APPEND
       OUTPUT ${complete_stamp_file}
+      COMMAND ""
       DEPENDS ${stamp_file}
     )
   endif()
@@ -2080,6 +2081,7 @@ function(ExternalProject_Add_Step name step)
     _ep_get_step_stampfile(${name} ${depender} depender_stamp_file)
     add_custom_command(APPEND
       OUTPUT ${depender_stamp_file}
+      COMMAND ""
       DEPENDS ${stamp_file}
     )
     if(cmp0114 STREQUAL "NEW" AND NOT independent)
@@ -2390,6 +2392,7 @@ function(ExternalProject_Add_StepDependencies name step)
   foreach(dep IN LISTS dependencies)
     add_custom_command(APPEND
       OUTPUT ${stamp_file}
+      COMMAND ""
       DEPENDS ${dep}
     )
   endforeach()
