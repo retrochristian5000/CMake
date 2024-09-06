@@ -2064,6 +2064,7 @@ function(ExternalProject_Add_Step name step)
   if(NOT exclude_from_main)
     add_custom_command(APPEND
       OUTPUT ${complete_stamp_file}
+      COMMAND ""
       DEPENDS ${stamp_file}
     )
   endif()
@@ -2080,6 +2081,7 @@ function(ExternalProject_Add_Step name step)
     _ep_get_step_stampfile(${name} ${depender} depender_stamp_file)
     add_custom_command(APPEND
       OUTPUT ${depender_stamp_file}
+      COMMAND ""
       DEPENDS ${stamp_file}
     )
     if(cmp0114 STREQUAL "NEW" AND NOT independent)
@@ -2157,6 +2159,12 @@ function(ExternalProject_Add_Step name step)
     byproducts
   )
 
+  if(NOT "x${work_dir}" STREQUAL "x")
+    set(maybe_WORKING_DIRECTORY "WORKING_DIRECTORY [==[${work_dir}]==]")
+  else()
+    set(maybe_WORKING_DIRECTORY "")
+  endif()
+
   # Custom comment?
   get_property(comment_set
     TARGET ${name}
@@ -2176,9 +2184,9 @@ function(ExternalProject_Add_Step name step)
     PROPERTY _EP_${step}_USES_TERMINAL
   )
   if(uses_terminal)
-    set(uses_terminal USES_TERMINAL)
+    set(maybe_USES_TERMINAL USES_TERMINAL)
   else()
-    set(uses_terminal "")
+    set(maybe_USES_TERMINAL "")
   endif()
 
   # Run every time?
@@ -2245,14 +2253,14 @@ function(ExternalProject_Add_Step name step)
     add_custom_command(
       OUTPUT \${stamp_file}
       BYPRODUCTS \${byproducts}
-      COMMENT \${comment}
+      COMMENT [===[${comment}]===]
       COMMAND ${__cmdQuoted}
+      DEPENDS \${depends}
+      VERBATIM
       ${maybe_COMMAND_touch}
       ${maybe_JOB_SERVER_AWARE}
-      DEPENDS \${depends}
-      WORKING_DIRECTORY \${work_dir}
-      VERBATIM
-      ${uses_terminal}
+      ${maybe_WORKING_DIRECTORY}
+      ${maybe_USES_TERMINAL}
     )"
   )
   set_property(TARGET ${name} APPEND PROPERTY _EP_STEPS ${step})
@@ -2384,6 +2392,7 @@ function(ExternalProject_Add_StepDependencies name step)
   foreach(dep IN LISTS dependencies)
     add_custom_command(APPEND
       OUTPUT ${stamp_file}
+      COMMAND ""
       DEPENDS ${dep}
     )
   endforeach()

@@ -1,6 +1,7 @@
 add_custom_command(
   OUTPUT
     ${CMAKE_CURRENT_BINARY_DIR}/main.cpp
+  COMMAND ""  # COMMAND is always required, but an empty string value is allowed
 
   # ERROR out if IMPLICIT_DEPENDS is used with CODEGEN
   IMPLICIT_DEPENDS C main.c
