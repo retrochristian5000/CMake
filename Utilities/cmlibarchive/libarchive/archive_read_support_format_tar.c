@@ -1935,6 +1935,7 @@ header_pax_extension(struct archive_read *a, struct tar *tar,
 		*unconsumed += 1;
 		tar_flush_unconsumed(a, unconsumed);
 	}
+	archive_string_free(&attr_name);
 	*unconsumed += ext_size + ext_padding;
 
 	/*
