@@ -1934,6 +1934,7 @@ bool HandleDownloadCommand(std::vector<std::string> const& args,
   std::string statusVar;
   cm::optional<std::string> tls_version;
   cm::optional<bool> tls_verify;
+  bool tls_verify_defaulted = false;
   cmValue cainfo = status.GetMakefile().GetDefinition("CMAKE_TLS_CAINFO");
   std::string netrc_level =
     status.GetMakefile().GetSafeDefinition("CMAKE_NETRC");
@@ -2108,6 +2109,10 @@ bool HandleDownloadCommand(std::vector<std::string> const& args,
           cmSystemTools::GetEnvVar("CMAKE_TLS_VERIFY")) {
       tls_verify = cmIsOn(*v);
     }
+  }
+  if (!tls_verify) {
+    tls_verify = true;
+    tls_verify_defaulted = true;
   }
 
   if (!tls_version) {
@@ -2317,9 +2322,17 @@ bool HandleDownloadCommand(std::vector<std::string> const& args,
   ::curl_easy_cleanup(curl);
 
   if (!statusVar.empty()) {
+    std::string m = curl_easy_strerror(res);
+    if ((res == CURLE_SSL_CONNECT_ERROR ||
+         res == CURLE_PEER_FAILED_VERIFICATION) &&
+        tls_verify_defaulted) {
+      m = cmStrCat(
+        std::move(m),
+        ".  If this is due to https certificate verification failure, one may "
+        "set environment variable CMAKE_TLS_VERIFY=0 to suppress it.");
+    }
     status.GetMakefile().AddDefinition(
-      statusVar,
-      cmStrCat(static_cast<int>(res), ";\"", ::curl_easy_strerror(res), "\""));
+      statusVar, cmStrCat(static_cast<int>(res), ";\"", std::move(m), "\""));
   }
 
   ::curl_global_cleanup();
@@ -2406,6 +2419,7 @@ bool HandleUploadCommand(std::vector<std::string> const& args,
   bool showProgress = false;
   cm::optional<std::string> tls_version;
   cm::optional<bool> tls_verify;
+  bool tls_verify_defaulted = false;
   cmValue cainfo = status.GetMakefile().GetDefinition("CMAKE_TLS_CAINFO");
   std::string userpwd;
   std::string netrc_level =
@@ -2521,6 +2535,10 @@ bool HandleUploadCommand(std::vector<std::string> const& args,
           cmSystemTools::GetEnvVar("CMAKE_TLS_VERIFY")) {
       tls_verify = cmIsOn(*v);
     }
+  }
+  if (!tls_verify) {
+    tls_verify = true;
+    tls_verify_defaulted = true;
   }
 
   if (!tls_version) {
@@ -2697,9 +2715,17 @@ bool HandleUploadCommand(std::vector<std::string> const& args,
   ::curl_easy_cleanup(curl);
 
   if (!statusVar.empty()) {
+    std::string m = curl_easy_strerror(res);
+    if ((res == CURLE_SSL_CONNECT_ERROR ||
+         res == CURLE_PEER_FAILED_VERIFICATION) &&
+        tls_verify_defaulted) {
+      m = cmStrCat(
+        std::move(m),
+        ".  If this is due to https certificate verification failure, one may "
+        "set environment variable CMAKE_TLS_VERIFY=0 to suppress it.");
+    }
     status.GetMakefile().AddDefinition(
-      statusVar,
-      cmStrCat(static_cast<int>(res), ";\"", ::curl_easy_strerror(res), "\""));
+      statusVar, cmStrCat(static_cast<int>(res), ";\"", std::move(m), "\""));
   }
 
   ::curl_global_cleanup();

@@ -76,6 +76,9 @@ cmCTestCurlOpts::cmCTestCurlOpts(cmCTest* ctest)
       }
     }
   }
+  if (!this->TLSVerifyOpt) {
+    this->TLSVerifyOpt = true;
+  }
 }
 
 bool cmCTestCurl::InitCurl()
