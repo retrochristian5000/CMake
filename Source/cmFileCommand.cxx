@@ -1741,6 +1741,7 @@ bool HandleNativePathCommand(std::vector<std::string> const& args,
 #if !defined(CMAKE_BOOTSTRAP)
 
 const bool TLS_VERIFY_DEFAULT = true;
+const std::string TLS_VERSION_DEFAULT = "1.2";
 
 // Stuff for curl download/upload
 using cmFileCommandVectorOfChar = std::vector<char>;
@@ -2127,6 +2128,9 @@ bool HandleDownloadCommand(std::vector<std::string> const& args,
           cmSystemTools::GetEnvVar("CMAKE_TLS_VERSION")) {
       tlsVersionOpt = std::move(v);
     }
+  }
+  if (!tlsVersionOpt.has_value()) {
+    tlsVersionOpt = TLS_VERSION_DEFAULT;
   }
 
   // Can't calculate hash if we don't save the file.
@@ -2553,6 +2557,9 @@ bool HandleUploadCommand(std::vector<std::string> const& args,
           cmSystemTools::GetEnvVar("CMAKE_TLS_VERSION")) {
       tlsVersionOpt = std::move(v);
     }
+  }
+  if (!tlsVersionOpt.has_value()) {
+    tlsVersionOpt = TLS_VERSION_DEFAULT;
   }
 
   // Open file for reading:
