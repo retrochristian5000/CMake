@@ -79,6 +79,11 @@ bool HandleSetMode(std::vector<std::string> const& args,
     policyStatus = cmPolicies::OLD;
   } else if (args[2] == "NEW") {
     policyStatus = cmPolicies::NEW;
+  } else if (args[2] == "WARN") {
+    // Undocumented WARN value for use only within CMake, for when a module
+    // defines a command that needs to apply the caller's policy settings for
+    // a specific policy.
+    policyStatus = cmPolicies::WARN;
   } else {
     status.SetError(
       cmStrCat("SET given unrecognized policy status \"", args[2], "\""));
