@@ -4,3 +4,6 @@ target \[main\] link dependency ordering:
   target \[A\]
 
 target \[main\] link line:
+  target \[B\]
+  target \[C\]
+  target \[A\]$
