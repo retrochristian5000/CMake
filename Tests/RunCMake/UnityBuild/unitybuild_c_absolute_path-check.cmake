@@ -1,0 +1,17 @@
+set(unitybuild_c "${RunCMake_TEST_BINARY_DIR}/CMakeFiles/tgt.dir/Unity/unity_0_c.c")
+if(NOT EXISTS "${unitybuild_c}")
+  set(RunCMake_TEST_FAILED "Generated unity source file ${unitybuild_c} does not exist.")
+  return()
+endif()
+
+set(EXPECTED_UNITY_FILE_CONTENT ".*")
+foreach(s RANGE 1 3)
+  string(APPEND EXPECTED_UNITY_FILE_CONTENT "#include.*\"${RunCMake_TEST_BINARY_DIR}/s${s}.c\".*")
+endforeach()
+
+file(STRINGS ${unitybuild_c} unitybuild_c_strings)
+string(REGEX MATCH "${EXPECTED_UNITY_FILE_CONTENT}" matched_code ${unitybuild_c_strings})
+if(NOT matched_code)
+  set(RunCMake_TEST_FAILED "Generated unity file ${unitybuild_c} doesn't contain absolute paths")
+  return()
+endif()
