@@ -42,16 +42,9 @@
 
 #include "cmCMakePresetsGraph.h"
 #include "cmCTestBuildAndTest.h"
-#include "cmCTestBuildHandler.h"
-#include "cmCTestConfigureHandler.h"
-#include "cmCTestCoverageHandler.h"
-#include "cmCTestMemCheckHandler.h"
 #include "cmCTestScriptHandler.h"
-#include "cmCTestSubmitHandler.h"
 #include "cmCTestTestHandler.h"
 #include "cmCTestTypes.h"
-#include "cmCTestUpdateHandler.h"
-#include "cmCTestUploadHandler.h"
 #include "cmCommandLineArgument.h"
 #include "cmDynamicLoader.h"
 #include "cmExecutionStatus.h"
@@ -123,16 +116,7 @@ struct cmCTest::Private
   bool FlushTestProgressLine = false;
 
   // these are helper classes
-  cmCTestBuildHandler BuildHandler;
   cmCTestBuildAndTest BuildAndTest;
-  cmCTestCoverageHandler CoverageHandler;
-  cmCTestScriptHandler ScriptHandler;
-  cmCTestTestHandler TestHandler;
-  cmCTestUpdateHandler UpdateHandler;
-  cmCTestConfigureHandler ConfigureHandler;
-  cmCTestMemCheckHandler MemCheckHandler;
-  cmCTestSubmitHandler SubmitHandler;
-  cmCTestUploadHandler UploadHandler;
 
   bool ShowOnly = false;
   bool OutputAsJson = false;
@@ -715,51 +699,6 @@ bool cmCTest::CTestFileExists(const std::string& filename)
   return cmSystemTools::FileExists(testingDir);
 }
 
-cmCTestBuildHandler* cmCTest::GetBuildHandler()
-{
-  return &this->Impl->BuildHandler;
-}
-
-cmCTestCoverageHandler* cmCTest::GetCoverageHandler()
-{
-  return &this->Impl->CoverageHandler;
-}
-
-cmCTestScriptHandler* cmCTest::GetScriptHandler()
-{
-  return &this->Impl->ScriptHandler;
-}
-
-cmCTestTestHandler* cmCTest::GetTestHandler()
-{
-  return &this->Impl->TestHandler;
-}
-
-cmCTestUpdateHandler* cmCTest::GetUpdateHandler()
-{
-  return &this->Impl->UpdateHandler;
-}
-
-cmCTestConfigureHandler* cmCTest::GetConfigureHandler()
-{
-  return &this->Impl->ConfigureHandler;
-}
-
-cmCTestMemCheckHandler* cmCTest::GetMemCheckHandler()
-{
-  return &this->Impl->MemCheckHandler;
-}
-
-cmCTestSubmitHandler* cmCTest::GetSubmitHandler()
-{
-  return &this->Impl->SubmitHandler;
-}
-
-cmCTestUploadHandler* cmCTest::GetUploadHandler()
-{
-  return &this->Impl->UploadHandler;
-}
-
 int cmCTest::ProcessSteps()
 {
   this->Impl->ExtraVerbose = this->Impl->Verbose;
@@ -784,8 +723,7 @@ int cmCTest::ProcessSteps()
   this->BlockTestErrorDiagnostics();
 
   int res = 0;
-  cmCTestScriptHandler script;
-  script.Initialize(this);
+  cmCTestScriptHandler script(this);
   script.CreateCMake();
   cmMakefile& mf = *script.GetMakefile();
   this->ReadCustomConfigurationFileTree(this->Impl->BinaryDir, &mf);
@@ -2711,8 +2649,7 @@ int cmCTest::RunScripts(
     cmCTestLog(this, OUTPUT, "* Extra verbosity turned on" << std::endl);
   }
 
-  cmCTestScriptHandler* ch = this->GetScriptHandler();
-  ch->Initialize(this);
+  auto ch = cm::make_unique<cmCTestScriptHandler>(this);
   ch->SetVerbose(this->Impl->Verbose);
   for (auto const& script : scripts) {
     ch->AddConfigurationScript(script.first, script.second);
@@ -2758,7 +2695,7 @@ int cmCTest::ExecuteTests()
 
   cmCTestLog(this, DEBUG, "Here: " << __LINE__ << std::endl);
 
-  this->GetTestHandler()->Initialize(this);
+  cmCTestTestHandler handler(this);
 
   {
     cmake cm(cmake::RoleScript, cmState::CTest);
@@ -2768,11 +2705,11 @@ int cmCTest::ExecuteTests()
     cmGlobalGenerator gg(&cm);
     cmMakefile mf(&gg, cm.GetCurrentSnapshot());
     this->ReadCustomConfigurationFileTree(this->Impl->BinaryDir, &mf);
-    this->GetTestHandler()->PopulateCustomVectors(&mf);
+    handler.PopulateCustomVectors(&mf);
   }
 
-  this->GetTestHandler()->SetVerbose(this->Impl->Verbose);
-  if (this->GetTestHandler()->ProcessHandler() < 0) {
+  handler.SetVerbose(this->Impl->Verbose);
+  if (handler.ProcessHandler() < 0) {
     cmCTestLog(this, ERROR_MESSAGE, "Errors while running CTest\n");
     if (!this->Impl->OutputTestOutputOnTestFailure) {
       const std::string lastTestLog =

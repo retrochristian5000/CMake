@@ -42,7 +42,7 @@ void cmCTestTestCommand::BindArguments()
   this->Bind("OUTPUT_JUNIT"_s, this->OutputJUnit);
 }
 
-cmCTestGenericHandler* cmCTestTestCommand::InitializeHandler()
+std::unique_ptr<cmCTestGenericHandler> cmCTestTestCommand::InitializeHandler()
 {
   cmValue ctestTimeout = this->Makefile->GetDefinition("CTEST_TEST_TIMEOUT");
 
@@ -64,7 +64,7 @@ cmCTestGenericHandler* cmCTestTestCommand::InitializeHandler()
     this->ResourceSpecFile = *resourceSpecFile;
   }
 
-  cmCTestTestHandler* handler = this->InitializeActualHandler();
+  auto handler = this->InitializeActualHandler();
   if (!this->Start.empty() || !this->End.empty() || !this->Stride.empty()) {
     handler->TestOptions.TestsToRunInformation =
       cmStrCat(this->Start, ',', this->End, ',', this->Stride);
@@ -159,9 +159,8 @@ cmCTestGenericHandler* cmCTestTestCommand::InitializeHandler()
   return handler;
 }
 
-cmCTestTestHandler* cmCTestTestCommand::InitializeActualHandler()
+std::unique_ptr<cmCTestTestHandler>
+cmCTestTestCommand::InitializeActualHandler()
 {
-  cmCTestTestHandler* handler = this->CTest->GetTestHandler();
-  handler->Initialize(this->CTest);
-  return handler;
+  return cm::make_unique<cmCTestTestHandler>(this->CTest);
 }

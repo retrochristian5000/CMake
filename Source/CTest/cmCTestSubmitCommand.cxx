@@ -32,7 +32,8 @@ std::unique_ptr<cmCommand> cmCTestSubmitCommand::Clone()
   return std::unique_ptr<cmCommand>(std::move(ni));
 }
 
-cmCTestGenericHandler* cmCTestSubmitCommand::InitializeHandler()
+std::unique_ptr<cmCTestGenericHandler>
+cmCTestSubmitCommand::InitializeHandler()
 {
   cmValue submitURL = !this->SubmitURL.empty()
     ? cmValue(this->SubmitURL)
@@ -122,8 +123,7 @@ cmCTestGenericHandler* cmCTestSubmitCommand::InitializeHandler()
     }
   }
 
-  cmCTestSubmitHandler* handler = this->CTest->GetSubmitHandler();
-  handler->Initialize(this->CTest);
+  auto handler = cm::make_unique<cmCTestSubmitHandler>(this->CTest);
 
   // If no FILES or PARTS given, *all* PARTS are submitted by default.
   //
