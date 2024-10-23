@@ -19,6 +19,7 @@
 #include "cmDuration.h"
 #include "cmProcessOutput.h"
 
+class cmake;
 class cmCTestBuildHandler;
 class cmCTestCoverageHandler;
 class cmCTestScriptHandler;
@@ -237,7 +238,7 @@ public:
   static std::string SafeBuildIdField(const std::string& value);
 
   /** Start CTest XML output file */
-  void StartXML(cmXMLWriter& xml, bool append);
+  void StartXML(cmXMLWriter& xml, cmake* cm, bool append);
 
   /** End CTest XML output file */
   void EndXML(cmXMLWriter& xml);
@@ -332,7 +333,7 @@ public:
   void AddCTestConfigurationOverwrite(const std::string& encstr);
 
   /** Create XML file that contains all the notes specified */
-  int GenerateNotesFile(std::vector<std::string> const& files);
+  int GenerateNotesFile(cmake* cm, std::vector<std::string> const& files);
 
   /** Create XML file to indicate that build is complete */
   int GenerateDoneFile();
@@ -408,7 +409,7 @@ public:
   bool GetExtraVerbose() const;
   int GetSubmitIndex() const;
 
-  void AddSiteProperties(cmXMLWriter& xml);
+  void AddSiteProperties(cmXMLWriter& xml, cmake* cm);
 
   bool GetLabelSummary() const;
   bool GetSubprojectSummary() const;
@@ -448,7 +449,7 @@ public:
   cmCTestTestOptions const& GetTestOptions() const;
 
 private:
-  int GenerateNotesFile(const std::string& files);
+  int GenerateNotesFile(cmake* cm, const std::string& files);
 
   void BlockTestErrorDiagnostics();
 
@@ -476,7 +477,7 @@ private:
   static bool ColoredOutputSupportedByConsole();
 
   /** Create note from files. */
-  int GenerateCTestNotesOutput(cmXMLWriter& xml,
+  int GenerateCTestNotesOutput(cmXMLWriter& xml, cmake* cm,
                                std::vector<std::string> const& files);
 
   /** Check if the argument is the one specified */

@@ -899,7 +899,7 @@ int cmCTest::ProcessSteps()
   if (this->Impl->Parts[PartNotes]) {
     this->UpdateCTestConfiguration();
     if (!this->Impl->NotesFiles.empty()) {
-      this->GenerateNotesFile(this->Impl->NotesFiles);
+      this->GenerateNotesFile(script.GetCMake(), this->Impl->NotesFiles);
     }
   }
   if (this->Impl->Parts[PartSubmit]) {
@@ -1103,7 +1103,7 @@ std::string cmCTest::SafeBuildIdField(const std::string& value)
   return safevalue;
 }
 
-void cmCTest::StartXML(cmXMLWriter& xml, bool append)
+void cmCTest::StartXML(cmXMLWriter& xml, cmake* cm, bool append)
 {
   if (this->Impl->CurrentTag.empty()) {
     cmCTestLog(this, ERROR_MESSAGE,
@@ -1165,25 +1165,17 @@ void cmCTest::StartXML(cmXMLWriter& xml, bool append)
     xml.Attribute("ChangeId", changeId);
   }
 
-  this->AddSiteProperties(xml);
+  this->AddSiteProperties(xml, cm);
 }
 
-void cmCTest::AddSiteProperties(cmXMLWriter& xml)
+void cmCTest::AddSiteProperties(cmXMLWriter& xml, cmake* cm)
 {
-  cmCTestScriptHandler* ch = this->GetScriptHandler();
-  cmake* cm = ch->GetCMake();
-  // if no CMake then this is the old style script and props like
-  // this will not work anyway.
-  if (!cm) {
-    return;
-  }
   // This code should go when cdash is changed to use labels only
   cmValue subproject = cm->GetState()->GetGlobalProperty("SubProject");
   if (subproject) {
     xml.StartElement("Subproject");
     xml.Attribute("name", *subproject);
-    cmValue labels =
-      ch->GetCMake()->GetState()->GetGlobalProperty("SubProjectLabels");
+    cmValue labels = cm->GetState()->GetGlobalProperty("SubProjectLabels");
     if (labels) {
       xml.StartElement("Labels");
       cmList args{ *labels };
@@ -1235,7 +1227,7 @@ void cmCTest::EndXML(cmXMLWriter& xml)
   xml.EndDocument();
 }
 
-int cmCTest::GenerateCTestNotesOutput(cmXMLWriter& xml,
+int cmCTest::GenerateCTestNotesOutput(cmXMLWriter& xml, cmake* cm,
                                       std::vector<std::string> const& files)
 {
   std::string buildname =
@@ -1252,7 +1244,7 @@ int cmCTest::GenerateCTestNotesOutput(cmXMLWriter& xml,
   xml.Attribute("Name", this->GetCTestConfiguration("Site"));
   xml.Attribute("Generator",
                 std::string("ctest-") + cmVersion::GetCMakeVersion());
-  this->AddSiteProperties(xml);
+  this->AddSiteProperties(xml, cm);
   xml.StartElement("Notes");
 
   for (std::string const& file : files) {
@@ -1286,7 +1278,8 @@ int cmCTest::GenerateCTestNotesOutput(cmXMLWriter& xml,
   return 1;
 }
 
-int cmCTest::GenerateNotesFile(std::vector<std::string> const& files)
+int cmCTest::GenerateNotesFile(cmake* cm,
+                               std::vector<std::string> const& files)
 {
   cmGeneratedFileStream ofs;
   if (!this->OpenOutputFile(this->Impl->CurrentTag, "Notes.xml", ofs)) {
@@ -1294,11 +1287,11 @@ int cmCTest::GenerateNotesFile(std::vector<std::string> const& files)
     return 1;
   }
   cmXMLWriter xml(ofs);
-  this->GenerateCTestNotesOutput(xml, files);
+  this->GenerateCTestNotesOutput(xml, cm, files);
   return 0;
 }
 
-int cmCTest::GenerateNotesFile(const std::string& cfiles)
+int cmCTest::GenerateNotesFile(cmake* cm, const std::string& cfiles)
 {
   if (cfiles.empty()) {
     return 1;
@@ -1312,7 +1305,7 @@ int cmCTest::GenerateNotesFile(const std::string& cfiles)
     return 1;
   }
 
-  return this->GenerateNotesFile(files);
+  return this->GenerateNotesFile(cm, files);
 }
 
 int cmCTest::GenerateDoneFile()
