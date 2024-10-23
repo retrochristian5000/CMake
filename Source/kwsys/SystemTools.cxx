@@ -504,7 +504,7 @@ static constexpr size_t FNV_PRIME = 16777619U;
 #  endif
 
 // Case insensitive Fnv1a hash
-struct SystemToolsPathCaseHash
+struct SystemToolsPathHash
 {
   size_t operator()(std::string const& path) const
   {
@@ -518,7 +518,7 @@ struct SystemToolsPathCaseHash
   }
 };
 
-struct SystemToolsPathCaseEqual
+struct SystemToolsPathEqual
 {
   bool operator()(std::string const& l, std::string const& r) const
   {
@@ -550,14 +550,10 @@ public:
 #ifdef _WIN32
   static std::string GetCasePathName(std::string const& pathIn,
                                      bool const cache);
-  static std::string GetActualCaseForPathCached(std::string const& path);
   static const char* GetEnvBuffered(const char* key);
-  std::unordered_map<std::string, std::string, SystemToolsPathCaseHash,
-                     SystemToolsPathCaseEqual>
+  std::unordered_map<std::string, std::string, SystemToolsPathHash,
+                     SystemToolsPathEqual>
     FindFileMap;
-  std::unordered_map<std::string, std::string, SystemToolsPathCaseHash,
-                     SystemToolsPathCaseEqual>
-    PathCaseMap;
   std::map<std::string, std::string> EnvMap;
 #endif
 #ifdef __CYGWIN__
@@ -673,21 +669,6 @@ std::string SystemToolsStatic::GetCasePathName(std::string const& pathIn,
 
     casePath += path_components[idx];
   }
-  return casePath;
-}
-
-std::string SystemToolsStatic::GetActualCaseForPathCached(std::string const& p)
-{
-  std::string casePath;
-
-  auto it = SystemToolsStatics->PathCaseMap.find(p);
-  if (it != SystemToolsStatics->PathCaseMap.end()) {
-    casePath = it->second;
-  } else {
-    casePath = SystemToolsStatic::GetCasePathName(p, true);
-    SystemToolsStatics->PathCaseMap.emplace(p, casePath);
-  }
-
   return casePath;
 }
 #endif
@@ -3647,7 +3628,6 @@ std::string CollapseFullPathImpl(std::string const& in_path,
   SystemTools::CheckTranslationPath(newPath);
 #endif
 #ifdef _WIN32
-  newPath = SystemToolsStatics->GetActualCaseForPathCached(newPath);
   SystemTools::ConvertToUnixSlashes(newPath);
 #endif
   // Return the reconstructed path.
