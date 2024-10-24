@@ -14,6 +14,7 @@
 #include "cmDebuggerVariablesHelper.h"
 #include "cmDebuggerVariablesManager.h"
 #include "cmListFileCache.h"
+#include "cmStringAlgorithms.h"
 
 namespace cmDebugger {
 
@@ -117,8 +118,27 @@ dap::VariablesResponse cmDebuggerThread::GetVariablesResponse(
 }
 
 dap::StackTraceResponse GetStackTraceResponse(
-  std::shared_ptr<cmDebuggerThread> const& thread)
+  std::shared_ptr<cmDebuggerThread> const& thread,
+  dap::optional<dap::StackFrameFormat> format)
 {
+  dap::boolean showParameters = false;
+  dap::boolean showParameterValues = false;
+  dap::boolean showLine = false;
+  if (format.has_value()) {
+    auto formatValue = format.value();
+    if (formatValue.parameters.has_value()) {
+      showParameters = formatValue.parameters.value();
+    }
+
+    if (formatValue.parameterValues.has_value()) {
+      showParameterValues = formatValue.parameterValues.value();
+    }
+
+    if (formatValue.line.has_value()) {
+      showLine = formatValue.line.value();
+    }
+  }
+
   dap::StackTraceResponse response;
   std::unique_lock<std::mutex> lock(thread->Mutex);
   for (int i = static_cast<int>(thread->Frames.size()) - 1; i >= 0; --i) {
@@ -136,10 +156,29 @@ dap::StackTraceResponse GetStackTraceResponse(
 #endif
     stackFrame.line = thread->Frames[i]->GetLine();
     stackFrame.column = 1;
-    stackFrame.name = thread->Frames[i]->GetFunction().OriginalName();
     stackFrame.id = thread->Frames[i]->GetId();
     stackFrame.source = source;
 
+    auto stackName = thread->Frames[i]->GetFunction().OriginalName();
+    if (showParameters) {
+      stackName.append("(");
+      if (showParameterValues && !thread->Frames[i]->GetArguments().empty()) {
+        for (auto const& arg : thread->Frames[i]->GetArguments()) {
+          stackName = cmStrCat(stackName, arg.Value, ", ");
+        }
+
+        stackName.erase(stackName.end() - 2, stackName.end());
+      }
+
+      stackName.append(")");
+    }
+
+    if (showLine) {
+      stackName =
+        cmStrCat(stackName, " Line: ", std::to_string(stackFrame.line));
+    }
+
+    stackFrame.name = stackName;
     response.stackFrames.push_back(stackFrame);
   }
 
