@@ -43,7 +43,6 @@
 cmCTestScriptHandler::cmCTestScriptHandler(cmCTest* ctest)
   : Superclass(ctest)
 {
-  this->ParentMakefile = nullptr;
 }
 
 cmCTestScriptHandler::~cmCTestScriptHandler() = default;
