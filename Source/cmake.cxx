@@ -13,6 +13,9 @@
 #include <sstream>
 #include <stdexcept>
 #include <utility>
+#if !defined(__GNUC__) || __GNUC__ >= 8
+#  include <iterator>
+#endif
 
 #include <cm/memory>
 #include <cm/optional>
@@ -1131,27 +1134,25 @@ void cmake::SetArgs(const std::vector<std::string>& args)
       "--debug-find-pkg", "Provide a package argument for --debug-find-pkg",
       CommandArgument::Values::One, CommandArgument::RequiresSeparator::Yes,
       [](std::string const& value, cmake* state) -> bool {
-        std::vector<std::string> find_pkgs(cmTokenize(value, ","));
-        std::cout << "Running with debug output on for the 'find' commands "
-                     "for package(s)";
-        for (auto const& v : find_pkgs) {
-          std::cout << ' ' << v;
-          state->SetDebugFindOutputPkgs(v);
-        }
-        std::cout << ".\n";
+        std::vector<cm::string_view> find_pkgs = cmTokenizedView(value, ',');
+        std::cout << cmJoinStrings(
+                       find_pkgs, " ",
+                       "Running with debug output on for the 'find' commands "
+                       "for package(s) ")
+                  << ".\n";
+        state->SetDebugFindOutputPkgs(std::move(find_pkgs));
         return true;
       } },
     CommandArgument{
       "--debug-find-var", CommandArgument::Values::One,
       CommandArgument::RequiresSeparator::Yes,
       [](std::string const& value, cmake* state) -> bool {
-        std::vector<std::string> find_vars(cmTokenize(value, ","));
-        std::cout << "Running with debug output on for the variable(s)";
-        for (auto const& v : find_vars) {
-          std::cout << ' ' << v;
-          state->SetDebugFindOutputVars(v);
-        }
-        std::cout << ".\n";
+        std::vector<cm::string_view> find_vars = cmTokenizedView(value, ',');
+        std::cout << cmJoinStrings(
+                       find_vars, " ",
+                       "Running with debug output on for the variable(s) ")
+                  << ".\n";
+        state->SetDebugFindOutputVars(std::move(find_vars));
         return true;
       } },
     CommandArgument{ "--trace", CommandArgument::Values::Zero,
@@ -4228,14 +4229,30 @@ void cmake::SetDeprecatedWarningsAsErrors(bool b)
                       cmStateEnums::INTERNAL);
 }
 
-void cmake::SetDebugFindOutputPkgs(std::string const& args)
+void cmake::SetDebugFindOutputPkgs(std::vector<cm::string_view> args)
 {
-  this->DebugFindPkgs.emplace(args);
+#if defined(__GNUC__) && __GNUC__ < 8
+  for (auto arg : args) {
+    this->DebugFindPkgs.emplace(std::string(arg));
+  }
+#else
+  // NOTE GCC 7 (and maybe older), can't compile this ;-(
+  this->DebugFindPkgs.insert(std::make_move_iterator(args.begin()),
+                             std::make_move_iterator(args.end()));
+#endif
 }
 
-void cmake::SetDebugFindOutputVars(std::string const& args)
+void cmake::SetDebugFindOutputVars(std::vector<cm::string_view> args)
 {
-  this->DebugFindVars.emplace(args);
+#if defined(__GNUC__) && __GNUC__ < 8
+  for (auto arg : args) {
+    this->DebugFindVars.emplace(std::string(arg));
+  }
+#else
+  // NOTE GCC 7 (and maybe older), can't compile this ;-(
+  this->DebugFindVars.insert(std::make_move_iterator(args.begin()),
+                             std::make_move_iterator(args.end()));
+#endif
 }
 
 bool cmake::GetDebugFindOutput(std::string const& var) const
