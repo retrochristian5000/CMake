@@ -1820,10 +1820,8 @@ bool cmCTest::SetArgsFromPreset(const std::string& presetName,
         }
       }
 
-      if (expandedPreset->Filter->Include->UseUnion.value_or(false)) {
-        this->GetTestHandler()->SetPersistentOption("UseUnion", "true");
-        this->GetMemCheckHandler()->SetPersistentOption("UseUnion", "true");
-      }
+      this->Impl->TestOptions.UseUnion =
+        expandedPreset->Filter->Include->UseUnion.value_or(false);
     }
 
     if (expandedPreset->Filter->Exclude) {
@@ -2133,8 +2131,7 @@ int cmCTest::Run(std::vector<std::string> const& args)
     return true;
   };
   auto const dashU = [this](std::string const&) -> bool {
-    this->Impl->TestHandler.SetPersistentOption("UseUnion", "true");
-    this->Impl->MemCheckHandler.SetPersistentOption("UseUnion", "true");
+    this->Impl->TestOptions.UseUnion = true;
     return true;
   };
   auto const dashR = [this](std::string const& expr) -> bool {
@@ -2616,16 +2613,14 @@ int cmCTest::Run(std::vector<std::string> const& args)
                      } },
     CommandArgument{ "--schedule-random", CommandArgument::Values::Zero,
                      [this](std::string const&) -> bool {
-                       this->Impl->ScheduleType = "Random";
+                       this->Impl->TestOptions.ScheduleRandom = true;
                        return true;
                      } },
-    CommandArgument{
-      "--rerun-failed", CommandArgument::Values::Zero,
-      [this](std::string const&) -> bool {
-        this->Impl->TestHandler.SetPersistentOption("RerunFailed", "true");
-        this->Impl->MemCheckHandler.SetPersistentOption("RerunFailed", "true");
-        return true;
-      } },
+    CommandArgument{ "--rerun-failed", CommandArgument::Values::Zero,
+                     [this](std::string const&) -> bool {
+                       this->Impl->TestOptions.RerunFailed = true;
+                       return true;
+                     } },
   };
 
   // process the command line arguments
