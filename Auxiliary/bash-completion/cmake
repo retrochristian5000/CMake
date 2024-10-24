@@ -179,7 +179,7 @@ _cmake()
             fi
             return
             ;;
-         --preset)
+         --preset | --workflow)
             local IFS=$'\n'
             local quoted
             printf -v quoted %q "$cur"
