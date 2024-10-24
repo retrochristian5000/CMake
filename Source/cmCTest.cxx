@@ -45,7 +45,6 @@
 #include "cmCTestBuildHandler.h"
 #include "cmCTestConfigureHandler.h"
 #include "cmCTestCoverageHandler.h"
-#include "cmCTestGenericHandler.h"
 #include "cmCTestMemCheckHandler.h"
 #include "cmCTestScriptHandler.h"
 #include "cmCTestSubmitHandler.h"
@@ -208,6 +207,7 @@ struct cmCTest::Private
   bool NoTestsModeSetInCli = false;
 
   cmCTestTestOptions TestOptions;
+  std::vector<std::string> CommandLineHttpHeaders;
 };
 
 struct tm* cmCTest::GetNightlyTime(std::string const& str, bool tomorrowtag)
@@ -2505,7 +2505,7 @@ int cmCTest::Run(std::vector<std::string> const& args)
                      } },
     CommandArgument{ "--http-header", CommandArgument::Values::One,
                      [this](std::string const& h) -> bool {
-                       this->Impl->SubmitHandler.AddCommandLineHttpHeader(h);
+                       this->Impl->CommandLineHttpHeaders.push_back(h);
                        return true;
                      } },
     CommandArgument{ "--submit-index", CommandArgument::Values::One,
@@ -3208,6 +3208,11 @@ std::string cmCTest::GetBuildID() const
 cmCTestTestOptions const& cmCTest::GetTestOptions() const
 {
   return this->Impl->TestOptions;
+}
+
+std::vector<std::string> cmCTest::GetCommandLineHttpHeaders() const
+{
+  return this->Impl->CommandLineHttpHeaders;
 }
 
 void cmCTest::AddSubmitFile(Part part, const std::string& name)
