@@ -14,10 +14,10 @@ void cmCTestMemCheckCommand::BindArguments()
   this->Bind("DEFECT_COUNT"_s, this->DefectCount);
 }
 
-cmCTestTestHandler* cmCTestMemCheckCommand::InitializeActualHandler()
+std::unique_ptr<cmCTestTestHandler>
+cmCTestMemCheckCommand::InitializeActualHandler()
 {
-  cmCTestMemCheckHandler* handler = this->CTest->GetMemCheckHandler();
-  handler->Initialize(this->CTest);
+  auto handler = cm::make_unique<cmCTestMemCheckHandler>(this->CTest);
 
   this->CTest->SetCTestConfigurationFromCMakeVariable(
     this->Makefile, "MemoryCheckType", "CTEST_MEMORYCHECK_TYPE", this->Quiet);

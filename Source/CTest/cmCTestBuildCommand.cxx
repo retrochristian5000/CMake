@@ -39,10 +39,9 @@ void cmCTestBuildCommand::BindArguments()
 
 cmCTestBuildCommand::~cmCTestBuildCommand() = default;
 
-cmCTestGenericHandler* cmCTestBuildCommand::InitializeHandler()
+std::unique_ptr<cmCTestGenericHandler> cmCTestBuildCommand::InitializeHandler()
 {
-  cmCTestBuildHandler* handler = this->CTest->GetBuildHandler();
-  handler->Initialize(this->CTest);
+  auto handler = cm::make_unique<cmCTestBuildHandler>(this->CTest);
 
   cmValue ctestBuildCommand =
     this->Makefile->GetDefinition("CTEST_BUILD_COMMAND");

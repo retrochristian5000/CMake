@@ -46,12 +46,10 @@ public:
    */
   void UpdateElapsedTime();
 
-  cmCTestScriptHandler();
+  cmCTestScriptHandler(cmCTest* ctest);
   cmCTestScriptHandler(const cmCTestScriptHandler&) = delete;
   const cmCTestScriptHandler& operator=(const cmCTestScriptHandler&) = delete;
   ~cmCTestScriptHandler() override;
-
-  void Initialize(cmCTest* ctest) override;
 
   void CreateCMake();
   cmake* GetCMake() { return this->CMake.get(); }

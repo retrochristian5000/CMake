@@ -24,7 +24,8 @@ void cmCTestConfigureCommand::BindArguments()
   this->Bind("OPTIONS"_s, this->Options);
 }
 
-cmCTestGenericHandler* cmCTestConfigureCommand::InitializeHandler()
+std::unique_ptr<cmCTestGenericHandler>
+cmCTestConfigureCommand::InitializeHandler()
 {
   cmList options;
 
@@ -149,8 +150,7 @@ cmCTestGenericHandler* cmCTestConfigureCommand::InitializeHandler()
                                        *labelsForSubprojects, this->Quiet);
   }
 
-  cmCTestConfigureHandler* handler = this->CTest->GetConfigureHandler();
-  handler->Initialize(this->CTest);
+  auto handler = cm::make_unique<cmCTestConfigureHandler>(this->CTest);
   handler->SetQuiet(this->Quiet);
   return handler;
 }
