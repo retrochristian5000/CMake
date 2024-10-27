@@ -481,7 +481,13 @@ void cmGlobalVisualStudio7Generator::WriteFolders(std::ostream& fout)
     std::string nameOnly = cmSystemTools::GetFilenameName(fullName);
 
     fout << "Project(\"{" << guidProjectTypeFolder << "}\") = \"" << nameOnly
-         << "\", \"" << fullName << "\", \"{" << guid << "}\"\nEndProject\n";
+         << "\", \"" << fullName << "\", \"{" << guid << "}\"\n";
+
+    if (!iter.second.SolutionItems.empty()) {
+      this->WriteFolderSolutionItems(fout, iter.second);
+    }
+
+    fout << "EndProject\n";
   }
 }
 
@@ -498,6 +504,15 @@ void cmGlobalVisualStudio7Generator::WriteFoldersContent(std::ostream& fout)
       fout << "\t\t{" << guid << "} = {" << guidParent << "}\n";
     }
   }
+}
+
+void cmGlobalVisualStudio7Generator::AddSolutionItems(cmLocalGenerator* root)
+{
+}
+
+void cmGlobalVisualStudio7Generator::WriteFolderSolutionItems(
+  std::ostream& fout, const cmVisualStudioFolder& folder)
+{
 }
 
 std::string cmGlobalVisualStudio7Generator::ConvertToSolutionPath(
