@@ -1289,11 +1289,9 @@ void cmNinjaTargetGenerator::GenerateSwiftOutputFileMap(
     if (cmValue name = target->GetProperty("Swift_DEPENDENCIES_FILE")) {
       return *name;
     }
-    return this->GetLocalGenerator()->ConvertToOutputFormat(
-      this->ConvertToNinjaPath(cmStrCat(target->GetSupportDirectory(), '/',
-                                        config, '/', target->GetName(),
-                                        ".swiftdeps")),
-      cmOutputConverter::SHELL);
+    return this->ConvertToNinjaPath(cmStrCat(target->GetSupportDirectory(),
+                                             '/', config, '/',
+                                             target->GetName(), ".swiftdeps"));
   }();
 
   std::string mapFilePath =
@@ -1312,9 +1310,7 @@ void cmNinjaTargetGenerator::GenerateSwiftOutputFileMap(
   // Add flag
   this->LocalGenerator->AppendFlags(flags, "-output-file-map");
   this->LocalGenerator->AppendFlagEscape(
-    flags,
-    this->GetLocalGenerator()->ConvertToOutputFormat(
-      ConvertToNinjaPath(mapFilePath), cmOutputConverter::SHELL));
+    flags, this->ConvertToNinjaPath(mapFilePath));
 }
 
 namespace {
