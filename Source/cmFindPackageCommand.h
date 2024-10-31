@@ -57,6 +57,13 @@ public:
     Dec
   };
 
+  enum class PackageDescriptionType
+  {
+    Any,
+    CMake,
+    Cps,
+  };
+
   /*! sorts a given list of string based on the input sort parameters */
   static void Sort(std::vector<std::string>::iterator begin,
                    std::vector<std::string>::iterator end, SortOrderType order,
@@ -118,6 +125,7 @@ private:
   bool FindPrefixedConfig();
   bool FindFrameworkConfig();
   bool FindAppBundleConfig();
+  bool FindEnvironmentConfig();
   enum PolicyScopeRule
   {
     NoPolicyScope,
@@ -149,15 +157,17 @@ private:
                               cmSearchPath& outPaths);
   bool CheckPackageRegistryEntry(const std::string& fname,
                                  cmSearchPath& outPaths);
-  bool SearchDirectory(std::string const& dir);
-  bool CheckDirectory(std::string const& dir);
-  bool FindConfigFile(std::string const& dir, std::string& file);
+  bool SearchDirectory(std::string const& dir, PackageDescriptionType type);
+  bool CheckDirectory(std::string const& dir, PackageDescriptionType type);
+  bool FindConfigFile(std::string const& dir, PackageDescriptionType type,
+                      std::string& file);
   bool CheckVersion(std::string const& config_file);
   bool CheckVersionFile(std::string const& version_file,
                         std::string& result_version);
   bool SearchPrefix(std::string const& prefix);
   bool SearchFrameworkPrefix(std::string const& prefix_in);
   bool SearchAppBundlePrefix(std::string const& prefix_in);
+  bool SearchEnvironmentPrefix(std::string const& prefix_in);
 
   struct OriginalDef
   {
@@ -200,6 +210,7 @@ private:
   KWIML_INT_uint64_t RequiredCMakeVersion = 0;
   bool Quiet = false;
   bool Required = false;
+  bool UseCpsFiles = false;
   bool UseConfigFiles = true;
   bool UseFindModules = true;
   bool NoUserRegistry = false;
@@ -213,10 +224,29 @@ private:
   bool RegistryViewDefined = false;
   std::string LibraryArchitecture;
   std::vector<std::string> Names;
-  std::vector<std::string> Configs;
   std::set<std::string> IgnoredPaths;
   std::set<std::string> IgnoredPrefixPaths;
   std::string DebugBuffer;
+
+  struct ConfigName
+  {
+    ConfigName(std::string const& name, PackageDescriptionType type)
+      : Name{ name }
+      , Type{ type }
+    {
+    }
+    ConfigName(std::string&& name, PackageDescriptionType type)
+      : Name{ std::move(name) }
+      , Type{ type }
+    {
+    }
+    ConfigName(ConfigName const&) = default;
+    ConfigName(ConfigName&&) = default;
+
+    std::string Name;
+    PackageDescriptionType Type;
+  };
+  std::vector<ConfigName> Configs;
 
   class FlushDebugBufferOnExit;
 
