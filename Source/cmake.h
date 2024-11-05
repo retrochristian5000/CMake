@@ -501,8 +501,8 @@ public:
   bool GetDebugFindOutput(std::string const& var) const;
   bool GetDebugFindPkgOutput(std::string const& pkg) const;
   void SetDebugFindOutput(bool b) { this->DebugFindOutput = b; }
-  void SetDebugFindOutputPkgs(std::string const& args);
-  void SetDebugFindOutputVars(std::string const& args);
+  void SetDebugFindOutputPkgs(std::vector<cm::string_view> args);
+  void SetDebugFindOutputVars(std::vector<cm::string_view> args);
 
   //! Do we want trace output during the cmake run.
   bool GetTrace() const { return this->Trace; }
