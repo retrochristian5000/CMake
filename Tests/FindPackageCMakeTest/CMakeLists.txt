@@ -606,6 +606,28 @@ unset(CMAKE_FIND_PACKAGE_SORT_DIRECTION)
 set(CMAKE_PREFIX_PATH )
 
 ############################################################################
+##Test FIND_PACKAGE finding CPS
+
+set(CMAKE_PREFIX_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+
+find_package(Sample CONFIG)
+if(NOT Sample_FOUND)
+  message(SEND_ERROR "CPS Sample not found !")
+elseif(NOT Sample_VERSION STREQUAL "2.10.11")
+  message(SEND_ERROR "CPS Sample wrong version ${Sample_VERSION} !")
+elseif(NOT Sample_VERSION_MAJOR EQUAL 2)
+  message(SEND_ERROR "CPS Sample wrong major version ${Sample_VERSION_MAJOR} !")
+elseif(NOT Sample_VERSION_MINOR EQUAL 10)
+  message(SEND_ERROR "CPS Sample wrong minor version ${Sample_VERSION_MINOR} !")
+elseif(NOT Sample_VERSION_PATCH EQUAL 11)
+  message(SEND_ERROR "CPS Sample wrong patch version ${Sample_VERSION_PATCH} !")
+elseif(NOT Sample_VERSION_TWEAK EQUAL 0)
+  message(SEND_ERROR "CPS Sample wrong tweak version ${Sample_VERSION_TWEAK} !")
+endif()
+
+set(CMAKE_PREFIX_PATH)
+
+############################################################################
 ##Test FIND_PACKAGE CMAKE_FIND_PACKAGE_PREFER_CONFIG
 
 set(CMAKE_PREFIX_PATH ${CMAKE_CURRENT_SOURCE_DIR}/PreferConfig)
