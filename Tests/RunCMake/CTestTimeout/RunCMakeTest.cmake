@@ -41,10 +41,10 @@ else()
   unset(CASE_CMAKELISTS_SUFFIX_CODE)
 
   string(CONCAT CASE_CMAKELISTS_SUFFIX_CODE [[
-    target_compile_definitions(TestTimeout PRIVATE SIGNAL SIGNAL_IGNORE=1)
+    target_compile_definitions(TestTimeout PRIVATE SIGNAL SIGNAL_IGNORE=10)
     set_tests_properties(TestTimeout PROPERTIES
       TIMEOUT_SIGNAL_NAME SIGUSR1
-      # Use default TIMEOUT_SIGNAL_GRACE_PERIOD of 1.
+      TIMEOUT_SIGNAL_GRACE_PERIOD 10
       )
 ]])
   run_ctest_timeout(SignalIgnore)
