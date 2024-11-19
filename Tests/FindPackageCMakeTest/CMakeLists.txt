@@ -608,6 +608,8 @@ set(CMAKE_PREFIX_PATH )
 ############################################################################
 ##Test FIND_PACKAGE finding CPS
 
+set(CMAKE_EXPERIMENTAL_FIND_CPS_PACKAGES "e82e467b-f997-4464-8ace-b00808fff261")
+
 set(CMAKE_PREFIX_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 
 find_package(Sample CONFIG)
