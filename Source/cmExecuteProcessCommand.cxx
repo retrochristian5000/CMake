@@ -17,6 +17,10 @@
 
 #include <cm3p/uv.h>
 
+#ifndef _WIN32
+#  include <fcntl.h>
+#endif
+
 #include "cmArgumentParser.h"
 #include "cmExecutionStatus.h"
 #include "cmList.h"
@@ -33,6 +37,20 @@ namespace {
 bool cmExecuteProcessCommandIsWhitespace(char c)
 {
   return (cmIsSpace(c) || c == '\n' || c == '\r');
+}
+
+FILE* FopenCLOEXEC(std::string const& path, const char* mode)
+{
+  FILE* f = cmsys::SystemTools::Fopen(path, mode);
+#ifndef _WIN32
+  if (f) {
+    if (fcntl(fileno(f), F_SETFD, FD_CLOEXEC) < 0) {
+      fclose(f);
+      f = nullptr;
+    }
+  }
+#endif
+  return f;
 }
 
 void cmExecuteProcessCommandFixText(std::vector<char>& output,
@@ -178,7 +196,7 @@ bool cmExecuteProcessCommand(std::vector<std::string> const& args,
   // Check the output variables.
   std::unique_ptr<FILE, int (*)(FILE*)> inputFile(nullptr, fclose);
   if (!inputFilename.empty()) {
-    inputFile.reset(cmsys::SystemTools::Fopen(inputFilename, "rb"));
+    inputFile.reset(FopenCLOEXEC(inputFilename, "rb"));
     if (inputFile) {
       builder.SetExternalStream(cmUVProcessChainBuilder::Stream_INPUT,
                                 inputFile.get());
@@ -189,7 +207,7 @@ bool cmExecuteProcessCommand(std::vector<std::string> const& args,
 
   std::unique_ptr<FILE, int (*)(FILE*)> outputFile(nullptr, fclose);
   if (!outputFilename.empty()) {
-    outputFile.reset(cmsys::SystemTools::Fopen(outputFilename, "wb"));
+    outputFile.reset(FopenCLOEXEC(outputFilename, "wb"));
     if (outputFile) {
       builder.SetExternalStream(cmUVProcessChainBuilder::Stream_OUTPUT,
                                 outputFile.get());
@@ -211,7 +229,7 @@ bool cmExecuteProcessCommand(std::vector<std::string> const& args,
                                   outputFile.get());
       }
     } else {
-      errorFile.reset(cmsys::SystemTools::Fopen(errorFilename, "wb"));
+      errorFile.reset(FopenCLOEXEC(errorFilename, "wb"));
       if (errorFile) {
         builder.SetExternalStream(cmUVProcessChainBuilder::Stream_ERROR,
                                   errorFile.get());
