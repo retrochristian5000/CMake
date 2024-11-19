@@ -2,22 +2,63 @@
    file Copyright.txt or https://cmake.org/licensing for details.  */
 #include "cmPackageInfoReader.h"
 
-#include <algorithm>
-#include <cctype>
+#include <initializer_list>
 #include <limits>
 #include <unordered_map>
 #include <utility>
 
 #include <cm/string_view>
+#include <cmext/string_view>
 
 #include <cm3p/json/reader.h>
 #include <cm3p/json/value.h>
 
 #include "cmsys/FStream.hxx"
+#include "cmsys/RegularExpression.hxx"
 
+#include "cmExecutionStatus.h"
+#include "cmListFileCache.h"
+#include "cmMakefile.h"
+#include "cmMessageType.h"
+#include "cmStateTypes.h"
+#include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
+#include "cmTarget.h"
 
 namespace {
+
+// Map of CPS language names to CMake language name.  Case insensitivity is
+// achieved by converting the CPS value to lower case, so keys in this map must
+// be lower case.
+std::unordered_map<std::string, std::string> Languages = {
+  // clang-format off
+  { "c", "C" },
+  { "c++", "CXX" },
+  { "cpp", "CXX" },
+  { "cxx", "CXX" },
+  { "objc", "OBJC" },
+  { "objc++", "OBJCXX" },
+  { "objcpp", "OBJCXX" },
+  { "objcxx", "OBJCXX" },
+  { "swift", "swift" },
+  { "hip", "HIP" },
+  { "cuda", "CUDA" },
+  { "ispc", "ISPC" },
+  { "c#", "CSharp" },
+  { "csharp", "CSharp" },
+  { "fortran", "Fortran" },
+  // clang-format on
+};
+
+std::string GetRealPath(std::string const& path)
+{
+  return cmSystemTools::GetRealPath(path);
+}
+
+std::string GetRealDir(std::string const& path)
+{
+  return cmSystemTools::GetFilenamePath(cmSystemTools::GetRealPath(path));
+}
 
 Json::Value ReadJson(std::string const& fileName)
 {
@@ -49,17 +90,269 @@ bool CheckSchemaVersion(Json::Value const& data)
 
   // Check that we understand this version.
   return cmSystemTools::VersionCompare(cmSystemTools::OP_GREATER_EQUAL,
-                                       version, "0.12") &&
+                                       version, "0.13") &&
     cmSystemTools::VersionCompare(cmSystemTools::OP_LESS, version, "1");
 
   // TODO Eventually this probably needs to return the version tuple, and
   // should share code with cmPackageInfoReader::ParseVersion.
 }
 
+bool ComparePathSuffix(std::string const& path, std::string const& suffix)
+{
+  auto const& tail = path.substr(path.size() - suffix.size());
+  return cmSystemTools::ComparePath(tail, suffix);
+}
+
+std::string DeterminePrefix(std::string const& filepath,
+                            Json::Value const& data)
+{
+  // First check if an absolute prefix was supplied.
+  auto prefix = data["prefix"].asString();
+  if (!prefix.empty()) {
+    // Ensure that the specified prefix is valid.
+    if (cmsys::SystemTools::FileIsFullPath(prefix) &&
+        cmsys::SystemTools::FileIsDirectory(prefix)) {
+      cmSystemTools::ConvertToUnixSlashes(prefix);
+      return prefix;
+    }
+    // The specified absolute prefix is not valid.
+    return {};
+  }
+
+  // Get and validate prefix-relative path.
+  auto relPath = data["cps_path"].asString();
+  cmSystemTools::ConvertToUnixSlashes(relPath);
+  if (relPath.empty() || !cmHasLiteralPrefix(relPath, "@prefix@/")) {
+    // The relative prefix is not valid.
+    return {};
+  }
+  relPath = relPath.substr(8);
+
+  // Get directory portion of the absolute path.
+  auto const& absPath = cmSystemTools::GetFilenamePath(filepath);
+  if (ComparePathSuffix(absPath, relPath)) {
+    return absPath.substr(0, absPath.size() - relPath.size());
+  }
+
+  for (auto* const f : { GetRealPath, GetRealDir }) {
+    auto const& tmpPath = (*f)(absPath);
+    if (!cmSystemTools::ComparePath(tmpPath, absPath) &&
+        ComparePathSuffix(tmpPath, relPath)) {
+      return tmpPath.substr(0, tmpPath.size() - relPath.size());
+    }
+  }
+
+  return {};
+}
+
+// Extract key name from value iterator as string_view.
+cm::string_view IterKey(Json::Value::const_iterator const& iter)
+{
+  char const* end;
+  auto const* const start = iter.memberName(&end);
+  return { start, static_cast<std::string::size_type>(end - start) };
+}
+
+// Get list-of-strings value from object.
+std::vector<std::string> ReadList(Json::Value const& data, char const* key)
+{
+  std::vector<std::string> result;
+
+  auto arr = data[key];
+  if (arr.isArray()) {
+    for (auto const& val : arr) {
+      if (val.isString()) {
+        result.push_back(val.asString());
+      }
+    }
+  }
+
+  return result;
+}
+
+std::string NormalizeTargetName(std::string const& name,
+                                std::string const& context)
+{
+  if (cmHasLiteralPrefix(name, ":")) {
+    return cmStrCat(context, name);
+  }
+
+  auto const n = name.find_first_of(':');
+  if (n != std::string::npos) {
+    auto v = cm::string_view{ name };
+    return cmStrCat(v.substr(0, n), ":"_s, v.substr(n));
+  }
+  return name;
+}
+
+std::string ResolvePrefix(cm::string_view str, cm::string_view prefix)
+{
+  if (cmHasPrefix(str, "@prefix@"_s)) {
+    return cmStrCat(prefix, str.substr(8));
+  }
+  return std::string{ str };
+}
+
+void AppendProperty(cmMakefile* makefile, cmTarget* target,
+                    cm::string_view property, cm::string_view configuration,
+                    std::string const& value)
+{
+  std::string fullprop;
+  if (configuration.empty()) {
+    fullprop = cmStrCat("INTERFACE_"_s, property);
+  } else {
+    fullprop = cmStrCat("INTERFACE_"_s, property, "_"_s,
+                        cmSystemTools::UpperCase(configuration));
+  }
+
+  target->AppendProperty(fullprop, value, makefile->GetBacktrace());
+}
+
+void SetOptionalProperty(cmMakefile* /*makefile*/, cmTarget* target,
+                         cm::string_view property,
+                         cm::string_view configuration,
+                         Json::Value const& value, std::string const& prefix)
+{
+  if (!value.isNull()) {
+    std::string fullprop;
+    if (configuration.empty()) {
+      fullprop = cmStrCat("IMPORTED_"_s, property);
+    } else {
+      fullprop = cmStrCat("IMPORTED_"_s, property, "_"_s,
+                          cmSystemTools::UpperCase(configuration));
+    }
+
+    target->SetProperty(fullprop, ResolvePrefix(value.asString(), prefix));
+  }
+}
+
+void AddCompileFeature(cmMakefile* makefile, cmTarget* target,
+                       cm::string_view configuration, std::string const& value)
+{
+  auto reLanguageLevel = [] {
+    static cmsys::RegularExpression re{ "^[Cc]([+][+])?([0-9][0-9])$" };
+    return re;
+  }();
+
+  if (reLanguageLevel.find(value)) {
+    auto const n = reLanguageLevel.end() - 2;
+    auto const featurePrefix = (n == 3 ? "cxx_std_"_s : "c_std_"_s);
+    if (configuration.empty()) {
+      AppendProperty(makefile, target, "COMPILE_FEATURES"_s, {},
+                     cmStrCat(featurePrefix, value.substr(n)));
+    } else {
+      auto const& feature = cmStrCat("$<$<CONFIG:"_s, configuration, ">:"_s,
+                                     featurePrefix, value.substr(n), ">"_s);
+      AppendProperty(makefile, target, "COMPILE_FEATURES"_s, {}, feature);
+    }
+  } else if (cmStrCaseEq(value, "gnu"_s)) {
+    // Not implemented in CMake at this time
+  } else if (cmStrCaseEq(value, "threads"_s)) {
+    AppendProperty(makefile, target, "LINK_LIBRARIES"_s, configuration,
+                   "Threads::Threads");
+  }
+}
+
+void AddLinkFeature(cmMakefile* makefile, cmTarget* target,
+                    cm::string_view configuration, std::string const& value)
+{
+  if (cmStrCaseEq(value, "thread"_s)) {
+    AppendProperty(makefile, target, "LINK_LIBRARIES"_s, configuration,
+                   "Threads::Threads");
+  }
+}
+
+void SetTargetProperties(cmMakefile* makefile, cmTarget* target,
+                         Json::Value const& data, std::string const& package,
+                         std::string const& prefix,
+                         cm::string_view configuration)
+{
+  // Add compile and link features.
+  for (auto const& def : ReadList(data, "compile_features")) {
+    AddCompileFeature(makefile, target, configuration, def);
+  }
+
+  for (auto const& def : ReadList(data, "link_features")) {
+    AddLinkFeature(makefile, target, configuration, def);
+  }
+
+  // Add compile definitions.
+  for (auto const& def : ReadList(data, "definitions")) {
+    AppendProperty(makefile, target, "COMPILE_DEFINITIONS"_s, configuration,
+                   def);
+  }
+
+  // Add include directories.
+  for (auto const& inc : ReadList(data, "includes")) {
+    AppendProperty(makefile, target, "INCLUDE_DIRECTORIES"_s, configuration,
+                   ResolvePrefix(inc, prefix));
+  }
+
+  // Add link name/location(s).
+  SetOptionalProperty(makefile, target, "LOCATION"_s, configuration,
+                      data["location"], prefix);
+
+  SetOptionalProperty(makefile, target, "IMPLIB"_s, configuration,
+                      data["link_location"], prefix);
+
+  SetOptionalProperty(makefile, target, "SONAME"_s, configuration,
+                      data["link_name"], prefix);
+
+  // Add link languages.
+  for (auto const& lang : ReadList(data, "link_languages")) {
+    auto const li = Languages.find(cmSystemTools::LowerCase(lang));
+    if (li != Languages.end()) {
+      AppendProperty(makefile, target, "LINK_LANGUAGES"_s, configuration,
+                     li->second);
+    }
+  }
+
+  // Add transitive dependencies.
+  for (auto const& dep : ReadList(data, "requires")) {
+    AppendProperty(makefile, target, "LINK_LIBRARIES"_s, configuration,
+                   NormalizeTargetName(dep, package));
+  }
+
+  for (auto const& dep : ReadList(data, "link_requires")) {
+    auto const& lib =
+      cmStrCat("$<LINK_ONLY:"_s, NormalizeTargetName(dep, package), ">"_s);
+    AppendProperty(makefile, target, "LINK_LIBRARIES"_s, configuration, lib);
+  }
+}
+
+cmTarget* AddLibraryComponent(cmMakefile* makefile,
+                              cmStateEnums::TargetType type,
+                              std::string const& name, Json::Value const& data,
+                              std::vector<std::string> const& configurations,
+                              std::string const& package,
+                              std::string const& prefix,
+                              cm::string_view configuration)
+{
+  // Create the imported target.
+  auto* const target = makefile->AddImportedTarget(name, type, false);
+
+  // Set target properties.
+  SetTargetProperties(makefile, target, data, package, prefix, configuration);
+  if (configuration.empty()) {
+    auto const& cfgData = data["configurations"];
+    for (auto ci = cfgData.begin(), ce = cfgData.end(); ci != ce; ++ci) {
+      SetTargetProperties(makefile, target, *ci, package, prefix, IterKey(ci));
+    }
+  }
+
+  // Set default configurations.
+  if (!configurations.empty()) {
+    target->SetProperty("IMPORTED_CONFIGURATIONS",
+                        cmJoin(configurations, ";"_s));
+  }
+
+  return target;
+}
+
 } // namespace
 
 std::unique_ptr<cmPackageInfoReader> cmPackageInfoReader::Read(
-  std::string const& path)
+  std::string const& path, cmPackageInfoReader const* parent)
 {
   // Read file and perform some basic validation:
   //   - the input is valid JSON
@@ -81,9 +374,25 @@ std::unique_ptr<cmPackageInfoReader> cmPackageInfoReader::Read(
     return nullptr;
   }
 
+  std::string prefix = (parent ? parent->Prefix : DeterminePrefix(path, data));
+  if (prefix.empty()) {
+    return nullptr;
+  }
+
   // Seems sane enough to hand back to the caller.
   auto reader = std::unique_ptr<cmPackageInfoReader>(new cmPackageInfoReader);
-  reader->Data = data;
+  reader->Data = std::move(data);
+  reader->Prefix = std::move(prefix);
+  reader->Path = path;
+
+  // Determine other information we need to know immediately, or (if this is
+  // a supplemental reader) copy from the parent.
+  if (parent) {
+    reader->ComponentTargets = parent->ComponentTargets;
+    reader->DefaultConfigurations = parent->DefaultConfigurations;
+  } else {
+    reader->DefaultConfigurations = ReadList(reader->Data, "configurations");
+  }
 
   return reader;
 }
@@ -136,4 +445,109 @@ std::vector<unsigned> cmPackageInfoReader::ParseVersion() const
   }
 
   return result;
+}
+
+bool cmPackageInfoReader::ImportTargets(cmMakefile* makefile,
+                                        cmExecutionStatus& status)
+{
+  auto const& package = this->GetName();
+
+  // Read components.
+  auto const& components = this->Data["components"];
+
+  for (auto ci = components.begin(), ce = components.end(); ci != ce; ++ci) {
+    auto const& name = IterKey(ci);
+    auto const& type = cmSystemTools::LowerCase((*ci)["type"].asString());
+
+    // Get and validate full target name.
+    auto const& fullName = cmStrCat(package, "::", name);
+    {
+      std::string msg;
+      if (!makefile->EnforceUniqueName(fullName, msg)) {
+        status.SetError(msg);
+        return false;
+      }
+    }
+
+    cmTarget* target = nullptr;
+    if (type == "symbolic"_s) {
+      // TODO
+    } else if (type == "dylib"_s) {
+      target = AddLibraryComponent(makefile, cmStateEnums::SHARED_LIBRARY,
+                                   fullName, *ci, this->DefaultConfigurations,
+                                   package, this->Prefix, {});
+    } else if (type == "module"_s) {
+      target = AddLibraryComponent(makefile, cmStateEnums::MODULE_LIBRARY,
+                                   fullName, *ci, this->DefaultConfigurations,
+                                   package, this->Prefix, {});
+    } else if (type == "archive"_s) {
+      target = AddLibraryComponent(makefile, cmStateEnums::STATIC_LIBRARY,
+                                   fullName, *ci, this->DefaultConfigurations,
+                                   package, this->Prefix, {});
+    } else if (type == "interface"_s) {
+      target = AddLibraryComponent(makefile, cmStateEnums::INTERFACE_LIBRARY,
+                                   fullName, *ci, this->DefaultConfigurations,
+                                   package, this->Prefix, {});
+    } else {
+      makefile->IssueMessage(MessageType::WARNING,
+                             cmStrCat("component "_s, fullName,
+                                      " has unknown type "_s, type,
+                                      " and was not imported"));
+    }
+
+    if (target) {
+      this->ComponentTargets.emplace(name, target);
+    }
+  }
+
+  // Read default components.
+  auto const& defaultComponents = ReadList(this->Data, "default_components");
+  if (!defaultComponents.empty()) {
+    std::string msg;
+    if (!makefile->EnforceUniqueName(package, msg)) {
+      status.SetError(msg);
+      return false;
+    }
+
+    auto* const target = makefile->AddImportedTarget(
+      package, cmStateEnums::INTERFACE_LIBRARY, false);
+    for (auto const& name : defaultComponents) {
+      auto const& fullName = cmStrCat(package, "::", name);
+      AppendProperty(makefile, target, "LINK_LIBRARIES", {}, fullName);
+    }
+  }
+
+  return true;
+}
+
+bool cmPackageInfoReader::ImportTargetConfigurations(
+  cmMakefile* makefile, cmExecutionStatus& status) const
+{
+  auto const& configuration = this->Data["configuration"].asString();
+
+  if (configuration.empty()) {
+    makefile->IssueMessage(MessageType::WARNING,
+                           cmStrCat("supplemental file "_s, this->Path,
+                                    " does not specify a configuration"_s));
+    return true;
+  }
+
+  auto const& package = this->GetName();
+  auto const& components = this->Data["components"];
+
+  for (auto ci = components.begin(), ce = components.end(); ci != ce; ++ci) {
+    // Get component name and look up target.
+    auto const& name = IterKey(ci);
+    auto const& ti = this->ComponentTargets.find(std::string{ name });
+    if (ti == this->ComponentTargets.end()) {
+      status.SetError(cmStrCat("component "_s, name, " was not found"_s));
+      return false;
+    }
+
+    // Read supplemental data for component.
+    SetTargetProperties(makefile, ti->second, *ci, package, this->Prefix,
+                        configuration);
+  }
+
+  return true;
 }

@@ -17,6 +17,7 @@
 
 #include "cmsys/Directory.hxx"
 #include "cmsys/FStream.hxx"
+#include "cmsys/Glob.hxx"
 #include "cmsys/RegularExpression.hxx"
 #include "cmsys/String.h"
 
@@ -1506,10 +1507,14 @@ bool cmFindPackageCommand::HandlePackageMode(
 
     // Parse the configuration file.
     if (this->CpsReader) {
-      // FIXME TODO
-
       // The package has been found.
       found = true;
+
+      // Import targets.
+      auto* const reader = this->CpsReader.get();
+      result = reader->ImportTargets(this->Makefile, this->Status) &&
+        this->ImportTargetConfigurations(this->FileFound, reader) &&
+        this->ImportAppendices(this->FileFound);
     } else if (this->ReadListFile(this->FileFound, DoPolicyScope)) {
       // The package has been found.
       found = true;
@@ -1825,6 +1830,60 @@ bool cmFindPackageCommand::ReadListFile(const std::string& f,
   std::string const e = cmStrCat("Error reading CMake code from \"", f, "\".");
   this->SetError(e);
   return false;
+}
+
+bool cmFindPackageCommand::ImportTargetConfigurations(
+  std::string const& base, cmPackageInfoReader* parent)
+{
+  // Find supplemental configuration files.
+  cmsys::Glob glob;
+  glob.RecurseOff();
+  if (glob.FindFiles(cmStrCat(cmSystemTools::GetFilenamePath(base), "/"_s,
+                              cmSystemTools::GetFilenameWithoutExtension(base),
+                              "@*.[Cc][Pp][Ss]"_s))) {
+
+    // Try to read supplemental data from each file found.
+    for (auto const& extra : glob.GetFiles()) {
+      auto reader = cmPackageInfoReader::Read(extra, parent);
+      if (reader && reader->GetName() == this->Name) {
+        if (!reader->ImportTargetConfigurations(this->Makefile,
+                                                this->Status)) {
+          return false;
+        }
+      }
+    }
+  }
+
+  return true;
+}
+
+bool cmFindPackageCommand::ImportAppendices(std::string const& base)
+{
+  // Find package appendices.
+  cmsys::Glob glob;
+  glob.RecurseOff();
+  if (glob.FindFiles(cmStrCat(cmSystemTools::GetFilenamePath(base), "/"_s,
+                              cmSystemTools::GetFilenameWithoutExtension(base),
+                              "[-:]*.[Cc][Pp][Ss]"_s))) {
+
+    // Try to read supplemental data from each appendix file found.
+    for (auto const& extra : glob.GetFiles()) {
+      // This loop should not consider configuration-specific files.
+      if (extra.find('@') != std::string::npos) {
+        continue;
+      }
+
+      auto reader = cmPackageInfoReader::Read(extra, this->CpsReader.get());
+      if (reader && reader->GetName() == this->Name) {
+        if (!reader->ImportTargets(this->Makefile, this->Status) ||
+            !this->ImportTargetConfigurations(extra, reader.get())) {
+          return false;
+        }
+      }
+    }
+  }
+
+  return true;
 }
 
 void cmFindPackageCommand::AppendToFoundProperty(const bool found)
