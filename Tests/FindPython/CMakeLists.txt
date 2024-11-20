@@ -342,16 +342,18 @@ if(CMake_TEST_FindPython3)
     --test-command ${CMAKE_CTEST_COMMAND} -V -C $<CONFIGURATION>
     )
 
-  add_test(NAME FindPython.Python3Embedded COMMAND
-    ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION>
-    --build-and-test
-    "${CMake_SOURCE_DIR}/Tests/FindPython/Python3Embedded"
-    "${CMake_BINARY_DIR}/Tests/FindPython/Python3Embedded"
-    ${build_generator_args}
-    --build-project TestPython3Embedded
-    --build-options ${build_options}
-    --test-command ${CMAKE_CTEST_COMMAND} -V -C $<CONFIGURATION>
-    )
+  if(NOT CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_VERSION  VERSION_GREATER_EQUAL "4.8")
+    add_test(NAME FindPython.Python3Embedded COMMAND
+      ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION>
+      --build-and-test
+      "${CMake_SOURCE_DIR}/Tests/FindPython/Python3Embedded"
+      "${CMake_BINARY_DIR}/Tests/FindPython/Python3Embedded"
+      ${build_generator_args}
+      --build-project TestPython3Embedded
+      --build-options ${build_options}
+      --test-command ${CMAKE_CTEST_COMMAND} -V -C $<CONFIGURATION>
+      )
+  endif()
 
   add_test(NAME FindPython.RequiredArtifacts COMMAND
     ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION>
