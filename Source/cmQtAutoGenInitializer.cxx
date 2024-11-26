@@ -1340,12 +1340,28 @@ bool cmQtAutoGenInitializer::InitAutogenTarget()
   }
 
   if (this->Uic.Enabled) {
-    // Make all ui_*.h files byproducts of the ${target}_autogen/timestamp
-    // custom command if the generation of depfile is enabled.
-    auto& byProducts = useDepfile ? timestampByproducts : autogenByproducts;
-    for (auto const& file : this->Uic.UiHeaders) {
-      this->AddGeneratedSource(file.first, this->Uic);
-      byProducts.push_back(file.second);
+    auto const useAdvancedUicGraph = [this] {
+      auto const isNinja =
+        this->GlobalGen->GetName().find("Ninja") != std::string::npos;
+      auto const IsNMC = isNinja && this->MultiConfig;
+      if (IsNMC) {
+        return this->UseBetterGraph;
+      }
+      return true;
+    }();
+    if (useAdvancedUicGraph) {
+      // Make all ui_*.h files byproducts of the ${target}_autogen/timestamp
+      // custom command if the generation of depfile is enabled.
+      auto& byProducts = useDepfile ? timestampByproducts : autogenByproducts;
+      for (auto const& file : this->Uic.UiHeaders) {
+        this->AddGeneratedSource(file.first, this->Uic);
+        byProducts.push_back(file.second);
+      }
+    } else {
+      for (auto const& file : this->Uic.UiHeaders) {
+        this->AddGeneratedSource(file.first, this->Uic);
+        autogenByproducts.push_back(file.second);
+      }
     }
   }
 
