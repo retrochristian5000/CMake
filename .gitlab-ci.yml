@@ -1098,6 +1098,7 @@ t:windows-vs2022-x64-nightly:
         - .t:windows-vs2022-x64
         - .windows_x86_64_tags_concurrent_vs2022_android
     variables:
+        GIT_CLONE_PATH: "$CI_BUILDS_DIR\\cmake i18n cï\\$CI_CONCURRENT_ID"
         CMAKE_CI_JOB_NIGHTLY: "true"
 
 t:windows-vs2019-x64:
