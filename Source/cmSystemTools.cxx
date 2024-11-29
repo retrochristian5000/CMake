@@ -111,6 +111,9 @@
 #endif
 
 #if defined(__APPLE__)
+#  include <filesystem>
+
+#  include <libgen.h>
 #  include <mach-o/dyld.h>
 #endif
 
@@ -191,6 +194,67 @@ cmsys::Status ReadNameOnDisk(std::string const& path, std::string& name)
   CloseHandle(h);
   return cmsys::Status::Success();
 }
+#elif defined(__APPLE__)
+cmsys::Status ReadNameOnDiskIterateDir(std::string const& path,
+                                       std::string& name)
+{
+  // Read contents of the parent directory to find the
+  // entry matching the given path.
+  char bn[MAXPATHLEN + 1];
+  char dn[MAXPATHLEN + 1];
+  if (!basename_r(path.c_str(), bn)) {
+    return cmsys::Status::POSIX(errno);
+  }
+  if (!dirname_r(path.c_str(), dn)) {
+    return cmsys::Status::POSIX(errno);
+  }
+  DIR* d = opendir(dn);
+  while (struct dirent* dr = readdir(d)) {
+    if (strcasecmp(dr->d_name, bn) == 0) {
+      name = dr->d_name;
+      closedir(d);
+      return cmsys::Status::Success();
+    }
+  }
+  closedir(d);
+  return cmsys::Status::POSIX(ENOENT);
+}
+
+cmsys::Status ReadNameOnDiskFcntlGetPath(std::string const& path,
+                                         std::string& name)
+{
+  // macOS (and *BSD) offer a syscall to get an on-disk path to
+  // a descriptor's file.
+  int fd = open(path.c_str(), O_SYMLINK | O_RDONLY);
+  if (fd == -1) {
+    return cmsys::Status::POSIX(errno);
+  }
+  char out[MAXPATHLEN + 1];
+  if (fcntl(fd, F_GETPATH, out) == -1) {
+    int e = errno;
+    close(fd);
+    return cmsys::Status::POSIX(e);
+  }
+  close(fd);
+  name = basename(out);
+  return cmsys::Status::Success();
+}
+
+cmsys::Status ReadNameOnDisk(std::string const& path, std::string& name)
+{
+  struct stat stat_path;
+  if (lstat(path.c_str(), &stat_path) != 0) {
+    return cmsys::Status::POSIX(errno);
+  }
+  // macOS (and *BSD) use namei(9) to cache file paths.  Use it unless
+  // the inode has multiple hardlinks: if it opened through multiple
+  // paths, the results may be unpredictable.
+  if (S_ISDIR(stat_path.st_mode) || stat_path.st_nlink < 2) {
+    return ReadNameOnDiskFcntlGetPath(path, name);
+  }
+  // Fall back to reading the parent directory.
+  return ReadNameOnDiskIterateDir(path, name);
+}
 #endif
 
 class RealSystem : public cm::PathResolver::System
@@ -215,7 +279,9 @@ public:
   {
     return GetDosDriveWorkingDirectory(letter);
   }
+#endif
 
+#if defined(_WIN32) || defined(__APPLE__)
   struct NameOnDisk
   {
     cmsys::Status Status;
