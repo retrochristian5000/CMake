@@ -1,0 +1,12 @@
+add_executable(app1 MACOSX_BUNDLE main.m)
+add_executable(app2 MACOSX_BUNDLE main.m)
+
+set_target_properties(app1 PROPERTIES
+  XCODE_EMBED_FRAMEWORKS "${CMAKE_CURRENT_LIST_DIR}/TestLib.framework"
+  XCODE_EMBED_FRAMEWORKS_REMOVE_HEADERS_ON_COPY OFF
+)
+
+set_target_properties(app2 PROPERTIES
+  XCODE_EMBED_FRAMEWORKS "${CMAKE_CURRENT_LIST_DIR}/TestLib.framework"
+  XCODE_EMBED_FRAMEWORKS_REMOVE_HEADERS_ON_COPY ON
+)
