@@ -108,6 +108,7 @@ public:
   std::string FilePath;
   long Line = 0;
   static long const DeferPlaceholderLine = -1;
+  static long const UnspecifiedLine = -2;
   cm::optional<std::string> DeferId;
 
   cmListFileContext() = default;
@@ -136,14 +137,30 @@ public:
   {
   }
 
-  static cmListFileContext FromListFilePath(std::string const& filePath)
+  enum class FileScope
+  {
+    Entry,
+    Final,
+  };
+  static cmListFileContext FromListFilePath(std::string const& filePath,
+                                            FileScope scope = FileScope::Entry)
   {
     // We are entering a file-level scope but have not yet reached
-    // any specific line or command invocation within it.  This context
-    // is useful to print when it is at the top but otherwise can be
-    // skipped during call stack printing.
+    // any specific line or command invocation within it.
+    //
+    // scope == Entry:
+    //   This context is useful to print when it is at the top, but is
+    //   expected to be superseded by a more specific entry, and so can
+    //   be skipped during call stack printing if not at the top.
+    //
+    // scope == Final:
+    //   This context is not going to get more specific and should always
+    //   be included during call stack printing.
     cmListFileContext lfc;
     lfc.FilePath = filePath;
+    if (scope == FileScope::Final) {
+      lfc.Line = UnspecifiedLine;
+    }
     return lfc;
   }
 
