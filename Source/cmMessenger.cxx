@@ -125,7 +125,8 @@ void PrintCallStack(std::ostream& out, cmListFileBacktrace bt,
   for (; !bt.Empty(); bt = bt.Pop()) {
     cmListFileContext lfc = bt.Top();
     if (lfc.Name.empty() &&
-        lfc.Line != cmListFileContext::DeferPlaceholderLine) {
+        lfc.Line != cmListFileContext::DeferPlaceholderLine &&
+        lfc.Line != cmListFileContext::UnspecifiedLine) {
       // Skip this whole-file scope.  When we get here we already will
       // have printed a more-specific context within the file.
       continue;
@@ -232,7 +233,9 @@ void cmMessenger::PrintBacktraceTitle(std::ostream& out,
     lfc.FilePath =
       cmSystemTools::RelativeIfUnder(*this->TopSource, lfc.FilePath);
   }
-  out << (lfc.Line ? " at " : " in ") << lfc;
+  bool const hasLine =
+    (lfc.Line && lfc.Line != cmListFileContext::UnspecifiedLine);
+  out << (hasLine ? " at " : " in ") << lfc;
 }
 
 void cmMessenger::SetTopSource(cm::optional<std::string> topSource)
