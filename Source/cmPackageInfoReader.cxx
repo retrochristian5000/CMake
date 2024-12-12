@@ -244,6 +244,23 @@ void AddLinkFeature(cmMakefile* makefile, cmTarget* target,
   }
 }
 
+void AddDefinitions(cmMakefile* makefile, cmTarget* target,
+                    cm::string_view configuration, std::string const& language,
+                    Json::Value const& definitions)
+{
+  for (auto di = definitions.begin(), de = definitions.end(); di != de; ++di) {
+    std::string def = di.name();
+    if (!di->isNull() && di->isConvertibleTo(Json::stringValue)) {
+      def = cmStrCat(def, '=', di->asString());
+    }
+    if (!language.empty()) {
+      def = cmStrCat("$<$<COMPILE_LANGUAGE:"_s, language, ">:"_s, def, '>');
+    }
+    AppendProperty(makefile, target, "COMPILE_DEFINITIONS"_s, configuration,
+                   def);
+  }
+}
+
 } // namespace
 
 std::unique_ptr<cmPackageInfoReader> cmPackageInfoReader::Read(
@@ -386,9 +403,13 @@ void cmPackageInfoReader::SetTargetProperties(
   }
 
   // Add compile definitions.
-  for (std::string const& def : ReadList(data, "definitions")) {
-    AppendProperty(makefile, target, "COMPILE_DEFINITIONS"_s, configuration,
-                   def);
+  Json::Value const& defs = data["definitions"];
+  AddDefinitions(makefile, target, configuration, {}, defs["*"]);
+  for (auto di = defs.begin(), de = defs.end(); di != de; ++di) {
+    auto const li = Languages.find(cmSystemTools::LowerCase(IterKey(di)));
+    if (li != Languages.end()) {
+      AddDefinitions(makefile, target, configuration, li->second, *di);
+    }
   }
 
   // Add include directories.
