@@ -79,6 +79,7 @@
 #include <functional>
 #include <iostream>
 #include <memory>
+#include <random>
 #include <sstream>
 #include <utility>
 #include <vector>
@@ -2808,6 +2809,12 @@ unsigned int cmSystemTools::RandomSeed()
   // in the slow-changing high-order bits of tv_sec.
   return tv_sec ^ (tv_usec << 21) ^ pid;
 #endif
+}
+
+unsigned int cmSystemTools::RandomNumber()
+{
+  thread_local static std::mt19937 gen{ cmSystemTools::RandomSeed() };
+  return static_cast<unsigned int>(gen());
 }
 
 namespace {
