@@ -179,8 +179,10 @@ bool cmExecuteProcessCommand(std::vector<std::string> const& args,
 
   if (!arguments.CommandErrorIsFatal.empty()) {
     if (arguments.CommandErrorIsFatal != "ANY"_s &&
-        arguments.CommandErrorIsFatal != "LAST"_s) {
-      status.SetError("COMMAND_ERROR_IS_FATAL option can be ANY or LAST");
+        arguments.CommandErrorIsFatal != "LAST"_s &&
+        arguments.CommandErrorIsFatal != "NONE"_s) {
+      status.SetError(
+        "COMMAND_ERROR_IS_FATAL option can be ANY, LAST or NONE");
       return false;
     }
   }
@@ -479,7 +481,13 @@ bool cmExecuteProcessCommand(std::vector<std::string> const& args,
                     exception.second);
   };
 
-  if (arguments.CommandErrorIsFatal == "ANY"_s) {
+  std::string commandErrorIsFatal = arguments.CommandErrorIsFatal;
+  if (commandErrorIsFatal.empty()) {
+    commandErrorIsFatal = status.GetMakefile().GetSafeDefinition(
+      "CMAKE_EXECUTE_PROCESS_COMMAND_ERROR_IS_FATAL");
+  }
+
+  if (commandErrorIsFatal == "ANY"_s) {
     bool ret = true;
     if (timedOut) {
       status.SetError("Process terminated due to timeout");
@@ -510,7 +518,7 @@ bool cmExecuteProcessCommand(std::vector<std::string> const& args,
     }
   }
 
-  if (arguments.CommandErrorIsFatal == "LAST"_s) {
+  if (commandErrorIsFatal == "LAST"_s) {
     bool ret = true;
     if (timedOut) {
       status.SetError("Process terminated due to timeout");
