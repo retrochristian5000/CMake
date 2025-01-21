@@ -417,8 +417,6 @@ public:
     cmMakefile* Makefile;
   };
 
-  bool IgnoreErrorsCMP0061() const;
-
   std::string const& GetHomeDirectory() const;
   std::string const& GetHomeOutputDirectory() const;
 
@@ -1006,8 +1004,6 @@ public:
 
   cmStateSnapshot GetStateSnapshot() const;
 
-  const char* GetDefineFlagsCMP0059() const;
-
   void EnforceDirectoryLevelRules() const;
 
   void AddEvaluationFile(
@@ -1133,9 +1129,6 @@ protected:
 
   std::string ComplainFileRegularExpression;
   std::string DefineFlags;
-
-  // Track the value of the computed DEFINITIONS property.
-  std::string DefineFlagsOrig;
 
 #if !defined(CMAKE_BOOTSTRAP)
   std::vector<cmSourceGroup> SourceGroups;
