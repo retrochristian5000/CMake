@@ -98,6 +98,7 @@ Policies Introduced by CMake 4.0
 .. toctree::
    :maxdepth: 1
 
+   CMP0186: Match "^" only once in all REGEX subcommands. </policy/CMP0186>
    CMP0185: FindRuby no longer provides upper-case RUBY_* variables. </policy/CMP0185>
    CMP0184: MSVC runtime checks flags are selected by an abstraction. </policy/CMP0184>
    CMP0183: add_feature_info() supports full Condition Syntax. </policy/CMP0183>
