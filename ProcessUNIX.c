@@ -188,6 +188,7 @@ static void kwsysProcessRestoreDefaultSignalHandlers(void);
 static pid_t kwsysProcessFork(kwsysProcess* cp,
                               kwsysProcessCreateInformation* si);
 static void kwsysProcessKill(pid_t process_id);
+static pid_t kwsysGetParentPID(pid_t process_id);
 #if defined(__VMS)
 static int kwsysProcessSetVMSFeature(char const* name, int value);
 #endif
@@ -2625,6 +2626,73 @@ static void kwsysProcessKill(pid_t process_id)
   kill(process_id, SIGCONT);
   kill(process_id, SIGKILL);
 #endif
+}
+unsigned long kwsysProcess_GetParentPID(unsigned long process_id)
+{
+  return kwsysGetParentPID((pid_t)process_id);
+}
+
+static pid_t kwsysGetParentPID(pid_t process_id)
+{
+#if defined(__linux__) || defined(__CYGWIN__)
+  DIR* procdir;
+#endif
+
+#if defined(__linux__) || defined(__CYGWIN__)
+  /* First try using the /proc filesystem.  */
+  if ((procdir = opendir("/proc"))) {
+#  if defined(MAXPATHLEN)
+    char fname[MAXPATHLEN];
+#  elif defined(PATH_MAX)
+    char fname[PATH_MAX];
+#  else
+    char fname[4096];
+#  endif
+    char buffer[KWSYSPE_PIPE_BUFFER_SIZE + 1];
+
+    struct stat finfo;
+    snprintf(fname, sizeof(fname), "/proc/%d/stat", process_id);
+    if (stat(fname, &finfo) == 0) {
+      FILE* f = fopen(fname, "r");
+      if (f) {
+        size_t nread = fread(buffer, 1, 1024, f);
+        fclose(f);
+        buffer[nread] = '\0';
+        if (nread > 0) {
+          char const* rparen = strrchr(buffer, ')');
+          int ppid;
+          if (rparen && (sscanf(rparen + 1, "%*s %d", &ppid) == 1)) {
+            return ppid;
+          }
+        }
+      }
+    }
+    closedir(procdir);
+  } else
+#endif
+  {
+#if defined(KWSYSPE_PS_COMMAND)
+    /* Try running "ps" to get the process information.  */
+    FILE* ps = popen(KWSYSPE_PS_COMMAND, "r");
+
+    /* Make sure the process started and provided a valid header.  */
+    if (ps && fscanf(ps, "%*[^\n]\n") != EOF) {
+      int pid;
+      int ppid;
+      while (fscanf(ps, KWSYSPE_PS_FORMAT, &pid, &ppid) == 2) {
+        if (pid == process_id) {
+          return ppid;
+        }
+      }
+    }
+
+    /* We are done with the ps process.  */
+    if (ps) {
+      pclose(ps);
+    }
+#endif
+  }
+  return 0;
 }
 
 #if defined(__VMS)
