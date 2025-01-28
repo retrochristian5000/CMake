@@ -82,6 +82,7 @@
 #  define kwsysProcess_Interrupt kwsys_ns(Process_Interrupt)
 #  define kwsysProcess_Kill kwsys_ns(Process_Kill)
 #  define kwsysProcess_KillPID kwsys_ns(Process_KillPID)
+#  define kwsysProcess_GetParentPID kwsys_ns(Process_GetParentPID)
 #  define kwsysProcess_ResetStartTime kwsys_ns(Process_ResetStartTime)
 #endif
 
@@ -468,6 +469,13 @@ kwsysEXPORT void kwsysProcess_Kill(kwsysProcess* cp);
  */
 kwsysEXPORT void kwsysProcess_KillPID(unsigned long);
 
+#ifndef _WIN32
+/**
+ * Get the parent process ID from a given process ID
+ */
+kwsysEXPORT unsigned long kwsysProcess_GetParentPID(unsigned long);
+#endif
+
 /**
  * Reset the start time of the child process to the current time.
  */
@@ -537,6 +545,8 @@ kwsysEXPORT void kwsysProcess_ResetStartTime(kwsysProcess* cp);
 #    undef kwsysProcess_WaitForExit
 #    undef kwsysProcess_Interrupt
 #    undef kwsysProcess_Kill
+#    undef kwsysProcess_KillPID
+#    undef kwsysProcess_GetParentPID
 #    undef kwsysProcess_ResetStartTime
 #  endif
 #endif
