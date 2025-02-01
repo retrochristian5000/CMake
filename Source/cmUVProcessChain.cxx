@@ -15,6 +15,7 @@
 #include "cm_fileno.hxx"
 
 #include "cmGetPipes.h"
+#include "cmSystemTools.h"
 #include "cmUVHandlePtr.h"
 
 struct cmUVProcessChain::InternalData
@@ -63,11 +64,12 @@ struct cmUVProcessChain::InternalData
 cmUVProcessChainBuilder::cmUVProcessChainBuilder() = default;
 
 cmUVProcessChainBuilder& cmUVProcessChainBuilder::AddCommand(
-  std::vector<std::string> const& arguments)
+  std::vector<std::string> arguments)
 {
   if (!arguments.empty()) {
+    cmSystemTools::MaybePrependCmdExe(arguments);
     this->Processes.emplace_back();
-    this->Processes.back().Arguments = arguments;
+    this->Processes.back().Arguments = std::move(arguments);
   }
   return *this;
 }
