@@ -35,6 +35,8 @@ run_cmake(UuidBadType)
 
 run_cmake(RegexClear)
 run_cmake(RegexMultiMatchClear)
+run_cmake(CMP0186-OLD)
+run_cmake(CMP0186-NEW)
 
 run_cmake(UTF-16BE)
 run_cmake(UTF-16LE)

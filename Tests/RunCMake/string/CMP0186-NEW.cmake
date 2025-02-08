@@ -1,0 +1,17 @@
+cmake_policy(SET CMP0186 NEW)
+include(Regex-common.cmake)
+
+assert_matchall("^0" "0000" "0")
+assert_matchall("^0+" "0000" "0000")
+assert_matchall("^(0|a)" "0000" "0")
+assert_matchall("^(0|a)" "aaaa" "a")
+assert_matchall("^(0|a)" "a0a0" "a")
+assert_matchall("(^|a)0" "00a0" "0;a0")
+
+assert_replace("^0" "" "0000" "000")
+assert_replace("^0" "x" "0000" "x000")
+assert_replace("^0+" "x" "0000" "x")
+assert_replace("^(0|a)" "x" "0000" "x000")
+assert_replace("^(0|a)" "x" "aaaa" "xaaa")
+assert_replace("^(0|a)" "x" "a0a0" "x0a0")
+assert_replace("(^|a)0" "x" "00a0" "x0x")

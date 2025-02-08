@@ -1,0 +1,32 @@
+CMP0186
+-------
+
+.. versionadded:: 4.1
+
+Match ``^`` only once in all ``REGEX`` subcommands.
+
+This policy applies to all subcommands that perform multiple regular expression
+searches. In particular, :command:`string(REGEX MATCHALL)`,
+:command:`string(REGEX REPLACE)` and :command:`list(TRANSFORM REPLACE)`.
+
+In CMake 4.0 and below, the ``^`` anchor matches at the start of every
+successive search, leading to multiple matches:
+
+.. code-block:: cmake
+
+  string(REGEX REPLACE "^a" "b" result "aaaa") # result="bbbb"
+  string(REGEX MATCHALL "^a" result "aaaa")    # result="a;a;a;a"
+
+In CMake 4.1, the ``^`` anchor matches only once, at the start of the input
+string:
+
+.. code-block:: cmake
+
+  string(REGEX REPLACE "^a" "b" result "aaaa") # result="abbb"
+  string(REGEX MATCHALL "^a" result "aaaa")    # result="a"
+
+.. |INTRODUCED_IN_CMAKE_VERSION| replace:: 4.0
+.. |WARNS_OR_DOES_NOT_WARN| replace:: does *not* warn
+.. include:: STANDARD_ADVICE.txt
+
+.. include:: DEPRECATED.txt
