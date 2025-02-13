@@ -94,3 +94,10 @@ endfunction()
 test_cmp0157_default("wholemodule")
 test_cmp0157_default("incremental")
 test_cmp0157_default("singlefile")
+
+# Ensure that `mt` is detected when building for Windows.
+if(WIN32)
+  if(NOT CMAKE_MT)
+    message(FATAL_ERROR "mt not found")
+  endif()
+endif()
