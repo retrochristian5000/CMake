@@ -9,6 +9,8 @@ project(CMake)
 unset(CMAKE_USER_MAKE_RULES_OVERRIDE_CXX)
 unset(CMAKE_USER_MAKE_RULES_OVERRIDE_C)
 
+include(Source/CMakeVersion.cmake)
+
 # FIXME: This block should go away after a transition period.
 if(MSVC AND NOT CMAKE_VERSION VERSION_LESS 3.15)
   # Filter out MSVC runtime library flags that may have come from
@@ -384,9 +386,7 @@ endif()
 
 #-----------------------------------------------------------------------
 # The main section of the CMakeLists file
-#
 #-----------------------------------------------------------------------
-include(Source/CMakeVersion.cmake)
 
 include(CTest)
 
