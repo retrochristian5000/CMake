@@ -34,6 +34,33 @@ endif()
 
 if(CMake_TEST_HOST_CMAKE)
   get_filename_component(CMake_TEST_EXTERNAL_CMAKE "${CMAKE_COMMAND}" DIRECTORY)
+elseif(CMake_TEST_DOWNLOAD_CMAKE MATCHES [[^(https?://.*)/cmake-VERSION-([a-z0-9_-]+)\.tar\.gz$]])
+  set(base_url "${CMAKE_MATCH_1}")
+  set(platform "${CMAKE_MATCH_2}")
+  string(REPLACE "-dirty" "" version "${CMake_VERSION}")
+  set(filename "cmake-${version}-${platform}")
+  set(tarball "${filename}.tar.gz")
+  set(url "${base_url}/${tarball}")
+  if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/${tarball}")
+    file(DOWNLOAD "${url}" "${CMAKE_CURRENT_BINARY_DIR}/${tarball}" STATUS status LOG log)
+    if(NOT status EQUAL 0)
+      string(REPLACE "\n" "\n  " log "${log}")
+      message(FATAL_ERROR
+        "CMake_TEST_DOWNLOAD_CMAKE URL:\n"
+        "  ${url}\n"
+        "failed to download:\n"
+        "  ${status}\n"
+        )
+    endif()
+  endif()
+  if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/${filename}/bin/cmake")
+    message(STATUS "Extracting into ${filename}")
+    file(ARCHIVE_EXTRACT
+      INPUT "${CMAKE_CURRENT_BINARY_DIR}/${tarball}"
+      DESTINATION "${CMAKE_CURRENT_BINARY_DIR}"
+      )
+  endif()
+  set(CMake_TEST_EXTERNAL_CMAKE "${CMAKE_CURRENT_BINARY_DIR}/${filename}/bin")
 endif()
 
 if(NOT CMake_TEST_EXTERNAL_CMAKE)
