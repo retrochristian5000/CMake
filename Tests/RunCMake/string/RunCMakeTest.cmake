@@ -21,6 +21,7 @@ run_cmake(JoinNoArgs)
 run_cmake(JoinNoVar)
 
 run_cmake(Timestamp)
+run_cmake(Timestamp2038)
 run_cmake(TimestampEmpty)
 run_cmake(TimestampInvalid)
 run_cmake(TimestampInvalid2)
