@@ -1,0 +1,1 @@
+execute_process(COMMAND "${CMAKE_COMMAND}" -S "${CMAKE_CURRENT_LIST_DIR}/ParentVariableRoot" -B "${CMAKE_CURRENT_BINARY_DIR}/ParentVariableRoot" COMMAND_ERROR_IS_FATAL ANY)
