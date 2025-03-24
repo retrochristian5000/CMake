@@ -72,6 +72,7 @@
 #include "cmSetSourceFilesPropertiesCommand.h"
 #include "cmSetTargetPropertiesCommand.h"
 #include "cmSetTestsPropertiesCommand.h"
+#include "cmSetVariableCommand.h"
 #include "cmSiteNameCommand.h"
 #include "cmState.h"
 #include "cmStringCommand.h"
@@ -87,6 +88,7 @@
 #include "cmTryCompileCommand.h"
 #include "cmTryRunCommand.h"
 #include "cmUnsetCommand.h"
+#include "cmUnsetVariableCommand.h"
 #include "cmWhileCommand.h"
 
 #if !defined(CMAKE_BOOTSTRAP)
@@ -153,12 +155,14 @@ void GetScriptingCommands(cmState* state)
   state->AddBuiltinCommand("cmake_parse_arguments", cmParseArgumentsCommand);
   state->AddBuiltinCommand("separate_arguments", cmSeparateArgumentsCommand);
   state->AddBuiltinCommand("set", cmSetCommand);
+  state->AddBuiltinCommand("set_variable", cmSetVariableCommand);
   state->AddBuiltinCommand("set_directory_properties",
                            cmSetDirectoryPropertiesCommand);
   state->AddBuiltinCommand("set_property", cmSetPropertyCommand);
   state->AddBuiltinCommand("site_name", cmSiteNameCommand);
   state->AddBuiltinCommand("string", cmStringCommand);
   state->AddBuiltinCommand("unset", cmUnsetCommand);
+  state->AddBuiltinCommand("unset_variable", cmUnsetVariableCommand);
 
   state->AddUnexpectedFlowControlCommand(
     "else",
