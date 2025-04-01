@@ -706,6 +706,10 @@ add_library(
   cmSetTargetPropertiesCommand.h
   cmSetTestsPropertiesCommand.cxx
   cmSetTestsPropertiesCommand.h
+  cmSetVariableCommand.cxx
+  cmSetVariableCommand.h
+  cmSetVariableHelper.cxx
+  cmSetVariableHelper.h
   cmSiteNameCommand.cxx
   cmSiteNameCommand.h
   cmSourceGroupCommand.cxx
@@ -747,6 +751,8 @@ add_library(
   cmTryRunCommand.h
   cmUnsetCommand.cxx
   cmUnsetCommand.h
+  cmUnsetVariableCommand.cxx
+  cmUnsetVariableCommand.h
   cmVariableWatchCommand.cxx
   cmVariableWatchCommand.h
   cmWhileCommand.cxx

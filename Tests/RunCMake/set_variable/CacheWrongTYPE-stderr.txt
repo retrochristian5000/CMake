@@ -1,0 +1,4 @@
+CMake Error at CacheWrongTYPE.cmake:[0-9]+ \(set_variable\):
+  Error after keyword "TYPE":
+
+  Invalid value: FOO.
