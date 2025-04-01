@@ -1,0 +1,2 @@
+
+set_variable(CACHE{VAR} TYPE STRING FOO HELP "help" VALUES)

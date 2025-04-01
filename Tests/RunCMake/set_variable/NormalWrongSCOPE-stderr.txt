@@ -1,0 +1,9 @@
+CMake Error at NormalWrongSCOPE.cmake:[0-9]+ \(set_variable\):
+  Error after keyword "SCOPE":
+
+  Invalid value\(s\): FOO.
+.+
+CMake Error at NormalWrongSCOPE.cmake:[0-9]+ \(unset_variable\):
+  Error after keyword "SCOPE":
+
+  Invalid value\(s\): FOO.
