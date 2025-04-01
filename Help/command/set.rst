@@ -11,6 +11,10 @@ expect zero or more arguments.  Multiple arguments will be joined as
 a :ref:`semicolon-separated list <CMake Language Lists>` to form the
 actual variable value to be set.
 
+.. note::
+  For more precise control over variable setting, see the
+  :command:`set_variable` command.
+
 Set Normal Variable
 ^^^^^^^^^^^^^^^^^^^
 
@@ -126,4 +130,6 @@ Set Environment Variable
 See Also
 ^^^^^^^^
 
+* :command:`set_variable`
+* :command:`unset_variable`
 * :command:`unset`

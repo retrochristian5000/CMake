@@ -1,0 +1,9 @@
+CMake Error at NormalUnknownArguments.cmake:[0-9]+ \(set_variable\):
+  Error after keyword "SCOPE":
+
+  Invalid value\(s\): FOO, BAR.
+.+
+CMake Error at NormalUnknownArguments.cmake:[0-9]+ \(unset_variable\):
+  Error after keyword "SCOPE":
+
+  Invalid value\(s\): FOO, BAR.
