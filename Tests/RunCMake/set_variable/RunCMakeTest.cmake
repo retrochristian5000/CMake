@@ -1,0 +1,36 @@
+include(RunCMake)
+
+function(run_variable_types test)
+  list(APPEND types NORMAL CACHE ENV)
+  list(APPEND names VAR CACHE{VAR} ENV{VAR})
+  foreach(var IN ZIP_LISTS types names)
+    set(RunCMake_TEST_VARIANT_DESCRIPTION ".${var_0}")
+    set(RunCMake_TEST_BINARY_DIR "${RunCMake_BINARY_DIR}/${test}.${var_0}-build")
+    if(EXISTS "${RunCMake_SOURCE_DIR}/${test}.${var_0}-stderr.txt")
+      set(RunCMake_TEST_EXPECT_RESULT 1)
+      file(READ "${RunCMake_SOURCE_DIR}/${test}.${var_0}-stderr.txt" RunCMake_TEST_EXPECT_stderr)
+    endif()
+    run_cmake_with_options(${test} -DVAR_NAME=${var_1})
+  endforeach()
+endfunction()
+
+run_variable_types(UnknownArgument)
+run_cmake(NormalUnknownArguments)
+run_variable_types(MissingVALUES)
+run_cmake(NormalWrongSCOPE)
+run_cmake(CacheUnknownArguments)
+run_cmake(CacheMissingArguments)
+run_cmake(CacheWrongTYPE)
+run_cmake(EnvExtraValue)
+
+run_cmake(SpecialNames)
+# Normal variable
+run_cmake(NormalSetUnset)
+run_cmake(LocalScope)
+run_cmake(ParentScope)
+run_cmake(BothScopes)
+run_cmake(ParentPullingRecursive)
+# Cache variable
+run_cmake(CacheSetUnset)
+# Env variable
+run_cmake(EnvSetUnset)

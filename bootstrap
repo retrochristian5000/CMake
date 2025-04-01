@@ -482,6 +482,8 @@ CMAKE_CXX_SOURCES="\
   cmSetSourceFilesPropertiesCommand \
   cmSetTargetPropertiesCommand \
   cmSetTestsPropertiesCommand \
+  cmSetVariableHelper \
+  cmSetVariableCommand \
   cmSiteNameCommand \
   cmSourceFile \
   cmSourceFileLocation \
@@ -515,6 +517,7 @@ CMAKE_CXX_SOURCES="\
   cmTryCompileCommand \
   cmTryRunCommand \
   cmUnsetCommand \
+  cmUnsetVariableCommand \
   cmUVHandlePtr \
   cmUVProcessChain \
   cmVersion \

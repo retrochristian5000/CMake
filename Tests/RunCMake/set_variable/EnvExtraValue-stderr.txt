@@ -1,0 +1,6 @@
+CMake Warning \(dev\) at EnvExtraValue.cmake:[0-9]+ \(set_variable\):
+  Only the first value is used when setting an environment variable.  Value
+  'value_2' and later are unused.
+Call Stack \(most recent call first\):
+  CMakeLists.txt:[0-9]+ \(include\)
+This warning is for project developers.  Use -Wno-dev to suppress it.
