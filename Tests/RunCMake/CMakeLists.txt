@@ -770,6 +770,7 @@ add_RunCMake_test(try_run)
 set_property(TEST RunCMake.try_run APPEND PROPERTY LABELS "Fortran")
 
 add_RunCMake_test(set)
+add_RunCMake_test(set_variable)
 add_RunCMake_test(variable_watch)
 add_RunCMake_test(while)
 add_RunCMake_test(CMP0004)

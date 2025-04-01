@@ -1,0 +1,2 @@
+CMake Error at CacheUnknownArguments.cmake:[0-9]+ \(set_variable\):
+  Called with unsupported argument\(s\): FOO.

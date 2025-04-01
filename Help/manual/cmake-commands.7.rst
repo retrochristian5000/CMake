@@ -62,9 +62,11 @@ These commands are always available.
    /command/set
    /command/set_directory_properties
    /command/set_property
+   /command/set_variable
    /command/site_name
    /command/string
    /command/unset
+   /command/unset_variable
    /command/variable_watch
    /command/while
 

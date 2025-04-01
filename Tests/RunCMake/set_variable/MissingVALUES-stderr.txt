@@ -1,0 +1,2 @@
+CMake Error at MissingVALUES.cmake:[0-9]+ \(set_variable\):
+  Required argument 'VALUES' is missing.
