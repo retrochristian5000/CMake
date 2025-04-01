@@ -3,6 +3,10 @@ unset
 
 Unset a variable, cache variable, or environment variable.
 
+.. note::
+  For more precise control over variable unsetting, see the
+  :command:`unset_variable` command.
+
 Unset Normal Variable or Cache Entry
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -38,4 +42,6 @@ nor the environment of subsequent build or test processes.
 See Also
 ^^^^^^^^
 
+* :command:`unset_variable`
+* :command:`set_variable`
 * :command:`set`

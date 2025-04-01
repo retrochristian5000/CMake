@@ -1,0 +1,8 @@
+CMake Error at CacheMissingArguments.cmake:[0-9]+ \(set_variable\):
+  Error after keyword "HELP":
+
+    missing required value
+
+  Error after keyword "TYPE":
+
+    missing required value
