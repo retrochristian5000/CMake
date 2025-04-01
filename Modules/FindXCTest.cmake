@@ -156,20 +156,7 @@ function(xctest_add_bundle target testee)
     add_dependencies(${target} ${testee})
     if(XCODE)
       set_target_properties(${target} PROPERTIES
-        XCODE_ATTRIBUTE_BUNDLE_LOADER "$(TEST_HOST)"
-        XCODE_ATTRIBUTE_TEST_HOST "$<TARGET_FILE:${testee}>")
-      if(XCODE_VERSION VERSION_GREATER_EQUAL 7.3)
-        # The Xcode "new build system" used a different path until Xcode 12.5.
-        if(CMAKE_XCODE_BUILD_SYSTEM EQUAL 12 AND
-           XCODE_VERSION VERSION_LESS 12.5 AND
-           NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-          set(_output_directory "$<TARGET_BUNDLE_CONTENT_DIR:${testee}>")
-        else()
-          set(_output_directory "$<TARGET_BUNDLE_CONTENT_DIR:${testee}>/PlugIns")
-        endif()
-        set_target_properties(${target} PROPERTIES
-          LIBRARY_OUTPUT_DIRECTORY "${_output_directory}")
-      endif()
+        XCODE_ATTRIBUTE_BUNDLE_LOADER "$<TARGET_FILE:${testee}>")
     else()
       target_link_options(${target}
         PRIVATE "SHELL:-bundle_loader \"$<TARGET_FILE:${testee}>\"")
