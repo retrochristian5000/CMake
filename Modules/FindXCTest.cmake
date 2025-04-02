@@ -158,18 +158,6 @@ function(xctest_add_bundle target testee)
       set_target_properties(${target} PROPERTIES
         XCODE_ATTRIBUTE_BUNDLE_LOADER "$(TEST_HOST)"
         XCODE_ATTRIBUTE_TEST_HOST "$<TARGET_FILE:${testee}>")
-      if(XCODE_VERSION VERSION_GREATER_EQUAL 7.3)
-        # The Xcode "new build system" used a different path until Xcode 12.5.
-        if(CMAKE_XCODE_BUILD_SYSTEM EQUAL 12 AND
-           XCODE_VERSION VERSION_LESS 12.5 AND
-           NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-          set(_output_directory "$<TARGET_BUNDLE_CONTENT_DIR:${testee}>")
-        else()
-          set(_output_directory "$<TARGET_BUNDLE_CONTENT_DIR:${testee}>/PlugIns")
-        endif()
-        set_target_properties(${target} PROPERTIES
-          LIBRARY_OUTPUT_DIRECTORY "${_output_directory}")
-      endif()
     else()
       target_link_options(${target}
         PRIVATE "SHELL:-bundle_loader \"$<TARGET_FILE:${testee}>\"")
@@ -210,6 +198,24 @@ function(xctest_add_test name bundle)
 
   get_property(_testee_type TARGET ${_testee} PROPERTY TYPE)
   get_property(_testee_framework TARGET ${_testee} PROPERTY FRAMEWORK)
+  get_property(_testee_macosx_bundle TARGET ${_testee} PROPERTY MACOSX_BUNDLE)
+
+  if(XCODE AND _testee_type STREQUAL "EXECUTABLE" AND _testee_macosx_bundle)
+    # Xcode's TEST_HOST setting places the test module inside the testee bundle.
+    if(XCODE_VERSION VERSION_GREATER_EQUAL 7.3)
+      # The Xcode "new build system" used a different path until Xcode 12.5.
+      if(CMAKE_XCODE_BUILD_SYSTEM EQUAL 12 AND
+          XCODE_VERSION VERSION_LESS 12.5 AND
+          NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+        set(_test_bundle_dir "$<TARGET_BUNDLE_CONTENT_DIR:${_testee}>")
+      else()
+        set(_test_bundle_dir "$<TARGET_BUNDLE_CONTENT_DIR:${_testee}>/PlugIns")
+      endif()
+      string(APPEND _test_bundle_dir "/$<TARGET_BUNDLE_DIR_NAME:${bundle}>")
+    endif()
+  else()
+    set(_test_bundle_dir "$<TARGET_BUNDLE_DIR:${bundle}>")
+  endif()
 
   # register test
 
@@ -217,7 +223,7 @@ function(xctest_add_test name bundle)
   # here for CMP0178.
   add_test(
     NAME ${name}
-    COMMAND ${XCTest_EXECUTABLE} $<TARGET_BUNDLE_DIR:${bundle}>)
+    COMMAND ${XCTest_EXECUTABLE} ${_test_bundle_dir})
 
   # point loader to testee in case rpath is disabled
 
