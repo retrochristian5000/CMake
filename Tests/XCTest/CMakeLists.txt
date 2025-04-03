@@ -55,8 +55,13 @@ set_target_properties(CocoaExample PROPERTIES
 
 # XCTest for Cocoa App Bundle
 
-xctest_add_bundle(CocoaExampleTests CocoaExample
-  CocoaExampleTests/CocoaExampleTests.m)
+block()
+  if(XCODE)
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/ShouldNotBeUsed)
+  endif()
+  xctest_add_bundle(CocoaExampleTests CocoaExample
+    CocoaExampleTests/CocoaExampleTests.m)
+endblock()
 
 xctest_add_test(XCTest.CocoaExample CocoaExampleTests)
 
