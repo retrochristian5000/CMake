@@ -60,6 +60,8 @@
 #  endif
 #endif
 
+class cmConfigureLog;
+
 namespace {
 
 using pdt = cmFindPackageCommand::PackageDescriptionType;
@@ -598,6 +600,20 @@ void cmFindPackageCommand::InheritOptions(cmFindPackageCommand* other)
   this->SearchPathSuffixes = other->SearchPathSuffixes;
 
   this->Quiet = other->Quiet;
+}
+
+bool cmFindPackageCommand::IsFound() const
+{
+  // TODO: track the actual found state.
+  return false;
+}
+
+bool cmFindPackageCommand::IsDefined() const
+{
+  // A `find_package` always needs to be rerun because it could create
+  // variables, provide commands, or targets. Therefore it is never
+  // "predefined" whether it is found or not.
+  return false;
 }
 
 bool cmFindPackageCommand::InitialPass(std::vector<std::string> const& args)
@@ -3384,3 +3400,22 @@ void cmFindPackageDebugState::FailedAtImpl(std::string const& path,
   (void)path;
   (void)regexName;
 }
+
+void cmFindPackageDebugState::WriteDebug() const
+{
+}
+
+#ifndef CMAKE_BOOTSTRAP
+void cmFindPackageDebugState::WriteEvent(cmConfigureLog& log,
+                                         cmMakefile const& mf) const
+{
+  (void)log;
+  (void)mf;
+
+  auto const* fpc = this->FindPackageCommand;
+  // Avoid a `clang` warning about an unused `private` member variable.
+  (void)fpc;
+
+  // TODO
+}
+#endif
