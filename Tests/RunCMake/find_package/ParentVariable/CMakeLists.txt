@@ -1,0 +1,10 @@
+if(NOT "${CMAKE_PARENT_LIST_FILE}" STREQUAL "${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt")
+  message(SEND_ERROR "Bad value of `CMAKE_PARENT_LIST_FILE`")
+endif()
+
+set(CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR})
+find_package(ParentVariable QUIET CONFIG REQUIRED)
+
+if(NOT "${CMAKE_PARENT_LIST_FILE}" STREQUAL "${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt")
+  message(SEND_ERROR "Bad value of `CMAKE_PARENT_LIST_FILE`")
+endif()
