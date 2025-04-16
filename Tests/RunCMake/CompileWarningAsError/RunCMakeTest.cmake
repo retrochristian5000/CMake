@@ -19,6 +19,11 @@ if(CMake_TEST_CUDA)
   list(APPEND exts cu)
 endif()
 
+if(CMake_TEST_Swift)
+  list(APPEND langs Swift)
+  list(APPEND exts swift)
+endif()
+
 foreach(lang ext IN ZIP_LISTS langs exts)
   run_compile_warn(WerrorOn ${lang} ${ext})
   run_compile_warn(WerrorOff ${lang} ${ext})
