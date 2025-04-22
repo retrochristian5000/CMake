@@ -17,6 +17,7 @@
 #include "cmArgumentParser.h"
 #include "cmArgumentParserTypes.h"
 #include "cmExecutionStatus.h"
+#include "cmExperimental.h"
 #include "cmList.h"
 #include "cmMakefile.h"
 #include "cmMessageType.h"
@@ -36,6 +37,7 @@ struct ProjectArguments : ArgumentParser::ParseResult
 {
   cm::optional<std::string> ProjectName;
   cm::optional<std::string> Version;
+  cm::optional<std::string> CompatVersion;
   cm::optional<std::string> Description;
   cm::optional<std::string> HomepageURL;
   cm::optional<ArgumentParser::MaybeEmpty<std::vector<std::string>>> Languages;
@@ -61,22 +63,30 @@ bool cmProjectCommand(std::vector<std::string> const& args,
   std::vector<cm::string_view> missingValueKeywords;
   std::vector<cm::string_view> parsedKeywords;
   ProjectArguments prArgs;
-  ProjectArgumentParser{}
-    .BindKeywordMissingValue(missingValueKeywords)
+  ProjectArgumentParser parser;
+  parser.BindKeywordMissingValue(missingValueKeywords)
     .BindParsedKeywords(parsedKeywords)
     .Bind(0, prArgs.ProjectName)
     .Bind("VERSION"_s, prArgs.Version)
     .Bind("DESCRIPTION"_s, prArgs.Description)
     .Bind("HOMEPAGE_URL"_s, prArgs.HomepageURL)
-    .Bind("LANGUAGES"_s, prArgs.Languages)
-    .Parse(args, &unparsedArgs, 0);
+    .Bind("LANGUAGES"_s, prArgs.Languages);
+
+  cmMakefile& mf = status.GetMakefile();
+  bool enable_compat_version = cmExperimental::HasSupportEnabled(
+    mf, cmExperimental::Feature::ExportPackageInfo);
+
+  if (enable_compat_version) {
+    parser.Bind("COMPAT_VERSION"_s, prArgs.CompatVersion);
+  }
+
+  parser.Parse(args, &unparsedArgs, 0);
 
   if (!prArgs.ProjectName) {
     status.SetError("PROJECT called with incorrect number of arguments");
     return false;
   }
 
-  cmMakefile& mf = status.GetMakefile();
   if (mf.IsRootMakefile() &&
       !mf.GetDefinition("CMAKE_MINIMUM_REQUIRED_VERSION")) {
     mf.IssueMessage(
@@ -168,13 +178,21 @@ bool cmProjectCommand(std::vector<std::string> const& args,
     prArgs.Languages->emplace_back("NONE");
   }
 
+  if (prArgs.CompatVersion && !prArgs.Version) {
+    mf.IssueMessage(MessageType::FATAL_ERROR,
+                    "project with COMPAT_VERSION must also provide VERSION.");
+    cmSystemTools::SetFatalErrorOccurred();
+    return true;
+  }
+
+  cmsys::RegularExpression vx(
+    R"(^([0-9]+(\.[0-9]+(\.[0-9]+(\.[0-9]+)?)?)?)?$)");
+
   constexpr std::size_t MAX_VERSION_COMPONENTS = 4u;
   std::string version_string;
   std::array<std::string, MAX_VERSION_COMPONENTS> version_components;
 
   if (prArgs.Version) {
-    cmsys::RegularExpression vx(
-      R"(^([0-9]+(\.[0-9]+(\.[0-9]+(\.[0-9]+)?)?)?)?$)");
     if (!vx.find(*prArgs.Version)) {
       std::string e =
         R"(VERSION ")" + *prArgs.Version + R"(" format invalid.)";
@@ -215,6 +233,16 @@ bool cmProjectCommand(std::vector<std::string> const& args,
     }
   }
 
+  if (prArgs.CompatVersion) {
+    if (!vx.find(*prArgs.CompatVersion)) {
+      std::string e =
+        R"(COMPAT_VERSION ")" + *prArgs.CompatVersion + R"(" format invalid.)";
+      mf.IssueMessage(MessageType::FATAL_ERROR, e);
+      cmSystemTools::SetFatalErrorOccurred();
+      return true;
+    }
+  }
+
   auto create_variables = [&](cm::string_view var, std::string const& val) {
     mf.AddDefinition(cmStrCat("PROJECT_"_s, var), val);
     mf.AddDefinition(cmStrCat(*prArgs.ProjectName, "_"_s, var), val);
@@ -228,6 +256,10 @@ bool cmProjectCommand(std::vector<std::string> const& args,
   create_variables("VERSION_TWEAK"_s, version_components[3]);
   create_variables("DESCRIPTION"_s, prArgs.Description.value_or(""));
   create_variables("HOMEPAGE_URL"_s, prArgs.HomepageURL.value_or(""));
+
+  if (enable_compat_version) {
+    create_variables("COMPAT_VERSION"_s, prArgs.CompatVersion.value_or(""));
+  }
 
   if (unparsedArgs.empty() && !prArgs.Languages) {
     // if no language is specified do c and c++
