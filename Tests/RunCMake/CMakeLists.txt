@@ -737,6 +737,7 @@ add_RunCMake_test(property_init)
 add_RunCMake_test(DependencyProviders)
 add_RunCMake_test(return)
 add_RunCMake_test(SarifOutput)
+add_RunCMake_test(Sbom)
 add_RunCMake_test(separate_arguments)
 add_RunCMake_test(set_property)
 add_RunCMake_test(string
