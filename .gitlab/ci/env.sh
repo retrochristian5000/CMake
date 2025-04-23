@@ -9,6 +9,13 @@ quietly() {
   rm -f "$log"
 }
 
+case "$(uname -s)-$(uname -m)" in
+    Linux-*)
+        # Remove superuser tools from PATH.
+        export PATH=$(echo "$PATH" | sed 's|:[^:]*/sbin:|:|g')
+        ;;
+esac
+
 if test -n "$CMAKE_CI_IN_SYMLINK_TREE"; then
   mkdir -p "$CI_PROJECT_DIR/real_work/work/build"
   ln -s real_work/work "$CI_PROJECT_DIR/work"
