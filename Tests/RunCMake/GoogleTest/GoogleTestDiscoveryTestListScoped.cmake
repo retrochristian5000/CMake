@@ -6,6 +6,9 @@ enable_language(CXX)
 
 enable_testing()
 
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED YES)
+
 include(xcode_sign_adhoc.cmake)
 
 add_subdirectory(GoogleTestDiscoveryTestListScoped)

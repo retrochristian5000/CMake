@@ -1,3 +1,4 @@
+#include <fstream>
 #include <iostream>
 #include <string>
 
@@ -9,26 +10,66 @@ int main(int argc, char** argv)
   // it only requires that we produces output in the expected format when
   // invoked with --gtest_list_tests. Thus, we fake that here. This allows us
   // to test the module without actually needing Google Test.
-  bool is_filtered =
-    argc > 2 && std::string(argv[2]).find("--gtest_filter=") == 0;
-  bool add_basic_tests =
-    !is_filtered || (std::string(argv[2]).find("basic*") != std::string::npos);
-  bool add_typed_tests =
-    !is_filtered || (std::string(argv[2]).find("typed*") != std::string::npos);
-  bool add_value_tests =
-    !is_filtered || (std::string(argv[2]).find("value*") != std::string::npos);
-  bool add_dynamic_tests = !is_filtered ||
-    (std::string(argv[2]).find("dynamic*") != std::string::npos);
+  int filter_arg = 2;
 
   if (argc > 1 && std::string(argv[1]) == "--gtest_list_tests") {
+    std::ofstream ostrm = {};
+    if (argc > 2 &&
+        std::string(argv[2]).find("--gtest_output=json:") !=
+          std::string::npos) {
+      filter_arg++;
+      std::string output_param(argv[2]);
+      std::string::size_type split = output_param.find(":");
+      std::string filepath = output_param.substr(split + 1);
+      // The full file path is passed
+      ostrm = std::ofstream(filepath.c_str(), std::ios::binary);
+      if (!ostrm) {
+        std::cerr << "Failed to create file: " << filepath.c_str()
+                  << std::endl;
+        return 1;
+      }
+    }
+
+    bool is_filtered = argc > filter_arg &&
+      std::string(argv[filter_arg]).find("--gtest_filter=") == 0;
+    bool add_basic_tests = !is_filtered ||
+      (std::string(argv[filter_arg]).find("basic*") != std::string::npos);
+    bool add_typed_tests = !is_filtered ||
+      (std::string(argv[filter_arg]).find("typed*") != std::string::npos);
+    bool add_value_tests = !is_filtered ||
+      (std::string(argv[filter_arg]).find("value*") != std::string::npos);
+    bool add_dynamic_tests = !is_filtered ||
+      (std::string(argv[filter_arg]).find("dynamic*") != std::string::npos);
+
+    int tests = 0;
+    ostrm << R"({
+    "name": "AllTests",
+    "testsuites": [)";
+
     if (add_basic_tests) {
-      char const* basic_suite_names[] = { "basic.", "ns.basic." };
+      char const* basic_suite_names[] = { "basic", "ns.basic" };
       for (size_t i = 0; i < ARRAY_SIZE(basic_suite_names); i++) {
-        std::cout << basic_suite_names[i] << std::endl;
+        std::cout << basic_suite_names[i] << '.' << std::endl;
         std::cout << "  case_foo" << std::endl;
         std::cout << "  case_bar" << std::endl;
         std::cout << "  DISABLED_disabled_case" << std::endl;
         std::cout << "  DISABLEDnot_really_case" << std::endl;
+
+        if (tests)
+          ostrm << ",";
+        ostrm << R"(
+        {
+            "name": ")"
+              << basic_suite_names[i] << R"(",
+            "tests": 4,
+            "testsuite": [
+                { "name": "case_foo", "file": "file1.cpp", "line": 1 },
+                { "name": "case_bar", "file": "file2.cpp", "line": 2 },
+                { "name": "DISABLED_disabled_case", "file": "file1.cpp", "line": 3 },
+                { "name": "DISABLEDnot_really_case", "file": "file1.cpp", "line": 4 }
+            ]
+        })";
+        tests += 4;
       }
     }
     if (!is_filtered) {
@@ -36,6 +77,25 @@ int main(int argc, char** argv)
       std::cout << "  case" << std::endl;
       std::cout << "DISABLEDnotreally." << std::endl;
       std::cout << "  case" << std::endl;
+
+      if (tests)
+        ostrm << ",";
+      ostrm << R"(
+        {
+            "name": "DISABLED_disabled",
+            "tests": 1,
+            "testsuite": [
+                { "name": "case", "file": "file2.cpp", "line": 1 }
+            ]
+        },
+        {
+            "name": "DISABLEDnotreally",
+            "tests": 1,
+            "testsuite": [
+                { "name": "case", "file": "file2.cpp", "line": 2 }
+            ]
+        })";
+      tests += 2;
     }
     if (add_typed_tests) {
       char const* typed_suite_names[] = { "typed", "ns.typed",
@@ -49,6 +109,31 @@ int main(int argc, char** argv)
         std::cout << "  case" << std::endl;
         std::cout << typed_suite_names[i] << "/named.  # TypeParam = int\n";
         std::cout << "  case" << std::endl;
+
+        if (tests)
+          ostrm << ",";
+        ostrm << R"(
+        {
+            "name": ")"
+              << typed_suite_names[i] << R"(/0",
+            "tests": 1, "testsuite": [ { "name": "case", "type_param": "short", "file": "file3.cpp", "line": 1 } ]
+        },
+        {
+            "name": ")"
+              << typed_suite_names[i] << R"(/1",
+            "tests": 1, "testsuite": [ { "name": "case", "type_param": "float", "file": "file3.cpp", "line": 2 } ]
+        },
+        {
+            "name": ")"
+              << typed_suite_names[i] << R"(/42",
+            "tests": 1, "testsuite": [ { "name": "case", "type_param": "char", "file": "file3.cpp", "line": 3 } ]
+        },
+        {
+            "name": ")"
+              << typed_suite_names[i] << R"(/named",
+            "tests": 1, "testsuite": [ { "name": "case", "type_param": "int", "file": "file3.cpp", "line": 4 } ]
+        })";
+        tests += 4;
       }
     }
     if (add_value_tests) {
@@ -59,6 +144,21 @@ int main(int argc, char** argv)
         std::cout << "  case/0  # GetParam() = 1" << std::endl;
         std::cout << "  case/1  # GetParam() = \"foo\"" << std::endl;
         std::cout << "  case/named  # GetParam() = 'c'" << std::endl;
+
+        if (tests)
+          ostrm << ",";
+        ostrm << R"(
+        {
+            "name": ")"
+              << value_suite_names[i] << "/test" << R"(",
+            "tests": 3,
+            "testsuite": [
+                { "name": "case/0", "value_param": "1", "file": "file4.cpp", "line": 1 },
+                { "name": "case/1", "value_param": "\"foo\"", "file": "file4.cpp", "line": 2 },
+                { "name": "case/named", "value_param": "'c'", "file": "file4.cpp", "line": 3 }
+            ]
+        })";
+        tests += 3;
       }
       char const* param_suite_names[] = { "param", "ns.param",
                                           "prefix/param" };
@@ -72,6 +172,24 @@ int main(int argc, char** argv)
         std::cout << "  case/5  # GetParam() = \"__osbtext\"" << std::endl;
         std::cout << "  case/6  # GetParam() = \"__csb___text\"" << std::endl;
         std::cout << "  case/7  # GetParam() = \"S o m  e   \"" << std::endl;
+
+        ostrm << R"(,
+        {
+            "name": ")"
+              << param_suite_names[j] << "/special" << R"(",
+            "tests": 8,
+            "testsuite": [
+                { "name": "case/0", "value_param": "\"semicolon;\"", "file": "file4.cpp", "line": 1 },
+                { "name": "case/1", "value_param": "\"backslash\\\"", "file": "file4.cpp", "line": 2 },
+                { "name": "case/2", "value_param": "\"${var}\"", "file": "file4.cpp", "line": 3 },
+                { "name": "case/3", "value_param": "'['", "file": "file4.cpp", "line": 4 },
+                { "name": "case/4", "value_param": "\"]]=]\"", "file": "file4.cpp", "line": 5 },
+                { "name": "case/5", "value_param": "\"__osbtext\"", "file": "file4.cpp", "line": 5 },
+                { "name": "case/6", "value_param": "\"__csb___text\"", "file": "file4.cpp", "line": 5 },
+                { "name": "case/7", "value_param": "\"S o m  e   \"", "file": "file4.cpp", "line": 6 }
+            ]
+        })";
+        tests += 8;
       }
     }
     if (add_value_tests || add_typed_tests || add_dynamic_tests) {
@@ -83,8 +201,26 @@ int main(int argc, char** argv)
                   << std::endl;
         std::cout << "  test  # GetParam() = VALUE" << std::endl;
         std::cout << "  case/test  # GetParam() = VALUE" << std::endl;
+
+        if (tests)
+          ostrm << ",";
+        ostrm << R"(
+          {
+              "name": ")"
+              << both_suite_names[k] << R"(",
+              "tests": 1,
+              "testsuite": [
+                  { "name": "test", "type_param": "TYPE", "value_param": "VALUE", "file": "file5.cpp", "line": 1 },
+                  { "name": "case/test", "type_param": "TYPE", "value_param": "VALUE", "file": "file5.cpp", "line": 2 }
+              ]
+          })";
+        tests += 2;
       }
     }
+    ostrm << R"(
+    ],
+    "tests": )"
+          << tests << "\n}";
     return 0;
   }
 
