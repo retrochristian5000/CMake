@@ -5,97 +5,151 @@
 FindGTest
 ---------
 
-Locate the Google C++ Testing Framework.
+Finds GoogleTest, the Google C++ testing and mocking framework:
+
+.. code-block:: cmake
+
+  find_package(GTest [...])
+
+The GoogleTest framework also includes GoogleMock, a library for writing
+and using C++ mock classes.  On some systems, GoogleMock may be distributed
+as a separate package.
 
 .. versionadded:: 3.20
-  Upstream ``GTestConfig.cmake`` is used if possible.
+  If GoogleTest is built and installed using its CMake-based build system, it
+  provides a :ref:`package configuration file <Config File Packages>`
+  (``GTestConfig.cmake``) for use with the :command:`find_package` command in
+  *config mode*.  By default, this module searches for that configuration file
+  and, if found, returns the results without further action.  If the upstream
+  configuration file is not found, this module falls back to *module mode* and
+  searches standard locations.
 
 Imported Targets
 ^^^^^^^^^^^^^^^^
 
-.. versionadded:: 3.20
-  This module defines the following :prop_tgt:`IMPORTED` targets:
+This module provides the following :ref:`Imported Targets`:
 
 ``GTest::gtest``
-  The Google Test ``gtest`` library, if found; adds Thread::Thread
-  automatically
-``GTest::gtest_main``
-  The Google Test ``gtest_main`` library, if found
+  .. versionadded:: 3.20
 
-.. versionadded:: 3.23
+  Target encapsulating the GoogleTest ``gtest`` library usage requirements,
+  available if GoogleTest is found.  This target also links the
+  :module:`Threads::Threads <FindThreads>` imported target automatically, if
+  thread support is available on the system.
+
+``GTest::gtest_main``
+  .. versionadded:: 3.20
+
+  Target encapsulating the GoogleTest ``gtest_main`` library usage
+  requirements, available if GoogleTest is found.  This target also links the
+  ``GTest::gtest`` target.
 
 ``GTest::gmock``
-  The Google Mock ``gmock`` library, if found; adds Thread::Thread
-  automatically
-``GTest::gmock_main``
-  The Google Mock ``gmock_main`` library, if found
+  .. versionadded:: 3.23
 
-.. deprecated:: 3.20
-  For backwards compatibility, this module defines additionally the
-  following deprecated :prop_tgt:`IMPORTED` targets (available since 3.5):
+  Target encapsulating the GoogleMock ``gmock`` library usage requirements,
+  available if GoogleTest and its Mock library are found.  This target also
+  links the :module:`Threads::Threads <FindThreads>` imported target
+  automatically, if thread support is available on the system.
+
+``GTest::gmock_main``
+  .. versionadded:: 3.23
+
+  Target encapsulating the GoogleMock ``gmock_main`` library usage
+  requirements, available if GoogleTest and ``gmock_main`` are found.  This
+  target also links the ``GTest::gmock`` target.
+
+For backwards compatibility, this module also defines the following
+deprecated imported targets (available since CMake 3.5):
 
 ``GTest::GTest``
-  The Google Test ``gtest`` library, if found; adds Thread::Thread
-  automatically
-``GTest::Main``
-  The Google Test ``gtest_main`` library, if found
+  .. deprecated:: 3.20
 
-Result variables
+  Imported target linking the ``GTest::gtest``.
+
+``GTest::Main``
+  .. deprecated:: 3.20
+
+  Imported target linking the ``GTest::gtest_main``.
+
+Result Variables
 ^^^^^^^^^^^^^^^^
 
-This module will set the following variables in your project:
+This module defines the following variables:
 
 ``GTest_FOUND``
-  Found the Google Testing framework
+  Boolean indicating whether GoogleTest is found.
 ``GTEST_INCLUDE_DIRS``
-  the directory containing the Google Test headers
+  Include directories containing headers needed to use GoogleTest.  This
+  variable is available only when GoogleTest is found in *module mode*.
 
-The library variables below are set as normal variables.  These
-contain debug/optimized keywords when a debugging library is found.
+The following library variables are set as normal variables.  These contain
+debug or release (optimized) library variants based on the
+:ref:`Build Configurations` when both debug and release library variants are
+available:
 
 ``GTEST_LIBRARIES``
-  The Google Test ``gtest`` library; note it also requires linking
-  with an appropriate thread library
+  Libraries needed to link against to use GoogleTest ``gtest`` library; Note
+  that it is also required to link with an appropriate thread library.
 ``GTEST_MAIN_LIBRARIES``
-  The Google Test ``gtest_main`` library
+  Libraries needed to link against to use GoogleTest ``gtest_main`` library.
 ``GTEST_BOTH_LIBRARIES``
-  Both ``gtest`` and ``gtest_main``
+  Both ``gtest`` and ``gtest_main`` libraries combined.
 
-Cache variables
-^^^^^^^^^^^^^^^
+Hints
+^^^^^
 
-The following cache variables may also be set:
+This module accepts the following variables before calling
+``find_package(GTest)``:
 
 ``GTEST_ROOT``
-  The root directory of the Google Test installation (may also be
-  set as an environment variable)
+  The root directory of the GoogleTest installation (may also be set as an
+  environment variable).  This variable is used only when GoogleTest is found
+  in *module mode*.
+
 ``GTEST_MSVC_SEARCH``
-  If compiling with MSVC, this variable can be set to ``MT`` or
-  ``MD`` (the default) to enable searching a GTest build tree
+  When compiling with MSVC, this variable can be set to ``MT`` or ``MD``
+  (the default) to control which ``gtest`` build variant to search for.  These
+  options determine the runtime library linkage: ``MT`` links statically to
+  the C runtime (``/MT`` or ``/MTd``), while ``MD`` links dynamically
+  (``/MD`` or ``/MDd``).  This variable is used only when GoogleTest is
+  found in *module mode*.
 
+Examples
+^^^^^^^^
 
-Example usage
-^^^^^^^^^^^^^
+Finding GoogleTest and adding a test:
 
 .. code-block:: cmake
 
-    enable_testing()
-    find_package(GTest REQUIRED)
+  enable_testing()
 
-    add_executable(foo foo.cc)
-    target_link_libraries(foo GTest::gtest GTest::gtest_main)
+  find_package(GTest REQUIRED)
 
-    add_test(AllTestsInFoo foo)
+  add_executable(foo foo.cc)
+  target_link_libraries(foo PRIVATE GTest::gtest_main)
 
+  add_test(NAME AllTestsInFoo COMMAND foo)
 
-Deeper integration with CTest
+Deeper Integration With CTest
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-See :module:`GoogleTest` for information on the :command:`gtest_add_tests`
-and :command:`gtest_discover_tests` commands.
+This module is commonly used with the :module:`GoogleTest` module, which
+provides :command:`gtest_discover_tests` and :command:`gtest_add_tests`
+commands to help integrate GoogleTest infrastructure with CTest:
+
+.. code-block:: cmake
+
+  find_package(GTest)
+  target_link_libraries(example PRIVATE GTest::gtest_main)
+
+  include(GoogleTest)
+  gtest_discover_tests(example)
+
+  # ...
 
 .. versionchanged:: 3.9
-  Previous CMake versions defined :command:`gtest_add_tests` macro in this
+  Previous CMake versions defined :command:`gtest_add_tests` command in this
   module.
 #]=======================================================================]
 
