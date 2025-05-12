@@ -6,6 +6,7 @@
 #include "cmConfigure.h" // IWYU pragma: keep
 
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include <cm/optional>
@@ -43,7 +44,7 @@ public:
     std::string const Description;
     std::vector<std::string> const TryCompileVariables;
     TryCompileCondition const ForwardThroughTryCompile;
-    bool Warned;
+    std::unordered_set<std::string> WarnedUuids;
   };
 
   static FeatureData const& DataForFeature(Feature f);
