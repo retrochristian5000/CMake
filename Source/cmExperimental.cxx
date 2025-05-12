@@ -6,9 +6,11 @@
 #include <cassert>
 #include <cstddef>
 #include <string>
+#include <utility>
 
 #include "cmMakefile.h"
 #include "cmMessageType.h"
+#include "cmStringAlgorithms.h"
 #include "cmValue.h"
 
 namespace {
@@ -27,7 +29,7 @@ cmExperimental::FeatureData LookupTable[] = {
     "only for experimentation and feedback to CMake developers.",
     {},
     cmExperimental::TryCompileCondition::Always,
-    false },
+    {} },
   // WindowsKernelModeDriver
   { "WindowsKernelModeDriver",
     "9157bf90-2313-44d6-aefa-67cd83c8be7c",
@@ -36,7 +38,7 @@ cmExperimental::FeatureData LookupTable[] = {
     "only for experimentation and feedback to CMake developers.",
     {},
     cmExperimental::TryCompileCondition::Always,
-    false },
+    {} },
   // CxxImportStd
   { "CxxImportStd",
     "d0edc3af-4c50-42ea-a356-e2862fe7a444",
@@ -45,7 +47,7 @@ cmExperimental::FeatureData LookupTable[] = {
     "is meant only for experimentation and feedback to CMake developers.",
     {},
     cmExperimental::TryCompileCondition::Always,
-    false },
+    {} },
   // ImportPackageInfo
   { "ImportPackageInfo",
     "e82e467b-f997-4464-8ace-b00808fff261",
@@ -55,7 +57,7 @@ cmExperimental::FeatureData LookupTable[] = {
     "only for experimentation and feedback to CMake developers.",
     {},
     cmExperimental::TryCompileCondition::Always,
-    false },
+    {} },
   // ExportPackageInfo
   { "ExportPackageInfo",
     "b80be207-778e-46ba-8080-b23bba22639e",
@@ -65,7 +67,7 @@ cmExperimental::FeatureData LookupTable[] = {
     "experimentation and feedback to CMake developers.",
     {},
     cmExperimental::TryCompileCondition::Always,
-    false },
+    {} },
   // ExportBuildDatabase
   { "ExportBuildDatabase",
     "73194a1d-c0b5-41b9-9190-a4512925e192",
@@ -74,7 +76,7 @@ cmExperimental::FeatureData LookupTable[] = {
     "meant only for experimentation and feedback to CMake developers.",
     {},
     cmExperimental::TryCompileCondition::Never,
-    false },
+    {} },
   // Instrumentation
   { "Instrumentation",
     "a37d1069-1972-4901-b9c9-f194aaf2b6e0",
@@ -83,7 +85,7 @@ cmExperimental::FeatureData LookupTable[] = {
     "is meant only for experimentation and feedback to CMake developers.",
     {},
     cmExperimental::TryCompileCondition::Never,
-    false },
+    {} },
 };
 static_assert(sizeof(LookupTable) / sizeof(LookupTable[0]) ==
                 static_cast<size_t>(cmExperimental::Feature::Sentinel),
@@ -120,14 +122,24 @@ bool cmExperimental::HasSupportEnabled(cmMakefile const& mf, Feature f)
   bool enabled = false;
   auto& data = ::DataForFeature(f);
 
-  auto value = mf.GetDefinition(data.Variable);
-  if (value == data.Uuid) {
-    enabled = true;
-  }
+  if (cmValue value = mf.GetDefinition(data.Variable)) {
+    enabled = *value == data.Uuid;
 
-  if (enabled && !data.Warned) {
-    mf.IssueMessage(MessageType::AUTHOR_WARNING, data.Description);
-    data.Warned = true;
+    if (data.WarnedUuids.emplace(*value).second) {
+      if (enabled) {
+        mf.IssueMessage(MessageType::AUTHOR_WARNING, data.Description);
+      } else {
+        mf.IssueMessage(
+          MessageType::AUTHOR_WARNING,
+          cmStrCat(
+            data.Variable, " is set to incorrect value\n  ", value, '\n',
+            "See 'Help/dev/experimental.rst' in the source tree of this "
+            "version of CMake for documentation of the experimental feature "
+            "and the corresponding activation value.  This project's code "
+            "may require changes to work with this CMake's version of the "
+            "feature."));
+      }
+    }
   }
 
   return enabled;
