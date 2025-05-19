@@ -9,40 +9,28 @@ int main(int argc, char** argv)
   // invoked with --gtest_list_tests. Thus, we fake that here. This allows us
   // to test the module without actually needing Google Test.
 
-  int extra_arg_start = 2;
-  bool json = false;
-
-  if (argc <= 4 || std::string(argv[1]) != "--gtest_list_tests")
-    return 0;
-  if (std::string(argv[2]).find("--gtest_output=json:") != std::string::npos) {
-    if (argc <= 5)
-      return 0;
-    json = true;
-    extra_arg_start++;
-  }
-  if (std::string(argv[extra_arg_start]) != "how now" &&
-      std::string(argv[extra_arg_start + 1]) != "" &&
-      std::string(argv[extra_arg_start + 2]) != "\"brown\" cow") {
-    return 0;
-  }
-
   // Simple test of DISCOVERY_EXTRA_ARGS
-  std::cout << "test_list_test/test.\n";
-  std::cout << "  case/0  # GetParam() = 'one'\n";
-  std::cout << "  case/1  # GetParam() = 'two'\n";
-  std::cout << "  case/2  # GetParam() = 'three'\n";
-  std::cout << "  case/3  # GetParam() = 'four'\n";
-  if (json) {
-    std::string output_param(argv[2]);
-    std::string::size_type split = output_param.find(":");
-    std::string filepath = output_param.substr(split + 1);
-    // The full file path is passed
-    std::ofstream ostrm(filepath.c_str(), std::ios::binary);
-    if (!ostrm) {
-      std::cerr << "Failed to create file: " << filepath.c_str() << std::endl;
-      return 1;
-    }
-    ostrm << R"({
+  if (argc > 5 && std::string(argv[1]) == "--gtest_list_tests" &&
+      std::string(argv[2]).find("--gtest_output=json:") != std::string::npos &&
+      std::string(argv[3]) == "how now" && std::string(argv[4]) == "" &&
+      std::string(argv[5]) == "\"brown\" cow") {
+    std::cout << "test_list_test/test.\n";
+    std::cout << "  case/0  # GetParam() = 'one'\n";
+    std::cout << "  case/1  # GetParam() = 'two'\n";
+    std::cout << "  case/2  # GetParam() = 'three'\n";
+    std::cout << "  case/3  # GetParam() = 'four'\n";
+    if (!std::getenv("NO_GTEST_JSON_OUTPUT")) {
+      std::string output_param(argv[2]);
+      std::string::size_type split = output_param.find(":");
+      std::string filepath = output_param.substr(split + 1);
+      // The full file path is passed
+      std::ofstream ostrm(filepath.c_str(), std::ios::binary);
+      if (!ostrm) {
+        std::cerr << "Failed to create file: " << filepath.c_str()
+                  << std::endl;
+        return 1;
+      }
+      ostrm << R"({
     "tests": 4,
     "name": "AllTests",
     "testsuites": [
@@ -58,6 +46,7 @@ int main(int argc, char** argv)
         }
     ]
 })";
+    }
   }
   return 0;
 }

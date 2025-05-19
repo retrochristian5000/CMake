@@ -192,7 +192,6 @@ macro(parse_tests_from_output)
       continue()
     endif()
 
-    # Discard empty lines (could be from removed warnings)
     if(line STREQUAL "")
       continue()
     endif()
@@ -356,28 +355,16 @@ function(gtest_discover_tests_impl)
     set(discovery_extra_args "[==[${discovery_extra_args}]==]")
   endif()
 
-  # gtest 1.8.1 was the first version to recognize the --gtest_output=json
-  # option. Earlier versions issue a warning on stdout about it being
-  # unrecognized, but still return an exit code 0 for success. All versions
-  # report the test list on stdout whether --gtest_output=json is recognized
-  # or not.
-  # As an undocumented escape hatch, allow a NO_GTEST_JSON_OUTPUT environment
-  # variable to be set to prevent even trying to add the --gtest_output=json
-  # option in case there's some corner case we don't know about.
-  if("$ENV{NO_GTEST_JSON_OUTPUT}")
-    set(maybe_json_output "")
-  else()
-    set(json_file "${arg_TEST_WORKING_DIR}/cmake_test_discovery.json")
-    set(maybe_json_output "[==[--gtest_output=json:${json_file}]==]")
-    # Remove json file to make sure we don't pick up an outdated one
-    file(REMOVE "${json_file}")
-  endif()
+  set(json_file "${arg_TEST_WORKING_DIR}/cmake_test_discovery.json")
+
+  # Remove json file to make sure we don't pick up an outdated one
+  file(REMOVE "${json_file}")
 
   cmake_language(EVAL CODE
     "execute_process(
       COMMAND ${launcherArgs} [==[${arg_TEST_EXECUTABLE}]==]
         --gtest_list_tests
-        ${maybe_json_output}
+        [==[--gtest_output=json:${json_file}]==]
         ${filter}
         ${discovery_extra_args}
       WORKING_DIRECTORY [==[${arg_TEST_WORKING_DIR}]==]
@@ -404,17 +391,20 @@ function(gtest_discover_tests_impl)
     )
   endif()
 
-  set(warning_regex [[WARNING: unrecognized output format "json" ignored]])
-  if("$ENV{NO_GTEST_JSON_OUTPUT}" OR NOT EXISTS "${json_file}" OR "${output}" MATCHES warning_regex)
-    # Remove the warning before parsing the output, if present
-    string(REGEX REPLACE "${warning_regex}" "" output "${output}")
+  if(EXISTS "${json_file}")
+    parse_tests_from_json("${json_file}")
+  else()
+    # gtest < 1.8.1, and all gtest compiled with GTEST_HAS_FILE_SYSTEM=0, don't
+    # recognize the --gtest_output=json option, and issue a warning or error on
+    # stdout about it being unrecognized, but still return an exit code 0 for
+    # success. All versions report the test list on stdout whether
+    # --gtest_output=json is recognized or not.
+
     # NOTE: Because we are calling a macro, we don't want to pass "output" as
     # an argument because it messes up the contents passed through due to the
     # different escaping, etc. that gets applied. We rely on it picking up the
     # "output" variable we have already set here.
     parse_tests_from_output()
-  else()
-    parse_tests_from_json("${json_file}")
   endif()
 
   if(NOT tests_buffer STREQUAL "")

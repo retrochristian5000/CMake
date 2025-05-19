@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* Having this as comment lets gtest_add_tests recognizes the test we fake
@@ -30,23 +31,23 @@ int main(int argc, char** argv)
    * it only requires that we produces output in the expected format when
    * invoked with --gtest_list_tests. Thus, we fake that here. This allows us
    * to test the module without actually needing Google Test.  */
-  if (argc > 1 && strcmp(argv[1], "--gtest_list_tests") == 0) {
-    printf("launcher_test.\n");
-    printf("  test1\n");
-  }
-  if (argc > 2 &&
+  if (argc > 2 && strcmp(argv[1], "--gtest_list_tests") == 0 &&
       strncmp(argv[2], gtest_output_json_flag_prefix,
               strlen(gtest_output_json_flag_prefix)) == 0) {
-    char* filepath = strchr(argv[2], ':') + 1;
-    // The full file path is passed
-    FILE* ofile = fopen(filepath, "wb");
+    printf("launcher_test.\n");
+    printf("  test1\n");
+    if (!getenv("NO_GTEST_JSON_OUTPUT")) {
+      char* filepath = strchr(argv[2], ':') + 1;
+      // The full file path is passed
+      FILE* ofile = fopen(filepath, "wb");
 
-    if (!ofile) {
-      fprintf(stderr, "Failed to create file: %s\n", filepath);
-      return 1;
+      if (!ofile) {
+        fprintf(stderr, "Failed to create file: %s\n", filepath);
+        return 1;
+      }
+      fprintf(ofile, "%s", json_output);
+      fclose(ofile);
     }
-    fprintf(ofile, "%s", json_output);
-    fclose(ofile);
   }
 
   printf("launcher_test.test1\n");

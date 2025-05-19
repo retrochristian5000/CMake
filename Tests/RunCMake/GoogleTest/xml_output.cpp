@@ -19,7 +19,8 @@ int main(int argc, char** argv)
       std::cout << "  case/0  # GetParam() = 42" << std::endl;
       std::cout << "  case/1  # GetParam() = \"string\"" << std::endl;
       std::cout << "  case/2  # GetParam() = \"path/like\"" << std::endl;
-    } else if (param.find("--gtest_output=json:") != std::string::npos) {
+    } else if (!std::getenv("NO_GTEST_JSON_OUTPUT") &&
+               param.find("--gtest_output=json:") != std::string::npos) {
       std::string::size_type split = param.find(":");
       std::string filepath = param.substr(split + 1);
       // The full file path is passed

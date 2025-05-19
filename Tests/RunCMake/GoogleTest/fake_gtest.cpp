@@ -10,14 +10,21 @@ int main(int argc, char** argv)
   // it only requires that we produces output in the expected format when
   // invoked with --gtest_list_tests. Thus, we fake that here. This allows us
   // to test the module without actually needing Google Test.
-  int filter_arg = 2;
+  bool is_filtered =
+    argc > 3 && std::string(argv[3]).find("--gtest_filter=") == 0;
+  bool add_basic_tests =
+    !is_filtered || (std::string(argv[3]).find("basic*") != std::string::npos);
+  bool add_typed_tests =
+    !is_filtered || (std::string(argv[3]).find("typed*") != std::string::npos);
+  bool add_value_tests =
+    !is_filtered || (std::string(argv[3]).find("value*") != std::string::npos);
+  bool add_dynamic_tests = !is_filtered ||
+    (std::string(argv[3]).find("dynamic*") != std::string::npos);
 
-  if (argc > 1 && std::string(argv[1]) == "--gtest_list_tests") {
+  if (argc > 2 && std::string(argv[1]) == "--gtest_list_tests" &&
+      std::string(argv[2]).find("--gtest_output=json:") != std::string::npos) {
     std::ofstream ostrm = {};
-    if (argc > 2 &&
-        std::string(argv[2]).find("--gtest_output=json:") !=
-          std::string::npos) {
-      filter_arg++;
+    if (!std::getenv("NO_GTEST_JSON_OUTPUT")) {
       std::string output_param(argv[2]);
       std::string::size_type split = output_param.find(":");
       std::string filepath = output_param.substr(split + 1);
@@ -28,18 +35,11 @@ int main(int argc, char** argv)
                   << std::endl;
         return 1;
       }
+    } else {
+      std::cout << "WARNING: An old-style warning." << std::endl;
+      std::cout << "[ WARNING ] A new-style warning." << std::endl;
+      std::cout << "[  ERROR  ] A new-style error." << std::endl;
     }
-
-    bool is_filtered = argc > filter_arg &&
-      std::string(argv[filter_arg]).find("--gtest_filter=") == 0;
-    bool add_basic_tests = !is_filtered ||
-      (std::string(argv[filter_arg]).find("basic*") != std::string::npos);
-    bool add_typed_tests = !is_filtered ||
-      (std::string(argv[filter_arg]).find("typed*") != std::string::npos);
-    bool add_value_tests = !is_filtered ||
-      (std::string(argv[filter_arg]).find("value*") != std::string::npos);
-    bool add_dynamic_tests = !is_filtered ||
-      (std::string(argv[filter_arg]).find("dynamic*") != std::string::npos);
 
     int tests = 0;
     ostrm << R"({
