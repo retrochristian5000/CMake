@@ -365,6 +365,15 @@ private:
 
   friend struct std::hash<ConfigFileInfo>;
   friend class cmFindPackageDebugState;
+
+  enum class FindState
+  {
+    Undefined,
+    Irrelevant,
+    Found,
+    NotFound,
+  };
+  FindState InitialState = FindState::Undefined;
 };
 
 namespace std {
@@ -395,6 +404,7 @@ public:
 private:
   void FoundAtImpl(std::string const& path, std::string regexName) override;
   void FailedAtImpl(std::string const& path, std::string regexName) override;
+  bool ShouldImplicitlyLogEvents() const override;
 
   void WriteDebug() const override;
 #ifndef CMAKE_BOOTSTRAP
