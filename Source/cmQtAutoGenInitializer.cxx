@@ -466,8 +466,8 @@ bool cmQtAutoGenInitializer::InitCustomTargets()
       this->GenTarget->GetLocalGenerator()->GetObjectOutputRoot());
 
     // Info directory
-    this->Dir.Info = cmStrCat(oor, "/CMakeFiles/", this->GenTarget->GetName(),
-                              "_autogen.dir");
+    this->Dir.Info =
+      cmStrCat(oor, '/', this->GenTarget->GetName(), "_autogen.dir");
     cmSystemTools::ConvertToUnixSlashes(this->Dir.Info);
 
     // Build directory
