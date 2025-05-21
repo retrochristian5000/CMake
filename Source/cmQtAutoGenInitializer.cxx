@@ -460,9 +460,13 @@ bool cmQtAutoGenInitializer::InitCustomTargets()
     // Collapsed current binary directory
     std::string const cbd = cmSystemTools::CollapseFullPath(
       std::string(), this->Makefile->GetCurrentBinaryDirectory());
+    // Collapsed object output root
+    std::string const oor = cmSystemTools::CollapseFullPath(
+      std::string(),
+      this->GenTarget->GetLocalGenerator()->GetObjectOutputRoot());
 
     // Info directory
-    this->Dir.Info = cmStrCat(cbd, "/CMakeFiles/", this->GenTarget->GetName(),
+    this->Dir.Info = cmStrCat(oor, "/CMakeFiles/", this->GenTarget->GetName(),
                               "_autogen.dir");
     cmSystemTools::ConvertToUnixSlashes(this->Dir.Info);
 
