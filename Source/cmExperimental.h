@@ -24,6 +24,7 @@ public:
     ExportPackageInfo,
     ExportBuildDatabase,
     Instrumentation,
+    GenerateSbom,
 
     Sentinel,
   };

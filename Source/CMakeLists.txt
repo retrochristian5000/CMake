@@ -340,6 +340,8 @@ add_library(
   cmInstallRuntimeDependencySet.cxx
   cmInstallRuntimeDependencySetGenerator.h
   cmInstallRuntimeDependencySetGenerator.cxx
+  cmInstallSbomDocumentGenerator.h
+  cmInstallSbomDocumentGenerator.cxx
   cmInstallScriptGenerator.h
   cmInstallScriptGenerator.cxx
   cmInstallSubdirectoryGenerator.h
@@ -447,6 +449,9 @@ add_library(
   cmRuntimeDependencyArchive.h
   cmSarifLog.cxx
   cmSarifLog.h
+  cmSbom.h
+  cmSbomDocumentGenerator.h
+  cmSbomDocumentGenerator.cxx
   cmScriptGenerator.h
   cmScriptGenerator.cxx
   cmSourceFile.cxx

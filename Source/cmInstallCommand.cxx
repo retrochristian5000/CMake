@@ -40,6 +40,7 @@
 #include "cmInstallPackageInfoExportGenerator.h"
 #include "cmInstallRuntimeDependencySet.h"
 #include "cmInstallRuntimeDependencySetGenerator.h"
+#include "cmInstallSbomDocumentGenerator.h"
 #include "cmInstallScriptGenerator.h"
 #include "cmInstallTargetGenerator.h"
 #include "cmList.h"
@@ -2411,6 +2412,56 @@ bool HandleRuntimeDependencySetMode(std::vector<std::string> const& args,
   return true;
 }
 
+bool HandleSbomMode(std::vector<std::string> const& args,
+                    cmExecutionStatus& status)
+{
+#ifndef CMAKE_BOOTSTRAP
+  if (!cmExperimental::HasSupportEnabled(
+        status.GetMakefile(), cmExperimental::Feature::GenerateSbom)) {
+    status.SetError("does not recognize sub-command SBOM");
+    return false;
+  }
+
+  Helper helper(status);
+
+  // Parse arguments for the SBOM mode
+  cmInstallCommandArguments ica(helper.DefaultComponentName, *helper.Makefile);
+
+  ArgumentParser::NonEmpty<std::string> sbom;
+  ArgumentParser::NonEmpty<std::string> format;
+
+  ica.Bind("SBOM"_s, sbom);
+  ica.Bind("FORMAT"_s, format);
+
+  std::vector<std::string> unknownArgs;
+  ica.Parse(args, &unknownArgs);
+
+  if (!unknownArgs.empty()) {
+    // Unknown argument.
+    status.SetError(
+      cmStrCat(args[0], " given unknown argument \"", unknownArgs[0], "\"."));
+    return false;
+  }
+
+  if (!ica.Finalize()) {
+    return false;
+  }
+
+  auto messageLevel = cmInstallGenerator::SelectMessageLevel(helper.Makefile);
+
+  helper.Makefile->AddInstallGenerator(
+    cm::make_unique<cmInstallSbomDocumentGenerator>(
+      format, ica.GetDestination(), ica.GetConfigurations(),
+      ica.GetComponent(), messageLevel, ica.GetExcludeFromAll(), false,
+      helper.Makefile->GetBacktrace()));
+  return true;
+#else
+  static_cast<void>(args);
+  status.SetError("SBOM not supported in bootstrap cmake");
+  return false;
+#endif
+}
+
 bool Helper::MakeFilesFullPath(char const* modeName,
                                std::vector<std::string> const& relFiles,
                                std::vector<std::string>& absFiles)
@@ -2648,6 +2699,7 @@ bool cmInstallCommand(std::vector<std::string> const& args,
     { "EXPORT_ANDROID_MK"_s, HandleExportAndroidMKMode },
     { "PACKAGE_INFO"_s, HandlePackageInfoMode },
     { "RUNTIME_DEPENDENCY_SET"_s, HandleRuntimeDependencySetMode },
+    { "SBOM"_s, HandleSbomMode },
   };
 
   return subcommand(args[0], args, status);

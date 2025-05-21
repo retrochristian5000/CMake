@@ -1,0 +1,7 @@
+^CMake Warning \(dev\) at Experimental/GenerateSbom-set\.cmake:4 \(cmake_language\):
+  CMake's support for generating software bill of materials \(SBOM\)
+  information in SPDX format is experimental\.  It is meant only for
+  experimentation and feedback to CMake developers\.
+Call Stack \(most recent call first\):
+  CMakeLists\.txt:[0-9]+ \(include\)
+This warning is for project developers\.  Use -Wno-dev to suppress it\.$
