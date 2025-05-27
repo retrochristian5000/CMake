@@ -90,6 +90,10 @@ bool cmFindBase::ParseArguments(std::vector<std::string> const& argsIn)
   this->VariableName = args[0];
   this->InitialState = this->GetInitialState();
   if (this->IsFound()) {
+    if (this->DebugState) {
+      this->DebugState->FoundAt(
+        *this->Makefile->GetDefinition(this->VariableName));
+    }
     return true;
   }
 
@@ -542,6 +546,9 @@ void cmFindBase::NormalizeFindResult()
       }
     }
 
+    if (this->DebugState) {
+      this->DebugState->FoundAt(value);
+    }
     if (this->StoreResultInCache) {
       // If the user specifies the entry on the command line without a
       // type we should add the type and docstring but keep the original
@@ -578,17 +585,23 @@ void cmFindBase::NormalizeFindResult()
         if (this->Makefile->GetPolicyStatus(cmPolicies::CMP0126) ==
               cmPolicies::NEW &&
             this->Makefile->IsNormalDefinitionSet(this->VariableName)) {
-          this->Makefile->AddDefinition(
-            this->VariableName,
-            *this->Makefile->GetCMakeInstance()->GetCacheDefinition(
-              this->VariableName));
+          auto const& existingValue =
+            this->Makefile->GetCMakeInstance()->GetCacheDefinition(
+              this->VariableName);
+          if (this->DebugState) {
+            this->DebugState->FoundAt(*existingValue);
+          }
+          this->Makefile->AddDefinition(this->VariableName, *existingValue);
         }
       }
     } else {
+      auto const& existingValue =
+        this->Makefile->GetSafeDefinition(this->VariableName);
+      if (this->DebugState) {
+        this->DebugState->FoundAt(existingValue);
+      }
       // ensure a normal variable is defined.
-      this->Makefile->AddDefinition(
-        this->VariableName,
-        this->Makefile->GetSafeDefinition(this->VariableName));
+      this->Makefile->AddDefinition(this->VariableName, existingValue);
     }
   }
 }
@@ -611,6 +624,10 @@ void cmFindBase::StoreFindResult(std::string const& value)
       }
     } else {
       this->Makefile->AddDefinition(this->VariableName, value);
+    }
+
+    if (this->DebugState) {
+      this->DebugState->FoundAt(value);
     }
 
     return;

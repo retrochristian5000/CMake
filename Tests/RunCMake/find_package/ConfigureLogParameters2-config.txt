@@ -1,13 +1,17 @@
 ^
 ---
-events:
+events:(
   -
+    kind: "find-v1"(
+    [^
+]*)+|
++  -
     kind: "message-v1"
     backtrace:(
       - "[^"]+")+
     message: \|(
 +      [^
-]*)*
+]*)*)*
   -
     kind: "find_package-v1"
     backtrace:(
