@@ -23,5 +23,8 @@ events:(
       - "[^"]+")*
     searched_directories:(
       - "[^"]+")*
-    found: (false|"[^"]*"))+
-\.\.\.$
+    found: (false|"[^"]*")
+    search_context:(
+      [^
+]*)+)+
++\.\.\.$
