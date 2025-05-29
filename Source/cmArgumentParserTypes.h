@@ -57,18 +57,21 @@ template <typename T>
 struct Maybe : public T
 {
   using T::T;
+  using T::operator=;
 };
 
 template <typename T>
 struct MaybeEmpty : public T
 {
   using T::T;
+  using T::operator=;
 };
 
 template <typename T>
 struct NonEmpty : public T
 {
   using T::T;
+  using T::operator=;
 };
 
 } // namespace ArgumentParser
