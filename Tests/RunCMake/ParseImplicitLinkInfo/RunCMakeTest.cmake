@@ -46,4 +46,8 @@ endif()
 
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID MATCHES Clang)
   run_cmake_with_options(CheckCompilerLinkerId "-DCMAKE_C_FLAGS=-fdiagnostics-color=always")
+  run_cmake_with_options(SanitizeCoverageFlags
+    "-DCMAKE_C_FLAGS=-fsanitize-coverage=trace-pc"
+    "-Dinfo=${RunCMake_BINARY_DIR}/Inspect-build/info.cmake"
+  )
 endif()
