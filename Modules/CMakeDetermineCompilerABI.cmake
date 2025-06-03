@@ -67,6 +67,8 @@ function(CMAKE_DETERMINE_COMPILER_ABI lang src)
       # executables.  This may lead to issues when their stderr output (which
       # contains the relevant compiler internals) becomes interweaved.
       string(REGEX REPLACE "(^| )-pipe( |$)" " " ${v} "${${v}}")
+      # Avoid insertion of `__sanitizer_cov_*` calls, which we do not implement here.
+      string(REGEX REPLACE "(^| )-fsanitize-coverage=[^ ]*( |$)" " " ${v} "${${v}}")
       # Suppress any formatting of warnings and/or errors
       string(REGEX REPLACE "(-f|/)diagnostics(-|:)color(=[a-z]+)?" "" ${v} "${${v}}")
     endforeach()
