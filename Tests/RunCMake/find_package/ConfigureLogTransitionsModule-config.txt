@@ -1,0 +1,90 @@
+^
+---
+events:(
+  -
+    kind: "find-v1"(
+    [^
+]*)+|
++  -
+    kind: "message-v1"
+    backtrace:(
+      - "[^"]+")+
+    message: \|(
++      [^
+]*)*)*
+  -
+    kind: "message-v1"
+    backtrace:
+      - "ConfigureLogTransitionsModule.cmake:[0-9]+ \(message\)"
+      - "CMakeLists.txt:[0-9]+ \(include\)"
+    message: \|
+      NotDefined -> NotFound
+  -
+    kind: "message-v1"
+    backtrace:
+      - "ConfigureLogTransitionsModule.cmake:[0-9]+ \(message\)"
+      - "CMakeLists.txt:[0-9]+ \(include\)"
+    message: \|
+      NotFound -> NotFound
+  -
+    kind: "message-v1"
+    backtrace:
+      - "ConfigureLogTransitionsModule.cmake:[0-9]+ \(message\)"
+      - "CMakeLists.txt:[0-9]+ \(include\)"
+    message: \|
+      NotFound -> Found
+  -
+    kind: "find_package-v1"
+    backtrace:
+      - "ConfigureLogTransitionsModule.cmake:[0-9]+ \(find_package\)"
+      - "CMakeLists.txt:[0-9]+ \(include\)"
+    name: "ViaModule"
+    version_request:
+      exact: false
+    settings:
+      required: "optional"
+      quiet: false
+      global: false
+      policy_scope: true
+      bypass_provider: false
+      path_suffixes:
+        - ""
+      paths:
+        CMAKE_FIND_USE_CMAKE_PATH: true
+        CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+        CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+        CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+        CMAKE_FIND_USE_INSTALL_PREFIX: true
+        CMAKE_FIND_USE_PACKAGE_ROOT_PATH: true
+        CMAKE_FIND_USE_CMAKE_PACKAGE_REGISTRY: true
+        CMAKE_FIND_USE_SYSTEM_PACKAGE_REGISTRY: true
+        CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
+    found:
+      path: "[^"]*/Tests/RunCMake/find_package/ConfigureLog/cmake/FindViaModule.cmake"
+      mode: "module"
+      version: "1.0"
+    search_context:(
+      [^
+]*)+
+  -
+    kind: "message-v1"
+    backtrace:
+      - "ConfigureLogTransitionsModule.cmake:[0-9]+ \(message\)"
+      - "CMakeLists.txt:[0-9]+ \(include\)"
+    message: \|
+      Found -> Found
+  -
+    kind: "message-v1"
+    backtrace:
+      - "ConfigureLogTransitionsModule.cmake:[0-9]+ \(message\)"
+      - "CMakeLists.txt:[0-9]+ \(include\)"
+    message: \|
+      Found -> NotFound
+  -
+    kind: "message-v1"
+    backtrace:
+      - "ConfigureLogTransitionsModule.cmake:[0-9]+ \(message\)"
+      - "CMakeLists.txt:[0-9]+ \(include\)"
+    message: \|
+      END
+\.\.\.$
