@@ -548,6 +548,9 @@ cmGlobalXCodeGenerator::GenerateBuildCommand(
   int jobs, bool /*verbose*/, cmBuildOptions const& /*buildOptions*/,
   std::vector<std::string> const& makeOptions)
 {
+  std::string const xcodebuild =
+    this->SelectMakeProgram(makeProgram, this->GetXcodeBuildCommand());
+
   // If an external tool created a workspace then build it instead.
   std::string projectPath = cmStrCat(projectName, ".xcworkspace");
   bool const isWorkspace = cmSystemTools::FileIsDirectory(projectPath);
@@ -558,53 +561,64 @@ cmGlobalXCodeGenerator::GenerateBuildCommand(
   std::string const targetFlag = isWorkspace ? "-scheme" : "-target";
   std::string const projectFlag = isWorkspace ? "-workspace" : "-project";
 
-  GeneratedMakeCommand makeCommand;
-  // now build the test
-  makeCommand.Add(
-    this->SelectMakeProgram(makeProgram, this->GetXcodeBuildCommand()));
-
-  if (!projectName.empty()) {
-    makeCommand.Add(projectFlag, projectPath);
+  std::vector<GeneratedMakeCommand> makeCommands(1);
+  // For workspaces we need a separate command for each target,
+  // because xcodebuild cap pass only one -scheme arg
+  if (isWorkspace && !targetNames.empty()) {
+    makeCommands.resize(targetNames.size());
   }
-  if (cm::contains(targetNames, "clean")) {
-    makeCommand.Add("clean");
-    makeCommand.Add(targetFlag, "ALL_BUILD");
-  } else {
-    makeCommand.Add("build");
-    if (targetNames.empty() ||
-        ((targetNames.size() == 1) && targetNames.front().empty())) {
+  for (size_t index = 0; index < makeCommands.size(); ++index) {
+    GeneratedMakeCommand& makeCommand = makeCommands[index];
+    makeCommand.Add(xcodebuild);
+
+    if (!projectName.empty()) {
+      makeCommand.Add(projectFlag, projectPath);
+    }
+
+    if (cm::contains(targetNames, "clean")) {
+      makeCommand.Add("clean");
       makeCommand.Add(targetFlag, "ALL_BUILD");
     } else {
-      for (auto const& tname : targetNames) {
-        if (!tname.empty()) {
-          makeCommand.Add(targetFlag, tname);
+      makeCommand.Add("build");
+      if (targetNames.empty() ||
+          ((targetNames.size() == 1) && targetNames.front().empty())) {
+        makeCommand.Add(targetFlag, "ALL_BUILD");
+      } else {
+        if (isWorkspace) {
+          makeCommand.Add(targetFlag, targetNames[index]);
+        } else {
+          for (auto const& tname : targetNames) {
+            if (!tname.empty()) {
+              makeCommand.Add(targetFlag, tname);
+            }
+          }
         }
       }
     }
-  }
 
-  if (isWorkspace) {
-    makeCommand.Add(
-      "-destination",
-      cmStrCat("generic/platform=", this->GetAppleSpecificPlatformName()));
-  }
+    if (isWorkspace) {
+      makeCommand.Add(
+        "-destination",
+        cmStrCat("generic/platform=", this->GetAppleSpecificPlatformName()));
+    }
 
-  if ((this->XcodeBuildSystem >= BuildSystem::Twelve) ||
-      (jobs != cmake::NO_BUILD_PARALLEL_LEVEL)) {
-    makeCommand.Add("-parallelizeTargets");
-  }
-  makeCommand.Add("-configuration", (config.empty() ? "Debug" : config));
+    if ((this->XcodeBuildSystem >= BuildSystem::Twelve) ||
+        (jobs != cmake::NO_BUILD_PARALLEL_LEVEL)) {
+      makeCommand.Add("-parallelizeTargets");
+    }
+    makeCommand.Add("-configuration", (config.empty() ? "Debug" : config));
 
-  if ((jobs != cmake::NO_BUILD_PARALLEL_LEVEL) &&
-      (jobs != cmake::DEFAULT_BUILD_PARALLEL_LEVEL)) {
-    makeCommand.Add("-jobs", std::to_string(jobs));
-  }
+    if ((jobs != cmake::NO_BUILD_PARALLEL_LEVEL) &&
+        (jobs != cmake::DEFAULT_BUILD_PARALLEL_LEVEL)) {
+      makeCommand.Add("-jobs", std::to_string(jobs));
+    }
 
-  if (this->XcodeVersion >= 70) {
-    makeCommand.Add("-hideShellScriptEnvironment");
+    if (this->XcodeVersion >= 70) {
+      makeCommand.Add("-hideShellScriptEnvironment");
+    }
+    makeCommand.Add(makeOptions.begin(), makeOptions.end());
   }
-  makeCommand.Add(makeOptions.begin(), makeOptions.end());
-  return { std::move(makeCommand) };
+  return makeCommands;
 }
 
 //! Create a local generator appropriate to this Global Generator

@@ -1,0 +1,4 @@
+.*xcodebuild -workspace XcodeWorkspace.xcworkspace build -scheme custom1 -destination generic/platform=MacOS[^
+]*
+.*xcodebuild -workspace XcodeWorkspace.xcworkspace build -scheme custom2 -destination generic/platform=MacOS[^
+]*
