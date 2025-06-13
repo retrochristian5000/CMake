@@ -3,6 +3,9 @@ include(GoogleTest)
 
 enable_testing()
 
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED YES)
+
 include(xcode_sign_adhoc.cmake)
 
 add_executable(fake_gtest fake_gtest.cpp)
@@ -40,6 +43,37 @@ gtest_discover_tests(
   TEST_FILTER typed*
   EXTRA_ARGS how now "\"brown\" cow"
   PROPERTIES LABELS TEST4
+)
+
+gtest_discover_tests(
+  fake_gtest
+  TEST_PREFIX TEST:
+  TEST_SUFFIX !5
+  TEST_FILTER value*
+  EXTRA_ARGS how now "\"brown\" cow"
+  PROPERTIES LABELS TEST5
+  NO_PRETTY_VALUES
+)
+
+gtest_discover_tests(
+  fake_gtest
+  TEST_PREFIX TEST:
+  TEST_SUFFIX !6
+  TEST_FILTER typed*
+  EXTRA_ARGS how now "\"brown\" cow"
+  PROPERTIES LABELS TEST6
+  NO_PRETTY_TYPES
+)
+
+gtest_discover_tests(
+  fake_gtest
+  TEST_PREFIX TEST:
+  TEST_SUFFIX !7
+  TEST_FILTER dynamic*
+  EXTRA_ARGS how now "\"brown\" cow"
+  PROPERTIES LABELS TEST7
+  NO_PRETTY_VALUES
+  NO_PRETTY_TYPES
 )
 
 add_executable(no_tests_defined no_tests_defined.cpp)

@@ -3,6 +3,9 @@ include(GoogleTest)
 
 enable_testing()
 
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED YES)
+
 include(xcode_sign_adhoc.cmake)
 
 add_executable(test_list_test test_list_test.cpp)

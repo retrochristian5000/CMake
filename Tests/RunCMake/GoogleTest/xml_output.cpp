@@ -19,6 +19,39 @@ int main(int argc, char** argv)
       std::cout << "  case/0  # GetParam() = 42" << std::endl;
       std::cout << "  case/1  # GetParam() = \"string\"" << std::endl;
       std::cout << "  case/2  # GetParam() = \"path/like\"" << std::endl;
+    } else if (!std::getenv("NO_GTEST_JSON_OUTPUT") &&
+               param.find("--gtest_output=json:") != std::string::npos) {
+      std::string::size_type split = param.find(":");
+      std::string filepath = param.substr(split + 1);
+      // The full file path is passed
+      std::ofstream ostrm(filepath.c_str(), std::ios::binary);
+      if (!ostrm) {
+        std::cerr << "Failed to create file: " << filepath.c_str()
+                  << std::endl;
+        return 1;
+      }
+      ostrm << R"({
+    "tests": 4,
+    "name": "AllTests",
+    "testsuites": [
+        {
+            "name": "GoogleTestXML",
+            "tests": 1,
+            "testsuite": [
+                { "name": "Foo", "file": "file.cpp", "line": 42 }
+            ]
+        },
+        {
+            "name": "GoogleTestXMLSpecial\/cases",
+            "tests": 3,
+            "testsuite": [
+                { "name": "case\/0", "value_param": "42", "file": "file2.cpp", "line": 47 },
+                { "name": "case\/1", "value_param": "\"string\"", "file": "file2.cpp", "line": 47 },
+                { "name": "case\/2", "value_param": "\"path/like\"", "file": "file2.cpp", "line": 47 }
+            ]
+        }
+    ]
+})";
     } else if (param.find("--gtest_output=xml:") != std::string::npos) {
       std::string::size_type split = param.find(":");
       std::string filepath = param.substr(split + 1);

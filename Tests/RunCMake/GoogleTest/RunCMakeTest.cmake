@@ -65,6 +65,27 @@ function(run_GoogleTest DISCOVERY_MODE)
     --no-label-summary
   )
 
+  run_cmake_command(GoogleTest-test5
+    ${CMAKE_CTEST_COMMAND}
+    -C Debug
+    -L TEST5
+    --no-label-summary
+  )
+
+  run_cmake_command(GoogleTest-test6
+    ${CMAKE_CTEST_COMMAND}
+    -C Debug
+    -L TEST6
+    --no-label-summary
+  )
+
+  run_cmake_command(GoogleTest-test7
+    ${CMAKE_CTEST_COMMAND}
+    -C Debug
+    -L TEST7
+    --no-label-summary
+  )
+
   run_cmake_command(GoogleTest-test-missing
     ${CMAKE_CTEST_COMMAND}
     -C Debug
@@ -381,30 +402,10 @@ function(run_GoogleTest_discovery_test_list_extra_args DISCOVERY_MODE)
   )
 endfunction()
 
-foreach(DISCOVERY_MODE POST_BUILD PRE_TEST)
-  message(STATUS "Testing ${DISCOVERY_MODE} discovery mode via CMAKE_GTEST_DISCOVER_TESTS_DISCOVERY_MODE global override...")
-  run_GoogleTest(${DISCOVERY_MODE})
-  run_GoogleTestXML(${DISCOVERY_MODE})
-  run_Launcher_CMP0178(${DISCOVERY_MODE} NEW)
-  run_Launcher_CMP0178(${DISCOVERY_MODE} OLD)
-  run_Launcher_CMP0178(${DISCOVERY_MODE} WARN)
-  message(STATUS "Testing ${DISCOVERY_MODE} discovery mode via DISCOVERY_MODE option...")
-  run_GoogleTest_discovery_timeout(${DISCOVERY_MODE})
-  run_GoogleTest_discovery_arg_change(${DISCOVERY_MODE})
-  run_GoogleTest_discovery_test_list(${DISCOVERY_MODE})
-  run_GoogleTest_discovery_test_list_scoped(${DISCOVERY_MODE})
-  run_GoogleTest_discovery_test_list_extra_args(${DISCOVERY_MODE})
-  run_GoogleTest_discovery_flush_script(${DISCOVERY_MODE})
-endforeach()
 
-if(RunCMake_GENERATOR_IS_MULTI_CONFIG)
-  message(STATUS "Testing PRE_TEST discovery multi configuration...")
-  run_GoogleTest_discovery_multi_config()
-endif()
-
-block(SCOPE_FOR VARIABLES)
+function(run_GoogleTest_DEF_SOURCE_LINE DISCOVERY_MODE)
   # Use a single build tree for a few tests without cleaning.
-  set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/WorkDirWithSpaces-build)
+  set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/GoogleTest-DEF_SOURCE_LINE-build)
   set(RunCMake_TEST_NO_CLEAN 1)
   if(NOT RunCMake_GENERATOR_IS_MULTI_CONFIG)
     set(RunCMake_TEST_OPTIONS -DCMAKE_BUILD_TYPE=Debug)
@@ -412,19 +413,79 @@ block(SCOPE_FOR VARIABLES)
   file(REMOVE_RECURSE "${RunCMake_TEST_BINARY_DIR}")
   file(MAKE_DIRECTORY "${RunCMake_TEST_BINARY_DIR}")
 
-  run_cmake(WorkDirWithSpaces)
+  run_cmake_with_options(GoogleTestDefSourceLine -DCMAKE_GTEST_DISCOVER_TESTS_DISCOVERY_MODE=${DISCOVERY_MODE})
 
-  run_cmake_command(WorkDirWithSpaces-build
+  run_cmake_command(GoogleTest-DEF_SOURCE_LINE-build
     ${CMAKE_COMMAND}
     --build .
     --config Debug
-    --target test_workdir
+    --target fake_gtest
   )
-
-  run_cmake_command(WorkDirWithSpaces-test
+  run_cmake_command(GoogleTest-DEF_SOURCE_LINE
     ${CMAKE_CTEST_COMMAND}
     -C Debug
-    --no-label-summary
-    --output-on-failure
+    -R "^basic\\.case_"
+    --show-only=json-v1
   )
-endblock()
+endfunction()
+
+foreach(DISABLE_JSON OFF ON)
+  if(DISABLE_JSON)
+    set(ENV{NO_GTEST_JSON_OUTPUT} 1)
+    message(STATUS "Testing with NO_GTEST_JSON_OUTPUT=1")
+  else()
+    unset(ENV{NO_GTEST_JSON_OUTPUT})
+    message(STATUS "Testing with NO_GTEST_JSON_OUTPUT unset")
+  endif()
+  foreach(DISCOVERY_MODE POST_BUILD PRE_TEST)
+    message(STATUS "Testing ${DISCOVERY_MODE} discovery mode via CMAKE_GTEST_DISCOVER_TESTS_DISCOVERY_MODE global override...")
+    run_GoogleTest(${DISCOVERY_MODE})
+    run_GoogleTestXML(${DISCOVERY_MODE})
+    run_Launcher_CMP0178(${DISCOVERY_MODE} NEW)
+    run_Launcher_CMP0178(${DISCOVERY_MODE} OLD)
+    run_Launcher_CMP0178(${DISCOVERY_MODE} WARN)
+    message(STATUS "Testing ${DISCOVERY_MODE} discovery mode via DISCOVERY_MODE option...")
+    run_GoogleTest_discovery_timeout(${DISCOVERY_MODE})
+    run_GoogleTest_discovery_arg_change(${DISCOVERY_MODE})
+    run_GoogleTest_discovery_test_list(${DISCOVERY_MODE})
+    run_GoogleTest_discovery_test_list_scoped(${DISCOVERY_MODE})
+    run_GoogleTest_discovery_test_list_extra_args(${DISCOVERY_MODE})
+    run_GoogleTest_discovery_flush_script(${DISCOVERY_MODE})
+  endforeach()
+
+  if(RunCMake_GENERATOR_IS_MULTI_CONFIG)
+    message(STATUS "Testing PRE_TEST discovery multi configuration...")
+    run_GoogleTest_discovery_multi_config()
+  endif()
+
+  block(SCOPE_FOR VARIABLES)
+    # Use a single build tree for a few tests without cleaning.
+    set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/WorkDirWithSpaces-build)
+    set(RunCMake_TEST_NO_CLEAN 1)
+    if(NOT RunCMake_GENERATOR_IS_MULTI_CONFIG)
+      set(RunCMake_TEST_OPTIONS -DCMAKE_BUILD_TYPE=Debug)
+    endif()
+    file(REMOVE_RECURSE "${RunCMake_TEST_BINARY_DIR}")
+    file(MAKE_DIRECTORY "${RunCMake_TEST_BINARY_DIR}")
+
+    run_cmake(WorkDirWithSpaces)
+
+    run_cmake_command(WorkDirWithSpaces-build
+      ${CMAKE_COMMAND}
+      --build .
+      --config Debug
+      --target test_workdir
+    )
+
+    run_cmake_command(WorkDirWithSpaces-test
+      ${CMAKE_CTEST_COMMAND}
+      -C Debug
+      --no-label-summary
+      --output-on-failure
+    )
+  endblock()
+endforeach()
+
+unset(ENV{NO_GTEST_JSON_OUTPUT})
+run_GoogleTest_DEF_SOURCE_LINE(POST_BUILD)
+run_GoogleTest_DEF_SOURCE_LINE(PRE_TEST)
