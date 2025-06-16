@@ -2978,7 +2978,8 @@ void cmLocalGenerator::CopyPchCompilePdb(
   cc->SetCommandLines(commandLines);
   cc->SetComment(comment.c_str());
   cc->SetStdPipesUTF8(true);
-  cc->AppendDepends({ reuseTarget->GetPchFile(config, language) });
+  cc->AppendDepends(
+    { reuseTarget->GetPchFile(config, language), copy_script });
 
   if (this->GetGlobalGenerator()->IsVisualStudio()) {
     cc->SetByproducts(outputs);
