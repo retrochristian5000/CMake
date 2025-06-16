@@ -2944,29 +2944,13 @@ void cmLocalGenerator::CopyPchCompilePdb(
       dest_file = cmStrCat(to_dir, prefix, ReuseFrom, extension);
     }
 
-    file << "foreach(retry RANGE 1 30)\n";
-    file << "  if (EXISTS \"" << from_file << "\" AND (NOT EXISTS \""
-         << dest_file << "\" OR NOT \"" << dest_file << "\" IS_NEWER_THAN \""
-         << from_file << "\"))\n";
-    file << "    execute_process(COMMAND ${CMAKE_COMMAND} -E copy";
-    file << " \"" << from_file << "\""
-         << " \"" << to_dir << "\" RESULT_VARIABLE result "
-         << " ERROR_QUIET)\n";
-    file << "    if (NOT result EQUAL 0)\n"
-         << "      execute_process(COMMAND ${CMAKE_COMMAND}"
-         << " -E sleep 1)\n"
-         << "    else()\n";
-    if (!prefix.empty()) {
-      file << "  file(REMOVE \"" << dest_file << "\")\n";
-      file << "  file(RENAME \"" << to_file << "\" \"" << dest_file << "\")\n";
-    }
-    file << "      break()\n"
-         << "    endif()\n";
-    file << "  elseif(NOT EXISTS \"" << from_file << "\")\n"
-         << "    execute_process(COMMAND ${CMAKE_COMMAND}"
-         << " -E sleep 1)\n"
-         << "  endif()\n";
-    file << "endforeach()\n";
+    file << "file(MAKE_DIRECTORY \"" << to_dir << "\")\n";
+    file << "file(COPY_FILE"
+            " \""
+         << from_file
+         << "\""
+            " \""
+         << dest_file << "\" INPUT_MAY_BE_RECENT)\n";
   }
 
   auto configGenex = [&](cm::string_view expr) -> std::string {
