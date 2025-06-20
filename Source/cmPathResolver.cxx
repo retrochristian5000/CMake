@@ -50,7 +50,7 @@ enum class Existence
 enum class Root
 {
   None,
-  POSIX,
+  Posix,
 #ifdef _WIN32
   Drive,
   Network,
@@ -103,7 +103,7 @@ Root ClassifyRoot(cm::string_view p)
   }
 #endif
   if (!p.empty() && p[0] == '/') {
-    return Root::POSIX;
+    return Root::Posix;
   }
   return Root::None;
 }
@@ -241,7 +241,7 @@ Control ImplBase::ResolveSymlink(Root root, std::string::size_type slash,
   }
 
 #ifdef _WIN32
-  if (root == Root::Drive && symlink_target_root == Root::POSIX) {
+  if (root == Root::Drive && symlink_target_root == Root::Posix) {
     // This is a symlink to a POSIX absolute path,
     // but the current path is on a drive letter.  Resolve the
     // symlink while preserving the drive letter, and start over:
