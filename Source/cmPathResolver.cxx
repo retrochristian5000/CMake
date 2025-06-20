@@ -54,6 +54,8 @@ enum class Root
 #ifdef _WIN32
   Drive,
   Network,
+#else
+  PosixTwoSlash,
 #endif
 };
 
@@ -100,6 +102,11 @@ Root ClassifyRoot(cm::string_view p)
   }
   if (p.size() >= 3 && p[0] == '/' && p[1] == '/' && p[2] != '/') {
     return Root::Network;
+  }
+#else
+  if ((p.size() >= 3 && p[0] == '/' && p[1] == '/' && p[2] != '/') ||
+      p == "//"_s) {
+    return Root::PosixTwoSlash;
   }
 #endif
   if (!p.empty() && p[0] == '/') {
@@ -292,6 +299,10 @@ Control Impl<Policy>::ResolveRoot(Root root)
       root_slash = P.size();
       P.push_back('/');
     }
+  }
+#else
+  if (root == Root::PosixTwoSlash) {
+    root_slash = 1;
   }
 #endif
 

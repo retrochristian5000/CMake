@@ -135,14 +135,30 @@ bool posixRoot()
   MockSystem os;
   os.SetPaths({
     { "/", { {}, {} } },
+#ifndef _WIN32
+    { "//", { {}, {} } },
+#endif
   });
   Resolver<Policies::RealPath> const r(os);
   EXPECT_RESOLVE("/", "/");
-  EXPECT_RESOLVE("//", "/");
   EXPECT_RESOLVE("/.", "/");
   EXPECT_RESOLVE("/./", "/");
   EXPECT_RESOLVE("/..", "/");
   EXPECT_RESOLVE("/../", "/");
+#ifdef _WIN32
+  EXPECT_RESOLVE("//", "/");
+#else
+  EXPECT_RESOLVE("//", "//");
+  EXPECT_RESOLVE("//.", "//");
+  EXPECT_RESOLVE("//./", "//");
+  EXPECT_RESOLVE("//..", "//");
+  EXPECT_RESOLVE("//../", "//");
+#endif
+  EXPECT_RESOLVE("///", "/");
+  EXPECT_RESOLVE("///.", "/");
+  EXPECT_RESOLVE("///./", "/");
+  EXPECT_RESOLVE("///..", "/");
+  EXPECT_RESOLVE("///../", "/");
   return true;
 }
 
@@ -153,6 +169,10 @@ bool posixAbsolutePath()
   os.SetPaths({
     { "/", { {}, {} } },
     { "/a", { {}, {} } },
+#ifndef _WIN32
+    { "//", { {}, {} } },
+    { "//a", { {}, {} } },
+#endif
   });
   Resolver<Policies::RealPath> const r(os);
   EXPECT_RESOLVE("/a", "/a");
@@ -164,7 +184,8 @@ bool posixAbsolutePath()
   EXPECT_RESOLVE("/a/../", "/");
   EXPECT_RESOLVE("/a/../..", "/");
 #ifndef _WIN32
-  EXPECT_RESOLVE("//a", "/a");
+  EXPECT_RESOLVE("//a", "//a");
+  EXPECT_RESOLVE("///a", "/a");
 #endif
   return true;
 }
