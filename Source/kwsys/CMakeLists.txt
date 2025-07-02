@@ -911,12 +911,6 @@ endif()
 # Setup testing if not being built as part of another project.
 if(KWSYS_STANDALONE OR CMake_SOURCE_DIR)
   if(BUILD_TESTING)
-    # Compute the location of executables.
-    set(EXEC_DIR "${CMAKE_CURRENT_BINARY_DIR}")
-    if(CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-      set(EXEC_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
-    endif()
-
     # C tests
     set(KWSYS_C_TESTS
       testEncode.c
@@ -934,7 +928,7 @@ if(KWSYS_STANDALONE OR CMake_SOURCE_DIR)
     foreach(testfile IN LISTS KWSYS_C_TESTS)
       get_filename_component(test "${testfile}" NAME_WE)
       add_test(NAME kwsys.${test}
-        COMMAND ${EXEC_DIR}/${KWSYS_NAMESPACE}TestsC ${test} ${KWSYS_TEST_ARGS_${test}}
+        COMMAND ${KWSYS_NAMESPACE}TestsC ${test} ${KWSYS_TEST_ARGS_${test}}
         )
       set_property(TEST kwsys.${test} PROPERTY LABELS ${KWSYS_LABELS_TEST})
     endforeach()
@@ -1001,6 +995,15 @@ if(KWSYS_STANDALONE OR CMake_SOURCE_DIR)
       ${PROJECT_BINARY_DIR}/testSystemTools.h)
     include_directories(${PROJECT_BINARY_DIR})
 
+    # https://learn.microsoft.com/en-us/windows/win32/sysinfo/targeting-your-application-at-windows-8-1
+    set_property(TARGET ${KWSYS_NAMESPACE}TestsCxx PROPERTY VERSION "0.0.0.0")
+    file(GENERATE OUTPUT ${KWSYS_NAMESPACE}TestsCxx.manifest
+      INPUT ${PROJECT_SOURCE_DIR}/Application.manifest.in
+      TARGET ${KWSYS_NAMESPACE}TestsCxx
+      NEWLINE_STYLE WIN32
+      )
+    target_sources(${KWSYS_NAMESPACE}TestsCxx PRIVATE ${KWSYS_NAMESPACE}TestsCxx.manifest)
+
     if(CTEST_TEST_KWSYS)
       configure_file("${CMAKE_CURRENT_SOURCE_DIR}/ExtraTest.cmake.in"
         "${CMAKE_CURRENT_BINARY_DIR}/ExtraTest.cmake")
@@ -1038,7 +1041,7 @@ if(KWSYS_STANDALONE OR CMake_SOURCE_DIR)
     foreach(testfile IN LISTS KWSYS_CXX_TESTS)
       get_filename_component(test "${testfile}" NAME_WE)
       add_test(NAME kwsys.${test}
-        COMMAND ${EXEC_DIR}/${KWSYS_NAMESPACE}TestsCxx ${test} ${KWSYS_TEST_ARGS_${test}}
+        COMMAND ${KWSYS_NAMESPACE}TestsCxx ${test} ${KWSYS_TEST_ARGS_${test}}
         )
       set_property(TEST kwsys.${test} PROPERTY LABELS ${KWSYS_LABELS_TEST})
     endforeach()
@@ -1050,7 +1053,7 @@ if(KWSYS_STANDALONE OR CMake_SOURCE_DIR)
     #set(KWSYS_TEST_PROCESS_7 7) # uncomment to run timing-sensitive test locally
     foreach(n IN ITEMS 1 2 3 4 5 6 ${KWSYS_TEST_PROCESS_7} 9 10)
       add_test(NAME kwsys.testProcess-${n}
-        COMMAND ${EXEC_DIR}/${KWSYS_NAMESPACE}TestProcess ${n}
+        COMMAND ${KWSYS_NAMESPACE}TestProcess ${n}
         )
       set_property(TEST kwsys.testProcess-${n} PROPERTY LABELS ${KWSYS_LABELS_TEST})
       set_property(TEST kwsys.testProcess-${n} PROPERTY TIMEOUT 120)
