@@ -128,10 +128,6 @@ instrument(cmake-command-resets-generated NO_WARN
   COPY_QUERIES_GENERATED
   CHECK_SCRIPT check-data-dir.cmake
 )
-
-# FIXME(#26668) This does not work on Windows
-if (UNIX)
-  instrument(cmake-command-make-program NO_WARN
-    BUILD_MAKE_PROGRAM
-    CHECK_SCRIPT check-make-program-hooks.cmake)
-endif()
+instrument(cmake-command-make-program NO_WARN
+  BUILD_MAKE_PROGRAM
+  CHECK_SCRIPT check-make-program-hooks.cmake)
