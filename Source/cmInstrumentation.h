@@ -58,6 +58,9 @@ public:
   void WriteJSONQuery(std::set<cmInstrumentationQuery::Option> const& options,
                       std::set<cmInstrumentationQuery::Hook> const& hooks,
                       std::vector<std::vector<std::string>> const& callback);
+  void AddCustomContent(std::string const& name, Json::Value const& contents);
+  void WriteCustomContent();
+  std::string GetLatestContentFile();
   void ClearGeneratedQueries();
   int CollectTimingData(cmInstrumentationQuery::Hook hook);
   int SpawnBuildDaemon();
@@ -98,6 +101,7 @@ private:
   bool hasQuery = false;
   bool ranSystemChecks = false;
   bool ranOSCheck = false;
+  Json::Value customContent;
 #ifndef CMAKE_BOOTSTRAP
   std::unique_ptr<cmsys::SystemInformation> systemInformation;
   cmsys::SystemInformation& GetSystemInformation();
