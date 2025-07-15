@@ -23,6 +23,12 @@ if(CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 19.27)
     set(CMAKE_C17_STANDARD_COMPILE_OPTION "-std:c17")
     set(CMAKE_C17_EXTENSION_COMPILE_OPTION "-std:c17")
     set(CMAKE_C_STANDARD_LATEST 17)
+
+    if(CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 19.39)
+      set(CMAKE_C23_STANDARD_COMPILE_OPTION "-std:clatest")
+      set(CMAKE_C23_EXTENSION_COMPILE_OPTION "-std:clatest")
+      set(CMAKE_C_STANDARD_LATEST 23)
+    endif()
   else()
     # Special case for 19.27 (VS 16.7): C11 has partial support.
     macro(cmake_record_c_compile_features)
