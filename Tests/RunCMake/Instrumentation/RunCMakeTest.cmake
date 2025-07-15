@@ -66,7 +66,9 @@ function(instrument test)
     run_cmake_command(${test}-build ${CMAKE_COMMAND} --build . --config Debug)
   endif()
   if (ARGS_BUILD_MAKE_PROGRAM)
+    set(RunCMake_TEST_OUTPUT_MERGE 1)
     run_cmake_command(${test}-make-program ${RunCMake_MAKE_PROGRAM})
+    unset(RunCMake_TEST_OUTPUT_MERGE)
   endif()
   if (ARGS_INSTALL)
     run_cmake_command(${test}-install ${CMAKE_COMMAND} --install . --prefix install --config Debug)
@@ -126,10 +128,6 @@ instrument(cmake-command-resets-generated NO_WARN
   COPY_QUERIES_GENERATED
   CHECK_SCRIPT check-data-dir.cmake
 )
-
-# FIXME(#26668) This does not work on Windows
-if (UNIX)
-  instrument(cmake-command-make-program NO_WARN
-    BUILD_MAKE_PROGRAM
-    CHECK_SCRIPT check-make-program-hooks.cmake)
-endif()
+instrument(cmake-command-make-program NO_WARN
+  BUILD_MAKE_PROGRAM
+  CHECK_SCRIPT check-make-program-hooks.cmake)
