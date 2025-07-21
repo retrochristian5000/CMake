@@ -1,0 +1,37 @@
+.*-- Variable - CustomVar: custom
+ *-- Variable - CustomVar2: custom2
+ *-- Stage: custom
+ *-- Separator: ;
+ *-- List: 1;2;3.*
+ *-- Stage: config
+ *-- Separator: ;
+ *-- List: 4;5;6
+ *-- Variable - Stage: config
+ *-- Variable - ListVar: 4;5;6
+.*-- Stage: build
+ *-- Separator: ;
+ *-- List: 4;5;6
+.*-- Stage: install
+ *-- Separator: ;
+ *-- List: 4;5;6
+.*-- Stage: test
+ *-- Separator: ;
+ *-- List: 4;5;6
+.*-- ConfigVar: config
+ *-- Separator: ,
+ *-- List: 7,8,9
+.*-- Stage: build
+ *-- Separator: ,
+ *-- List: 7,8,9,10
+.*(-- ConfigVar: config
+ *-- Separator: ;
+ *-- List: 10;11;12
+.*-- Stage: build
+ *-- Separator: ;
+ *-- List: 10;11;12
+.*-- Stage: install
+ *-- Separator: ;
+ *-- List: 10;11;12;13
+.*-- Stage: install
+ *-- Separator: ;
+ *-- List: 10;11;12;13)?.*
