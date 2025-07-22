@@ -1160,6 +1160,98 @@ static bool CheckCopyFileIfDifferent()
   return ret;
 }
 
+static bool CheckCopyFileIfNewer()
+{
+  bool ret = true;
+
+  // Test case 1: Copy when destination doesn't exist
+  if (!writeFile("newer_source.txt", "test content")) {
+    return false;
+  }
+  if (!kwsys::SystemTools::CopyFileIfNewer("newer_source.txt",
+                                           "newer_dest1.txt")) {
+    std::cerr << "CopyFileIfNewer() failed when destination doesn't exist."
+              << std::endl;
+    ret = false;
+  } else {
+    std::string dest_content = readFile("newer_dest1.txt");
+    if (dest_content != "test content") {
+      std::cerr << "CopyFileIfNewer() incorrect content when destination "
+                   "doesn't exist."
+                << std::endl;
+      ret = false;
+    }
+  }
+
+  // Test case 2: Don't copy when source is older
+  if (!writeFile("older_source.txt", "old content") ||
+      !writeFile("newer_dest2.txt", "new content")) {
+    return false;
+  }
+
+  // Make destination newer by touching it
+  if (!kwsys::SystemTools::Touch("newer_dest2.txt", false)) {
+    std::cerr << "Failed to touch newer_dest2.txt" << std::endl;
+    return false;
+  }
+
+  auto copy_result =
+    kwsys::SystemTools::CopyFileIfNewer("older_source.txt", "newer_dest2.txt");
+  if (!copy_result) {
+    std::cerr << "CopyFileIfNewer() failed when source is older." << std::endl;
+    ret = false;
+  } else {
+    std::string dest_content = readFile("newer_dest2.txt");
+    if (dest_content != "new content") {
+      std::cerr
+        << "CopyFileIfNewer() should not have copied when source is older."
+        << std::endl;
+      ret = false;
+    }
+  }
+
+  // Test case 3: Copy when source is newer
+  if (!writeFile("older_dest.txt", "old content")) {
+    return false;
+  }
+
+  // Small delay to ensure different timestamps
+#if defined(_WIN32)
+  Sleep(1200); // Sleep for 1.2 seconds on Windows
+#else
+  usleep(1200000); // Sleep for 1.2 seconds on Unix
+#endif
+
+  if (!writeFile("newer_source2.txt", "newer content")) {
+    return false;
+  }
+
+  if (!kwsys::SystemTools::CopyFileIfNewer("newer_source2.txt",
+                                           "older_dest.txt")) {
+    std::cerr << "CopyFileIfNewer() failed when source is newer." << std::endl;
+    ret = false;
+  } else {
+    std::string dest_content = readFile("older_dest.txt");
+    if (dest_content != "newer content") {
+      std::cerr << "CopyFileIfNewer() incorrect content when source is newer."
+                << std::endl;
+      ret = false;
+    }
+  }
+
+  // Test case 4: Directory to directory copy
+  if (!kwsys::SystemTools::MakeDirectory("newer_dir_a") ||
+      !kwsys::SystemTools::MakeDirectory("newer_dir_b")) {
+    return false;
+  }
+
+  if (!kwsys::SystemTools::CopyFileIfNewer("newer_dir_a/", "newer_dir_b")) {
+    ret = false;
+  }
+
+  return ret;
+}
+
 static bool CheckURLParsing()
 {
   bool ret = true;
@@ -1270,6 +1362,8 @@ int testSystemTools(int, char*[])
   res &= CheckTextFilesDiffer();
 
   res &= CheckCopyFileIfDifferent();
+
+  res &= CheckCopyFileIfNewer();
 
   res &= CheckURLParsing();
 
