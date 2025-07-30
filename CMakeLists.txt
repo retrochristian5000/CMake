@@ -500,6 +500,11 @@ if(NOT CMake_TEST_EXTERNAL_CMAKE)
       set(CXX_FLAGS_LIST -Wnon-virtual-dtor -Wcast-align -Wchar-subscripts -Wall -W
                          -Wshadow -Wpointer-arith -Wformat-security -Wundef
       )
+      if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        list(APPEND CXX_FLAGS_LIST
+          -Wundefined-func-template
+        )
+      endif()
 
       foreach(FLAG_LANG IN ITEMS C CXX)
         foreach(FLAG IN LISTS ${FLAG_LANG}_FLAGS_LIST)
