@@ -428,7 +428,8 @@ public:
    * per-target support directory.
    */
   virtual std::string GetTargetDirectory(
-    cmGeneratorTarget const* target) const;
+    cmGeneratorTarget const* target,
+    cmStateEnums::IntermediateDirKind kind) const;
 
   cmPolicies::PolicyStatus GetPolicyStatus(cmPolicies::PolicyID id) const;
 
