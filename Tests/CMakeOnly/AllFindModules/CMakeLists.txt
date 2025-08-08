@@ -125,7 +125,7 @@ foreach(
     OpenSceneGraph OPENSCENEGRAPH OpenSSL OPENSSL
     PNG PostgreSQL Protobuf
     Ruby RUBY
-    SDL SWIG
+    SDL Subversion SWIG
     TIFF
     ZLIB
 )
