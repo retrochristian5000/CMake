@@ -101,7 +101,7 @@ foreach(
     HG HSPELL
     ICOTOOL
     JASPER
-    LIBLZMA LIBXML2 LIBXSLT LTTNGUST
+    LIBLZMA LIBXML2 LIBXSLT LTTNGUST LUA
     PERL PKG_CONFIG PNG PostgreSQL
     SDL
     TIFF
@@ -121,7 +121,7 @@ foreach(
     Gettext GIF GTK2
     HDF5
     Jasper JPEG
-    LibArchive LibLZMA LIBLZMA LibXml2 LibXslt LTTngUST
+    LibArchive LibLZMA LIBLZMA LibXml2 LibXslt LTTngUST Lua
     OpenSceneGraph OPENSCENEGRAPH OpenSSL OPENSSL
     PNG PostgreSQL Protobuf
     Ruby RUBY
