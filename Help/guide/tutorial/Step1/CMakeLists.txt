@@ -1,16 +1,21 @@
-# TODO 1: Set the minimum required version of CMake to be 3.10
+# TODO 1: Set the minimum required version of CMake to be 3.23
 
 # TODO 2: Create a project named Tutorial
 
-# TODO 7: Set the project version number as 1.0 in the above project command
+# TODO 3: Add an executable target called Tutorial to the project
 
-# TODO 6: Set the variable CMAKE_CXX_STANDARD to 11
-#         and the variable CMAKE_CXX_STANDARD_REQUIRED to True
+# TODO 4: Add the Tutorial/Tutorial.cxx source file to the Tutorial target
 
-# TODO 8: Use configure_file to configure and copy TutorialConfig.h.in to
-#         TutorialConfig.h
+# TODO 7: Add the MathFunctions library as a linked dependency
+#         to the Tutorial target
 
-# TODO 3: Add an executable called Tutorial to the project
-# Hint: Be sure to specify the source file as tutorial.cxx
+# TODO 9: Add the Tutorial subdirectory to the project
 
-# TODO 9: Use target_include_directories to include ${PROJECT_BINARY_DIR}
+# TODO 5: Add a library target called MathFunctions to the project
+
+# TODO 6: Add the source and header file located in Step1/MathFunctions to the
+#         MathFunctions target, note that intended way to include the
+#         MathFunctions header is:
+#           #include <MathFunctions.h>
+
+# TODO 11: Add the MathFunctions subdirectory to the project
