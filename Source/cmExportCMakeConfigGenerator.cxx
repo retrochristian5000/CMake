@@ -292,8 +292,20 @@ void cmExportCMakeConfigGenerator::GenerateImportTargetCode(
       os << "add_library(" << targetName << " OBJECT IMPORTED)\n";
       break;
     case cmStateEnums::INTERFACE_LIBRARY:
-      os << "add_library(" << targetName << " INTERFACE IMPORTED)\n";
-      break;
+      if (target->IsSymbolic()) {
+        os << "if(CMAKE_VERSION VERSION_GREATER_EQUAL \""
+           << CMake_VERSION_DEVEL(4, 2)
+           << "\")\n"
+              "  add_library("
+           << targetName << " INTERFACE SYMBOLIC IMPORTED)\n"
+           << "elseif(CMAKE_VERSION VERSION_GREATER_EQUAL 3.2.0)\n"
+           << "  add_library(" << targetName << " INTERFACE IMPORTED)\n"
+           << "  set_target_properties(" << targetName
+           << " PROPERTIES SYMBOLIC TRUE)\n"
+           << "endif()\n";
+      } else {
+        os << "add_library(" << targetName << " INTERFACE IMPORTED)\n";
+      }
     default: // should never happen
       break;
   }
