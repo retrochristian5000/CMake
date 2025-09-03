@@ -1,0 +1,1 @@
+((Ninja Multi-Config)?multiple rules generate CMakeFiles/objlib.dir/Debug/objlib_lib.c.o|(Makefiles)?(undefined reference to `[fg]'|"_[fg]" referenced from:)|(NMake Makefiles)?NMAKE : |(NMake Makefiles JOM)?jom: |(Watcom WMake)?Last command making \(usefuncs.exe\) returned a bad status|^$)
