@@ -2786,6 +2786,8 @@ void cmLocalGenerator::AddPchDependencies(cmGeneratorTarget* target)
 
         auto* pch_sf = this->Makefile->GetOrCreateSource(
           pchSource, false, cmSourceFileLocationKind::Known);
+        pch_sf->SetSpecialSourceType(
+          cmSourceFile::SpecialSourceType::PchSource);
         // PCH sources should never be scanned as they cannot contain C++
         // module references.
         pch_sf->SetProperty("CXX_SCAN_FOR_MODULES", "0");
@@ -2881,6 +2883,8 @@ void cmLocalGenerator::AddPchDependencies(cmGeneratorTarget* target)
           // be grouped as "Precompile Header File"
           auto* pchHeader_sf = this->Makefile->GetOrCreateSource(
             pchHeader, false, cmSourceFileLocationKind::Known);
+          pchHeader_sf->SetSpecialSourceType(
+            cmSourceFile::SpecialSourceType::PchHeader);
           std::string err;
           pchHeader_sf->ResolveFullPath(&err);
           if (!err.empty()) {
@@ -2991,7 +2995,9 @@ void cmLocalGenerator::CopyPchCompilePdb(
     cmSourceFile* copy_rule = this->AddCustomCommandToOutput(std::move(cc));
     if (copy_rule) {
       copy_rule->SetProperty("CXX_SCAN_FOR_MODULES", "0");
-      target->AddSource(copy_rule->ResolveFullPath());
+      auto* pch_pdb_sf = target->AddSource(copy_rule->ResolveFullPath());
+      pch_pdb_sf->SetSpecialSourceType(
+        cmSourceFile::SpecialSourceType::PchPdbReuseSource);
     }
   }
 }
@@ -3331,6 +3337,8 @@ void cmLocalGenerator::AddUnityBuild(cmGeneratorTarget* target)
 
     for (UnitySource const& file : unity_files) {
       auto* unity = this->GetMakefile()->GetOrCreateSource(file.Path);
+      unity->SetSpecialSourceType(
+        cmSourceFile::SpecialSourceType::UnitySource);
       target->AddSource(file.Path, true);
       unity->SetProperty("SKIP_UNITY_BUILD_INCLUSION", "ON");
       unity->SetProperty("UNITY_SOURCE_FILE", file.Path);
