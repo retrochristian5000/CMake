@@ -23,3 +23,7 @@ This property supports
    * Generated PCH source files (``cmake_pch``)
    * Generated Unity compilation files (``unity_``)
    * Qt autogen sources (``moc_compilations.cpp``)
+
+.. note::
+   The :generator:`FASTBuild` and :generator:`Xcode` generators do not support
+   this property and it is ignored.
