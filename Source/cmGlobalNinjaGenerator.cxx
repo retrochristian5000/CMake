@@ -210,6 +210,21 @@ std::string cmGlobalNinjaGenerator::EncodePath(std::string const& path)
   return result;
 }
 
+void cmGlobalNinjaGenerator::Configure()
+{
+  static std::string const statusVar = "NINJA_STATUS";
+  cm::optional<std::string> value = cmSystemTools::GetEnvVar(statusVar);
+  if (value) {
+    cmSystemTools::UnPutEnv(statusVar);
+  }
+
+  this->cmGlobalGenerator::Configure();
+
+  if (value) {
+    cmSystemTools::PutEnv(cmStrCat(statusVar, '=', *value));
+  }
+}
+
 void cmGlobalNinjaGenerator::WriteBuild(std::ostream& os,
                                         cmNinjaBuild const& build,
                                         int cmdLineLimit,

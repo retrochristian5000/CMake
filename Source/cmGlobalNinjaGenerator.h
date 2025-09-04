@@ -103,6 +103,8 @@ public:
 
   bool IsIPOSupported() const override { return true; }
 
+  void Configure() override;
+
   /**
    * Write a build statement @a build to @a os.
    * @warning no escaping of any kind is done here.
