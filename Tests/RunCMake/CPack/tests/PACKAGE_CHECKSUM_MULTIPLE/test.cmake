@@ -1,0 +1,3 @@
+install(FILES CMakeLists.txt DESTINATION foo)
+
+string(REPLACE "&" ";" CPACK_PACKAGE_CHECKSUM "${RunCMake_SUBTEST_SUFFIX}")
