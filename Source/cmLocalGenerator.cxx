@@ -4329,7 +4329,8 @@ std::string cmLocalGenerator::GetObjectFileNameWithoutTarget(
     useShortObjectNames = *forceShortObjectName;
   }
 
-  if (!useShortObjectNames) {
+  if (!useShortObjectNames &&
+      this->GetGlobalGenerator()->SupportsCustomObjectNames()) {
     auto customName = this->GetCustomObjectFileName(source);
     if (!customName.empty()) {
       auto ext = this->GlobalGenerator->GetLanguageOutputExtension(source);

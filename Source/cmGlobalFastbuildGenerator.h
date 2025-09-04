@@ -354,6 +354,8 @@ public:
 
   bool IsMultiConfig() const override { return false; }
 
+  bool SupportsCustomObjectNames() const override { return false; }
+
   void ComputeTargetObjectDirectory(cmGeneratorTarget*) const override;
   void AppendDirectoryForConfig(std::string const& prefix,
                                 std::string const& config,
