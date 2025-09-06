@@ -12,6 +12,9 @@ Note that the object name may not be used as-is in
 :prop_tgt:`INSTALL_OBJECT_NAME_STRATEGY` strategies, but instead changed as
 the strategy requires to fulfill its goals.
 
+When installing objects, the :prop_sf:`INSTALL_OBJECT_NAME` property takes
+precedence.
+
 This property supports
 :manual:`generator expressions <cmake-generator-expressions(7)>`, but does not
 allow for context-sensitive (i.e., configuration-dependent) expressions.

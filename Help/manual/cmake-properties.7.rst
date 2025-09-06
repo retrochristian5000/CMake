@@ -574,6 +574,7 @@ Properties on Source Files
    /prop_sf/GENERATED
    /prop_sf/HEADER_FILE_ONLY
    /prop_sf/INCLUDE_DIRECTORIES
+   /prop_sf/INSTALL_OBJECT_NAME
    /prop_sf/KEEP_EXTENSION
    /prop_sf/LABELS
    /prop_sf/LANGUAGE
