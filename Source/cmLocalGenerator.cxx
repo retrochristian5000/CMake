@@ -4150,7 +4150,7 @@ std::string& cmLocalGenerator::CreateSafeUniqueObjectFileName(
 
 void cmLocalGenerator::ComputeObjectFilenames(
   std::map<cmSourceFile const*, cmObjectLocations>& /*unused*/,
-  cmGeneratorTarget const* /*unused*/)
+  std::string const& /*unused*/, cmGeneratorTarget const* /*unused*/)
 {
 }
 
