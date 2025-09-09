@@ -39,6 +39,9 @@ struct cmListFileLexer_s
   int size;
   FILE* file;
   size_t cr;
+  char read_buffer[4];
+  size_t read_size;
+  size_t read_position;
   char* string_buffer;
   char* string_position;
   int string_left;
@@ -332,9 +335,28 @@ static int cmListFileLexerInput(cmListFileLexer* lexer, char* buffer,
          does not convert newlines on all platforms.  Move any
          trailing CR to the start of the buffer for the next read. */
       size_t cr = lexer->cr;
-      size_t n;
+      size_t n = 0;
       buffer[0] = '\r';
-      n = fread(buffer + cr, 1, bufferSize - cr, lexer->file);
+
+      size_t actualBufferSize = bufferSize - cr;
+      char* p = buffer + cr;
+      size_t readLeft = lexer->read_size - lexer->read_position;
+
+      /* Make sure to absorb the bytes that were read during BOM detection, if
+         any. */
+      if (readLeft > 0) {
+        size_t actualReadSize = actualBufferSize >= readLeft
+          ? readLeft
+          : readLeft - actualBufferSize;
+        memcpy(p, lexer->read_buffer + lexer->read_position, actualReadSize);
+        lexer->read_position += actualReadSize;
+        p += actualReadSize;
+        n += actualReadSize;
+        actualBufferSize -= actualReadSize;
+      }
+
+      n += fread(p, 1, actualBufferSize, lexer->file);
+
       if (n) {
         char* o = buffer;
         const char* i = buffer;
@@ -388,6 +410,11 @@ static void cmListFileLexerDestroy(cmListFileLexer* lexer)
       fclose(lexer->file);
       lexer->file = 0;
     }
+    if (lexer->read_size != 0) {
+      memset(lexer->read_buffer, 0, sizeof(lexer->read_buffer));
+      lexer->read_size = 0;
+      lexer->read_position = 0;
+    }
     if (lexer->string_buffer) {
       free(lexer->string_buffer);
       lexer->string_buffer = 0;
@@ -418,36 +445,53 @@ void cmListFileLexer_Delete(cmListFileLexer* lexer)
 }
 
 /*--------------------------------------------------------------------------*/
-static cmListFileLexer_BOM cmListFileLexer_ReadBOM(FILE* f)
+static cmListFileLexer_BOM cmListFileLexer_ReadBOM(FILE* f,
+                                                   unsigned char readBuffer[4],
+                                                   size_t* readSize)
 {
-  unsigned char b[2];
+  /* Read the up to four bytes that might correspond to a BOM. In case these
+     bytes turn out not to represent a BOM, save them for later consumption in
+     order to avoid seeking the file (which might not be seekable, e.g., if
+     it's a pipe). */
+  unsigned char* b = readBuffer;
+  *readSize = 0;
+
   if (fread(b, 1, 2, f) == 2) {
+    *readSize = 2;
+
     if (b[0] == 0xEF && b[1] == 0xBB) {
-      if (fread(b, 1, 1, f) == 1 && b[0] == 0xBF) {
-        return cmListFileLexer_BOM_UTF8;
+      if (fread(b + 2, 1, 1, f) == 1) {
+        ++*readSize;
+        if (b[2] == 0xBF) {
+          *readSize = 0; /* We consumed the BOM: discard it */
+          return cmListFileLexer_BOM_UTF8;
+        }
       }
     } else if (b[0] == 0xFE && b[1] == 0xFF) {
+      *readSize = 0; /* We consumed the BOM: discard it */
       /* UTF-16 BE */
       return cmListFileLexer_BOM_UTF16BE;
     } else if (b[0] == 0 && b[1] == 0) {
-      if (fread(b, 1, 2, f) == 2 && b[0] == 0xFE && b[1] == 0xFF) {
-        return cmListFileLexer_BOM_UTF32BE;
+      if (fread(b + 2, 1, 2, f) == 2) {
+        *readSize += 2;
+        if (b[2] == 0xFE && b[3] == 0xFF) {
+          *readSize = 0; /* We consumed the BOM: discard it */
+          return cmListFileLexer_BOM_UTF32BE;
+        }
       }
     } else if (b[0] == 0xFF && b[1] == 0xFE) {
-      fpos_t p;
-      fgetpos(f, &p);
-      if (fread(b, 1, 2, f) == 2 && b[0] == 0 && b[1] == 0) {
-        return cmListFileLexer_BOM_UTF32LE;
+      if (fread(b + 2, 1, 2, f) == 2) {
+        *readSize += 2;
+        if (b[2] == 0 && b[3] == 0) {
+          *readSize = 0; /* We consumed the BOM: discard it */
+          return cmListFileLexer_BOM_UTF32LE;
+        }
       }
-      if (fsetpos(f, &p) != 0) {
-        return cmListFileLexer_BOM_Broken;
-      }
+      *readSize = 0; /* We consumed the BOM: discard it */
       return cmListFileLexer_BOM_UTF16LE;
     }
   }
-  if (fseek(f, 0, SEEK_SET) != 0) {
-    return cmListFileLexer_BOM_Broken;
-  }
+
   return cmListFileLexer_BOM_None;
 }
 
@@ -467,7 +511,13 @@ int cmListFileLexer_SetFileName(cmListFileLexer* lexer, const char* name,
 #endif
     if (lexer->file) {
       if (bom) {
-        *bom = cmListFileLexer_ReadBOM(lexer->file);
+        *bom = cmListFileLexer_ReadBOM(
+          lexer->file, (unsigned char*)lexer->read_buffer, &lexer->read_size);
+        lexer->read_position = 0;
+      } else {
+        memset(lexer->read_buffer, 0, sizeof(lexer->read_buffer));
+        lexer->read_size = 0;
+        lexer->read_position = 0;
       }
     } else {
       result = 0;
@@ -483,10 +533,14 @@ int cmListFileLexer_SetString(cmListFileLexer* lexer, const char* text)
   int result = 1;
   cmListFileLexerDestroy(lexer);
   if (text) {
-    int length = (int)strlen(text);
+    size_t read_size = lexer->read_size - lexer->read_position;
+    size_t length = read_size + strlen(text);
     lexer->string_buffer = (char*)malloc(length + 1);
     if (lexer->string_buffer) {
-      strcpy(lexer->string_buffer, text);
+      memcpy(lexer->string_buffer, lexer->read_buffer + lexer->read_position,
+             read_size);
+      strcpy(lexer->string_buffer + lexer->read_size, text);
+      lexer->read_position = lexer->read_size;
       lexer->string_position = lexer->string_buffer;
       lexer->string_left = length;
     } else {
