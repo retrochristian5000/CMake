@@ -3664,6 +3664,15 @@ bool cmVisualStudio10TargetGenerator::ComputeClOptions(
     if (!clOptions.HasFlag("BasicRuntimeChecks")) {
       clOptions.AddFlag("BasicRuntimeChecks", "Default");
     }
+    if (!clOptions.HasFlag("BufferSecurityCheck")) {
+      clOptions.AddFlag("BufferSecurityCheck", "");
+    }
+    if (!clOptions.HasFlag("CallingConvention")) {
+      clOptions.AddFlag("CallingConvention", "");
+    }
+    if (!clOptions.HasFlag("FloatingPointModel")) {
+      clOptions.AddFlag("FloatingPointModel", "Default");
+    }
     if (!clOptions.HasFlag("ForceConformanceInForLoopScope")) {
       clOptions.AddFlag("ForceConformanceInForLoopScope", "");
     }
