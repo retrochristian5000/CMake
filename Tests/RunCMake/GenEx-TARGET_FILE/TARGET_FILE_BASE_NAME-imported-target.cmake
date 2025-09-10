@@ -92,10 +92,24 @@ set_property (TARGET static4 PROPERTY ${FIRST_CONFIG}_POSTFIX _postfix)
 string (APPEND GENERATE_CONTENT [[
 
 check_value ("TARGET_FILE_BASE_NAME executable all properties + postfix" "$<TARGET_FILE_BASE_NAME:exec4>" "exec4_runtime_postfix")
+check_value ("TARGET_FILE_BASE_NAME executable all properties + postfix" "$<TARGET_FILE_BASE_NAME:exec4,POSTFIX:YES>" "exec4_runtime_postfix")
+check_value ("TARGET_FILE_BASE_NAME executable all properties without postfix" "$<TARGET_FILE_BASE_NAME:exec4,POSTFIX:NO>" "exec4_runtime")
+
 check_value ("TARGET_FILE_BASE_NAME shared all properties + postfix" "$<TARGET_FILE_BASE_NAME:shared4>" "$<IF:$<IN_LIST:$<PLATFORM_ID>,Windows$<SEMICOLON>CYGWIN$<SEMICOLON>MSYS>,shared4_runtime,shared4_library>_postfix")
+check_value ("TARGET_FILE_BASE_NAME shared all properties + postfix" "$<TARGET_FILE_BASE_NAME:shared4,POSTFIX:YES>" "$<IF:$<IN_LIST:$<PLATFORM_ID>,Windows$<SEMICOLON>CYGWIN$<SEMICOLON>MSYS>,shared4_runtime,shared4_library>_postfix")
+check_value ("TARGET_FILE_BASE_NAME shared all properties without postfix" "$<TARGET_FILE_BASE_NAME:shared4,POSTFIX:NO>" "$<IF:$<IN_LIST:$<PLATFORM_ID>,Windows$<SEMICOLON>CYGWIN$<SEMICOLON>MSYS>,shared4_runtime,shared4_library>")
+
 check_value ("TARGET_LINKER_FILE_BASE_NAME shared linker all properties + postfix" "$<TARGET_LINKER_FILE_BASE_NAME:shared4>" "$<IF:$<IN_LIST:$<PLATFORM_ID>,Windows$<SEMICOLON>CYGWIN$<SEMICOLON>MSYS>,shared4_archive,shared4_library>_postfix")
+check_value ("TARGET_LINKER_FILE_BASE_NAME shared linker all properties + postfix" "$<TARGET_LINKER_FILE_BASE_NAME:shared4,POSTFIX:YES>" "$<IF:$<IN_LIST:$<PLATFORM_ID>,Windows$<SEMICOLON>CYGWIN$<SEMICOLON>MSYS>,shared4_archive,shared4_library>_postfix")
+check_value ("TARGET_LINKER_FILE_BASE_NAME shared linker all properties without postfix" "$<TARGET_LINKER_FILE_BASE_NAME:shared4,POSTFIX:NO>" "$<IF:$<IN_LIST:$<PLATFORM_ID>,Windows$<SEMICOLON>CYGWIN$<SEMICOLON>MSYS>,shared4_archive,shared4_library>")
+
 check_value ("TARGET_FILE_BASE_NAME static all properties + postfix" "$<TARGET_FILE_BASE_NAME:static4>" "static4_archive_postfix")
+check_value ("TARGET_FILE_BASE_NAME static all properties + postfix" "$<TARGET_FILE_BASE_NAME:static4,POSTFIX:YES>" "static4_archive_postfix")
+check_value ("TARGET_FILE_BASE_NAME static all properties without postfix" "$<TARGET_FILE_BASE_NAME:static4,POSTFIX:NO>" "static4_archive")
+
 check_value ("TARGET_LINKER_FILE_BASE_NAME static linker all properties + postfix" "$<TARGET_LINKER_FILE_BASE_NAME:static4>" "static4_archive_postfix")
+check_value ("TARGET_LINKER_FILE_BASE_NAME static linker all properties + postfix" "$<TARGET_LINKER_FILE_BASE_NAME:static4,POSTFIX:YES>" "static4_archive_postfix")
+check_value ("TARGET_LINKER_FILE_BASE_NAME static linker all properties without postfix" "$<TARGET_LINKER_FILE_BASE_NAME:static4,POSTFIX:NO>" "static4_archive")
 ]])
 
 
