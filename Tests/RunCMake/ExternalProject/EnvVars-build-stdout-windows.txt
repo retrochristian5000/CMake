@@ -8,7 +8,12 @@
  *-- Stage: config
  *-- Separator: ;
  *-- List: 4;5;6.*
+ *-- MYLIST:
+ *-- -- a
+ *-- -- b
+ *-- -- c
  *-- Variable - Stage: config.*
+ *
  *-- Variable - ListVar: 4;5;6
 .*(Performing build step for 'CustomCommand'|CustomCommand-build).*
  *-- Stage: build
@@ -30,3 +35,12 @@
 .*-- Stage: build
  *-- Separator: ,
  *-- List: 7,8,9,10
+.*(Performing configure step for 'DefaultCommandListSep'|DefaultCommandListSep-configure).*
+ *-- ConfigVar: config
+ *-- Separator: ;
+ *-- List: 9;8;7
+ *-- MYLIST:
+ *-- -- d
+ *-- -- e
+ *-- -- f
+ *-- -- g
