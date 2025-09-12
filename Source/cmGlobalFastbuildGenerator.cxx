@@ -1785,17 +1785,20 @@ void cmGlobalFastbuildGenerator::AddIDEProject(FastbuildTarget const& target,
     return;
   }
   auto& IDEProject = IDEProjects[target.BaseName];
+  auto const relativeSubdir = cmSystemTools::RelativePath(
+    this->GetCMakeInstance()->GetHomeDirectory(), target.BasePath);
   // VS
   auto& VSProject = IDEProject.first;
   VSProject.Alias = target.BaseName + "-vcxproj";
-  VSProject.ProjectOutput =
-    cmStrCat("VisualStudio/Projects/", target.BaseName + ".vcxproj");
+  VSProject.ProjectOutput = cmStrCat("VisualStudio/Projects/", relativeSubdir,
+                                     '/', target.BaseName + ".vcxproj");
   VSProject.ProjectBasePath = target.BasePath;
   // XCode
   auto& XCodeProject = IDEProject.second;
   XCodeProject.Alias = target.BaseName + "-xcodeproj";
-  XCodeProject.ProjectOutput = cmStrCat(
-    "XCode/Projects/", target.BaseName + ".xcodeproj/project.pbxproj");
+  XCodeProject.ProjectOutput =
+    cmStrCat("XCode/Projects/", relativeSubdir, '/',
+             target.BaseName + ".xcodeproj/project.pbxproj");
   XCodeProject.ProjectBasePath = target.BasePath;
 
   IDEProjectConfig VSConfig;
