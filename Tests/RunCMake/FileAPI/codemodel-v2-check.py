@@ -295,6 +295,18 @@ def check_target(c, major, minor):
         assert is_string(obj["type"], expected["type"])
         check_backtrace_graph(obj["backtraceGraph"])
 
+        if expected["imported"] is not None:
+            expected_keys.append("imported")
+            assert is_bool(obj["imported"], expected["imported"])
+
+        if expected["local"] is not None:
+            expected_keys.append("local")
+            assert is_bool(obj["local"], expected["local"])
+
+        if expected["abstract"] is not None:
+            expected_keys.append("abstract")
+            assert is_bool(obj["abstract"], expected["abstract"])
+
         assert is_dict(obj["paths"])
         assert sorted(obj["paths"].keys()) == ["build", "source"]
         assert matches(obj["paths"]["build"], expected["build"])
@@ -778,7 +790,7 @@ def gen_check_directories(c, g):
     elif g["name"] == "Xcode":
         if ';' in os.environ.get("CMAKE_OSX_ARCHITECTURES", ""):
             for e in expected:
-                e["targetIds"] = filter_list(lambda t: not matches(t, "^\\^(link_imported_object_exe)"), e["targetIds"])
+                e["targetIds"] = filter_list(lambda t: not matches(t, "^\\^(link_imported_object_exe|imported_object_lib)"), e["targetIds"])
 
     else:
         for e in expected:
@@ -820,6 +832,7 @@ def gen_check_targets(c, g, inSource):
         read_codemodel_json_data("targets/all_build_top.json"),
         read_codemodel_json_data("targets/zero_check_top.json"),
         read_codemodel_json_data("targets/interface_exe.json"),
+        read_codemodel_json_data("targets/interface_lib.json"),
         read_codemodel_json_data("targets/c_lib.json"),
         read_codemodel_json_data("targets/c_exe.json"),
         read_codemodel_json_data("targets/c_shared_lib.json"),
@@ -860,9 +873,16 @@ def gen_check_targets(c, g, inSource):
         read_codemodel_json_data("targets/static_framework.json"),
         read_codemodel_json_data("targets/shared_framework.json"),
         read_codemodel_json_data("targets/exe_framework.json"),
+        read_codemodel_json_data("targets/import_framework.json"),
 
         read_codemodel_json_data("targets/all_build_imported.json"),
         read_codemodel_json_data("targets/zero_check_imported.json"),
+        read_codemodel_json_data("targets/imported_exe.json"),
+        read_codemodel_json_data("targets/imported_lib.json"),
+        read_codemodel_json_data("targets/imported_interface_lib.json"),
+        read_codemodel_json_data("targets/imported_object_lib.json"),
+        read_codemodel_json_data("targets/imported_shared_lib.json"),
+        read_codemodel_json_data("targets/imported_static_lib.json"),
         read_codemodel_json_data("targets/link_imported_exe.json"),
         read_codemodel_json_data("targets/link_imported_shared_exe.json"),
         read_codemodel_json_data("targets/link_imported_static_exe.json"),
@@ -871,6 +891,7 @@ def gen_check_targets(c, g, inSource):
 
         read_codemodel_json_data("targets/all_build_interface.json"),
         read_codemodel_json_data("targets/zero_check_interface.json"),
+        read_codemodel_json_data("targets/iface_none.json"),
         read_codemodel_json_data("targets/iface_srcs.json"),
 
         read_codemodel_json_data("targets/all_build_custom.json"),
@@ -899,6 +920,10 @@ def gen_check_targets(c, g, inSource):
                 apple_exe_framework = read_codemodel_json_data("targets/apple_exe_framework.json")
                 e["compileGroups"] = apple_exe_framework["compileGroups"]
                 e["link"] = apple_exe_framework["link"]
+            elif e["name"] == "import_framework":
+                apple_import_framework = read_codemodel_json_data("targets/apple_import_framework.json")
+                e["artifacts"] = apple_import_framework["artifacts"]
+                e["nameOnDisk"] = apple_import_framework["nameOnDisk"]
 
     if args.cxx_compiler_id in ['Clang', 'AppleClang', 'LCC', 'GNU', 'Intel', 'IntelLLVM', 'MSVC', 'Embarcadero', 'CrayClang', 'IBMClang'] and g["name"] != "Xcode":
         for e in expected:
@@ -1044,7 +1069,7 @@ def gen_check_projects(c, g):
     elif g["name"] == "Xcode":
         if ';' in os.environ.get("CMAKE_OSX_ARCHITECTURES", ""):
             for e in expected:
-                e["targetIds"] = filter_list(lambda t: not matches(t, "^\\^(link_imported_object_exe)"), e["targetIds"])
+                e["targetIds"] = filter_list(lambda t: not matches(t, "^\\^(link_imported_object_exe|imported_object_lib)"), e["targetIds"])
 
     else:
         for e in expected:

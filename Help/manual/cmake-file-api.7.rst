@@ -1039,6 +1039,31 @@ with members:
   ``MODULE_LIBRARY``, ``OBJECT_LIBRARY``, ``INTERFACE_LIBRARY``,
   or ``UTILITY``.
 
+``imported``
+  Optional member that is present with boolean value ``true`` if the
+  target is an imported target.
+
+  This field was added in codemodel version 2.9.
+
+``local``
+  Optional member that is present with boolean value ``true`` if the
+  target is only defined with local scope rather than being a global target.
+  Currently, only imported targets will potentially have this field.
+
+  This field was added in codemodel version 2.9.
+
+``abstract``
+  Optional member that is present with boolean value ``true`` if the
+  target is an abstract target.  Abstract targets are not part of the build
+  system, they only exist to describe dependencies or to provide usage
+  requirements to targets that link to them.  Examples include imported targets
+  and interface libraries that have no generated sources.  Abstract targets
+  cannot be built, so they should not be presented to the user as a buildable
+  target.
+
+  This field was added in codemodel version 2.9.  Abstract targets were not
+  included anywhere in file API replies in codemodel version 2.8 and earlier.
+
 ``backtrace``
   Optional member that is present when a CMake language backtrace to
   the command in the source code that created the target is available.
@@ -1146,8 +1171,8 @@ with members:
   This field was added in codemodel version 2.7.
 
 ``link``
-  Optional member that is present for executables and shared library
-  targets that link into a runtime binary.  The value is a JSON object
+  Optional member that is present for non-imported executables and shared
+  library targets that link into a runtime binary.  The value is a JSON object
   with members describing the link step:
 
   ``language``
@@ -1193,8 +1218,8 @@ with members:
       with forward slashes.
 
 ``archive``
-  Optional member that is present for static library targets.  The value
-  is a JSON object with members describing the archive step:
+  Optional member that is present for non-imported static library targets.
+  The value is a JSON object with members describing the archive step:
 
   ``commandFragments``
     Optional member that is present when fragments of the archiver command
@@ -1233,6 +1258,8 @@ with members:
 
 ``dependencies``
   Optional member that is present when the target depends on other targets.
+  It is not present if the target is not part of the build system (i.e. it is
+  not an imported target or an interface library with no generated sources).
   The value is a JSON array of entries corresponding to the dependencies.
   Each entry is a JSON object with members:
 

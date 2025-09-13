@@ -689,6 +689,7 @@ Json::Value CodemodelConfig::DumpTargets()
     this->FileAPI.GetCMakeInstance()->GetGlobalGenerator();
   for (auto const& lg : gg->GetLocalGenerators()) {
     cm::append(targetList, lg->GetGeneratorTargets());
+    cm::append(targetList, lg->GetOwnedImportedGeneratorTargets());
   }
   std::sort(targetList.begin(), targetList.end(),
             [](cmGeneratorTarget* l, cmGeneratorTarget* r) {
@@ -696,8 +697,7 @@ Json::Value CodemodelConfig::DumpTargets()
             });
 
   for (cmGeneratorTarget* gt : targetList) {
-    if (gt->GetType() == cmStateEnums::GLOBAL_TARGET ||
-        !gt->IsInBuildSystem()) {
+    if (gt->GetType() == cmStateEnums::GLOBAL_TARGET) {
       continue;
     }
 
@@ -716,7 +716,9 @@ Json::Value CodemodelConfig::DumpTarget(cmGeneratorTarget* gt,
                                         Json::ArrayIndex ti)
 {
   Target t(gt, this->VersionMajor, this->VersionMinor, this->Config);
-  std::string prefix = "target-" + gt->GetName();
+  std::string safeTargetName = gt->GetName();
+  std::replace(safeTargetName.begin(), safeTargetName.end(), ':', '_');
+  std::string prefix = "target-" + safeTargetName;
   if (!this->Config.empty()) {
     prefix += "-" + this->Config;
   }
@@ -1231,6 +1233,15 @@ Json::Value Target::Dump()
   target["name"] = this->GT->GetName();
   target["type"] = cmState::GetTargetTypeName(type);
   target["id"] = TargetId(this->GT, this->TopBuild);
+  if (this->GT->IsImported()) {
+    target["imported"] = true;
+    if (!this->GT->IsImportedGloballyVisible()) {
+      target["local"] = true;
+    }
+  }
+  if (!this->GT->IsInBuildSystem()) {
+    target["abstract"] = true;
+  }
   target["paths"] = this->DumpPaths();
   if (this->GT->Target->GetIsGeneratorProvided()) {
     target["isGeneratorProvided"] = true;
@@ -1253,10 +1264,14 @@ Json::Value Target::Dump()
       type == cmStateEnums::SHARED_LIBRARY ||
       type == cmStateEnums::MODULE_LIBRARY) {
     target["nameOnDisk"] = this->GT->GetFullName(this->Config);
-    target["link"] = this->DumpLink();
+    if (!this->GT->IsImported()) {
+      target["link"] = this->DumpLink();
+    }
   } else if (type == cmStateEnums::STATIC_LIBRARY) {
     target["nameOnDisk"] = this->GT->GetFullName(this->Config);
-    target["archive"] = this->DumpArchive();
+    if (!this->GT->IsImported()) {
+      target["archive"] = this->DumpArchive();
+    }
   }
 
   if (type == cmStateEnums::EXECUTABLE) {
@@ -1266,13 +1281,17 @@ Json::Value Target::Dump()
     }
   }
 
-  Json::Value dependencies = this->DumpDependencies();
-  if (!dependencies.empty()) {
-    target["dependencies"] = dependencies;
+  if (!this->GT->IsImported()) {
+    Json::Value dependencies = this->DumpDependencies();
+    if (!dependencies.empty()) {
+      target["dependencies"] = dependencies;
+    }
   }
 
   {
-    this->ProcessLanguages();
+    if (!this->GT->IsImported()) {
+      this->ProcessLanguages();
+    }
 
     auto fileSetInfo = this->DumpFileSets();
 
@@ -1280,6 +1299,8 @@ Json::Value Target::Dump()
       target["fileSets"] = fileSetInfo.first;
     }
 
+    // Even though some types of targets can't have sources, we have to always
+    // output a sources array to preserve backward compatibility
     target["sources"] = this->DumpSources(fileSetInfo.second);
 
     Json::Value folder = this->DumpFolder();
@@ -1287,22 +1308,26 @@ Json::Value Target::Dump()
       target["folder"] = std::move(folder);
     }
 
-    Json::Value sourceGroups = this->DumpSourceGroups();
-    if (!sourceGroups.empty()) {
-      target["sourceGroups"] = std::move(sourceGroups);
-    }
+    if (!this->GT->IsImported()) {
+      Json::Value sourceGroups = this->DumpSourceGroups();
+      if (!sourceGroups.empty()) {
+        target["sourceGroups"] = std::move(sourceGroups);
+      }
 
-    Json::Value compileGroups = this->DumpCompileGroups();
-    if (!compileGroups.empty()) {
-      target["compileGroups"] = std::move(compileGroups);
+      Json::Value compileGroups = this->DumpCompileGroups();
+      if (!compileGroups.empty()) {
+        target["compileGroups"] = std::move(compileGroups);
+      }
     }
   }
 
   target["backtraceGraph"] = this->Backtraces.Dump();
 
-  Json::Value debugger = this->DumpDebugger();
-  if (!debugger.isNull()) {
-    target["debugger"] = std::move(debugger);
+  if (!this->GT->IsImported()) {
+    Json::Value debugger = this->DumpDebugger();
+    if (!debugger.isNull()) {
+      target["debugger"] = std::move(debugger);
+    }
   }
 
   return target;

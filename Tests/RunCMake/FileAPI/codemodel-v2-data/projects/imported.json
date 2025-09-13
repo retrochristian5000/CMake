@@ -8,6 +8,12 @@
     "targetIds": [
         "^ALL_BUILD::@ba7eb709d0b48779c6c8$",
         "^ZERO_CHECK::@ba7eb709d0b48779c6c8$",
+        "^imported_exe::@ba7eb709d0b48779c6c8$",
+        "^imported_lib::@ba7eb709d0b48779c6c8$",
+        "^imported_interface_lib::@ba7eb709d0b48779c6c8$",
+        "^imported_object_lib::@ba7eb709d0b48779c6c8$",
+        "^imported_shared_lib::@ba7eb709d0b48779c6c8$",
+        "^imported_static_lib::@ba7eb709d0b48779c6c8$",
         "^link_imported_exe::@ba7eb709d0b48779c6c8$",
         "^link_imported_shared_exe::@ba7eb709d0b48779c6c8$",
         "^link_imported_static_exe::@ba7eb709d0b48779c6c8$",
