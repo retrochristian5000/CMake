@@ -914,6 +914,18 @@ def gen_check_targets(c, g, inSource):
                 e["sources"] = precompile_header_data["sources"]
                 e["sourceGroups"] = precompile_header_data["sourceGroups"]
 
+    if not (sys.platform in ("win32", "cygwin", "msys") and cxx_compiler_id in ['MSVC', 'NVIDIA']):
+        for e in expected:
+            if not e["compileGroups"]:
+                continue
+
+            for group in e["compileGroups"]:
+                if not group["defines"]:
+                    continue
+
+                # _WINDLL should be defined for compilers, that wants to simulate VisualStudio shared library compiling & linkage behavior only
+                group["defines"] = [d for d in group["defines"] if d and d["define"] != "_WINDLL"]
+
     if os.path.exists(os.path.join(reply_dir, "..", "..", "..", "..", "cxx", "cxx_std_11.txt")):
         for e in expected:
             if e["name"] == "cxx_standard_compile_feature_exe":

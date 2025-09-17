@@ -1435,3 +1435,8 @@ if(CMake_TEST_Emscripten_TOOLCHAINS)
   add_RunCMake_test(Emscripten -DCMake_TEST_Emscripten_TOOLCHAINS=${CMake_TEST_Emscripten_TOOLCHAINS})
   set_property(TEST RunCMake.Emscripten APPEND PROPERTY LABELS "Emscripten")
 endif()
+
+if (MSVC OR (WIN32 AND CMAKE_C_COMPILER_ID MATCHES "NVIDIA"))
+  add_RunCMake_test(SharedLibraryDefineCheck -DCMake_TEST_CUDA=${CMake_TEST_CUDA})
+  set_property(TEST RunCMake.SharedLibraryDefineCheck APPEND PROPERTY LABELS "CUDA")
+endif()
