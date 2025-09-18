@@ -3263,7 +3263,9 @@ cmLocalGenerator::AddUnityFilesModeGroup(
 
 void cmLocalGenerator::AddUnityBuild(cmGeneratorTarget* target)
 {
-  if (!target->GetPropertyAsBool("UNITY_BUILD")) {
+  // cmFastbuildNormalTargetGenerator handles unity build.
+  if (this->GetGlobalGenerator()->IsFastbuild() ||
+      !target->GetPropertyAsBool("UNITY_BUILD")) {
     return;
   }
 
