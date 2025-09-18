@@ -47,6 +47,10 @@
             "frameworks": null,
             "defines": [
                 {
+                    "define": "_WINDLL",
+                    "backtrace": null
+                },
+                {
                     "define": "cxx_shared_lib_EXPORTS",
                     "backtrace": null
                 }
