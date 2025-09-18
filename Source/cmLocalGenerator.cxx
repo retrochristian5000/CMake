@@ -4511,7 +4511,7 @@ std::string cmLocalGenerator::GetObjectFileNameWithoutTarget(
     }
 
     // Strip source file extension when shortening object file paths
-    if (this->UseShortObjectNames()) {
+    if (useShortObjectNames) {
       objectName = cmSystemTools::GetFilenameWithoutExtension(objectName);
     }
     // Store the new extension.
