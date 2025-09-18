@@ -9,6 +9,7 @@ target_link_libraries(lib PRIVATE "$<LINK_LIBRARY:WHOLE_ARCHIVE,base>")
 
 add_executable(main main.c)
 target_link_libraries(main PRIVATE lib)
+target_link_options(main PRIVATE -sMAIN_MODULE)
 
 add_library(circular1 STATIC circular1.c)
 add_library(circular2 STATIC circular2.c)
