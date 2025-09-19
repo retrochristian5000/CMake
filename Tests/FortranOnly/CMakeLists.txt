@@ -198,3 +198,6 @@ if(CMAKE_Fortran_COMPILE_OPTIONS_PREPROCESS_OFF AND
 
   set_property(SOURCE no_preprocess_source_upper.F no_preprocess_source_fpp.fpp PROPERTY Fortran_PREPROCESS OFF)
 endif()
+
+# Test that we are safe from infinite include recursion in dependency scanner
+add_executable(test_include_loop test_include_loop.F)
