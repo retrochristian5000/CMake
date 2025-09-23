@@ -22,6 +22,7 @@
     "targetIds": [
         "^ALL_BUILD::@6890427a1f51a3e7e1df$",
         "^ZERO_CHECK::@6890427a1f51a3e7e1df$",
+        "^interface_lib::@6890427a1f51a3e7e1df$",
         "^interface_exe::@6890427a1f51a3e7e1df$",
         "^c_lib::@6890427a1f51a3e7e1df$",
         "^c_exe::@6890427a1f51a3e7e1df$",

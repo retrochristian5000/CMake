@@ -25,6 +25,7 @@
         "^c_static_exe::@6890427a1f51a3e7e1df$",
         "^c_static_lib::@6890427a1f51a3e7e1df$",
         "^c_subdir::@6890427a1f51a3e7e1df$",
+        "^interface_lib::@6890427a1f51a3e7e1df$",
         "^interface_exe::@6890427a1f51a3e7e1df$"
     ],
     "projectName": "codemodel-v2",
