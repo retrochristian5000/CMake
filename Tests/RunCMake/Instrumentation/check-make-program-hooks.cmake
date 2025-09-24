@@ -1,5 +1,5 @@
 set(NUM_TRIES 30)
-set(DELAY 1)
+set(DELAY 4)
 
 if (NOT EXISTS ${v1}/preBuild.hook)
   set(RunCMake_TEST_FAILED "preBuild hook did not run\n")
