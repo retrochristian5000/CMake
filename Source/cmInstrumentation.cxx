@@ -416,7 +416,13 @@ void cmInstrumentation::InsertDynamicSystemInformation(
   }
   root["dynamicSystemInformation"][cmStrCat(prefix, "HostMemoryUsed")] =
     memory;
-  root["dynamicSystemInformation"][cmStrCat(prefix, "CPULoadAverage")] = load;
+  if (load == 0) {
+    root["dynamicSystemInformation"][cmStrCat(prefix, "CPULoadAverage")] =
+      Json::nullValue;
+  } else {
+    root["dynamicSystemInformation"][cmStrCat(prefix, "CPULoadAverage")] =
+      load;
+  }
 }
 
 void cmInstrumentation::GetDynamicSystemInformation(double& memory,
