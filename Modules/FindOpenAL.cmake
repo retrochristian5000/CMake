@@ -42,7 +42,9 @@ This module defines the following variables:
 
   Boolean indicating whether (the requested version of) OpenAL was found.
 
-``OPENAL_VERSION_STRING``
+``OpenAL_VERSION``
+  .. versionadded:: 4.2
+
   Human-readable string containing the version of OpenAL found.
 
 Cache Variables
@@ -54,17 +56,6 @@ The following cache variables may also be set:
   The include directory containing headers needed to use the OpenAL library.
 ``OPENAL_LIBRARY``
   The path to the OpenAL library.
-
-Deprecated Variables
-^^^^^^^^^^^^^^^^^^^^
-
-The following variables are provided for backward compatibility:
-
-``OPENAL_FOUND``
-  .. deprecated:: 4.2
-    Use ``OpenAL_FOUND``, which has the same value.
-
-  Boolean indicating whether (the requested version of) OpenAL was found.
 
 Hints
 ^^^^^
@@ -85,6 +76,23 @@ This module accepts the following variables:
   4. User-compiled framework: ``~/Library/Frameworks``.
   5. Manually compiled framework: ``/Library/Frameworks``.
   6. Add-on package: ``/opt``.
+
+Deprecated Variables
+^^^^^^^^^^^^^^^^^^^^
+
+The following variables are provided for backward compatibility:
+
+``OPENAL_FOUND``
+  .. deprecated:: 4.2
+    Use ``OpenAL_FOUND``, which has the same value.
+
+  Boolean indicating whether (the requested version of) OpenAL was found.
+
+``OPENAL_VERSION_STRING``
+  .. deprecated:: 4.2
+    Use ``OpenAL_VERSION``, which has the same value.
+
+  Human-readable string containing the version of OpenAL found.
 
 Examples
 ^^^^^^^^
@@ -108,9 +116,15 @@ Finding the OpenAL library and linking it to a project target:
 # The OpenAL 1.0 installer doesn't seem to have a useful key I can use.
 # I do not know if the Nvidia OpenAL SDK has a registry key.
 
+find_package(PkgConfig QUIET)
+if(PkgConfig_FOUND)
+  pkg_check_modules(PC_OpenAL QUIET openal)
+endif()
+
 find_path(OPENAL_INCLUDE_DIR al.h
   HINTS
     ENV OPENALDIR
+    ${PC_OpenAL_INCLUDE_DIRS}
   PATHS
     ~/Library/Frameworks
     /Library/Frameworks
@@ -129,6 +143,7 @@ find_library(OPENAL_LIBRARY
   NAMES OpenAL al openal OpenAL32
   HINTS
     ENV OPENALDIR
+    ${PC_OpenAL_LIBRARY_DIRS}
   PATHS
     ~/Library/Frameworks
     /Library/Frameworks
@@ -137,13 +152,18 @@ find_library(OPENAL_LIBRARY
   PATH_SUFFIXES libx32 lib64 lib libs64 libs ${_OpenAL_ARCH_DIR}
   )
 
+if(PC_OpenAL_VERSION AND OPENAL_INCLUDE_DIR IN_LIST PC_OpenAL_INCLUDE_DIRS)
+  set(OpenAL_VERSION ${PC_OpenAL_VERSION})
+  set(OPENAL_VERSION_STRING "${OpenAL_VERSION}")
+endif()
+
 unset(_OpenAL_ARCH_DIR)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
   OpenAL
   REQUIRED_VARS OPENAL_LIBRARY OPENAL_INCLUDE_DIR
-  VERSION_VAR OPENAL_VERSION_STRING
+  VERSION_VAR OpenAL_VERSION
   )
 
 mark_as_advanced(OPENAL_LIBRARY OPENAL_INCLUDE_DIR)

@@ -77,6 +77,9 @@ Find Modules
   ``Lua_VERSION`` instead of the now deprecated ``LUA_VERSION_STRING`` result
   variable.
 
+* The :module:`FindOpenAL` module now provides an ``OpenAL_VERSION`` result
+  variable.  The ``OPENAL_VERSION_STRING`` result variable is deprecated.
+
 * The :module:`FindOpenCL` module now provides an ``OpenCL_VERSION`` result
   variable.  The ``OpenCL_VERSION_STRING`` result variable is deprecated.
 
