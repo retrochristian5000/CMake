@@ -102,7 +102,7 @@ foreach(
     ICOTOOL ImageMagick
     JASPER
     LIBLZMA LIBXML2 LIBXSLT LTTNGUST
-    OpenCL
+    OPENAL OpenCL
     PERL PKG_CONFIG PNG PostgreSQL
     SDL
     TCLSH TIFF
@@ -125,7 +125,7 @@ foreach(
     Icotool ImageMagick
     Jasper JPEG
     LibArchive LibLZMA LIBLZMA LibXml2 LibXslt LTTngUST
-    OpenCL OpenSceneGraph OPENSCENEGRAPH OpenSSL OPENSSL
+    OpenAL OpenCL OpenSceneGraph OPENSCENEGRAPH OpenSSL OPENSSL
     Perl PerlLibs PkgConfig PNG PostgreSQL Protobuf
     Ruby RUBY
     SDL SWIG
