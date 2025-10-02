@@ -536,8 +536,6 @@ public:
   std::vector<std::string> GetAppleArchs(std::string const& config,
                                          cm::optional<std::string> lang) const;
 
-  std::string const& GetTargetLabelsString();
-
   // The classification of the flag.
   enum class FlagClassification
   {
