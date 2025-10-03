@@ -39,7 +39,7 @@
 #  endif
 #endif
 
-int FUNCTION()
+int FUNCTION(void)
 {
   return 0;
 }
