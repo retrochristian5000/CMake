@@ -143,7 +143,7 @@
                 "backtrace": [
                     {
                         "file": "^codemodel-v2\\.cmake$",
-                        "line": 50,
+                        "line": 51,
                         "command": "install",
                         "hasParent": true
                     },
@@ -253,6 +253,51 @@
             "backtrace": null
         }
     ],
+    "linkLibraries": [
+        {
+            "id": "^cxx_lib::@a56b12a3f5c0529fb296$",
+            "fragment": null,
+            "backtrace": [
+                {
+                    "file": "^cxx/CMakeLists\\.txt$",
+                    "line": 6,
+                    "command": "target_link_libraries",
+                    "hasParent": true
+                },
+                {
+                    "file": "^cxx/CMakeLists\\.txt$",
+                    "line": null,
+                    "command": null,
+                    "hasParent": false
+                }
+            ],
+            "fromDependency": null
+        }
+    ],
+    "interfaceLinkLibraries": null,
+    "usageDependencies": [
+        {
+            "id": "^cxx_lib::@a56b12a3f5c0529fb296$",
+            "backtrace": [
+                {
+                    "file": "^cxx/CMakeLists\\.txt$",
+                    "line": 6,
+                    "command": "target_link_libraries",
+                    "hasParent": true
+                },
+                {
+                    "file": "^cxx/CMakeLists\\.txt$",
+                    "line": null,
+                    "command": null,
+                    "hasParent": false
+                }
+            ],
+            "fromDependency": null
+        }
+    ],
+    "interfaceUsageDependencies": null,
+    "objectDependencies": null,
+    "orderDependencies": null,
     "debugger": {
         "workingDirectory": "^/test/debugger/workingDirectory$"
     }
