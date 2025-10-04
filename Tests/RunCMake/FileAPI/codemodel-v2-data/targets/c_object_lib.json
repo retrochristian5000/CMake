@@ -85,5 +85,11 @@
             "id": "^ZERO_CHECK::@5ed5358f70faf8d8af7a$",
             "backtrace": null
         }
-    ]
+    ],
+    "linkLibraries": null,
+    "interfaceLinkLibraries": null,
+    "usageDependencies": null,
+    "interfaceUsageDependencies": null,
+    "objectDependencies": null,
+    "orderDependencies": null
 }
