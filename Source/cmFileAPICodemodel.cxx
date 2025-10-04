@@ -41,6 +41,7 @@
 #include "cmInstallScriptGenerator.h"
 #include "cmInstallSubdirectoryGenerator.h"
 #include "cmInstallTargetGenerator.h"
+#include "cmLinkItem.h"
 #include "cmLinkLineComputer.h" // IWYU pragma: keep
 #include "cmList.h"
 #include "cmListFileCache.h"
@@ -521,6 +522,13 @@ class Target
                                   std::string const& role = std::string());
   Json::Value DumpDependencies();
   Json::Value DumpDependency(cmTargetDepend const& td);
+
+  Json::Value DumpLinkItem(cmLinkItem const& linkItem);
+  Json::Value DumpLinkImplementationLibraries(cmGeneratorTarget::UseTo usage);
+  Json::Value DumpLinkInterfaceLibraries(cmGeneratorTarget::UseTo usage);
+  Json::Value DumpObjectDependencies();
+  Json::Value DumpOrderDependencies();
+
   Json::Value DumpFolder();
   Json::Value DumpLauncher(char const* name, char const* type);
   Json::Value DumpLaunchers();
@@ -1322,6 +1330,35 @@ Json::Value Target::Dump()
   }
 
   {
+    Json::Value linkLibraries =
+      this->DumpLinkImplementationLibraries(cmGeneratorTarget::UseTo::Link);
+    if (!linkLibraries.empty()) {
+      target["linkLibraries"] = std::move(linkLibraries);
+    }
+    Json::Value ifaceLinkLibraries =
+      this->DumpLinkInterfaceLibraries(cmGeneratorTarget::UseTo::Link);
+    if (!ifaceLinkLibraries.empty()) {
+      target["interfaceLinkLibraries"] = std::move(ifaceLinkLibraries);
+    }
+    Json::Value usageDependencies =
+      this->DumpLinkImplementationLibraries(cmGeneratorTarget::UseTo::Compile);
+    if (!usageDependencies.empty()) {
+      target["usageDependencies"] = std::move(usageDependencies);
+    }
+    Json::Value ifaceUsageDependencies =
+      this->DumpLinkInterfaceLibraries(cmGeneratorTarget::UseTo::Compile);
+    if (!ifaceUsageDependencies.empty()) {
+      target["interfaceUsageDependencies"] = std::move(ifaceUsageDependencies);
+    }
+    Json::Value objectDependencies = this->DumpObjectDependencies();
+    if (!objectDependencies.empty()) {
+      target["objectDependencies"] = std::move(objectDependencies);
+    }
+    Json::Value orderDependencies = this->DumpOrderDependencies();
+    if (!orderDependencies.empty()) {
+      target["orderDependencies"] = std::move(orderDependencies);
+    }
+
     if (!this->GT->IsImported()) {
       this->ProcessLanguages();
     }
@@ -2168,6 +2205,106 @@ Json::Value Target::DumpDependency(cmTargetDepend const& td)
   dependency["id"] = TargetId(td, this->TopBuild);
   this->AddBacktrace(dependency, td.GetBacktrace());
   return dependency;
+}
+
+Json::Value Target::DumpLinkItem(cmLinkItem const& linkItem)
+{
+  Json::Value itemJson = Json::objectValue;
+  if (linkItem.Target) {
+    itemJson["id"] = TargetId(linkItem.Target, this->TopBuild);
+  } else {
+    itemJson["fragment"] = linkItem.AsStr();
+  }
+  if (linkItem.InterfaceDirectFrom) {
+    Json::Value jsonDirectFrom = Json::objectValue;
+    jsonDirectFrom["id"] =
+      TargetId(linkItem.InterfaceDirectFrom, this->TopBuild);
+    itemJson["fromDependency"] = jsonDirectFrom;
+  }
+  this->AddBacktrace(itemJson, linkItem.Backtrace);
+  return itemJson;
+}
+
+Json::Value Target::DumpLinkImplementationLibraries(
+  cmGeneratorTarget::UseTo usage)
+{
+  Json::Value jsonLibs = Json::arrayValue;
+
+  cmLinkImplementationLibraries const* implLibs =
+    this->GT->GetLinkImplementationLibraries(this->Config, usage);
+  if (implLibs) {
+    for (cmLinkItem const& linkItem : implLibs->Libraries) {
+      // Non-target compile items are never used, so we drop them here too
+      if (usage == cmGeneratorTarget::UseTo::Link || linkItem.Target) {
+        jsonLibs.append(this->DumpLinkItem(linkItem));
+      }
+    }
+  }
+  return jsonLibs;
+}
+
+Json::Value Target::DumpLinkInterfaceLibraries(cmGeneratorTarget::UseTo usage)
+{
+  Json::Value jsonLibs = Json::arrayValue;
+
+  cmLinkInterfaceLibraries const* ifaceLibs =
+    this->GT->GetLinkInterfaceLibraries(this->Config, this->GT, usage);
+  if (ifaceLibs) {
+    for (cmLinkItem const& linkItem : ifaceLibs->Libraries) {
+      // Non-target compile items are never used, so we drop them here too
+      if (usage == cmGeneratorTarget::UseTo::Link || linkItem.Target) {
+        jsonLibs.append(this->DumpLinkItem(linkItem));
+      }
+    }
+  }
+  return jsonLibs;
+}
+
+Json::Value Target::DumpObjectDependencies()
+{
+  // Object dependencies are a special case. They cannot be config-specific
+  // because they are obtained by matching the pattern $<TARGET_OBJECT:xxx>
+  // against the SOURCES property, and the matcher rejects any cases where
+  // "xxx" contains a generator expression.
+  // NOTE: This should potentially use GetSourceObjectLibraries() instead.
+  std::vector<BT<cmGeneratorTarget*>> objectLibraries;
+  this->GT->GetObjectLibrariesInSources(objectLibraries);
+
+  // We don't want to repeat the same target in the list. We will only
+  // retain the first backtrace for cases where the same target is added
+  // multiple times from different commands.
+  std::set<BT<cmGeneratorTarget*>> uniqueObjectLibraries(
+    objectLibraries.begin(), objectLibraries.end());
+
+  Json::Value jsonDependencies = Json::arrayValue;
+  for (BT<cmGeneratorTarget*> const& target : uniqueObjectLibraries) {
+    Json::Value jsonDependency = Json::objectValue;
+    jsonDependency["id"] = TargetId(target.Value, this->TopBuild);
+    this->AddBacktrace(jsonDependency, target.Backtrace);
+    jsonDependencies.append(jsonDependency);
+  }
+  return jsonDependencies;
+}
+
+Json::Value Target::DumpOrderDependencies()
+{
+  // The generated build systems don't account for per-config dependencies.
+  // This is due to limitations of Xcode and/or Visual Studio, which have
+  // (or at least once had) no way to express a per-config inter-target
+  // dependency.
+  Json::Value jsonDependencies = Json::arrayValue;
+  for (cmLinkItem const& linkItem : this->GT->GetUtilityItems()) {
+    // We don't want to dump dependencies on reserved targets like ZERO_CHECK
+    if (linkItem.Target &&
+        cmGlobalGenerator::IsReservedTarget(linkItem.Target->GetName())) {
+      continue;
+    }
+    Json::Value jsonDependency = Json::objectValue;
+    jsonDependency["id"] = TargetId(linkItem.Target, this->TopBuild);
+    this->AddBacktrace(jsonDependency, linkItem.Backtrace);
+    jsonDependencies.append(jsonDependency);
+  }
+  return jsonDependencies;
 }
 
 Json::Value Target::DumpFolder()
