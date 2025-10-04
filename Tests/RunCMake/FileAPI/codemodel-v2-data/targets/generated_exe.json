@@ -308,5 +308,11 @@
             "id": "^ZERO_CHECK::@[0-9a-f]+$",
             "backtrace": null
         }
-    ]
+    ],
+    "linkLibraries": null,
+    "interfaceLinkLibraries": null,
+    "usageDependencies": null,
+    "interfaceUsageDependencies": null,
+    "objectDependencies": null,
+    "orderDependencies": null
 }
