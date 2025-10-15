@@ -1,0 +1,8 @@
+^CMake Warning \(dev\) at CMP0205-common\.cmake:[0-9]+ \(file\):
+  Policy CMP0205 is not set: file\(CREATE_LINK\) with COPY_ON_ERROR copies
+  directory content\.  Run "cmake --help-policy CMP0205" for policy details\.
+  Use the cmake_policy command to set the policy and suppress this warning\.
+Call Stack \(most recent call first\):
+  CMP0205-WARN\.cmake:[0-9]+ \(include\)
+  CMakeLists\.txt:[0-9]+ \(include\)
+This warning is for project developers\.  Use -Wno-dev to suppress it\.$
