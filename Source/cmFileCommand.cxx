@@ -3271,10 +3271,32 @@ bool HandleCreateLinkCommand(std::vector<std::string> const& args,
     }
   }
 
+  if (arguments.CopyOnError &&
+      status.GetMakefile().GetPolicyStatus(cmPolicies::CMP0205) ==
+        cmPolicies::WARN &&
+      cmsys::SystemTools::FileIsDirectory(fileName)) {
+    status.GetMakefile().IssueMessage(
+      MessageType::AUTHOR_WARNING,
+      cmPolicies::GetPolicyWarning(cmPolicies::CMP0205));
+  }
+
   // Check if copy-on-error is enabled in the arguments.
   if (!completed && arguments.CopyOnError) {
-    cmsys::Status copied =
-      cmsys::SystemTools::CopyFileAlways(fileName, newFileName);
+    cmsys::Status copied;
+    if (status.GetMakefile().GetPolicyStatus(cmPolicies::CMP0205) ==
+          cmPolicies::NEW &&
+        cmsys::SystemTools::FileIsDirectory(fileName)) {
+      if (cmSystemTools::FileIsDirectory(newFileName) &&
+          !cmSystemTools::FileIsSymlink(newFileName)) {
+        cmSystemTools::RepeatedRemoveDirectory(newFileName);
+      } else {
+        cmSystemTools::RemoveFile(newFileName);
+      }
+      copied = cmsys::SystemTools::CopyADirectory(fileName, newFileName);
+    } else {
+      copied = cmsys::SystemTools::CopyFileAlways(fileName, newFileName);
+    }
+
     if (copied) {
       completed = true;
     } else {
