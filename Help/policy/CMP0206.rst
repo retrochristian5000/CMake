@@ -1,0 +1,37 @@
+CMP0206
+-------
+
+.. versionadded:: 4.3
+
+The :cpack_gen:`CPack Archive Generator` produces archives with a given
+UID and GID.
+
+The :cpack_gen:`CPack Archive Generator` :variable:`CPACK_ARCHIVE_UID` and
+:variable:`CPACK_ARCHIVE_GID` variable can define the UID and GID used in
+generated archives.  A value of ``-1`` indicates the UID and GID
+of the current user, and a value of ``0`` indicates root.  If the archive is
+unpacked by a non-root user, the UID/GID of the extracted files will be set
+to the current user.  If the archive is unpacked by root, the UID/GID of the
+extracted files will be preserved.
+
+This policy was introduced to change the default UID/GID to ``0`` instead of
+the current user UID/GID.  This allows unpacking by root to have files owned
+by root.
+
+In CMake 4.2 and below, the default value for :variable:`CPACK_ARCHIVE_UID`
+is ``-1`` and the default value for :variable:`CPACK_ARCHIVE_GID` is ``-1``.
+
+CMake 4.3 and above, the default value for :variable:`CPACK_ARCHIVE_UID`
+is ``0`` and the default value for :variable:`CPACK_ARCHIVE_GID` is ``0``.
+
+The ``OLD`` behavior for this policy is to set the UID and GID to ``-1``.
+
+.. |INTRODUCED_IN_CMAKE_VERSION| replace:: 4.3
+.. |WARNS_OR_DOES_NOT_WARN| replace:: does *not* warn
+.. include:: include/STANDARD_ADVICE.rst
+
+See documentation of the
+:variable:`CMAKE_POLICY_WARNING_CMP0206 <CMAKE_POLICY_WARNING_CMP<NNNN>>`
+variable to control the warning.
+
+.. include:: include/DEPRECATED.rst

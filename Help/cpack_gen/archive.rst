@@ -100,6 +100,28 @@ Variables specific to CPack Archive generator
   If enabled (``ON``) multiple packages are generated. By default a single package
   containing files of all components is generated.
 
+.. variable:: CPACK_ARCHIVE_UID
+
+  .. versionadded: 4.3
+
+  Set the UID of the files contained in the archive.
+
+  :Default: ``0``
+
+  This may be set to ``-1`` use the UID of the current user.
+  See policy :policy:`CMP0206` for details on how the default can be affected.
+
+.. variable:: CPACK_ARCHIVE_GID
+
+  .. versionadded: 4.3
+
+  Set the GID of the files contained in the archive.
+
+  :Default: ``0``
+
+  This may be set to ``-1`` use the GID of the current user.
+  See policy :policy:`CMP0206` for details on how the default can be affected.
+
 Variables used by CPack Archive generator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
