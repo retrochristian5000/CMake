@@ -98,6 +98,7 @@ Policies Introduced by CMake 4.3
 .. toctree::
    :maxdepth: 1
 
+   CMP0206: The CPack Archive Generator produces archives with a given UID and GID. </policy/CMP0206>
    CMP0205: file(CREATE_LINK) with COPY_ON_ERROR copies directory content. </policy/CMP0205>
 
 Policies Introduced by CMake 4.2
