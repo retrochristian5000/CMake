@@ -310,8 +310,8 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data)
       if(result)
         return result;
     }
-    sslc->primary.CApath = data->set.str[STRING_SSL_CAPATH];
 #endif
+    sslc->primary.CApath = data->set.str[STRING_SSL_CAPATH];
 #ifdef CURL_CA_BUNDLE
     if(!sslc->custom_cafile && !set->str[STRING_SSL_CAFILE]) {
       result = Curl_setstropt(&set->str[STRING_SSL_CAFILE], CURL_CA_BUNDLE);
@@ -358,8 +358,8 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data)
       if(result)
         return result;
     }
-    sslc->primary.CApath = data->set.str[STRING_SSL_CAPATH_PROXY];
 #endif
+    sslc->primary.CApath = data->set.str[STRING_SSL_CAPATH_PROXY];
 #ifdef CURL_CA_BUNDLE
     if(!sslc->custom_cafile && !set->str[STRING_SSL_CAFILE_PROXY]) {
       result = Curl_setstropt(&set->str[STRING_SSL_CAFILE_PROXY],
