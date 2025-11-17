@@ -60,16 +60,16 @@ def check_object_toolchain(o, expected):
         if is_string(value) or is_dict(value)
             or (type(value) in (ExpectedVar, ExpectedList)
                 and variables[value.name]["defined"])]
-    assert sorted(o.keys()) == sorted(expected_keys)
+    assert sorted(o.keys()) == sorted(expected_keys), f"actual object {o!r}, expected keys {sorted(expected_keys)!r}"
 
     for key in expected_keys:
         value = expected[key]
         if is_string(value):
-            assert o[key] == value
+            assert o[key] == value, f"{key!r}: actual {o[key]!r}, expected {value!r}"
         elif is_dict(value):
             check_object_toolchain(o[key], value)
         elif type(value) == ExpectedVar:
-            assert o[key] == variables[value.name]["value"]
+            assert o[key] == variables[value.name]["value"], f"{key!r}: actual {o[key]!r}, expected {variables[value.name]['value']!r} (from {value.name})"
         elif type(value) == ExpectedList:
             expected_items = filter(
                 None, variables[value.name]["value"].split(";"))
