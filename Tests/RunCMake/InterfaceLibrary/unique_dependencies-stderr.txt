@@ -1,0 +1,57 @@
+The initial target dependency graph is:
+target 0 is \[lib1\]
+target 1 is \[lib2\]
+target 2 is \[top\]
+  depends on target 3 \[util\] \(strong\)
+target 3 is \[util\]
+target 4 is \[edit_cache\]
+target 5 is \[rebuild_cache\]
+
+The side effects are:
+target 0 is \[lib1\]
+target 1 is \[lib2\]
+target 2 is \[top\]
+  custom commands
+    from target 2 \[top\]
+    from target 3 \[util\]
+target 3 is \[util\]
+  custom commands
+    from target 3 \[util\]
+target 4 is \[edit_cache\]
+  custom commands
+    from target 4 \[edit_cache\]
+target 5 is \[rebuild_cache\]
+  custom commands
+    from target 5 \[rebuild_cache\]
+
+The intermediate target dependency graph is:
+target 0 is \[lib1\]
+target 1 is \[lib2\]
+target 2 is \[top\]
+  depends on target 3 \[util\] \(strong\)
+target 3 is \[util\]
+target 4 is \[edit_cache\]
+target 5 is \[rebuild_cache\]
+
+The strongly connected components for the intermediate graph are:
+Component \(0\):
+  contains target 0 \[lib1\]
+Component \(1\):
+  contains target 1 \[lib2\]
+Component \(2\):
+  contains target 3 \[util\]
+Component \(3\):
+  contains target 2 \[top\]
+Component \(4\):
+  contains target 4 \[edit_cache\]
+Component \(5\):
+  contains target 5 \[rebuild_cache\]
+
+The final target dependency graph is:
+target 0 is \[lib1\]
+target 1 is \[lib2\]
+target 2 is \[top\]
+  depends on target 3 \[util\] \(strong\)
+target 3 is \[util\]
+target 4 is \[edit_cache\]
+target 5 is \[rebuild_cache\]
