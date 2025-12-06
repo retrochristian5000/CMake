@@ -367,10 +367,15 @@ void cmGraphVizWriter::WritePerTargetConnections(
     std::unique_ptr<cmGeneratedFileStream> fileStream =
       this->CreateTargetFile(rootItem, fileNameSuffix);
 
+    // avoid write same node multiple times
+    std::set<std::string> writtenNodes = { rootItem.AsStr() };
     for (Connection const& con : cons) {
       cmLinkItem const& src = DirFunc::src(con);
       cmLinkItem const& dst = DirFunc::dst(con);
-      this->WriteNode(*fileStream, con.dst);
+      if (writtenNodes.count(con.dst.AsStr()) == 0) {
+        this->WriteNode(*fileStream, con.dst);
+        writtenNodes.insert(con.dst.AsStr());
+      }
       this->WriteConnection(*fileStream, src, dst, con.scopeType);
     }
 
