@@ -7,6 +7,7 @@
 #include <iostream>
 #include <memory>
 #include <set>
+#include <unordered_set>
 #include <utility>
 
 #include <cm/memory>
@@ -368,13 +369,12 @@ void cmGraphVizWriter::WritePerTargetConnections(
       this->CreateTargetFile(rootItem, fileNameSuffix);
 
     // avoid write same node multiple times
-    std::set<std::string> writtenNodes = { rootItem.AsStr() };
+    std::unordered_set<std::string> writtenNodes = { rootItem.AsStr() };
     for (Connection const& con : cons) {
       cmLinkItem const& src = DirFunc::src(con);
       cmLinkItem const& dst = DirFunc::dst(con);
-      if (writtenNodes.count(con.dst.AsStr()) == 0) {
+      if (writtenNodes.emplace(con.dst.AsStr()).second) {
         this->WriteNode(*fileStream, con.dst);
-        writtenNodes.insert(con.dst.AsStr());
       }
       this->WriteConnection(*fileStream, src, dst, con.scopeType);
     }
