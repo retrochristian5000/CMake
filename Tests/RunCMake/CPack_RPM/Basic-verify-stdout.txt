@@ -1,0 +1,4 @@
+-- Basic-1\.2\.3-Linux\.rpm
+/usr/share/doc/basic
+/usr/share/doc/basic/basic\.txt
+--
