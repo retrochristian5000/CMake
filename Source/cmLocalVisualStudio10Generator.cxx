@@ -92,6 +92,7 @@ void cmLocalVisualStudio10Generator::ReadAndStoreExternalGUID(
     return;
   }
 
+  // FIXME(#27462): Avoid modifying the cache during generate.
   std::string guidStoreName = cmStrCat(name, "_GUID_CMAKE");
   // save the GUID in the cache
   this->GlobalGenerator->GetCMakeInstance()->AddCacheEntry(

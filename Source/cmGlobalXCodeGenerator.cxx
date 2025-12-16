@@ -3608,6 +3608,7 @@ std::string cmGlobalXCodeGenerator::GetOrCreateId(std::string const& name,
     return *storedGUID;
   }
 
+  // FIXME(#27462): Avoid modifying the cache during generate.
   this->CMakeInstance->AddCacheEntry(
     guidStoreName, id, "Stored Xcode object GUID", cmStateEnums::INTERNAL);
 
@@ -5153,6 +5154,7 @@ void cmGlobalXCodeGenerator::OutputXCodeProject(
 
   this->ClearXCodeObjects();
 
+  // FIXME(#27462): Avoid modifying the cache during generate.
   // Since this call may have created new cache entries, save the cache:
   //
   root->GetMakefile()->GetCMakeInstance()->SaveCache(

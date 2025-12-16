@@ -1159,6 +1159,10 @@ void cmGlobalVisualStudioGenerator::Generate()
   // first do the superclass method
   this->cmGlobalGenerator::Generate();
 
+  // FIXME(#27462): Avoid modifying the cache during generate.
+  this->CMakeInstance->SaveCache(
+    this->CMakeInstance->GetHomeOutputDirectory());
+
   // Now write out the VS Solution files.
   for (auto& it : this->ProjectMap) {
     this->GenerateSolution(it.second[0], it.second);

@@ -3179,10 +3179,6 @@ int cmake::Generate()
 #endif
     return -1;
   }
-  // Save the cache again after a successful Generate so that any internal
-  // variables created during Generate are saved. (Specifically target GUIDs
-  // for the Visual Studio and Xcode generators.)
-  this->SaveCache(this->GetHomeOutputDirectory());
 
 #if !defined(CMAKE_BOOTSTRAP)
   this->GlobalGenerator->WriteInstallJson();
