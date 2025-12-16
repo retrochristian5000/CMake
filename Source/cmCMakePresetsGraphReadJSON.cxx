@@ -656,6 +656,13 @@ bool cmCMakePresetsGraph::ReadJSONFile(std::string const& filename,
       return false;
     }
 
+    // Support for default native build tool parallelism added in version 11.
+    if (v < 11 && preset.Jobs.has_value() && !preset.Jobs->has_value()) {
+      cmCMakePresetsErrors::JOBS_DEFAULT_PARALLEL_UNSUPPORTED(
+        &this->parseState);
+      return false;
+    }
+
     this->BuildPresetOrder.push_back(preset.Name);
   }
 

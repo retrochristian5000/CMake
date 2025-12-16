@@ -546,8 +546,10 @@ that may contain the following fields:
 ``jobs``
   An optional integer. Equivalent to passing
   :option:`--parallel <cmake--build --parallel>` or ``-j`` on the command line.
-  In preset files specifying version ``11`` or above, this field does not
-  accept negative values.
+  In preset files specifying version ``11`` or above, this field can also be a
+  string, in which case it must be empty, and is equivalent to passing
+  ``--parallel`` with ``<jobs>`` omitted; additionally, it does not accept
+  negative values.
 
 ``targets``
   An optional string or array of strings. Equivalent to passing
@@ -1452,8 +1454,10 @@ they were added and a summary of the new features and changes is given below.
 
     * Changes to `Build Presets <Build Preset_>`_
 
-      * The `jobs <CMakePresets build jobs_>`_ field no longer accepts negative
-        values.
+      * The `jobs <CMakePresets build jobs_>`_ field now accepts an empty
+        string representing :option:`--parallel <cmake--build --parallel>`
+        with ``<jobs>`` omitted. In addition, when an integer is specified, it
+        must not be negative.
 
     * Changes to `Test Presets <Test Preset_>`_
 

@@ -167,7 +167,7 @@ public:
 
     std::string ConfigurePreset;
     cm::optional<bool> InheritConfigureEnvironment;
-    cm::optional<unsigned int> Jobs;
+    cm::optional<cm::optional<unsigned int>> Jobs;
     std::vector<std::string> Targets;
     std::string Configuration;
     cm::optional<bool> CleanFirst;

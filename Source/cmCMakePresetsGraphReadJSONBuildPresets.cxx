@@ -57,6 +57,31 @@ std::function<bool(BuildPreset&, Json::Value const*, cmJSONState*)> const
   return PackageResolveModeHelper(out.ResolvePackageReferences, value, state);
 };
 
+bool BuildPresetJobsHelper(cm::optional<unsigned int>& out,
+                           Json::Value const* value, cmJSONState* state)
+{
+  if (value->isString()) {
+    if (!value->asString().empty()) {
+      cmCMakePresetsErrors::INVALID_PRESET(value, state);
+      return false;
+    }
+    out.reset();
+    return true;
+  }
+
+  if (value->isUInt()) {
+    out.emplace(value->asUInt());
+    return true;
+  }
+
+  cmCMakePresetsErrors::INVALID_PRESET(value, state);
+  return false;
+}
+
+auto const BuildPresetOptionalJobsHelper =
+  JSONHelperBuilder::Optional<cm::optional<unsigned int>>(
+    BuildPresetJobsHelper);
+
 auto const BuildPresetHelper =
   JSONHelperBuilder::Object<BuildPreset>(
     cmCMakePresetsErrors::INVALID_PRESET_OBJECT, false)
@@ -82,8 +107,7 @@ auto const BuildPresetHelper =
     .Bind("inheritConfigureEnvironment"_s,
           &BuildPreset::InheritConfigureEnvironment,
           cmCMakePresetsGraphInternal::PresetOptionalBoolHelper, false)
-    .Bind("jobs"_s, &BuildPreset::Jobs,
-          cmCMakePresetsGraphInternal::PresetOptionalUIntHelper, false)
+    .Bind("jobs"_s, &BuildPreset::Jobs, BuildPresetOptionalJobsHelper, false)
     .Bind("targets"_s, &BuildPreset::Targets,
           cmCMakePresetsGraphInternal::PresetVectorOneOrMoreStringHelper,
           false)

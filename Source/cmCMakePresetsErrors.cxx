@@ -189,6 +189,12 @@ void JOBS_PROC_UNSUPPORTED(cmJSONState* state)
                   "processor-count-based jobs preset support");
 }
 
+void JOBS_DEFAULT_PARALLEL_UNSUPPORTED(cmJSONState* state)
+{
+  state->AddError("File version must be 11 or higher for "
+                  "default native build tool parallelism preset support");
+}
+
 void CYCLIC_INCLUDE(std::string const& file, cmJSONState* state)
 {
   state->AddError(cmStrCat("Cyclic include among preset files: ", file));

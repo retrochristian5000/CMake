@@ -813,9 +813,19 @@
       }
     },
     "buildPresetsJobsV11": {
-      "type": "integer",
-      "description": "An optional integer. Equivalent to passing --parallel or -j on the command line.",
-      "minimum": 0
+      "oneOf": [
+        {
+          "type": "integer",
+          "description": "An optional integer. Equivalent to passing --parallel or -j on the command line.",
+          "minimum": 0
+        },
+        {
+          "type": "string",
+          "description": "An optional string. Equivalent to passing --parallel or -j on the command line with the number of jobs omitted.",
+          "minLength": 0,
+          "maxLength": 0
+        }
+      ]
     },
     "buildPresetsJobsV2": {
       "type": "integer",

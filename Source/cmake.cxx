@@ -3947,13 +3947,16 @@ int cmake::Build(cmBuildArgs buildArgs, std::vector<std::string> targets,
 
     if ((buildArgs.jobs == cmake::DEFAULT_BUILD_PARALLEL_LEVEL ||
          buildArgs.jobs == cmake::NO_BUILD_PARALLEL_LEVEL) &&
-        expandedPreset->Jobs) {
-      if (expandedPreset->Jobs > INT_MAX) {
+        expandedPreset->Jobs.has_value()) {
+      if (!expandedPreset->Jobs->has_value()) {
+        buildArgs.jobs = cmake::DEFAULT_BUILD_PARALLEL_LEVEL;
+      } else if (**expandedPreset->Jobs > INT_MAX) {
         cmSystemTools::Error(
           "The build preset \"jobs\" value is too large.\n");
         return 1;
+      } else {
+        buildArgs.jobs = **expandedPreset->Jobs;
       }
-      buildArgs.jobs = *expandedPreset->Jobs;
     }
 
     if (targets.empty()) {
