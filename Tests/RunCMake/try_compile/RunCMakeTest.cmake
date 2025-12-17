@@ -67,6 +67,14 @@ run_cmake(CMP0066)
 run_cmake(CMP0067)
 run_cmake(CMP0137-WARN)
 run_cmake(CMP0137-NEW)
+run_cmake(CMP0210-WARN)
+if (CMAKE_C_COMPILER_ID STREQUAL "MSVC")
+  # The MSVC compiler just ignores this 'bad object', rather than failing the
+  # compilation.
+  set(RunCMake_TEST_EXPECT_RESULT .)
+endif()
+run_cmake(CMP0210-NEW)
+unset(RunCMake_TEST_EXPECT_RESULT)
 
 if(RunCMake_GENERATOR MATCHES "Make|Ninja")
   # Use a single build tree for a few tests without cleaning.

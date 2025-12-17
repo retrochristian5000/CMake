@@ -40,6 +40,46 @@ if (NOT CMAKE_C_COMPILER_ID STREQUAL "Intel")
   run_cmake_target(CMAKE_LINKER_FLAGS_CONFIG mod --config Release)
   run_cmake_target(CMAKE_LINKER_FLAGS_CONFIG exe --config Release)
 
+  run_cmake(CMAKE_LANG_LINK_FLAGS-CMP0210-NEW)
+  run_cmake_target(CMAKE_LANG_LINK_FLAGS-CMP0210-NEW shared_C)
+  run_cmake_target(CMAKE_LANG_LINK_FLAGS-CMP0210-NEW mod_C)
+  if (CMAKE_C_COMPILER_ID STREQUAL "MSVC")
+    # The MSVC compiler just ignores this 'bad object', rather than failing the
+    # compilation.
+    set(RunCMake_TEST_EXPECT_RESULT .)
+  endif()
+  run_cmake_target(CMAKE_LANG_LINK_FLAGS-CMP0210-NEW exe_C)
+  unset(RunCMake_TEST_EXPECT_RESULT)
+  run_cmake_target(CMAKE_LANG_LINK_FLAGS-CMP0210-NEW shared_CXX)
+  run_cmake_target(CMAKE_LANG_LINK_FLAGS-CMP0210-NEW mod_CXX)
+  run_cmake_target(CMAKE_LANG_LINK_FLAGS-CMP0210-NEW exe_CXX)
+
+  run_cmake(CMAKE_LANG_LINK_FLAGS_CONFIG-CMP0210-NEW)
+  run_cmake_target(CMAKE_LANG_LINK_FLAGS_CONFIG-CMP0210-NEW shared_C --config Release)
+  run_cmake_target(CMAKE_LANG_LINK_FLAGS_CONFIG-CMP0210-NEW mod_C --config Release)
+  if (CMAKE_C_COMPILER_ID STREQUAL "MSVC")
+    # The MSVC compiler just ignores this 'bad object', rather than failing the
+    # compilation.
+    set(RunCMake_TEST_EXPECT_RESULT .)
+  endif()
+  run_cmake_target(CMAKE_LANG_LINK_FLAGS_CONFIG-CMP0210-NEW exe_C --config Release)
+  unset(RunCMake_TEST_EXPECT_RESULT)
+  run_cmake_target(CMAKE_LANG_LINK_FLAGS_CONFIG-CMP0210-NEW shared_CXX --config Release)
+  run_cmake_target(CMAKE_LANG_LINK_FLAGS_CONFIG-CMP0210-NEW mod_CXX --config Release)
+  run_cmake_target(CMAKE_LANG_LINK_FLAGS_CONFIG-CMP0210-NEW exe_CXX --config Release)
+
+  if (NOT RunCMake_GENERATOR MATCHES "Visual Studio")
+    # CMP0210's OLD behavior never applied to the Visual Studio generators.
+    run_cmake(CMAKE_LANG_LINK_FLAGS-CMP0210-OLD)
+    run_cmake_target(CMAKE_LANG_LINK_FLAGS-CMP0210-OLD shared)
+    run_cmake_target(CMAKE_LANG_LINK_FLAGS-CMP0210-OLD mod)
+    run_cmake_target(CMAKE_LANG_LINK_FLAGS-CMP0210-OLD exe)
+
+    run_cmake(CMAKE_LANG_LINK_FLAGS-CMP0210-WARN)
+    run_cmake_target(CMAKE_LANG_LINK_FLAGS-CMP0210-WARN shared)
+    run_cmake_target(CMAKE_LANG_LINK_FLAGS-CMP0210-WARN exe)
+  endif()
+
   unset(RunCMake_TEST_OPTIONS)
   unset(RunCMake_TEST_OUTPUT_MERGE)
 endif()
