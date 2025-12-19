@@ -1,0 +1,1 @@
+^bin2c Usage: -E bin2c \[-c \| --const\] \[-n \| --name <name>] \[-st \| --static\] <input file>$

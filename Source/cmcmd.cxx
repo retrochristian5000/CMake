@@ -9,6 +9,7 @@
 
 #include <cm/optional>
 #include <cmext/algorithm>
+#include <cmext/string_view>
 
 #include <cm3p/uv.h>
 #include <fcntl.h>
@@ -60,6 +61,7 @@
 
 #include <array>
 #include <chrono>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -593,6 +595,56 @@ struct CoCompileJob
   std::string Command;
   CoCompileHandler Handler;
 };
+
+void Bin2C(std::istream& in, std::ostream& out, std::string const& name,
+           bool makeConst, bool makeStatic)
+{
+  out << "#ifdef __cplusplus\n"
+         "extern \"C\" {\n"
+         "#endif\n"
+         "\n";
+  if (makeStatic) {
+    out << "static ";
+  }
+  if (makeConst) {
+    out << "const ";
+  }
+  out << "unsigned char " << name << "[] = {";
+
+  static size_t const BUFFER_SIZE = 16384;
+  static size_t const ROW_WIDTH = 32;
+  size_t readSize;
+  bool any = false;
+  size_t column = 0;
+  std::vector<std::uint8_t> buffer(BUFFER_SIZE);
+
+  auto const oldFlags = out.flags();
+  out << std::setfill('0') << std::hex << std::nouppercase;
+  do {
+    in.read(reinterpret_cast<char*>(buffer.data()), BUFFER_SIZE);
+    readSize = in.gcount();
+    for (size_t i = 0; i < readSize; i++) {
+      any = true;
+      if (column == 0) {
+        out << "\n  ";
+      }
+      out << "0x" << std::setw(2) << static_cast<unsigned int>(buffer[i])
+          << ",";
+      column++;
+      column %= ROW_WIDTH;
+    }
+  } while (readSize >= BUFFER_SIZE);
+  out.flags(oldFlags);
+
+  if (any) {
+    out << "\n";
+  }
+  out << "};\n"
+         "\n"
+         "#ifdef __cplusplus\n"
+         "}\n"
+         "#endif\n";
+}
 }
 
 // called when args[0] == "__run_co_compile"
@@ -1786,6 +1838,73 @@ int cmcmd::ExecuteCMakeCommand(std::vector<std::string> const& args,
                              "(list), 'c' (create) or 'x' (extract)");
         return 1;
       }
+      return 0;
+    }
+
+    // bin2c
+    if (args[1] == "bin2c"_s) {
+      auto const usage = []() {
+        std::cerr << "bin2c Usage: -E bin2c [-c | --const] [-n | --name "
+                     "<name>] [-st | --static] <input file>\n";
+        return 1;
+      };
+      if (args.size() <= 2) {
+        return usage();
+      }
+
+      std::string name = "imageBytes";
+      bool makeConst = false;
+      bool makeStatic = false;
+
+      using CommandArgument =
+        cmCommandLineArgument<bool(std::string const& value)>;
+      std::vector<CommandArgument> arguments = {
+        CommandArgument{ "-c", CommandArgument::Values::Zero,
+                         CommandArgument::setToTrue(makeConst) },
+        CommandArgument{ "--const", CommandArgument::Values::Zero,
+                         CommandArgument::setToTrue(makeConst) },
+        CommandArgument{ "-n", CommandArgument::Values::One,
+                         CommandArgument::setToValue(name) },
+        CommandArgument{ "--name", CommandArgument::Values::One,
+                         CommandArgument::setToValue(name) },
+        CommandArgument{ "-st", CommandArgument::Values::Zero,
+                         CommandArgument::setToTrue(makeStatic) },
+        CommandArgument{ "--static", CommandArgument::Values::Zero,
+                         CommandArgument::setToTrue(makeStatic) },
+      };
+
+      for (size_t i = 2; i < args.size() - 1; i++) {
+        bool matched = false;
+        auto const& arg = args[i];
+        for (auto const& argument : arguments) {
+          if (argument.matches(arg)) {
+            matched = true;
+            if (!argument.parse(arg, i, args)) {
+              return 1;
+            }
+            break;
+          }
+        }
+
+        if (!matched) {
+          return usage();
+        }
+      }
+
+      auto const& filename = args.back();
+      if (cmHasLiteralPrefix(filename, "-")) {
+        return usage();
+      }
+
+      cmsys::ifstream fin(filename.c_str(), std::ios::in | std::ios::binary);
+      if (!fin) {
+        std::cerr << "Could not open file for reading: \"" << filename
+                  << "\"\n";
+        return 1;
+      }
+
+      Bin2C(fin, std::cout, name, makeConst, makeStatic);
+
       return 0;
     }
 
