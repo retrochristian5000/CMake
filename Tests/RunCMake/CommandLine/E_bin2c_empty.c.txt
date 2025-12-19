@@ -1,0 +1,9 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+unsigned char imageBytes[] = {};
+
+#ifdef __cplusplus
+}
+#endif

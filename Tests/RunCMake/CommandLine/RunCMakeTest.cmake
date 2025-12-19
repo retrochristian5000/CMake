@@ -913,7 +913,46 @@ run_cmake_command(E_sleep-bad-arg1 ${CMAKE_COMMAND} -E sleep x)
 run_cmake_command(E_sleep-bad-arg2 ${CMAKE_COMMAND} -E sleep 1 -1)
 run_cmake_command(E_sleep-one-tenth ${CMAKE_COMMAND} -E sleep 0.1)
 
-run_cmake_command(P_directory ${CMAKE_COMMAND} -P ${RunCMake_SOURCE_DIR})
+block()
+  function(run_bin2c name)
+    set(name E_bin2c_${name})
+    string(REPLACE ";" "\\;" ARGS "${ARGN}")
+    run_cmake_command(${name}
+      ${CMAKE_COMMAND}
+      "-DINPUT_FILE=${RunCMake_TEST_BINARY_DIR}/${name}.bin"
+      "-DOUTPUT_FILE=${RunCMake_TEST_BINARY_DIR}/${name}.c"
+      "-DEXPECTED_OUTPUT_FILE=${RunCMake_SOURCE_DIR}/${name}.c.txt"
+      "-DARGS=${ARGS}"
+      -P "${RunCMake_SOURCE_DIR}/E_bin2c.cmake"
+      )
+  endfunction()
+
+  set(RunCMake_TEST_BINARY_DIR "${RunCMake_BINARY_DIR}/E_bin2c-build")
+  set(RunCMake_TEST_NO_CLEAN 1)
+  run_cmake(E_bin2c_generate_binaries)
+  run_cmake_command(E_bin2c_generate_binaries-build ${CMAKE_COMMAND} --build "${RunCMake_TEST_BINARY_DIR}")
+  run_bin2c(basic)
+  run_bin2c(empty)
+  run_bin2c(st -st)
+  run_bin2c(static --static)
+  run_bin2c(c -c)
+  run_bin2c(const --const)
+  run_bin2c(static_const --static --const)
+  run_bin2c(n -n embedded_file)
+  run_bin2c(name --name embedded_file --const)
+  run_bin2c(text_lf)
+  run_bin2c(text_crlf)
+  run_bin2c(text_align)
+  run_bin2c(very_long)
+
+  run_cmake_command(E_bin2c_invalid_arg ${CMAKE_COMMAND} -E bin2c --invalid-arg ${RunCMake_SOURCE_DIR}/basic.bin)
+  run_cmake_command(E_bin2c_arg_order ${CMAKE_COMMAND} -E bin2c ${RunCMake_SOURCE_DIR}/basic.bin --static)
+  run_cmake_command(E_bin2c_no_filename ${CMAKE_COMMAND} -E bin2c)
+  run_cmake_command(E_bin2c_no_filename_with_arg ${CMAKE_COMMAND} -E bin2c --static)
+  run_cmake_command(E_bin2c_noexist ${CMAKE_COMMAND} -E bin2c ${RunCMake_SOURCE_DIR}/noexist.bin)
+
+  run_cmake_command(P_directory ${CMAKE_COMMAND} -P ${RunCMake_SOURCE_DIR})
+endblock()
 
 block()
   set(expect ${RunCMake_BINARY_DIR}/P_working-dir-build)
