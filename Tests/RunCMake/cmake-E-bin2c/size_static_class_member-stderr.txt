@@ -1,0 +1,3 @@
+^Cannot use --static or --size-static if --size-name is a class member
+
+bin2c Usage: -E bin2c \[<options>\.\.\.\] \[--\] \[<input file> \[<output file>\]\]$

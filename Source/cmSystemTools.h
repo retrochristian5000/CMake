@@ -705,6 +705,9 @@ public:
   /** Get the system path separator character */
   static char GetSystemPathlistSeparator();
 
+  /** Determine whether a string is a valid C identifier */
+  static bool IsValidCIdentifier(cm::string_view str);
+
 private:
   static bool s_ForceUnixPaths;
   static bool s_RunCommandHideConsole;
