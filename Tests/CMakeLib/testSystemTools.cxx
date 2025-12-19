@@ -6,6 +6,9 @@
 #include <string>
 #include <vector>
 
+#include <cm/string_view>
+#include <cmext/string_view>
+
 #include <stddef.h>
 
 #include "cmSystemTools.h"
@@ -162,6 +165,84 @@ static bool testMakeTempDirectory()
   return true;
 }
 
+static bool testIsValidCIdentifier()
+{
+  std::cout << "testIsValidCIdentifier()\n";
+  struct
+  {
+    cm::static_string_view Str;
+    bool Expected;
+  } const testCases[] = {
+    {
+      ""_s,
+      false,
+    },
+    {
+      "0"_s,
+      false,
+    },
+    {
+      "9"_s,
+      false,
+    },
+    {
+      "-"_s,
+      false,
+    },
+    {
+      "A"_s,
+      true,
+    },
+    {
+      "Z"_s,
+      true,
+    },
+    {
+      "a"_s,
+      true,
+    },
+    {
+      "z"_s,
+      true,
+    },
+    {
+      "_"_s,
+      true,
+    },
+    {
+      "a0"_s,
+      true,
+    },
+    {
+      "a9"_s,
+      true,
+    },
+    {
+      "a-"_s,
+      false,
+    },
+    {
+      "longIdentifierWith1Number"_s,
+      true,
+    },
+    {
+      "long_identifier_with_underscores"_s,
+      true,
+    },
+  };
+
+  bool success = true;
+  for (auto const testCase : testCases) {
+    if (cmSystemTools::IsValidCIdentifier(testCase.Str) != testCase.Expected) {
+      std::cout << "cmSystemTools::IsValidCIdentifier failed on \""
+                << testCase.Str << "\"\n";
+      success = false;
+    }
+  }
+
+  return success;
+}
+
 int testSystemTools(int /*unused*/, char* /*unused*/[])
 {
   return runTests({
@@ -170,5 +251,6 @@ int testSystemTools(int /*unused*/, char* /*unused*/[])
     testStrVersCmp,
     testRelativeIfUnder,
     testMakeTempDirectory,
+    testIsValidCIdentifier,
   });
 }
