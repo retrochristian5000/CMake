@@ -1,0 +1,2 @@
+^Could not open file for reading: "[^
+]*/noexist[.]bin"$
