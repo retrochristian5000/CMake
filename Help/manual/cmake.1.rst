@@ -1027,6 +1027,29 @@ CMake provides builtin command-line tools through the signature
 
 Available commands are:
 
+.. option:: bin2c [-c | --const] [-n | --name <name>] [-st | --static] <input-file>
+
+  .. versionadded:: 4.3
+
+  Convert a binary file to a C array, similar to the ``bin2c`` Unix utility.
+  Prints the generated C array to standard output.
+
+  .. program:: cmake-E_bin2c
+
+  .. option:: -c, --const
+
+    Prepend ``const`` to the array definition.
+
+  .. option:: -n, --name NAME
+
+    Set the name of the generated array. Set to ``imageBytes`` by default.
+
+  .. option:: -st, --static
+
+    Prepend ``static`` to the array definition.
+
+.. program:: cmake-E
+
 .. option:: capabilities
 
   .. versionadded:: 3.7
