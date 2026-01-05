@@ -43,8 +43,8 @@ cmCTestCoverageHandler::cmCTestCoverageHandler(cmCTest* ctest)
 void cmCTestCoverageHandler::CleanCoverageLogFiles(std::ostream& log)
 {
   std::string logGlob =
-    cmStrCat(this->CTest->GetCTestConfiguration("BuildDirectory"), "/Testing/",
-             this->CTest->GetCurrentTag(), "/CoverageLog*");
+    cmStrCat(this->CTest->GetOutputDir(), '/', this->CTest->GetCurrentTag(),
+             "/CoverageLog*");
   cmsys::Glob gl;
   gl.FindFiles(logGlob);
   std::vector<std::string> const& files = gl.GetFiles();
@@ -193,6 +193,7 @@ int cmCTestCoverageHandler::ProcessHandler()
   std::string sourceDir =
     this->CTest->GetCTestConfiguration("SourceDirectory");
   std::string binaryDir = this->CTest->GetCTestConfiguration("BuildDirectory");
+  std::string outputDir = this->CTest->GetOutputDir();
 
   if (binaryDir.empty()) {
     cmCTestLog(this->CTest, ERROR_MESSAGE,
@@ -215,6 +216,7 @@ int cmCTestCoverageHandler::ProcessHandler()
 
   cmSystemTools::ConvertToUnixSlashes(sourceDir);
   cmSystemTools::ConvertToUnixSlashes(binaryDir);
+  cmSystemTools::ConvertToUnixSlashes(outputDir);
 
   cmCTestOptionalLog(this->CTest, HANDLER_OUTPUT, this->Quiet,
                      "Performing coverage\n");
@@ -223,6 +225,7 @@ int cmCTestCoverageHandler::ProcessHandler()
   cont.Error = error;
   cont.SourceDir = sourceDir;
   cont.BinaryDir = binaryDir;
+  cont.OutputDir = outputDir;
   cont.OFS = &ofs;
   cont.Quiet = this->Quiet;
 
@@ -876,7 +879,7 @@ int cmCTestCoverageHandler::HandleGCovCoverage(
     return 0;
   }
 
-  std::string testingDir = this->CTest->GetBinaryDir() + "/Testing";
+  std::string testingDir = this->CTest->GetOutputDir();
   std::string tempDir = testingDir + "/CoverageInfo";
   if (!cmSystemTools::MakeDirectory(tempDir)) {
     cmCTestLog(this->CTest, ERROR_MESSAGE,
@@ -1403,7 +1406,6 @@ int cmCTestCoverageHandler::HandleLCovCoverage(
     // No coverage files is a valid thing, so the exit code is 0
     return 0;
   }
-  std::string testingDir = this->CTest->GetBinaryDir();
 
   std::set<std::string> missingFiles;
 
@@ -1683,7 +1685,7 @@ int cmCTestCoverageHandler::HandleTracePyCoverage(
     return 0;
   }
 
-  std::string testingDir = this->CTest->GetBinaryDir() + "/Testing";
+  std::string testingDir = this->CTest->GetOutputDir();
   std::string tempDir = testingDir + "/CoverageInfo";
   cmSystemTools::MakeDirectory(tempDir);
 
@@ -1950,7 +1952,7 @@ int cmCTestCoverageHandler::RunBullseyeCommand(
   // create a process object and start it
   cmUVProcessChainBuilder builder;
   std::string stdoutFile =
-    cmStrCat(cont->BinaryDir, "/Testing/Temporary/",
+    cmStrCat(cont->OutputDir, "/Temporary/",
              this->GetCTestInstance()->GetCurrentTag(), '-', cmd);
   std::string stderrFile = stdoutFile;
   stdoutFile += ".stdout";
