@@ -595,7 +595,7 @@ class cmMakefile;
          WARN)                                                                \
   SELECT(                                                                     \
     POLICY, CMP0199,                                                          \
-    "$<CONFIG:cfgs> only matches the configuration of the consumed target.",  \
+    "$<CONFIG:cfgs> does not match configurations that are not applicable.",  \
     4, 2, 0, WARN)                                                            \
   SELECT(POLICY, CMP0200,                                                     \
          "Location and configuration selection for imported targets is more " \
