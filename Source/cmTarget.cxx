@@ -2996,7 +2996,8 @@ char const* cmTarget::GetPrefixVariableInternal(
 }
 
 std::string cmTarget::ImportedGetFullPath(
-  std::string const& config, cmStateEnums::ArtifactType artifact) const
+  std::string const& config, cmStateEnums::ArtifactType artifact,
+  ImportArtifactMissingOk missingOk) const
 {
   assert(this->IsImported());
 
@@ -3077,7 +3078,7 @@ std::string cmTarget::ImportedGetFullPath(
     }
   }
 
-  if (result.empty()) {
+  if (result.empty() && missingOk != ImportArtifactMissingOk::Yes) {
     if (this->GetType() != cmStateEnums::INTERFACE_LIBRARY) {
       auto message = [&]() -> std::string {
         std::string unset;
