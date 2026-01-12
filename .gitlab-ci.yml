@@ -1065,6 +1065,15 @@ t:fedora43-ninja-valgrind:
         CMAKE_CI_JOB_NIGHTLY: "true"
     timeout: 2 hours
 
+b:fedora43-fuzzing:
+    extends:
+        - .fedora43_fuzzing
+        - .cmake_build_linux
+        - .linux_x86_64_tags
+        - .run_manually
+    variables:
+        CMAKE_CI_JOB_NIGHTLY: "true"
+
 # macOS builds
 
 b:macos-x86_64-ninja:

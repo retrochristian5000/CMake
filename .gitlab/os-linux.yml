@@ -354,7 +354,6 @@
     variables:
         CMAKE_CONFIGURATION: fedora43_asan
 
-
 .fedora43_ninja_valgrind:
     extends:
         - .fedora43
@@ -362,6 +361,15 @@
 
     variables:
         CMAKE_CONFIGURATION: fedora43_ninja_valgrind
+
+.fedora43_fuzzing:
+    extends:
+        - .fedora43
+
+    variables:
+        CMAKE_CONFIGURATION: fedora43_fuzzing
+        CTEST_NO_WARNINGS_ALLOWED: 1
+        CMAKE_CI_NO_INSTALL: 1
 
 ### Intel Compiler
 
