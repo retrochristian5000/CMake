@@ -119,6 +119,25 @@ run_cmake(compression-method-lzma)
 run_cmake(compression-method-zstd)
 run_cmake(compression-method-ppmd)
 
+# Encoding
+if (WIN32 OR AIX)
+  run_cmake(encoding-oem-gnutar-fails)
+  run_cmake(encoding-oem-zip-fails)
+else()
+  run_cmake(encoding-oem-gnutar)
+  run_cmake(encoding-oem-zip)
+endif()
+
+run_cmake(encoding-oem-7zip)
+run_cmake(encoding-oem-pax)
+run_cmake(encoding-oem-paxr)
+
+run_cmake(encoding-utf-8-7zip)
+run_cmake(encoding-utf-8-gnutar)
+run_cmake(encoding-utf-8-pax)
+run_cmake(encoding-utf-8-paxr)
+run_cmake(encoding-utf-8-zip)
+
 # Extracting only selected files or directories
 run_cmake(zip-filtered)
 
