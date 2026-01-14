@@ -217,3 +217,40 @@ CPack generators which are essentially archives at their core. These include:
   It is selected automatically by the archive library backend and
   not directly set by CMake itself. The default compression level
   may vary between archive formats, platforms, etc.
+
+.. variable:: CPACK_ARCHIVE_ENCODING
+
+  .. versionadded:: 4.3
+
+  The encoding to be used for file names & paths when archive creation.
+
+  :Default: ``UTF-8`` or ``OEM``, see next description
+
+  The value is directly passed to the libarchive,
+  except the ``OEM`` value.
+
+  The value is silently ignored for ``7zip`` format, which only supports
+  ``UTF-16LE``.
+
+  Possible encoding values:
+
+  ``UTF-8``
+
+    Use the UTF-8 codepage.
+
+    It manages the same way as ``OEM`` value for non-Windows platforms.
+
+    This is the default since CMake 4.3.
+
+  ``OEM``
+
+    Use the original equipment manufacturer (OEM) code page.
+    This value is platform-dependent and not managed by CMake directly -
+    libarchive internally selects the headers encoding.
+
+    This was the default in CMake 4.2 and older.
+
+  ``...``
+
+    Any other codepage, directly supported by libarchive.
+    Such as ``UTF-16LE`` or ``UTF-16BE`` or ``CP932`` for some formats.
