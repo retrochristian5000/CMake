@@ -4376,3 +4376,23 @@ char cmSystemTools::GetSystemPathlistSeparator()
   return ':';
 #endif
 }
+
+bool cmSystemTools::IsValidCIdentifier(cm::string_view str)
+{
+  if (str.empty()) {
+    return false;
+  }
+
+  auto const isAlphaUnderscore = [](char c) -> bool {
+    return c == '_' || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+  };
+  auto const isAlphaNumericUnderscore = [&isAlphaUnderscore](char c) -> bool {
+    return isAlphaUnderscore(c) || (c >= '0' && c <= '9');
+  };
+
+  if (!isAlphaUnderscore(str.front())) {
+    return false;
+  }
+  auto const rest = str.substr(1);
+  return std::all_of(rest.begin(), rest.end(), isAlphaNumericUnderscore);
+}

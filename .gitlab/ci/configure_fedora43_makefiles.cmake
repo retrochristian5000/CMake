@@ -7,6 +7,7 @@ set(CMake_TEST_CTestUpdate_HG "ON" CACHE BOOL "")
 set(CMake_TEST_CTestUpdate_SVN "ON" CACHE BOOL "")
 if (NOT "$ENV{CMAKE_CI_NIGHTLY}" STREQUAL "")
   set(CMake_TEST_CTestUpdate_P4 "ON" CACHE BOOL "")
+  set(CMake_TEST_BIN2C_LARGE_FILE "ON" CACHE BOOL "")
 endif()
 
 set(CMake_TEST_ASM_NASM "ON" CACHE BOOL "")
