@@ -11,5 +11,8 @@ set(CMAKE_EXE_LINKER_FLAGS "-machine:x86 -subsystem:console,6.02" CACHE STRING "
 
 set(qt "$ENV{CI_PROJECT_DIR}/.gitlab/qt")
 set(CMAKE_PREFIX_PATH "${qt}" CACHE STRING "")
+if(NOT "$ENV{CMAKE_CI_NIGHTLY}" STREQUAL "")
+  set(CMake_TEST_BIN2C_LARGE_FILE ON CACHE BOOL "")
+endif()
 
 include("${CMAKE_CURRENT_LIST_DIR}/configure_windows_package_common.cmake")
