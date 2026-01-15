@@ -1,0 +1,3 @@
+^Cannot use --extern-c or --array-extern-c if --array-name is a class member
+
+bin2c Usage: -E bin2c \[<options>\.\.\.\] \[<input file> \[<output file>\]\]$

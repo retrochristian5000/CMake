@@ -2,6 +2,7 @@
    file LICENSE.rst or https://cmake.org/licensing for details.  */
 #include "cmcmd.h"
 
+#include <cassert>
 #include <functional>
 #include <iomanip>
 #include <iterator>
@@ -9,6 +10,7 @@
 
 #include <cm/optional>
 #include <cmext/algorithm>
+#include <cmext/string_view>
 
 #include <cm3p/uv.h>
 #include <fcntl.h>
@@ -16,6 +18,7 @@
 #include "cmCommandLineArgument.h"
 #include "cmCryptoHash.h"
 #include "cmDuration.h"
+#include "cmGeneratedFileStream.h"
 #include "cmGlobalGenerator.h"
 #include "cmList.h"
 #include "cmLocalGenerator.h"
@@ -60,6 +63,7 @@
 
 #include <array>
 #include <chrono>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -86,10 +90,18 @@ int cmcmd_cmake_module_compile_db(
   std::vector<std::string>::const_iterator argBeg,
   std::vector<std::string>::const_iterator argEnd);
 
+std::ostream& operator<<(
+  std::ostream& stream,
+  std::function<std::ostream&(std::ostream&)> const& func)
+{
+  return func(stream);
+}
+
 namespace {
 // ATTENTION If you add new commands, change here,
 // and in `cmakemain.cxx` in the options table
 char const* const HELP_AVAILABLE_COMMANDS = R"(Available commands:
+  bin2c                     - Turn a binary file into a C array
   capabilities              - Report capabilities built into cmake in JSON format
   cat [--] <files>...       - concat the files and print them to the standard output
   chdir dir cmd [args...]   - run command in a given directory
@@ -676,6 +688,293 @@ struct CoCompileJob
   std::string Command;
   CoCompileHandler Handler;
 };
+
+struct Bin2CDefinition
+{
+  cm::optional<std::string> Type;
+  std::string Name;
+  bool Static = false;
+  bool Const = false;
+  cm::optional<std::vector<cm::string_view>> Namespace;
+  bool ExternC = false;
+  cm::optional<std::string> Macro;
+};
+
+class Bin2CSectionTracker
+{
+public:
+  Bin2CSectionTracker(std::ostream& sout)
+    : Sout(sout)
+  {
+  }
+
+  Bin2CSectionTracker(Bin2CSectionTracker const&) = delete;
+  Bin2CSectionTracker(Bin2CSectionTracker&&) = delete;
+
+  void Start()
+  {
+    assert(this->CurrentState != State::InProgress);
+    if (this->CurrentState == State::End) {
+      this->Sout << "\n";
+    }
+    this->CurrentState = State::InProgress;
+  }
+
+  void End()
+  {
+    assert(this->CurrentState == State::InProgress);
+    this->CurrentState = State::End;
+  }
+
+private:
+  enum class State
+  {
+    Start,
+    InProgress,
+    End,
+  };
+
+  std::ostream& Sout;
+  State CurrentState = State::Start;
+};
+
+class Bin2CSectionGuard
+{
+public:
+  Bin2CSectionGuard(Bin2CSectionTracker& tracker)
+    : Tracker(tracker)
+  {
+    this->Tracker.Start();
+  }
+
+  Bin2CSectionGuard(Bin2CSectionGuard const&) = delete;
+
+  ~Bin2CSectionGuard() { this->Tracker.End(); }
+
+private:
+  Bin2CSectionTracker& Tracker;
+};
+
+class Bin2CDefGuard
+{
+public:
+  Bin2CDefGuard(std::ostream& sout, Bin2CSectionTracker& sectionTracker,
+                Bin2CDefinition const& def, cm::string_view defaultType,
+                cm::string_view arraySuffix = ""_s)
+    : Sout(sout)
+    , SectionTracker(sectionTracker)
+    , Def(def)
+  {
+    if (this->Def.ExternC || this->Def.Namespace) {
+      Bin2CSectionGuard guard{ this->SectionTracker };
+      (void)guard;
+      if (this->Def.ExternC) {
+        this->Sout << "#ifdef __cplusplus\nextern \"C\" {\n";
+      }
+      if (this->Def.Namespace) {
+        if (this->Def.Namespace->empty()) {
+          this->Sout << "namespace {\n";
+        } else {
+          for (auto const& component : *this->Def.Namespace) {
+            this->Sout << "namespace " << component << " {\n";
+          }
+        }
+      }
+      if (this->Def.ExternC) {
+        this->Sout << "#endif /* __cplusplus */\n";
+      }
+    }
+    this->Guard.emplace(this->SectionTracker);
+    if (this->Def.Macro) {
+      this->Sout << *def.Macro << " ";
+    }
+    if (this->Def.Static) {
+      this->Sout << "static ";
+    }
+    if (this->Def.Const) {
+      this->Sout << "const ";
+    }
+    this->Sout << (this->Def.Type ? *this->Def.Type : defaultType) << " "
+               << this->Def.Name << arraySuffix << " = ";
+  }
+
+  Bin2CDefGuard(Bin2CDefGuard const&) = delete;
+
+  ~Bin2CDefGuard()
+  {
+    this->Sout << ";";
+    if (this->EndComment) {
+      this->Sout << " /* " << *this->EndComment << " */";
+    }
+    this->Sout << "\n";
+    this->Guard.reset();
+
+    if (this->Def.ExternC || this->Def.Namespace) {
+      Bin2CSectionGuard guard{ this->SectionTracker };
+      (void)guard;
+      if (this->Def.ExternC) {
+        this->Sout << "#ifdef __cplusplus\n";
+      }
+      if (this->Def.Namespace) {
+        if (this->Def.Namespace->empty()) {
+          this->Sout << "} /* namespace */\n";
+        } else {
+          for (auto const& component : cmMakeRange(
+                 this->Def.Namespace->rbegin(), this->Def.Namespace->rend())) {
+            this->Sout << "} /* namespace " << component << " */\n";
+          }
+        }
+      }
+      if (this->Def.ExternC) {
+        this->Sout << "} /* extern \"C\" */\n#endif /* __cplusplus */\n";
+      }
+    }
+  }
+
+  cm::optional<cm::string_view> EndComment;
+
+private:
+  std::ostream& Sout;
+  Bin2CSectionTracker& SectionTracker;
+  cm::optional<Bin2CSectionGuard> Guard;
+  Bin2CDefinition const& Def;
+};
+
+std::function<std::ostream&(std::ostream& sout)> Bin2CPrintChars(
+  std::istream& sin, Bin2CSectionTracker& sectionTracker, bool array,
+  bool trailingComma, std::uint64_t& pos, bool& any)
+{
+  return [&sin, &sectionTracker, array, trailingComma, &any,
+          &pos](std::ostream& sout) -> std::ostream& {
+    static std::size_t const BUFFER_SIZE = 16384;
+    static std::size_t const ROW_WIDTH = 32;
+    std::size_t readSize;
+    std::vector<std::uint8_t> buffer(BUFFER_SIZE);
+    cm::optional<Bin2CSectionGuard> guard;
+
+    // Construct a line buffer and modify the characters within it. This is
+    // an order of magnitude faster than `sout <<`-ing everything.
+    std::string line = " ";
+    line.reserve(cmStrLen(" ") + cmStrLen(" 0x__,") * ROW_WIDTH +
+                 cmStrLen("\n"));
+    for (std::size_t i = 0; i < ROW_WIDTH; i++) {
+      line = cmStrCat(line, " 0x__,");
+    }
+    line = cmStrCat(line, '\n');
+
+#define COLUMN_POS()                                                          \
+  (cmStrLen("  0x") + (pos % ROW_WIDTH) * cmStrLen("__, 0x"))
+    static char const hextable[] = "0123456789ABCDEF";
+    any = false;
+    pos = 0;
+    do {
+      sin.read(reinterpret_cast<char*>(buffer.data()), BUFFER_SIZE);
+      readSize = sin.gcount();
+      for (std::size_t i = 0; i < readSize; i++) {
+        if (!any) {
+          if (array) {
+            sout << "\n";
+          } else {
+            guard.emplace(sectionTracker);
+          }
+        }
+        if (any && pos % ROW_WIDTH == 0) {
+          sout << line;
+        }
+        any = true;
+        auto const byte = buffer[i];
+        line[COLUMN_POS()] = hextable[byte >> 4];
+        line[COLUMN_POS() + 1] = hextable[byte & 0xF];
+        pos++;
+      }
+    } while (readSize >= BUFFER_SIZE);
+    if (any) {
+      sout << line.substr(
+                0,
+                pos % ROW_WIDTH == 0 ? cmStrLen("  ") +
+                    (ROW_WIDTH - 1) * cmStrLen("0x__, ") + cmStrLen("0x__")
+                                     : COLUMN_POS() - cmStrLen(", 0x"))
+           << (trailingComma ? ",\n" : "\n");
+    }
+#undef COLUMN_POS
+
+    return sout;
+  };
+}
+
+void Bin2C(std::istream& sin, std::ostream& sout,
+           cm::optional<Bin2CDefinition> const& array,
+           cm::optional<Bin2CDefinition> const& size,
+           std::vector<std::string> const& include, bool autoGenComment,
+           bool trailingComma)
+{
+  Bin2CSectionTracker sectionTracker{ sout };
+
+  if (autoGenComment) {
+    Bin2CSectionGuard guard{ sectionTracker };
+    (void)guard;
+    sout << "/* Automatically generated by cmake -E bin2c. Do not edit! */\n";
+  }
+
+  bool any = false;
+  std::uint64_t pos = 0;
+  if (array) {
+    if ((size && !size->Type) || !include.empty()) {
+      Bin2CSectionGuard guard{ sectionTracker };
+      (void)guard;
+      for (auto const& inc : include) {
+        sout << "#include " << inc << " /* specified on command line */\n";
+      }
+      if (size && !size->Type) {
+        sout << "#include <stdlib.h> /* for size_t */\n";
+      }
+    }
+    {
+      Bin2CDefGuard guard{ sout, sectionTracker, *array, "unsigned char"_s,
+                           "[]"_s };
+      sout << "{"
+           << Bin2CPrintChars(sin, sectionTracker, true, trailingComma, pos,
+                              any)
+           << "}";
+      if (any) {
+        guard.EndComment = cm::make_optional<cm::string_view>(array->Name);
+      }
+    }
+  } else {
+    sout << Bin2CPrintChars(sin, sectionTracker, false, trailingComma, pos,
+                            any);
+  }
+
+  if (size) {
+    Bin2CDefGuard guard{ sout, sectionTracker, *size, "size_t"_s };
+    (void)guard;
+    sout << pos;
+  }
+
+  sout.flush();
+}
+
+cm::optional<std::vector<cm::string_view>> ParseCPPNamespace(
+  cm::string_view str)
+{
+  std::vector<cm::string_view> components;
+  std::size_t componentStart = 0;
+  std::size_t colons;
+  while ((colons = str.find("::", componentStart)) != std::string::npos) {
+    auto component = str.substr(componentStart, colons - componentStart);
+    if (!cmSystemTools::IsValidCIdentifier(component)) {
+      return cm::nullopt;
+    }
+    components.push_back(component);
+    componentStart = colons + 2;
+  }
+  auto component = str.substr(componentStart);
+  if (!cmSystemTools::IsValidCIdentifier(component)) {
+    return cm::nullopt;
+  }
+  components.push_back(component);
+  return components;
+}
 }
 
 // called when args[0] == "__run_co_compile"
@@ -1906,6 +2205,341 @@ int cmcmd::ExecuteCMakeCommand(std::vector<std::string> const& args,
                              "(list), 'c' (create) or 'x' (extract)");
         return 1;
       }
+      return 0;
+    }
+
+    // bin2c
+    if (args[1] == "bin2c"_s) {
+      auto const usage = []() {
+        std::cerr << "bin2c Usage: -E bin2c "
+                     "[<options>...] "
+                     "[<input file> [<output file>]]\n";
+        return 1;
+      };
+      auto const isFilename = [](std::string const& arg) -> bool {
+        return arg == "-"_s || !cmHasLiteralPrefix(arg, "-");
+      };
+
+      std::string inputFile = "-";
+      std::string outputFile = "-";
+      cm::optional<Bin2CDefinition> array;
+      cm::optional<std::string> arrayNamespace;
+      cm::optional<Bin2CDefinition> size;
+      cm::optional<std::string> sizeNamespace;
+      bool staticArg = false;
+      bool constArg = false;
+      cm::optional<std::string> namespaceArg;
+      bool externCArg = false;
+      cm::optional<std::string> macroArg;
+      std::vector<std::string> include;
+      bool noAutoGenComment = false;
+      bool trailingComma = false;
+
+      auto const ensure =
+        [](cm::optional<Bin2CDefinition>& def) -> Bin2CDefinition& {
+        if (!def) {
+          def.emplace();
+        }
+        return *def;
+      };
+
+      using CommandArgument =
+        cmCommandLineArgument<bool(std::string const& value)>;
+      std::vector<CommandArgument> arguments = {
+        CommandArgument{ "--array-name", CommandArgument::Values::One,
+                         [&ensure, &array](std::string const& arg) -> bool {
+                           ensure(array).Name = arg;
+                           return true;
+                         } },
+        CommandArgument{ "--array-static", CommandArgument::Values::Zero,
+                         [&ensure, &array](std::string const&) -> bool {
+                           ensure(array).Static = true;
+                           return true;
+                         } },
+        CommandArgument{ "--array-const", CommandArgument::Values::Zero,
+                         [&ensure, &array](std::string const&) -> bool {
+                           ensure(array).Const = true;
+                           return true;
+                         } },
+        CommandArgument{ "--array-namespace",
+                         CommandArgument::Values::ZeroOrOne,
+                         CommandArgument::setToValue(arrayNamespace) },
+        CommandArgument{ "--array-extern-c", CommandArgument::Values::Zero,
+                         [&ensure, &array](std::string const&) -> bool {
+                           ensure(array).ExternC = true;
+                           return true;
+                         } },
+        CommandArgument{ "--array-macro", CommandArgument::Values::One,
+                         [&ensure, &array](std::string const& arg) -> bool {
+                           ensure(array).Macro = arg;
+                           return true;
+                         } },
+        CommandArgument{ "--array-type", CommandArgument::Values::One,
+                         [&ensure, &array](std::string const& arg) -> bool {
+                           ensure(array).Type = arg;
+                           return true;
+                         } },
+        CommandArgument{ "--size-name", CommandArgument::Values::One,
+                         [&ensure, &size](std::string const& arg) -> bool {
+                           ensure(size).Name = arg;
+                           return true;
+                         } },
+        CommandArgument{ "--size-static", CommandArgument::Values::Zero,
+                         [&ensure, &size](std::string const&) -> bool {
+                           ensure(size).Static = true;
+                           return true;
+                         } },
+        CommandArgument{ "--size-const", CommandArgument::Values::Zero,
+                         [&ensure, &size](std::string const&) -> bool {
+                           ensure(size).Const = true;
+                           return true;
+                         } },
+        CommandArgument{ "--size-namespace",
+                         CommandArgument::Values::ZeroOrOne,
+                         CommandArgument::setToValue(sizeNamespace) },
+        CommandArgument{ "--size-extern-c", CommandArgument::Values::Zero,
+                         [&ensure, &size](std::string const&) -> bool {
+                           ensure(size).ExternC = true;
+                           return true;
+                         } },
+        CommandArgument{ "--size-macro", CommandArgument::Values::One,
+                         [&ensure, &size](std::string const& arg) -> bool {
+                           ensure(size).Macro = arg;
+                           return true;
+                         } },
+        CommandArgument{ "--size-type", CommandArgument::Values::One,
+                         [&ensure, &size](std::string const& arg) -> bool {
+                           ensure(size).Type = arg;
+                           return true;
+                         } },
+        CommandArgument{ "--static", CommandArgument::Values::Zero,
+                         CommandArgument::setToTrue(staticArg) },
+        CommandArgument{ "--const", CommandArgument::Values::Zero,
+                         CommandArgument::setToTrue(constArg) },
+        CommandArgument{ "--namespace", CommandArgument::Values::ZeroOrOne,
+                         CommandArgument::setToValue(namespaceArg) },
+        CommandArgument{ "--extern-c", CommandArgument::Values::Zero,
+                         CommandArgument::setToTrue(externCArg) },
+        CommandArgument{ "--macro", CommandArgument::Values::One,
+                         CommandArgument::setToValue(macroArg) },
+        CommandArgument{ "--include", CommandArgument::Values::One,
+                         [&include](std::string const& arg) -> bool {
+                           if ((arg.front() == '"' && arg.back() == '"') ||
+                               (arg.front() == '<' && arg.back() == '>')) {
+                             include.push_back(arg);
+                           } else {
+                             include.push_back(cmStrCat('"', arg, '"'));
+                           }
+                           return true;
+                         } },
+        CommandArgument{ "--no-auto-gen-comment",
+                         CommandArgument::Values::Zero,
+                         CommandArgument::setToTrue(noAutoGenComment) },
+        CommandArgument{ "--trailing-comma", CommandArgument::Values::Zero,
+                         CommandArgument::setToTrue(trailingComma) },
+      };
+
+      size_t i;
+      for (i = 2; i < args.size(); i++) {
+        bool matched = false;
+        auto const& arg = args[i];
+        for (auto const& argument : arguments) {
+          if (argument.matches(arg)) {
+            matched = true;
+            if (!argument.parse(arg, i, args)) {
+              std::cerr << "\n";
+              return usage();
+            }
+            break;
+          }
+        }
+
+        if (isFilename(arg)) {
+          break;
+        }
+        if (!matched) {
+          return usage();
+        }
+      }
+
+      if (i < args.size() - 2) {
+        return usage();
+      }
+      if (i < args.size()) {
+        if (!isFilename(args[i])) {
+          return usage();
+        }
+        inputFile = args[i];
+        i++;
+      }
+      if (i < args.size()) {
+        if (!isFilename(args[i])) {
+          return usage();
+        }
+        outputFile = args[i];
+        i++;
+      }
+
+      auto const checkAndPopulateDef =
+        [&staticArg, &constArg, &namespaceArg, &externCArg, &macroArg](
+          cm::static_string_view defType, cm::optional<Bin2CDefinition>& def,
+          cm::optional<std::string> const& ns) -> bool {
+        if (def && !def->Name.empty()) {
+          if (staticArg) {
+            def->Static = true;
+          }
+          if (constArg) {
+            def->Const = true;
+          }
+          if (externCArg) {
+            def->ExternC = true;
+          }
+
+          if (!cmSystemTools::IsValidCIdentifier(def->Name)) {
+            // If not a valid C identifier, assume it's a class member. We
+            // can't parse full C++.
+            if (def->Static) {
+              std::cerr << "Cannot use --static or --" << defType
+                        << "-static if --" << defType
+                        << "-name is a class member\n\n";
+              return false;
+            }
+            if (def->ExternC) {
+              std::cerr << "Cannot use --extern-c or --" << defType
+                        << "-extern-c if --" << defType
+                        << "-name is a class member\n\n";
+              return false;
+            }
+          }
+
+          cm::optional<cm::string_view> nsView;
+          if (ns) {
+            nsView = *ns;
+          } else if (namespaceArg) {
+            nsView = *namespaceArg;
+          }
+          if (nsView) {
+            if (nsView->empty()) {
+              def->Namespace.emplace();
+            } else if (!(def->Namespace = ParseCPPNamespace(*nsView))) {
+              std::cerr << "Invalid " << defType << " namespace: \"" << *nsView
+                        << "\"\n\n";
+              return false;
+            }
+          }
+
+          if (!def->Macro) {
+            def->Macro = macroArg;
+          }
+        } else {
+          if (def && def->Static) {
+            std::cerr << "Cannot use --" << defType << "-static without --"
+                      << defType << "-name\n\n";
+            return false;
+          }
+          if (def && def->Const) {
+            std::cerr << "Cannot use --" << defType << "-const without --"
+                      << defType << "-name\n\n";
+            return false;
+          }
+          if (ns) {
+            std::cerr << "Cannot use --" << defType << "-namespace without --"
+                      << defType << "-name\n\n";
+            return false;
+          }
+          if (def && def->ExternC) {
+            std::cerr << "Cannot use --" << defType << "-extern-c without --"
+                      << defType << "-name\n\n";
+            return false;
+          }
+          if (def && def->Macro) {
+            std::cerr << "Cannot use --" << defType << "-macro without --"
+                      << defType << "-name\n\n";
+            return false;
+          }
+          if (def && def->Type) {
+            std::cerr << "Cannot use --" << defType << "-type without --"
+                      << defType << "-name\n\n";
+            return false;
+          }
+        }
+
+        return true;
+      };
+
+      if (!array || array->Name.empty()) {
+        if (!include.empty()) {
+          std::cerr << "Cannot use --include without --array-name\n\n";
+          return usage();
+        }
+        if (staticArg) {
+          std::cerr << "Cannot use --static without --array-name\n\n";
+          return usage();
+        }
+        if (constArg) {
+          std::cerr << "Cannot use --const without --array-name\n\n";
+          return usage();
+        }
+        if (namespaceArg) {
+          std::cerr << "Cannot use --namespace without --array-name\n\n";
+          return usage();
+        }
+        if (externCArg) {
+          std::cerr << "Cannot use --extern-c without --array-name\n\n";
+          return usage();
+        }
+        if (macroArg) {
+          std::cerr << "Cannot use --macro without --array-name\n\n";
+          return usage();
+        }
+      }
+      if (!checkAndPopulateDef("array"_s, array, arrayNamespace)) {
+        return usage();
+      }
+      if (size && !size->Name.empty() && !array) {
+        std::cerr << "Cannot use --size-name without --array-name\n\n";
+        return usage();
+      }
+      if (!checkAndPopulateDef("size"_s, size, sizeNamespace)) {
+        return usage();
+      }
+
+      std::istream* sin = &std::cin;
+      cmsys::ifstream fin;
+      if (inputFile != "-"_s) {
+        fin.open(inputFile.c_str(), std::ios::in | std::ios::binary);
+        if (!fin) {
+          std::cerr << "Could not open file for reading: \"" << inputFile
+                    << "\"\n";
+          return 1;
+        }
+        sin = &fin;
+#ifdef _WIN32
+      } else {
+        _setmode(fileno(stdin), _O_BINARY);
+#endif
+      }
+
+      std::ostream* sout = &std::cout;
+      cmGeneratedFileStream fout;
+      if (outputFile != "-"_s) {
+        fout.Open(outputFile);
+        if (!fout) {
+          std::cerr << "Could not open file for writing: \"" << outputFile
+                    << "\"\n";
+          return 1;
+        }
+        fout.SetCopyIfDifferent(true);
+        sout = &fout;
+      }
+
+      Bin2C(*sin, *sout, array, size, include, !noAutoGenComment,
+            trailingComma);
+
+      if (fout) {
+        fout.Close();
+      }
+
       return 0;
     }
 
