@@ -547,8 +547,17 @@ void optional<T>::reset() noexcept
 {
   if (this->has_value()) {
     this->_has_value = false;
+#  if defined(__GNUC__) && !defined(__clang__)
+#    define CM_GCC_diagnostic_push_Wmaybe_uninitialized
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#  endif
     std::allocator_traits<std::allocator<T>>::destroy(this->_allocator,
                                                       &**this);
+#  ifdef CM_GCC_diagnostic_push_Wmaybe_uninitialized
+#    pragma GCC diagnostic pop
+#    undef CM_GCC_diagnostic_push_Wmaybe_uninitialized
+#  endif
   }
 }
 
