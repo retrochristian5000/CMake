@@ -28,3 +28,4 @@
 -- FAMILY_ID=`.*`
 -- MODEL_ID=`.*`
 -- MODEL_NAME=`.*`
+-- PROCESSOR_APIC_ID=`[0-9]+`

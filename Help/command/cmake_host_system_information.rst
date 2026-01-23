@@ -177,6 +177,11 @@ queried.  The list of queried values is stored in ``<variable>``.
 
   The processor model name
 
+``PROCESSOR_APIC_ID``
+  .. versionadded:: 4.3
+
+  The processor APIC ID
+
 ``DISTRIB_INFO``
   .. versionadded:: 3.22
 
