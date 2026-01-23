@@ -182,6 +182,11 @@ queried.  The list of queried values is stored in ``<variable>``.
 
   The processor APIC ID
 
+``PROCESSOR_CACHE_SIZE``
+  .. versionadded:: 4.3
+
+  The processor L1 cache size
+
 ``DISTRIB_INFO``
   .. versionadded:: 3.22
 

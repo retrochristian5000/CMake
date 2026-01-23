@@ -163,6 +163,9 @@ cm::optional<std::string> GetValue(cmsys::SystemInformation& info,
   if (key == "PROCESSOR_APIC_ID"_s) {
     return ValueToString(info.GetProcessorAPICID());
   }
+  if (key == "PROCESSOR_CACHE_SIZE"_s) {
+    return ValueToString(info.GetProcessorCacheSize());
+  }
   return {};
 }
 
