@@ -166,6 +166,9 @@ cm::optional<std::string> GetValue(cmsys::SystemInformation& info,
   if (key == "PROCESSOR_CACHE_SIZE"_s) {
     return ValueToString(info.GetProcessorCacheSize());
   }
+  if (key == "PROCESSOR_CLOCK_FREQUENCY"_s) {
+    return ValueToString(info.GetProcessorClockFrequency());
+  }
   return {};
 }
 
