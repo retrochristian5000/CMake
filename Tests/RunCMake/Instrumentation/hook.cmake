@@ -108,6 +108,38 @@ if (NOT hasStaticInfo STREQUAL UNEXPECTED)
   json_has_key("${index}" "${staticSystemInformation}" totalVirtualMemory ${hasStaticInfo})
   json_has_key("${index}" "${staticSystemInformation}" vendorID ${hasStaticInfo})
   json_has_key("${index}" "${staticSystemInformation}" vendorString ${hasStaticInfo})
+
+  set(string_fields
+    OSName
+    OSPlatform
+    OSRelease
+    OSVersion
+    familyId
+    hostname
+    modelId
+    processorName
+    vendorID
+    vendorString
+  )
+  foreach (field IN LISTS string_fields)
+    if ("${${field}}" STREQUAL "")
+      add_error("Failed to obtain ${field} in staticSystemInformaton")
+    endif()
+  endforeach()
+  set(integral_fields
+    numberOfLogicalCPU
+    numberOfPhysicalCPU
+    processorAPICID
+    processorCacheSize
+    processorClockFrequency
+    totalPhysicalMemory
+    totalVirtualMemory
+  )
+  foreach (field IN_LISTS integral_fields)
+    if (${field} LESS_EQUAL 0)
+      add_error("Failed to obtain ${field} in staticSystemInformaton")
+    endif()
+  endforeach()
 endif()
 
 get_filename_component(v1 ${dataDir} DIRECTORY)
