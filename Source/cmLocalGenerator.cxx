@@ -1504,8 +1504,6 @@ void cmLocalGenerator::GetTargetFlags(
 {
   std::string const configUpper = cmSystemTools::UpperCase(config);
   cmComputeLinkInformation* pcli = target->GetLinkInformation(config);
-  char const* libraryLinkVariable =
-    "CMAKE_SHARED_LINKER_FLAGS"; // default to shared library
 
   std::string const linkLanguage =
     linkLineComputer->GetLinkerLanguage(target, config);
@@ -1518,38 +1516,33 @@ void cmLocalGenerator::GetTargetFlags(
     }
   }
 
+  {
+    if (this->IsSplitSwiftBuild() || linkLanguage != "Swift") {
+      std::string targetLinkerFlags;
+      this->AddTargetTypeLinkerFlags(targetLinkerFlags, target, linkLanguage,
+                                     config);
+      if (!targetLinkerFlags.empty()) {
+        linkFlags.emplace_back(std::move(targetLinkerFlags));
+      }
+    }
+  }
+
   switch (target->GetType()) {
     case cmStateEnums::STATIC_LIBRARY:
       linkFlags = this->GetStaticLibraryFlags(config, linkLanguage, target);
       break;
     case cmStateEnums::MODULE_LIBRARY:
-      libraryLinkVariable = "CMAKE_MODULE_LINKER_FLAGS";
       CM_FALLTHROUGH;
     case cmStateEnums::SHARED_LIBRARY: {
-      if (this->IsSplitSwiftBuild() || linkLanguage != "Swift") {
-        std::string libFlags;
-        this->AddConfigVariableFlags(libFlags, libraryLinkVariable, target,
-                                     cmBuildStep::Link, linkLanguage, config);
-        if (!libFlags.empty()) {
-          linkFlags.emplace_back(std::move(libFlags));
-        }
+      std::string langLinkFlags;
+      this->AddPerLanguageLinkFlags(langLinkFlags, target, linkLanguage,
+                                    config);
+      if (!langLinkFlags.empty()) {
+        linkFlags.emplace_back(std::move(langLinkFlags));
       }
 
       std::string sharedLibFlags;
-      cmValue targetLinkFlags = target->GetProperty("LINK_FLAGS");
-      if (targetLinkFlags) {
-        sharedLibFlags += *targetLinkFlags;
-        sharedLibFlags += " ";
-      }
-      if (!configUpper.empty()) {
-        targetLinkFlags =
-          target->GetProperty(cmStrCat("LINK_FLAGS_", configUpper));
-        if (targetLinkFlags) {
-          sharedLibFlags += *targetLinkFlags;
-          sharedLibFlags += " ";
-        }
-      }
-
+      this->AddTargetPropertyLinkFlags(sharedLibFlags, target, config);
       if (!sharedLibFlags.empty()) {
         this->GetGlobalGenerator()->EncodeLiteral(sharedLibFlags);
         linkFlags.emplace_back(std::move(sharedLibFlags));
@@ -1568,23 +1561,6 @@ void cmLocalGenerator::GetTargetFlags(
       }
     } break;
     case cmStateEnums::EXECUTABLE: {
-      if (linkLanguage.empty()) {
-        cmSystemTools::Error(
-          "CMake can not determine linker language for target: " +
-          target->GetName());
-        return;
-      }
-
-      if (linkLanguage != "Swift") {
-        std::string exeFlags;
-        this->AddConfigVariableFlags(exeFlags, "CMAKE_EXE_LINKER_FLAGS",
-                                     target, cmBuildStep::Link, linkLanguage,
-                                     config);
-        if (!exeFlags.empty()) {
-          linkFlags.emplace_back(std::move(exeFlags));
-        }
-      }
-
       {
         auto exeType = cmStrCat(
           "CMAKE_", linkLanguage, "_CREATE_",
@@ -1623,19 +1599,7 @@ void cmLocalGenerator::GetTargetFlags(
         exeFlags += " ";
       }
 
-      cmValue targetLinkFlags = target->GetProperty("LINK_FLAGS");
-      if (targetLinkFlags) {
-        exeFlags += *targetLinkFlags;
-        exeFlags += " ";
-      }
-      if (!configUpper.empty()) {
-        targetLinkFlags =
-          target->GetProperty(cmStrCat("LINK_FLAGS_", configUpper));
-        if (targetLinkFlags) {
-          exeFlags += *targetLinkFlags;
-          exeFlags += " ";
-        }
-      }
+      this->AddTargetPropertyLinkFlags(exeFlags, target, config);
 
       if (!exeFlags.empty()) {
         this->GetGlobalGenerator()->EncodeLiteral(exeFlags);
@@ -2106,6 +2070,8 @@ void cmLocalGenerator::AddLanguageFlags(std::string& flags,
        // selection, this will have to be reconciled with it.
        this->Makefile->IsOn(
          cmStrCat("CMAKE_", lang, "_LINK_WITH_STANDARD_COMPILE_OPTION")))) {
+    this->AddPerLanguageLinkFlags(flags, target, lang, config);
+
     cmStandardLevelResolver standardResolver(this->Makefile);
     std::string const& optionFlagDef =
       standardResolver.GetCompileOptionDef(target, lang, config);
@@ -2612,6 +2578,25 @@ void cmLocalGenerator::AppendFlagEscape(std::string& flags,
     this->EscapeForShell(rawFlag, false, false, false, this->IsNinjaMulti()));
 }
 
+void cmLocalGenerator::AppendLinkFlagsWithParsing(
+  std::string& flags, std::string const& newFlags,
+  cmGeneratorTarget const* target, std::string const& language)
+{
+  std::vector<std::string> options;
+  cmSystemTools::ParseUnixCommandLine(newFlags.c_str(), options);
+  this->SetLinkScriptShell(this->GlobalGenerator->GetUseLinkScript());
+  std::vector<BT<std::string>> optionsWithBT{ options.size() };
+  std::transform(options.cbegin(), options.cend(), optionsWithBT.begin(),
+                 [](std::string const& item) -> BT<std::string> {
+                   return BT<std::string>{ item };
+                 });
+  target->ResolveLinkerWrapper(optionsWithBT, language);
+  for (auto const& item : optionsWithBT) {
+    this->AppendFlagEscape(flags, item.Value);
+  }
+  this->SetLinkScriptShell(false);
+}
+
 void cmLocalGenerator::AppendFlags(std::string& flags,
                                    std::string const& newFlags,
                                    std::string const& name,
@@ -2640,19 +2625,7 @@ void cmLocalGenerator::AppendFlags(std::string& flags,
       break;
     case cmPolicies::NEW:
       if (compileOrLink == cmBuildStep::Link) {
-        std::vector<std::string> options;
-        cmSystemTools::ParseUnixCommandLine(newFlags.c_str(), options);
-        this->SetLinkScriptShell(this->GlobalGenerator->GetUseLinkScript());
-        std::vector<BT<std::string>> optionsWithBT{ options.size() };
-        std::transform(options.cbegin(), options.cend(), optionsWithBT.begin(),
-                       [](std::string const& item) -> BT<std::string> {
-                         return BT<std::string>{ item };
-                       });
-        target->ResolveLinkerWrapper(optionsWithBT, language);
-        for (auto const& item : optionsWithBT) {
-          this->AppendFlagEscape(flags, item.Value);
-        }
-        this->SetLinkScriptShell(false);
+        this->AppendLinkFlagsWithParsing(flags, newFlags, target, language);
       } else {
         this->AppendFlags(flags, newFlags);
       }
@@ -3379,6 +3352,64 @@ void cmLocalGenerator::AddUnityBuild(cmGeneratorTarget* target)
   }
 }
 
+void cmLocalGenerator::AddPerLanguageLinkFlags(std::string& flags,
+                                               cmGeneratorTarget const* target,
+                                               std::string const& lang,
+                                               std::string const& config)
+{
+  switch (target->GetType()) {
+    case cmStateEnums::MODULE_LIBRARY:
+    case cmStateEnums::SHARED_LIBRARY:
+    case cmStateEnums::EXECUTABLE:
+      break;
+    default:
+      return;
+  }
+
+  std::string langLinkFlags =
+    this->Makefile->GetSafeDefinition(cmStrCat("CMAKE_", lang, "_LINK_FLAGS"));
+
+  switch (target->GetPolicyStatusCMP0210()) {
+    case cmPolicies::WARN:
+      // WARN only when CMAKE_<LANG>_LINK_FLAGS is set, and when the current
+      // target is not an executable, and CMAKE_<LANG>_LINK_FLAGS is not equal
+      // to CMAKE_EXECUTABLE_CREATE_<LANG>_FLAGS. This warns users trying to
+      // use the NEW behavior on old projects (since CMake will be ignoring
+      // their wishes), while also exempting cases when the latter variable
+      // (substituted for the former spelling under the NEW behavior) is being
+      // used legitimately by CMake.
+      if (!langLinkFlags.empty() &&
+          target->GetType() != cmStateEnums::EXECUTABLE &&
+          langLinkFlags !=
+            this->Makefile->GetSafeDefinition(
+              cmStrCat("CMAKE_EXECUTABLE_CREATE_", lang, "_FLAGS"))) {
+        this->IssueMessage(
+          MessageType::AUTHOR_WARNING,
+          cmStrCat(cmPolicies::GetPolicyWarning(cmPolicies::CMP0210), "\n",
+                   "For compatibility with older versions of CMake, ",
+                   "CMAKE_", lang, "_LINK_FLAGS will be ignored for target '",
+                   target->GetName(), "'."));
+      }
+      CM_FALLTHROUGH;
+    case cmPolicies::OLD:
+      // OLD behavior is to do nothing here, since the use of
+      // CMAKE_<LANG>_LINK_FLAGS for EXECUTABLEs is handled elsewhere.
+      break;
+    case cmPolicies::NEW:
+      // NEW behavior is to support per-language link flags for all target
+      // types.
+      this->AppendLinkFlagsWithParsing(flags, langLinkFlags, target, lang);
+      if (!config.empty()) {
+        std::string lankLinkFlagsConfig =
+          this->Makefile->GetSafeDefinition(cmStrCat(
+            "CMAKE_", lang, "_LINK_FLAGS_", cmSystemTools::UpperCase(config)));
+        this->AppendLinkFlagsWithParsing(flags, lankLinkFlagsConfig, target,
+                                         lang);
+      }
+      break;
+  }
+}
+
 void cmLocalGenerator::AppendTargetCreationLinkFlags(
   std::string& flags, cmGeneratorTarget const* target,
   std::string const& linkLanguage)
@@ -3402,7 +3433,9 @@ void cmLocalGenerator::AppendTargetCreationLinkFlags(
       }
       break;
     case cmStateEnums::EXECUTABLE:
-      createFlagsVar = cmStrCat("CMAKE_", linkLanguage, "_LINK_FLAGS");
+      createFlagsVar = target->GetPolicyStatusCMP0210() == cmPolicies::NEW
+        ? cmStrCat("CMAKE_EXECUTABLE_CREATE_", linkLanguage, "_FLAGS")
+        : cmStrCat("CMAKE_", linkLanguage, "_LINK_FLAGS");
       createFlagsVal = this->Makefile->GetDefinition(createFlagsVar);
       break;
     default:
@@ -3466,6 +3499,45 @@ void cmLocalGenerator::AppendLinkerTypeFlags(std::string& flags,
         cmStrCat("LINKER_TYPE '", linkerType,
                  "' is unknown. Did you forget to define the '", usingLinker,
                  "' variable?"));
+    }
+  }
+}
+
+void cmLocalGenerator::AddTargetTypeLinkerFlags(
+  std::string& flags, cmGeneratorTarget const* target, std::string const& lang,
+  std::string const& config)
+{
+  std::string linkerFlagsVar;
+  switch (target->GetType()) {
+    case cmStateEnums::EXECUTABLE:
+      linkerFlagsVar = "CMAKE_EXE_LINKER_FLAGS";
+      break;
+    case cmStateEnums::SHARED_LIBRARY:
+      linkerFlagsVar = "CMAKE_SHARED_LINKER_FLAGS";
+      break;
+    case cmStateEnums::MODULE_LIBRARY:
+      linkerFlagsVar = "CMAKE_MODULE_LINKER_FLAGS";
+      break;
+    default:
+      return;
+  }
+  this->AddConfigVariableFlags(flags, linkerFlagsVar, target,
+                               cmBuildStep::Link, lang, config);
+}
+
+void cmLocalGenerator::AddTargetPropertyLinkFlags(
+  std::string& flags, cmGeneratorTarget const* target,
+  std::string const& config)
+{
+  cmValue targetLinkFlags = target->GetProperty("LINK_FLAGS");
+  if (targetLinkFlags) {
+    this->AppendFlags(flags, *targetLinkFlags);
+  }
+  if (!config.empty()) {
+    cmValue targetLinkFlagsConfig = target->GetProperty(
+      cmStrCat("LINK_FLAGS_", cmSystemTools::UpperCase(config)));
+    if (targetLinkFlagsConfig) {
+      this->AppendFlags(flags, *targetLinkFlagsConfig);
     }
   }
 }
