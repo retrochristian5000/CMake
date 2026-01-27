@@ -1,0 +1,17 @@
+{
+    "version": 10,
+    "configurePresets": [
+        {
+            "name": "default",
+            "generator": "@RunCMake_GENERATOR@",
+            "binaryDir": "${sourceDir}/build/${presetName}"
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "default",
+            "configurePreset": "default",
+            "jobs": ""
+        }
+    ]
+}

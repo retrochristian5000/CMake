@@ -1,5 +1,5 @@
 {
-    "version": 5,
+    "version": 11,
     "configurePresets": [
         {
             "name": "default",
@@ -84,6 +84,11 @@
             "inherits": "build-default",
             "targets": "good",
             "resolvePackageReferences": "off"
+        },
+        {
+            "name": "jobsDefaultParallel",
+            "inherits": "build-default",
+            "jobs": ""
         }
     ]
 }
