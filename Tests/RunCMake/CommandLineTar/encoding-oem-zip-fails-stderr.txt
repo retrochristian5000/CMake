@@ -1,0 +1,12 @@
+^(CMake Error: archive_write_header: Can't translate [Pp]athname '.*\.txt' to .*
+CMake Error: Problem creating tar:
+[^
+]*/bad\.zip
+CMake Error at roundtrip\.cmake:[0-9]+ \(message\):
+|CMake Error at roundtrip\.cmake:[0-9]+ \(message\):
+  Cannot find output file:[
+ ]+"[^"]+\.txt"
+Call Stack \(most recent call first\):
+  encoding-oem-zip-fails\.cmake:[0-9]+ \(include\)
+  CMakeLists\.txt:[0-9]+ \(include\)
+|CMake Error: Problem with archive_)
