@@ -151,6 +151,30 @@ cm::optional<std::string> GetValue(cmsys::SystemInformation& info,
   if (key == "OS_PLATFORM"_s) {
     return ValueToString(info.GetOSPlatform());
   }
+  if (key == "FAMILY_ID"_s) {
+    return ValueToString(info.GetFamilyID());
+  }
+  if (key == "MODEL_ID"_s) {
+    return ValueToString(info.GetModelID());
+  }
+  if (key == "MODEL_NAME"_s) {
+    return ValueToString(info.GetModelName());
+  }
+  if (key == "PROCESSOR_APIC_ID"_s) {
+    return ValueToString(info.GetProcessorAPICID());
+  }
+  if (key == "PROCESSOR_CACHE_SIZE"_s) {
+    return ValueToString(info.GetProcessorCacheSize());
+  }
+  if (key == "PROCESSOR_CLOCK_FREQUENCY"_s) {
+    return ValueToString(info.GetProcessorClockFrequency());
+  }
+  if (key == "VENDOR_ID"_s) {
+    return ValueToString(info.GetVendorID());
+  }
+  if (key == "VENDOR_STRING"_s) {
+    return ValueToString(info.GetVendorString());
+  }
   return {};
 }
 

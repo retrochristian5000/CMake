@@ -162,6 +162,46 @@ queried.  The list of queried values is stored in ``<variable>``.
   environment that sets the ``MSYSTEM`` environment variable, this
   is its installation prefix.  Otherwise, this is the empty string.
 
+``FAMILY_ID``
+  .. versionadded:: 4.3
+
+  The processor family name
+
+``MODEL_ID``
+  .. versionadded:: 4.3
+
+  The processor model ID
+
+``MODEL_NAME``
+  .. versionadded:: 4.3
+
+  The processor model name
+
+``PROCESSOR_APIC_ID``
+  .. versionadded:: 4.3
+
+  The processor APIC ID
+
+``PROCESSOR_CACHE_SIZE``
+  .. versionadded:: 4.3
+
+  The processor L1 cache size
+
+``PROCESSOR_CLOCK_FREQUENCY``
+  .. versionadded:: 4.3
+
+  The processor clock frequency
+
+``VENDOR_ID``
+  .. versionadded:: 4.3
+
+  The processor vendor ID
+
+``VENDOR_STRING``
+  .. versionadded:: 4.3
+
+  The processor vendor string
+
 ``DISTRIB_INFO``
   .. versionadded:: 3.22
 
