@@ -7,6 +7,12 @@ run_cmake(BadArg3)
 run_cmake(QueryList)
 run_cmake(QueryKeys)
 
+if(CMAKE_HOST_WIN32 OR CMake_TEST_LOCALE_UTF8)
+  set(RunCMake-stdout-file Locale-stdout-utf-8.txt)
+endif()
+run_cmake_script(Locale)
+unset(RunCMake-stdout-file)
+
 run_cmake(UnitTest)
 run_cmake(Exherbo)
 run_cmake(Ubuntu)
