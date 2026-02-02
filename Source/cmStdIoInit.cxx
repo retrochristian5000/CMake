@@ -3,6 +3,7 @@
 #include "cmStdIoInit.h"
 
 #include <cerrno>
+#include <clocale>
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
@@ -106,14 +107,13 @@ public:
   static Globals& Get();
 };
 
-#ifdef _WIN32
 Globals::Globals()
 {
+  std::setlocale(LC_CTYPE, "");
+#ifdef _WIN32
   SetConsoleCtrlHandler(CtrlHandler, TRUE);
-}
-#else
-Globals::Globals() = default;
 #endif
+}
 
 Globals& Globals::Get()
 {
