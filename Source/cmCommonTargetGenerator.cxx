@@ -180,9 +180,12 @@ cmCommonTargetGenerator::GetLinkedTargetDirectories(
 
   if (cmComputeLinkInformation* cli =
         this->GeneratorTarget->GetLinkInformation(config)) {
+
+    auto const& synthDeps = this->GeneratorTarget->GetSyntheticDeps(config);
+
     auto addLinkedTarget =
       [this, &lang, &config, &dirs, &direct_emitted, &forward_emitted,
-       gg](cmGeneratorTarget const* linkee, Forwarding forward) {
+       &synthDeps, gg](cmGeneratorTarget const* linkee, Forwarding forward) {
         if (linkee &&
             !linkee->IsImported()
             // Skip targets that build after this one in a static lib cycle.
@@ -192,7 +195,10 @@ cmCommonTargetGenerator::GetLinkedTargetDirectories(
             // link interface and they don't have any output themselves.
             && (linkee->GetType() != cmStateEnums::INTERFACE_LIBRARY
                 // Synthesized targets may have relevant rules.
-                || linkee->IsSynthetic()) &&
+                || linkee->IsSynthetic())
+            // Skip the native target directory if there is a synthetic version
+            // for this consumer
+            && (synthDeps.find(linkee) == synthDeps.end()) &&
             ((lang == "CXX"_s && linkee->HaveCxx20ModuleSources()) ||
              (lang == "Fortran"_s && linkee->HaveFortranSources(config)))) {
           cmLocalGenerator* lg = linkee->GetLocalGenerator();

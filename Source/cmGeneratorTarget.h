@@ -1121,6 +1121,10 @@ public:
   bool DiscoverSyntheticTargets(cmSyntheticTargetCache& cache,
                                 std::string const& config);
 
+  using SyntheticDepsMap =
+    std::map<cmGeneratorTarget const*, std::vector<cmGeneratorTarget const*>>;
+  SyntheticDepsMap const& GetSyntheticDeps(std::string const& config) const;
+
   class CustomTransitiveProperty : public TransitiveProperty
   {
     std::unique_ptr<std::string> InterfaceNameBuf;
