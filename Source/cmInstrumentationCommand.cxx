@@ -11,7 +11,6 @@ file LICENSE.rst or https://cmake.org/licensing for details.  */
 
 #include <cmext/string_view>
 
-#include <cm3p/json/reader.h>
 #include <cm3p/json/value.h>
 
 #include "cmArgumentParser.h"
@@ -19,6 +18,7 @@ file LICENSE.rst or https://cmake.org/licensing for details.  */
 #include "cmExecutionStatus.h"
 #include "cmInstrumentation.h"
 #include "cmInstrumentationQuery.h"
+#include "cmJSONState.h"
 #include "cmList.h"
 #include "cmMakefile.h"
 #include "cmStringAlgorithms.h"
@@ -160,11 +160,11 @@ bool cmInstrumentationCommand(std::vector<std::string> const& args,
         value.append(item);
       }
     } else if (type == "JSON") {
-      Json::CharReaderBuilder builder;
       std::istringstream iss(contentString);
-      if (!Json::parseFromStream(builder, iss, &value, nullptr)) {
-        status.SetError(
-          cmStrCat("failed to parse custom content as JSON: ", contentString));
+      cmJSONState parseState(iss, &value, false);
+      if (!parseState.errors.empty()) {
+        status.SetError(cmStrCat("failed to parse custom content as JSON:\n ",
+                                 parseState.GetErrorMessage()));
         return false;
       }
     } else {
