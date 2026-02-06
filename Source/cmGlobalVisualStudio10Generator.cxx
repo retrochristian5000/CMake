@@ -11,7 +11,6 @@
 #include <cm/memory>
 #include <cmext/string_view>
 
-#include <cm3p/json/reader.h>
 #include <cm3p/json/value.h>
 
 #include "cmsys/FStream.hxx"
@@ -1393,13 +1392,10 @@ cmIDEFlagTable const* cmLoadFlagTableJson(std::string const& flagJsonPath,
   if (savedFlagIterator != loadedFlagJsonFiles.end()) {
     ret = savedFlagIterator->second.data();
   } else {
-    Json::Reader reader;
-    cmsys::ifstream stream;
-
-    stream.open(flagJsonPath.c_str(), std::ios_base::in);
-    if (stream) {
-      Json::Value flags;
-      if (reader.parse(stream, flags, false) && flags.isArray()) {
+    Json::Value flags;
+    if (cmSystemTools::FileExists(flagJsonPath)) {
+      cmJSONState parseState(flagJsonPath, &flags);
+      if (!parseState.errors.empty() && flags.isArray()) {
         std::vector<cmIDEFlagTable> flagTable;
         for (auto const& flag : flags) {
           Json::Value const& vsminJson = flag["vsmin"];
