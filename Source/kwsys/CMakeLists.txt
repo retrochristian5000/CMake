@@ -159,6 +159,7 @@ if(KWSYS_USE_SystemTools)
   set(KWSYS_USE_FStream 1)
   set(KWSYS_USE_Encoding 1)
   set(KWSYS_USE_Status 1)
+  set(KWSYS_USE_String 1)
 endif()
 if(KWSYS_USE_Glob)
   set(KWSYS_USE_Directory 1)
@@ -166,6 +167,7 @@ if(KWSYS_USE_Glob)
   set(KWSYS_USE_RegularExpression 1)
   set(KWSYS_USE_FStream 1)
   set(KWSYS_USE_Encoding 1)
+  set(KWSYS_USE_String 1)
 endif()
 if(KWSYS_USE_Process)
   set(KWSYS_USE_System 1)
@@ -913,6 +915,7 @@ if(KWSYS_STANDALONE OR CMake_SOURCE_DIR)
     # C tests
     set(KWSYS_C_TESTS
       testEncode.c
+      testString.c
       )
     if(KWSYS_STANDALONE)
       set(KWSYS_C_TESTS ${KWSYS_C_TESTS} testFail.c)

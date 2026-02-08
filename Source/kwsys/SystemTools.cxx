@@ -25,9 +25,9 @@
 #include KWSYS_HEADER(FStream.hxx)
 #include KWSYS_HEADER(Encoding.h)
 #include KWSYS_HEADER(Encoding.hxx)
+#include KWSYS_HEADER(String.h)
 
 #include <algorithm>
-#include <cctype>
 #include <fstream>
 #include <iostream>
 #include <set>
@@ -44,9 +44,11 @@
 // duplicate the above list of headers.
 #if 0
 #  include "Directory.hxx.in"
+#  include "Encoding.h.in"
 #  include "Encoding.hxx.in"
 #  include "FStream.hxx.in"
 #  include "RegularExpression.hxx.in"
+#  include "String.h.in"
 #  include "SystemTools.hxx.in"
 #endif
 
@@ -58,7 +60,6 @@
 #  pragma set woff 1375 /* base class destructor not virtual */
 #endif
 
-#include <cctype>
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
@@ -321,8 +322,7 @@ inline char const* Getcwd(char* buf, unsigned int len)
     if (nlen < len) {
       // make sure the drive letter is capital
       if (nlen > 1 && buf[1] == ':') {
-        buf[0] =
-          static_cast<char>(toupper(static_cast<unsigned char>(buf[0])));
+        buf[0] = kwsysString_toupper(buf[0]);
       }
       return buf;
     }
@@ -554,8 +554,7 @@ std::string SystemToolsStatic::GetCasePathName(std::string const& pathIn)
   casePath = path_components[idx++];
   // make sure drive letter is always upper case
   if (casePath.size() > 1 && casePath[1] == ':') {
-    casePath[0] = static_cast<std::string::value_type>(
-      toupper(static_cast<unsigned char>(casePath[0])));
+    casePath[0] = kwsysString_toupper(casePath[0]);
   }
   char const* sep = "";
 
@@ -1659,11 +1658,9 @@ std::string SystemTools::Capitalized(std::string const& s)
     return n;
   }
   n.resize(s.size());
-  n[0] = static_cast<std::string::value_type>(
-    toupper(static_cast<unsigned char>(s[0])));
+  n[0] = static_cast<std::string::value_type>(kwsysString_toupper(s[0]));
   for (size_t i = 1; i < s.size(); i++) {
-    n[i] = static_cast<std::string::value_type>(
-      tolower(static_cast<unsigned char>(s[i])));
+    n[i] = static_cast<std::string::value_type>(kwsysString_tolower(s[i]));
   }
   return n;
 }
@@ -1682,8 +1679,7 @@ std::string SystemTools::CapitalizedWords(std::string const& s)
     if (isalpha(s[i]) && (i == 0 || isspace(s[i - 1])))
 #endif
     {
-      n[i] = static_cast<std::string::value_type>(
-        toupper(static_cast<unsigned char>(s[i])));
+      n[i] = static_cast<std::string::value_type>(kwsysString_toupper(s[i]));
     }
   }
   return n;
@@ -1703,8 +1699,7 @@ std::string SystemTools::UnCapitalizedWords(std::string const& s)
     if (isalpha(s[i]) && (i == 0 || isspace(s[i - 1])))
 #endif
     {
-      n[i] = static_cast<std::string::value_type>(
-        tolower(static_cast<unsigned char>(s[i])));
+      n[i] = static_cast<std::string::value_type>(kwsysString_tolower(s[i]));
     }
   }
   return n;
@@ -1771,15 +1766,13 @@ char* SystemTools::AppendStrings(char const* str1, char const* str2,
 
 std::string SystemTools::LowerCase(std::string s)
 {
-  std::transform(s.begin(), s.end(), s.begin(),
-                 [](unsigned char c) { return std::tolower(c); });
+  std::transform(s.begin(), s.end(), s.begin(), kwsysString_tolower);
   return s;
 }
 
 std::string SystemTools::UpperCase(std::string s)
 {
-  std::transform(s.begin(), s.end(), s.begin(),
-                 [](unsigned char c) { return std::toupper(c); });
+  std::transform(s.begin(), s.end(), s.begin(), kwsysString_toupper);
   return s;
 }
 
@@ -2742,8 +2735,8 @@ int SystemTools::Strucmp(char const* l, char const* r)
   int lc;
   int rc;
   do {
-    lc = tolower(static_cast<unsigned char>(*l++));
-    rc = tolower(static_cast<unsigned char>(*r++));
+    lc = kwsysString_tolower(*l++);
+    rc = kwsysString_tolower(*r++);
   } while (lc == rc && lc);
   return lc - rc;
 }
