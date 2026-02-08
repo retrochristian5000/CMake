@@ -16,6 +16,8 @@
 #  define kwsysEXPORT @KWSYS_NAMESPACE@_EXPORT
 #endif
 #if !@KWSYS_NAMESPACE@_NAME_IS_KWSYS
+#  define kwsysString_tolower kwsys_ns(String_tolower)
+#  define kwsysString_toupper kwsys_ns(String_toupper)
 #  define kwsysString_strcasecmp kwsys_ns(String_strcasecmp)
 #  define kwsysString_strncasecmp kwsys_ns(String_strncasecmp)
 #endif
@@ -23,6 +25,16 @@
 #if defined(__cplusplus)
 extern "C" {
 #endif
+
+/**
+ * Convert A-Z to a-z.  Locale-independnet.
+ */
+kwsysEXPORT unsigned char kwsysString_tolower(char c);
+
+/**
+ * Convert a-z to A-Z.  Locale-independnet.
+ */
+kwsysEXPORT unsigned char kwsysString_toupper(char c);
 
 /**
  * Compare two strings ignoring the case of the characters.  The
@@ -49,6 +61,8 @@ kwsysEXPORT int kwsysString_strncasecmp(char const* lhs, char const* rhs,
 #  undef kwsys_ns
 #  undef kwsysEXPORT
 #  if !@KWSYS_NAMESPACE@_NAME_IS_KWSYS
+#    undef kwsysString_tolower
+#    undef kwsysString_toupper
 #    undef kwsysString_strcasecmp
 #    undef kwsysString_strncasecmp
 #  endif

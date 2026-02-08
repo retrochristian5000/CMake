@@ -58,7 +58,6 @@
 #  include <cm3p/archive_entry.h>
 
 #  include "cmArchiveWrite.h"
-#  include "cmLocale.h"
 #  ifndef __LA_INT64_T
 #    define __LA_INT64_T la_int64_t
 #  endif
@@ -101,6 +100,7 @@
 #include "cmsys/Directory.hxx"
 #ifdef _WIN32
 #  include "cmsys/Encoding.hxx"
+#  include "cmsys/String.h"
 #endif
 #include "cmsys/FStream.hxx"
 #include "cmsys/RegularExpression.hxx"
@@ -1340,7 +1340,7 @@ std::string cmSystemTools::GetRealPathResolvingWindowsSubst(
   }
   // Normalize to upper-case drive letter as cm::PathResolver does.
   if (resolved_path.size() > 1 && resolved_path[1] == ':') {
-    resolved_path[0] = toupper(static_cast<unsigned char>(resolved_path[0]));
+    resolved_path[0] = cmsysString_toupper(resolved_path[0]);
   }
   return resolved_path;
 #else
@@ -1362,12 +1362,10 @@ std::string cmSystemTools::GetRealPath(std::string const& path,
   // limitation to otherwise preserve susbt drives.
   if (resolved_path.size() >= 2 && resolved_path[1] == ':' &&
       path.size() >= 2 && path[1] == ':' &&
-      toupper(static_cast<unsigned char>(resolved_path[0])) !=
-        toupper(static_cast<unsigned char>(path[0]))) {
+      cmsysString_toupper(resolved_path[0]) != cmsysString_toupper(path[0])) {
     // FIXME: Add thread_local or mutex if we use threads.
     static std::map<char, std::string> substMap;
-    char const drive =
-      static_cast<char>(toupper(static_cast<unsigned char>(path[0])));
+    char const drive = static_cast<char>(cmsysString_toupper(path[0]));
     std::string maybe_subst = cmStrCat(drive, ":/");
     auto smi = substMap.find(drive);
     if (smi == substMap.end()) {
@@ -2626,8 +2624,6 @@ bool extract_tar(std::string const& arFileName,
                  cmSystemTools::cmTarExtractTimestamps extractTimestamps,
                  bool extract)
 {
-  cmLocaleRAII localeRAII;
-  static_cast<void>(localeRAII);
   struct archive* a = archive_read_new();
   struct archive* ext = archive_write_disk_new();
   if (extract) {
