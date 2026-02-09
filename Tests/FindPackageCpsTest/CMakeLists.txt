@@ -226,12 +226,16 @@ add_executable(requires-test-compile_only requires-test.cxx)
 target_link_libraries(requires-test-compile_only RequiresTest::CompileOnly)
 
 expect_property(
+  RequiresTest::Other INTERFACE_LINK_LIBRARIES
+  "link libraries" "every-config;$<$<CONFIG:test>:test-config>")
+
+expect_property(
   RequiresTest::Other IMPORTED_LINK_DEPENDENT_LIBRARIES
   "dyld requirements (any config)" "RequiresTest::Private1")
 
 expect_property(
   RequiresTest::Other IMPORTED_LINK_DEPENDENT_LIBRARIES_TEST
-  "dyld requirements ('TEST' config)" "RequiresTest::Private22")
+  "dyld requirements ('TEST' config)" "RequiresTest::Private2")
 
 ###############################################################################
 # Test importing of (language-specific) include paths.
