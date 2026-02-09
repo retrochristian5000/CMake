@@ -11,13 +11,13 @@
 #include <cm/string_view>
 #include <cmext/string_view>
 
-#include <cm3p/json/reader.h>
 #include <cm3p/json/value.h>
 #include <cm3p/json/writer.h>
 
 #include "cmsys/FStream.hxx"
 
 #include "cmGeneratedFileStream.h"
+#include "cmJSONState.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
 
@@ -85,13 +85,11 @@ bool cmScanDepFormat_P1689_Parse(std::string const& arg_pp,
 {
   Json::Value ppio;
   Json::Value const& ppi = ppio;
-  cmsys::ifstream ppf(arg_pp.c_str(), std::ios::in | std::ios::binary);
   {
-    Json::Reader reader;
-    if (!reader.parse(ppf, ppio, false)) {
+    cmJSONState parseState(arg_pp, &ppio);
+    if (!parseState.errors.empty()) {
       cmSystemTools::Error(cmStrCat("-E cmake_ninja_dyndep failed to parse ",
-                                    arg_pp,
-                                    reader.getFormattedErrorMessages()));
+                                    arg_pp, parseState.GetErrorMessage()));
       return false;
     }
   }

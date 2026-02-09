@@ -21,8 +21,9 @@
 #include <sstream>
 #include <string>
 
-#include <cm3p/json/reader.h>
 #include <cm3p/json/value.h>
+
+#include "cmJSONState.h"
 
 // Limit input size
 static constexpr size_t kMaxInputSize = 256 * 1024; // 256KB
@@ -75,31 +76,12 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t const* data, size_t size)
   }
 
   std::string input(reinterpret_cast<char const*>(data), size);
-
   Json::Value root;
-  Json::CharReaderBuilder builder;
-  std::string errors;
-
   std::istringstream stream(input);
 
-  // Try parsing with default settings
-  bool success = Json::parseFromStream(builder, stream, &root, &errors);
-
-  if (success) {
+  cmJSONState parseState(stream, &root);
+  if (!parseState.errors.empty()) {
     // Traverse the parsed structure
-    TraverseValue(root);
-  }
-
-  // Also try with strict mode
-  builder["strictRoot"] = true;
-  builder["allowComments"] = false;
-  builder["allowTrailingCommas"] = false;
-
-  stream.clear();
-  stream.str(input);
-
-  success = Json::parseFromStream(builder, stream, &root, &errors);
-  if (success) {
     TraverseValue(root);
   }
 

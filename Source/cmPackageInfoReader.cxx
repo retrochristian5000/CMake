@@ -11,15 +11,13 @@
 #include <cmext/algorithm>
 #include <cmext/string_view>
 
-#include <cm3p/json/reader.h>
 #include <cm3p/json/value.h>
-#include <cm3p/json/version.h>
 
-#include "cmsys/FStream.hxx"
 #include "cmsys/RegularExpression.hxx"
 
 #include "cmCxxModuleMetadata.h"
 #include "cmExecutionStatus.h"
+#include "cmJSONState.h"
 #include "cmList.h"
 #include "cmListFileCache.h"
 #include "cmMakefile.h"
@@ -81,33 +79,6 @@ std::string GetRealPath(std::string const& path)
 std::string GetRealDir(std::string const& path)
 {
   return cmSystemTools::GetFilenamePath(cmSystemTools::GetRealPath(path));
-}
-
-Json::Value ReadJson(std::string const& fileName)
-{
-  // Open the specified file.
-  cmsys::ifstream file(fileName.c_str(), std::ios::in | std::ios::binary);
-  if (!file) {
-#if JSONCPP_VERSION_HEXA < 0x01070300
-    return Json::Value::null;
-#else
-    return Json::Value::nullSingleton();
-#endif
-  }
-
-  // Read file content and translate JSON.
-  Json::Value data;
-  Json::CharReaderBuilder builder;
-  builder["collectComments"] = false;
-  if (!Json::parseFromStream(builder, file, &data, nullptr)) {
-#if JSONCPP_VERSION_HEXA < 0x01070300
-    return Json::Value::null;
-#else
-    return Json::Value::nullSingleton();
-#endif
-  }
-
-  return data;
 }
 
 std::string ToString(Json::Value const& value)
@@ -452,8 +423,10 @@ std::unique_ptr<cmPackageInfoReader> cmPackageInfoReader::Read(
   //   - the input is valid JSON
   //   - the input is a JSON object
   //   - the input has a "cps_version" that we (in theory) know how to parse
-  Json::Value data = ReadJson(path);
-  if (!data.isObject() || (!parent && !CheckSchemaVersion(data))) {
+  Json::Value data;
+  cmJSONState parseState(path, &data);
+  if (!parseState.errors.empty() || !data.isObject() ||
+      (!parent && !CheckSchemaVersion(data))) {
     return nullptr;
   }
 

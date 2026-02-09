@@ -13,7 +13,6 @@
 #include <cm/optional>
 #include <cmext/algorithm>
 
-#include <cm3p/json/reader.h>
 #include <cm3p/json/version.h>
 #include <cm3p/json/writer.h>
 #include <cm3p/uv.h>
@@ -509,22 +508,16 @@ void cmInstrumentation::InsertTimingData(
 
 Json::Value cmInstrumentation::ReadJsonSnippet(std::string const& file_name)
 {
-  Json::CharReaderBuilder builder;
-  builder["collectComments"] = false;
-  cmsys::ifstream ftmp(
-    cmStrCat(this->timingDirv1, "/data/", file_name).c_str());
   Json::Value snippetData;
-  builder["collectComments"] = false;
-
-  if (!Json::parseFromStream(builder, ftmp, &snippetData, nullptr)) {
+  std::string snippetPath = cmStrCat(this->timingDirv1, "/data/", file_name);
+  cmJSONState parseState(snippetPath, &snippetData);
+  if (!parseState.errors.empty()) {
 #if JSONCPP_VERSION_HEXA < 0x01070300
-    snippetData = Json::Value::null;
+    return Json::Value::null;
 #else
-    snippetData = Json::Value::nullSingleton();
+    return Json::Value::nullSingleton();
 #endif
   }
-
-  ftmp.close();
   return snippetData;
 }
 

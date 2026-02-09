@@ -3,6 +3,7 @@
 
 #include "cmJSONState.h"
 
+#include <istream>
 #include <iterator>
 #include <memory>
 #include <sstream>
@@ -16,7 +17,8 @@
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
 
-cmJSONState::cmJSONState(std::string jsonFile, Json::Value* root)
+cmJSONState::cmJSONState(std::string jsonFile, Json::Value* root,
+                         bool strictMode)
   : Filename(std::move(jsonFile))
 {
   cmsys::ifstream fin(this->Filename.c_str(), std::ios::in | std::ios::binary);
@@ -27,37 +29,13 @@ cmJSONState::cmJSONState(std::string jsonFile, Json::Value* root)
   // If there's a BOM, toss it.
   cmsys::FStream::ReadBOM(fin);
 
-  // Save the entire document.
-  std::streampos finBegin = fin.tellg();
-  this->doc = std::string(std::istreambuf_iterator<char>(fin),
-                          std::istreambuf_iterator<char>());
-  if (this->doc.empty()) {
-    this->AddError("A JSON document cannot be empty");
-    return;
-  }
-  fin.seekg(finBegin);
+  this->ReadJSONStream(fin, root, strictMode);
+}
 
-  Json::CharReaderBuilder builder;
-  Json::CharReaderBuilder::strictMode(&builder.settings_);
-  std::string errMsg;
-
-#if JSONCPP_VERSION_HEXA >= 0x01090600
-  // Has StructuredError
-  std::unique_ptr<Json::CharReader> const reader(builder.newCharReader());
-  reader->parse(doc.data(), doc.data() + doc.size(), root, &errMsg);
-  std::vector<Json::CharReader::StructuredError> structuredErrors =
-    reader->getStructuredErrors();
-  for (auto const& structuredError : structuredErrors) {
-    this->AddErrorAtOffset(structuredError.message,
-                           structuredError.offset_start);
-  }
-#else
-  // No StructuredError Available, Use error string from jsonCpp
-  if (!Json::parseFromStream(builder, fin, root, &errMsg)) {
-    errMsg = cmStrCat("JSON Parse Error: ", this->Filename, ":\n", errMsg);
-    this->AddError(errMsg);
-  }
-#endif
+cmJSONState::cmJSONState(std::istream& jsonIStream, Json::Value* root,
+                         bool strictMode)
+{
+  this->ReadJSONStream(jsonIStream, root, strictMode);
 }
 
 void cmJSONState::AddError(std::string const& errMsg)
@@ -142,6 +120,58 @@ void cmJSONState::push_stack(std::string const& k, Json::Value const* value)
 void cmJSONState::pop_stack()
 {
   this->parseStack.pop_back();
+}
+
+void cmJSONState::ReadJSONStream(std::istream& jsonIStream, Json::Value* root,
+                                 bool strictMode)
+{
+  // Save the entire document.
+  std::streampos inBegin = jsonIStream.tellg();
+  this->doc = std::string(std::istreambuf_iterator<char>(jsonIStream),
+                          std::istreambuf_iterator<char>());
+  if (this->doc.empty()) {
+    this->AddError("A JSON document cannot be empty");
+    return;
+  }
+  jsonIStream.seekg(inBegin);
+
+  Json::CharReaderBuilder builder;
+  if (strictMode) {
+    Json::CharReaderBuilder::strictMode(&builder.settings_);
+  }
+  std::string errMsg;
+
+  try {
+#if JSONCPP_VERSION_HEXA >= 0x01090600
+    // Has StructuredError
+    std::unique_ptr<Json::CharReader> const reader(builder.newCharReader());
+    reader->parse(this->doc.data(), this->doc.data() + this->doc.size(), root,
+                  &errMsg);
+    std::vector<Json::CharReader::StructuredError> structuredErrors =
+      reader->getStructuredErrors();
+    for (auto const& structuredError : structuredErrors) {
+      this->AddErrorAtOffset(structuredError.message,
+                             structuredError.offset_start);
+    }
+#else
+    // No StructuredError Available, Use error string from jsonCpp
+    if (!Json::parseFromStream(builder, in, root, &errMsg)) {
+      if (this->Filename.empty()) {
+        errMsg = cmStrCat("JSON Parse Error:\n ", errMsg);
+      } else {
+        errMsg = cmStrCat("JSON Parse Error: ", this->Filename, ":\n", errMsg);
+      }
+      this->AddError(errMsg);
+    }
+#endif
+  } catch (Json::Exception const& e) {
+    if (this->Filename.empty()) {
+      errMsg = cmStrCat("JSON Parse Error:\n ", e.what());
+    } else {
+      errMsg = cmStrCat("JSON Parse Error: ", this->Filename, ":\n", e.what());
+    }
+    this->AddError(errMsg);
+  }
 }
 
 std::string cmJSONState::GetJsonContext(Location loc)
