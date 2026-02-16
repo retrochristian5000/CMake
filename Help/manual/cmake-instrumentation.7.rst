@@ -581,6 +581,8 @@ Each CMake content file contains the following:
     ``labels``
       The :prop_tgt:`LABELS` property of the target.
 
+.. _`Instrumentation Google Trace File`:
+
 Google Trace File
 -----------------
 
