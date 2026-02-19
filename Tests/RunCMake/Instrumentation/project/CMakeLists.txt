@@ -15,10 +15,17 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E true
   OUTPUT output1 output2
 )
+add_custom_command(
+  OUTPUT shell_redirect
+  VERBATIM
+  COMMAND ${CMAKE_COMMAND} -E cat - < ${CMAKE_SOURCE_DIR}/shell_redirect.txt
+  COMMAND ${CMAKE_COMMAND} -E echo "> operator" > shell_redirect
+  COMMAND ${CMAKE_COMMAND} -E echo ">> operator" >> shell_redirect
+)
 set_property(SOURCE output1 output2 PROPERTY SYMBOLIC 1)
 add_custom_target(customTarget ALL
   COMMAND ${CMAKE_COMMAND} -E true
-  DEPENDS output1
+  DEPENDS output1 shell_redirect
 )
 add_test(NAME test COMMAND $<TARGET_FILE:main>)
 install(TARGETS main)
