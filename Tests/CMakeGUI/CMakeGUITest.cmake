@@ -34,6 +34,17 @@ function(run_cmake_gui_test name)
   if(EXISTS "${_cmakepresets_in}")
     configure_file("${_cmakepresets_in}" "${_workdir}/src/CMakePresets.json" @ONLY)
   endif()
+  set(_instrumentation_srcs
+    "${_srcdir}/main.cxx"
+    "${_srcdir}/lib.h"
+    "${_srcdir}/lib.cxx"
+  )
+  foreach(_instrumentation_src IN LISTS _instrumentation_srcs)
+    if(EXISTS "${_instrumentation_src}.in")
+      cmake_path(GET _instrumentation_src FILENAME _instrumentation_src_name)
+      configure_file("${_instrumentation_src}.in" "${_workdir}/src/${_instrumentation_src_name}" @ONLY)
+    endif()
+  endforeach()
   if(_rcgt_DO_CONFIGURE)
     if(NOT _rcgt_GENERATOR)
       set(_rcgt_GENERATOR "${CMakeGUITest_GENERATOR}")
@@ -170,3 +181,12 @@ run_cmake_gui_test(presetArg:noExist
     "--preset=noExist"
   )
 run_cmake_gui_test(changingPresets)
+
+if("${CMakeGUITest_GENERATOR}" MATCHES "Make|Ninja|FASTBuild" AND NOT WIN32)
+  # FIXME: This test hangs on Windows.
+  run_cmake_gui_test(instrumentation)
+  set(instrumentation_v1
+    "${CMakeGUITest_BINARY_DIR}/instrumentation/build/.cmake/instrumentation/v1"
+    )
+  include(${CMAKE_CURRENT_LIST_DIR}/instrumentation/check-data-dir.cmake)
+endif()
