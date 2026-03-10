@@ -3,14 +3,29 @@ add_custom_command
 
 Add a custom build rule to the generated build system.
 
-There are two main signatures for ``add_custom_command``.
+Synopsis
+^^^^^^^^
 
-.. _`add_custom_command(OUTPUT)`:
+.. parsed-literal::
+  `Generating Files`_
+    add_custom_command(`OUTPUT`_ <output1> [<output2> ...]
+                       COMMAND <command1> [ARGS] [<args1>...]
+                       [...])
+
+  `Build Events`_
+    add_custom_command(`TARGET`_ <target>
+                       PRE_BUILD | PRE_LINK | POST_BUILD
+                       [...])
 
 Generating Files
 ^^^^^^^^^^^^^^^^
 
 The first signature is for adding a custom command to produce an output:
+
+.. signature::
+  add_custom_command(OUTPUT <output1> [<output2> ...]
+                     COMMAND <command1> [ARGS] [<args1>...]
+                     [...])
 
 .. code-block:: cmake
 
@@ -578,8 +593,6 @@ target-level dependency on ``generate_table_csv``, so the targets using them,
 ``foo`` and ``bar``, will not build until after target ``generate_table_csv``
 is built.
 
-.. _`add_custom_command(TARGET)`:
-
 Build Events
 ^^^^^^^^^^^^
 
@@ -588,6 +601,11 @@ library or executable.  This is useful for performing an operation
 before or after building the target.  The command becomes part of the
 target and will only execute when the target itself is built.  If the
 target is already built, the command will not execute.
+
+.. signature::
+  add_custom_command(TARGET <target>
+                     PRE_BUILD | PRE_LINK | POST_BUILD
+                     [...])
 
 .. code-block:: cmake
 
