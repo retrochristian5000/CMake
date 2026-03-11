@@ -214,6 +214,8 @@ cm::optional<cmPkgConfigResult> cmPkgConfigResolver::ResolveStrict(
   cmPkgConfigResult config;
   auto& keys = config.Keywords;
 
+  config.Variables["pcfiledir"] = env.PcFileDir;
+
   if (env.SysrootDir) {
     config.Variables["pc_sysrootdir"] = *env.SysrootDir;
   } else {
@@ -291,6 +293,8 @@ cmPkgConfigResult cmPkgConfigResolver::ResolveBestEffort(
   std::vector<cmPkgConfigEntry> const& entries, cmPkgConfigEnv env)
 {
   cmPkgConfigResult result;
+
+  result.Variables["pcfiledir"] = env.PcFileDir;
 
   if (env.SysrootDir) {
     result.Variables["pc_sysrootdir"] = *env.SysrootDir;

@@ -477,6 +477,7 @@ cm::optional<cmPkgConfigResult> ReadPackage(std::string const& package,
     if (!cmSystemTools::FileExists(path.string())) {
       return result;
     }
+    path = cmSystemTools::CollapseFullPath(path.string());
   } else {
 
     if (pcEnv.DisableUninstalled && !*pcEnv.DisableUninstalled) {
@@ -501,6 +502,10 @@ cm::optional<cmPkgConfigResult> ReadPackage(std::string const& package,
       }
     }
   }
+
+  // We need to escape spaces
+  pcEnv.PcFileDir = cmSystemTools::ConvertToUnixOutputPath(
+    cmSystemTools::GetFilenamePath(path.string()));
 
   auto len = cmSystemTools::FileLength(path.string());
 

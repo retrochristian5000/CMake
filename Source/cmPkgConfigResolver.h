@@ -60,6 +60,7 @@ struct cmPkgConfigEnv
   cm::optional<std::vector<std::string>> SysCflags;
   cm::optional<std::vector<std::string>> SysLibs;
 
+  std::string PcFileDir;
   cm::optional<std::string> SysrootDir;
   cm::optional<std::string> TopBuildDir;
   std::vector<std::string> search;
