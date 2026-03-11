@@ -1,0 +1,6 @@
+Name: Test Escaped Path
+Description: Paths containing backslash escapes
+Version: 1.0.0
+
+Cflags: -I/Test\ Escaped/Path -I/SecondPath -I/Third\ Path
+Libs: -L/Test\ Escaped/Path -L/SecondPath -L/Third\ Path

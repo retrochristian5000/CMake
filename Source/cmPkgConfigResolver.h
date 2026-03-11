@@ -133,35 +133,34 @@ private:
     cmPkgConfigEntry const& entry,
     std::unordered_map<std::string, std::string> const& variables);
 
-  static std::vector<cm::string_view> TokenizeFlags(
-    std::string const& flagline);
+  static std::vector<std::string> TokenizeFlags(std::string const& flagline);
 
   static cmPkgConfigCflagsResult MangleCflags(
-    std::vector<cm::string_view> const& flags);
+    std::vector<std::string> const& flags);
 
   static cmPkgConfigCflagsResult MangleCflags(
-    std::vector<cm::string_view> const& flags, std::string const& sysroot);
+    std::vector<std::string> const& flags, std::string const& sysroot);
 
   static cmPkgConfigCflagsResult MangleCflags(
-    std::vector<cm::string_view> const& flags,
+    std::vector<std::string> const& flags,
     std::vector<std::string> const& syspaths);
 
   static cmPkgConfigCflagsResult MangleCflags(
-    std::vector<cm::string_view> const& flags, std::string const& sysroot,
+    std::vector<std::string> const& flags, std::string const& sysroot,
     std::vector<std::string> const& syspaths);
 
   static cmPkgConfigLibsResult MangleLibs(
-    std::vector<cm::string_view> const& flags);
+    std::vector<std::string> const& flags);
 
   static cmPkgConfigLibsResult MangleLibs(
-    std::vector<cm::string_view> const& flags, std::string const& sysroot);
+    std::vector<std::string> const& flags, std::string const& sysroot);
 
   static cmPkgConfigLibsResult MangleLibs(
-    std::vector<cm::string_view> const& flags,
+    std::vector<std::string> const& flags,
     std::vector<std::string> const& syspaths);
 
   static cmPkgConfigLibsResult MangleLibs(
-    std::vector<cm::string_view> const& flags, std::string const& sysroot,
+    std::vector<std::string> const& flags, std::string const& sysroot,
     std::vector<std::string> const& syspaths);
 
   static std::string Reroot(cm::string_view flag, cm::string_view prefix,

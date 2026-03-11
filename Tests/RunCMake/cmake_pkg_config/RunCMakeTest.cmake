@@ -8,6 +8,7 @@ foreach(strictness IN ITEMS STRICT PERMISSIVE BEST_EFFORT)
   )
 endforeach()
 
+run_cmake(EscapedPath)
 run_cmake(ExtractEnv)
 run_cmake(ExtractFields)
 run_cmake(ExtractMangle)
