@@ -400,6 +400,22 @@ std::vector<std::string> cmPkgConfigResolver::TokenizeFlags(
           break;
         }
         flag.pop_back();
+      } else if (*it == '"') {
+        if (prev != '\\') {
+          for (;;) {
+            ++it;
+            if (it == flagline.end()) {
+              result.clear();
+              return result;
+            }
+            if (*it == '"') {
+              break;
+            }
+            flag += *it;
+          }
+          continue;
+        }
+        flag.pop_back();
       }
 
       flag += *it;
