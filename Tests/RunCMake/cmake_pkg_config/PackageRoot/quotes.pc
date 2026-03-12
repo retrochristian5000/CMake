@@ -1,0 +1,6 @@
+Name: Test Quoted Paths
+Description: Paths containing quotes
+Version: 1.0.0
+
+Cflags: "-I/Test Quoted/Path" -I/SecondPath\" "-I/Third "/Path
+Libs: "-L/Test Quoted/Path" -L/SecondPath\" "-L/Third "/Path

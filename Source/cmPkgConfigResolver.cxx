@@ -35,36 +35,17 @@ void TrimBack(std::string& str)
   }
 }
 
-std::string AppendAndTrim(std::string& str, cm::string_view sv)
+void AppendFlagLine(std::string& line, std::string const& flag)
 {
-  auto size = str.length();
-  str += sv;
-  if (str.empty()) {
-    return {};
+  if (!line.empty()) {
+    line += " ";
   }
-
-  auto begin = str.begin() + size;
-  auto cur = str.end() - 1;
-
-  while (cur != begin && cmsysString_isspace(*cur)) {
-    --cur;
-  }
-
-  if (cmsysString_isspace(*cur)) {
-    return {};
-  }
-
-  return { &*begin, static_cast<std::size_t>(cur - begin) + 1 };
+  line += flag;
 }
 
 cm::string_view TrimFlag(cm::string_view flag)
 {
-  std::size_t trim_size = 2;
-  for (auto c = flag.rbegin(); c != flag.rend() && cmsysString_isspace(*c);
-       ++c) {
-    ++trim_size;
-  }
-  return { flag.data() + 2, flag.size() - trim_size };
+  return { flag.data() + 2, flag.size() - 2 };
 }
 
 } // namespace
@@ -233,6 +214,8 @@ cm::optional<cmPkgConfigResult> cmPkgConfigResolver::ResolveStrict(
   cmPkgConfigResult config;
   auto& keys = config.Keywords;
 
+  config.Variables["pcfiledir"] = env.PcFileDir;
+
   if (env.SysrootDir) {
     config.Variables["pc_sysrootdir"] = *env.SysrootDir;
   } else {
@@ -310,6 +293,8 @@ cmPkgConfigResult cmPkgConfigResolver::ResolveBestEffort(
   std::vector<cmPkgConfigEntry> const& entries, cmPkgConfigEnv env)
 {
   cmPkgConfigResult result;
+
+  result.Variables["pcfiledir"] = env.PcFileDir;
 
   if (env.SysrootDir) {
     result.Variables["pc_sysrootdir"] = *env.SysrootDir;
@@ -402,44 +387,64 @@ std::string cmPkgConfigResolver::HandleKeyword(
   return result;
 }
 
-std::vector<cm::string_view> cmPkgConfigResolver::TokenizeFlags(
+std::vector<std::string> cmPkgConfigResolver::TokenizeFlags(
   std::string const& flagline)
 {
-  std::vector<cm::string_view> result;
+  std::vector<std::string> result;
 
-  auto it = flagline.begin();
-  while (it != flagline.end() && cmsysString_isspace(*it)) {
-    ++it;
-  }
+  for (auto it = flagline.begin(); it != flagline.end();) {
+    result.push_back("");
+    auto& flag = result.back();
 
-  while (it != flagline.end()) {
-    char const* start = &(*it);
-    std::size_t len = 0;
+    char prev = '\0';
+    for (; it != flagline.end(); ++it) {
 
-    for (; it != flagline.end() && !cmsysString_isspace(*it); ++it) {
-      ++len;
+      if (cmsysString_isspace(*it)) {
+        if (prev != '\\') {
+          break;
+        }
+        flag.pop_back();
+      } else if (*it == '"') {
+        if (prev != '\\') {
+          for (;;) {
+            ++it;
+            if (it == flagline.end()) {
+              result.clear();
+              return result;
+            }
+            if (*it == '"') {
+              break;
+            }
+            flag += *it;
+          }
+          continue;
+        }
+        flag.pop_back();
+      }
+
+      flag += *it;
+      prev = *it;
     }
 
-    for (; it != flagline.end() && cmsysString_isspace(*it); ++it) {
-      ++len;
+    while (it != flagline.end() && cmsysString_isspace(*it)) {
+      ++it;
     }
-
-    result.emplace_back(start, len);
   }
 
   return result;
 }
 
 cmPkgConfigCflagsResult cmPkgConfigResolver::MangleCflags(
-  std::vector<cm::string_view> const& flags)
+  std::vector<std::string> const& flags)
 {
   cmPkgConfigCflagsResult result;
 
-  for (auto flag : flags) {
+  for (auto const& flag : flags) {
+    AppendFlagLine(result.Flagline, flag);
     if (flag.rfind("-I", 0) == 0) {
-      result.Includes.emplace_back(AppendAndTrim(result.Flagline, flag));
+      result.Includes.push_back(flag);
     } else {
-      result.CompileOptions.emplace_back(AppendAndTrim(result.Flagline, flag));
+      result.CompileOptions.push_back(flag);
     }
   }
 
@@ -447,16 +452,18 @@ cmPkgConfigCflagsResult cmPkgConfigResolver::MangleCflags(
 }
 
 cmPkgConfigCflagsResult cmPkgConfigResolver::MangleCflags(
-  std::vector<cm::string_view> const& flags, std::string const& sysroot)
+  std::vector<std::string> const& flags, std::string const& sysroot)
 {
   cmPkgConfigCflagsResult result;
 
-  for (auto flag : flags) {
+  for (auto const& flag : flags) {
     if (flag.rfind("-I", 0) == 0) {
       std::string reroot = Reroot(flag, "-I", sysroot);
-      result.Includes.emplace_back(AppendAndTrim(result.Flagline, reroot));
+      AppendFlagLine(result.Flagline, reroot);
+      result.Includes.push_back(std::move(reroot));
     } else {
-      result.CompileOptions.emplace_back(AppendAndTrim(result.Flagline, flag));
+      AppendFlagLine(result.Flagline, flag);
+      result.CompileOptions.push_back(flag);
     }
   }
 
@@ -464,22 +471,23 @@ cmPkgConfigCflagsResult cmPkgConfigResolver::MangleCflags(
 }
 
 cmPkgConfigCflagsResult cmPkgConfigResolver::MangleCflags(
-  std::vector<cm::string_view> const& flags,
+  std::vector<std::string> const& flags,
   std::vector<std::string> const& syspaths)
 {
   cmPkgConfigCflagsResult result;
 
-  for (auto flag : flags) {
+  for (auto const& flag : flags) {
     if (flag.rfind("-I", 0) == 0) {
       cm::string_view trimmed = TrimFlag(flag);
       if (std::all_of(
             syspaths.begin(), syspaths.end(),
             [&](std::string const& path) { return path != trimmed; })) {
-        result.Includes.emplace_back(AppendAndTrim(result.Flagline, flag));
+        AppendFlagLine(result.Flagline, flag);
+        result.Includes.push_back(flag);
       }
-
     } else {
-      result.CompileOptions.emplace_back(AppendAndTrim(result.Flagline, flag));
+      AppendFlagLine(result.Flagline, flag);
+      result.CompileOptions.push_back(flag);
     }
   }
 
@@ -487,23 +495,24 @@ cmPkgConfigCflagsResult cmPkgConfigResolver::MangleCflags(
 }
 
 cmPkgConfigCflagsResult cmPkgConfigResolver::MangleCflags(
-  std::vector<cm::string_view> const& flags, std::string const& sysroot,
+  std::vector<std::string> const& flags, std::string const& sysroot,
   std::vector<std::string> const& syspaths)
 {
   cmPkgConfigCflagsResult result;
 
-  for (auto flag : flags) {
+  for (auto const& flag : flags) {
     if (flag.rfind("-I", 0) == 0) {
       std::string reroot = Reroot(flag, "-I", sysroot);
       cm::string_view trimmed = TrimFlag(reroot);
       if (std::all_of(
             syspaths.begin(), syspaths.end(),
             [&](std::string const& path) { return path != trimmed; })) {
-        result.Includes.emplace_back(AppendAndTrim(result.Flagline, reroot));
+        AppendFlagLine(result.Flagline, reroot);
+        result.Includes.push_back(std::move(reroot));
       }
-
     } else {
-      result.CompileOptions.emplace_back(AppendAndTrim(result.Flagline, flag));
+      AppendFlagLine(result.Flagline, flag);
+      result.CompileOptions.push_back(flag);
     }
   }
 
@@ -511,17 +520,17 @@ cmPkgConfigCflagsResult cmPkgConfigResolver::MangleCflags(
 }
 
 cmPkgConfigLibsResult cmPkgConfigResolver::MangleLibs(
-  std::vector<cm::string_view> const& flags)
+  std::vector<std::string> const& flags)
 {
   cmPkgConfigLibsResult result;
-
-  for (auto flag : flags) {
+  for (auto const& flag : flags) {
+    AppendFlagLine(result.Flagline, flag);
     if (flag.rfind("-L", 0) == 0) {
-      result.LibDirs.emplace_back(AppendAndTrim(result.Flagline, flag));
+      result.LibDirs.push_back(flag);
     } else if (flag.rfind("-l", 0) == 0) {
-      result.LibNames.emplace_back(AppendAndTrim(result.Flagline, flag));
+      result.LibNames.push_back(flag);
     } else {
-      result.LinkOptions.emplace_back(AppendAndTrim(result.Flagline, flag));
+      result.LinkOptions.push_back(flag);
     }
   }
 
@@ -529,18 +538,21 @@ cmPkgConfigLibsResult cmPkgConfigResolver::MangleLibs(
 }
 
 cmPkgConfigLibsResult cmPkgConfigResolver::MangleLibs(
-  std::vector<cm::string_view> const& flags, std::string const& sysroot)
+  std::vector<std::string> const& flags, std::string const& sysroot)
 {
   cmPkgConfigLibsResult result;
 
-  for (auto flag : flags) {
+  for (auto const& flag : flags) {
     if (flag.rfind("-L", 0) == 0) {
       std::string reroot = Reroot(flag, "-L", sysroot);
-      result.LibDirs.emplace_back(AppendAndTrim(result.Flagline, reroot));
+      AppendFlagLine(result.Flagline, reroot);
+      result.LibDirs.push_back(std::move(reroot));
     } else if (flag.rfind("-l", 0) == 0) {
-      result.LibNames.emplace_back(AppendAndTrim(result.Flagline, flag));
+      AppendFlagLine(result.Flagline, flag);
+      result.LibNames.push_back(flag);
     } else {
-      result.LinkOptions.emplace_back(AppendAndTrim(result.Flagline, flag));
+      AppendFlagLine(result.Flagline, flag);
+      result.LinkOptions.push_back(flag);
     }
   }
 
@@ -548,24 +560,26 @@ cmPkgConfigLibsResult cmPkgConfigResolver::MangleLibs(
 }
 
 cmPkgConfigLibsResult cmPkgConfigResolver::MangleLibs(
-  std::vector<cm::string_view> const& flags,
+  std::vector<std::string> const& flags,
   std::vector<std::string> const& syspaths)
 {
   cmPkgConfigLibsResult result;
 
-  for (auto flag : flags) {
+  for (auto const& flag : flags) {
     if (flag.rfind("-L", 0) == 0) {
       cm::string_view trimmed = TrimFlag(flag);
       if (std::all_of(
             syspaths.begin(), syspaths.end(),
             [&](std::string const& path) { return path != trimmed; })) {
-        result.LibDirs.emplace_back(AppendAndTrim(result.Flagline, flag));
+        AppendFlagLine(result.Flagline, flag);
+        result.LibDirs.push_back(flag);
       }
-
     } else if (flag.rfind("-l", 0) == 0) {
-      result.LibNames.emplace_back(AppendAndTrim(result.Flagline, flag));
+      AppendFlagLine(result.Flagline, flag);
+      result.LibNames.push_back(flag);
     } else {
-      result.LinkOptions.emplace_back(AppendAndTrim(result.Flagline, flag));
+      AppendFlagLine(result.Flagline, flag);
+      result.LinkOptions.push_back(flag);
     }
   }
 
@@ -573,25 +587,27 @@ cmPkgConfigLibsResult cmPkgConfigResolver::MangleLibs(
 }
 
 cmPkgConfigLibsResult cmPkgConfigResolver::MangleLibs(
-  std::vector<cm::string_view> const& flags, std::string const& sysroot,
+  std::vector<std::string> const& flags, std::string const& sysroot,
   std::vector<std::string> const& syspaths)
 {
   cmPkgConfigLibsResult result;
 
-  for (auto flag : flags) {
+  for (auto const& flag : flags) {
     if (flag.rfind("-L", 0) == 0) {
       std::string reroot = Reroot(flag, "-L", sysroot);
       cm::string_view trimmed = TrimFlag(reroot);
       if (std::all_of(
             syspaths.begin(), syspaths.end(),
             [&](std::string const& path) { return path != trimmed; })) {
-        result.LibDirs.emplace_back(AppendAndTrim(result.Flagline, reroot));
+        AppendFlagLine(result.Flagline, reroot);
+        result.LibDirs.push_back(std::move(reroot));
       }
-
     } else if (flag.rfind("-l", 0) == 0) {
-      result.LibNames.emplace_back(AppendAndTrim(result.Flagline, flag));
+      AppendFlagLine(result.Flagline, flag);
+      result.LibNames.push_back(flag);
     } else {
-      result.LinkOptions.emplace_back(AppendAndTrim(result.Flagline, flag));
+      AppendFlagLine(result.Flagline, flag);
+      result.LinkOptions.push_back(flag);
     }
   }
 
