@@ -8,6 +8,7 @@
 
 #include <cm/string_view>
 
+#include "cmAlgorithms.h"
 #include "cmFileSetMetadata.h"
 #include "cmListFileCache.h"
 #include "cmPropertyMap.h"
@@ -61,6 +62,16 @@ public:
     return this->FileEntries;
   }
 
+  // Special properties
+  cmBTStringRange GetIncludeDirectories() const;
+  cmBTStringRange GetInterfaceIncludeDirectories() const;
+
+  cmBTStringRange GetCompileOptions() const;
+  cmBTStringRange GetInterfaceCompileOptions() const;
+
+  cmBTStringRange GetCompileDefinitions() const;
+  cmBTStringRange GetInterfaceCompileDefinitions() const;
+
   //! Set/Get a property of this file set
   void SetProperty(std::string const& prop, cmValue value);
   void SetProperty(std::string const& prop, std::nullptr_t)
@@ -88,7 +99,10 @@ private:
   std::vector<BT<std::string>> DirectoryEntries;
   std::vector<BT<std::string>> FileEntries;
   cmPropertyMap Properties;
-  std::vector<BT<std::string>> CompileOptions;
-  std::vector<BT<std::string>> CompileDefinitions;
   std::vector<BT<std::string>> IncludeDirectories;
+  std::vector<BT<std::string>> InterfaceIncludeDirectories;
+  std::vector<BT<std::string>> CompileOptions;
+  std::vector<BT<std::string>> InterfaceCompileOptions;
+  std::vector<BT<std::string>> CompileDefinitions;
+  std::vector<BT<std::string>> InterfaceCompileDefinitions;
 };
