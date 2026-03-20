@@ -1368,12 +1368,8 @@ bool cmQtAutoGenInitializer::InitAutogenTarget()
   this->Makefile->AddCMakeOutputFile(this->AutogenTarget.InfoFile);
 
   // Determine whether to use a depfile for the AUTOGEN target.
-  bool const useDepfile = [this]() -> bool {
-    auto const& gen = this->GlobalGen->GetName();
-    return this->QtVersion >= IntegerVersion(5, 15) &&
-      (gen.find("Ninja") != std::string::npos ||
-       gen.find("Make") != std::string::npos);
-  }();
+  bool const useDepfile = this->QtVersion >= IntegerVersion(5, 15) &&
+    this->GlobalGen->SupportsCustomCommandDepfile();
 
   // Files provided by the autogen target
   std::vector<std::string> autogenByproducts;
@@ -1451,6 +1447,10 @@ bool cmQtAutoGenInitializer::InitAutogenTarget()
     }
     // Cannot use PRE_BUILD when a global autogen target is in place
     if (this->AutogenTarget.GlobalTarget) {
+      usePRE_BUILD = false;
+    }
+    // Cannot use PRE_BUILD with depfiles
+    if (useDepfile) {
       usePRE_BUILD = false;
     }
   }
