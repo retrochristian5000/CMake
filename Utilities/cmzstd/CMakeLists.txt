@@ -51,6 +51,8 @@ target_compile_definitions(cmzstd PRIVATE
   # Explicitly disable ASM build to work with more compilers.
   # Our vendored zstd does not include the assembly language file.
   ZSTD_DISABLE_ASM=1
+  # Enable threaded compression.
+  ZSTD_MULTITHREAD
   )
 
 install(FILES LICENSE DESTINATION ${CMake_INSTALL_DOC_DIR}/cmzstd)
