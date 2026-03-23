@@ -1330,6 +1330,7 @@ size_t ZSTDMT_initCStream_internal(
                 ZSTD_customFree(mtctx->roundBuff.buffer, mtctx->cMem);
             mtctx->roundBuff.buffer = (BYTE*)ZSTD_customMalloc(capacity, mtctx->cMem);
             if (mtctx->roundBuff.buffer == NULL) {
+                DEBUGLOG(4, "ZSTD_customMalloc(0x%zx, ...) failed", capacity);
                 mtctx->roundBuff.capacity = 0;
                 return ERROR(memory_allocation);
             }
