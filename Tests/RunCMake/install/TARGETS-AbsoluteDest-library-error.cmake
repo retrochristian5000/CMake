@@ -1,0 +1,7 @@
+enable_language(C)
+add_library(mylib SHARED empty.c)
+if(WIN32)
+  install(TARGETS mylib RUNTIME DESTINATION /absolute/lib)
+else()
+  install(TARGETS mylib LIBRARY DESTINATION /absolute/lib)
+endif()
