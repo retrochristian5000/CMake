@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-extern int lib();
+extern int lib(void);
 
 struct x
 {
@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 
 #ifdef CMAKE_RCDEFINE_NO_QUOTED_STRINGS
   // Expect CMAKE_RCDEFINE to preprocess to exactly test.txt
-  x test;
+  struct x test;
   test.txt = "*exactly* test.txt";
   fprintf(stdout, "CMAKE_RCDEFINE_NO_QUOTED_STRINGS defined\n");
   fprintf(stdout, "CMAKE_RCDEFINE is %s, and is *not* a string constant\n",
@@ -32,15 +32,15 @@ int main(int argc, char** argv)
           CMAKE_RCDEFINE);
 #endif
 
-  HRSRC hello = ::FindResource(NULL, MAKEINTRESOURCE(1025), "TEXTFILE");
+  HRSRC hello = FindResource(NULL, MAKEINTRESOURCE(1025), "TEXTFILE");
   if (hello) {
     fprintf(stdout, "FindResource worked\n");
-    HGLOBAL hgbl = ::LoadResource(NULL, hello);
-    int datasize = (int)::SizeofResource(NULL, hello);
+    HGLOBAL hgbl = LoadResource(NULL, hello);
+    int datasize = (int)SizeofResource(NULL, hello);
     if (hgbl && datasize > 0) {
       fprintf(stdout, "LoadResource worked\n");
       fprintf(stdout, "SizeofResource returned datasize='%d'\n", datasize);
-      void* data = ::LockResource(hgbl);
+      void* data = LockResource(hgbl);
       if (data) {
         fprintf(stdout, "LockResource worked\n");
         char* str = (char*)malloc(datasize + 4);
@@ -59,7 +59,7 @@ int main(int argc, char** argv)
           fprintf(stdout, "LoadString skipped\n");
 #else
           char buf[256];
-          if (::LoadString(NULL, 1026, buf, sizeof(buf)) > 0) {
+          if (LoadString(NULL, 1026, buf, sizeof(buf)) > 0) {
             fprintf(stdout, "LoadString worked\n");
             fprintf(stdout, "buf='%s'\n", buf);
           } else {
