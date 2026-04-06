@@ -29,7 +29,7 @@ char const* qnxnto = "INFO" ":" "qnxnto[]";
 # define C_STD __STDC_VERSION__
 #endif
 
-#if !defined(__STDC__)
+#if !defined(C_STD)
 # if defined(__ibmxl__) || defined(__IBMC__)
 #  define C_VERSION "90"
 # else
