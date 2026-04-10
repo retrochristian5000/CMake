@@ -186,9 +186,9 @@ workflow:
         # Nightly pipelines run all other jobs automatically when ready.
         - if: '$CMAKE_CI_NIGHTLY == "true"'
           when: on_success
-        # Nightly-only jobs do not run in any other situations.
-        - if: '$CMAKE_CI_JOB_NIGHTLY == "true"'
-          when: never
+        # # Nightly-only jobs do not run in any other situations.
+        # - if: '$CMAKE_CI_JOB_NIGHTLY == "true"'
+        #   when: never
 
         ### Merge request pipelines.
         # Merge request pipelines do not run jobs that are explicitly excluded.
