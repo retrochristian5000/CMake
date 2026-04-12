@@ -3299,8 +3299,8 @@ bool HandleCreateLinkCommand(std::vector<std::string> const& args,
         status.GetMakefile().IssueMessage(
           MessageType::AUTHOR_WARNING,
           cmStrCat("Path\n  ", fileName,
-                   "\nis directory. Hardlinks creation is not supported for "
-                   "directories.\n",
+                   "\nis a directory. Hard link creation is not supported "
+                   "for directories.\n",
                    cmPolicies::GetPolicyWarning(cmPolicies::CMP0205)));
       }
     }
@@ -3325,8 +3325,8 @@ bool HandleCreateLinkCommand(std::vector<std::string> const& args,
     status.GetMakefile().IssueMessage(
       MessageType::AUTHOR_WARNING,
       cmStrCat("Path\n  ", fileName,
-               "\nis directory. It will be copied recursively when NEW policy "
-               "behavior applies for CMP0205.\n",
+               "\nis a directory. It will be copied "
+               "recursively when CMP0205 is set to NEW.\n",
                cmPolicies::GetPolicyWarning(cmPolicies::CMP0205)));
   }
 
