@@ -14,13 +14,27 @@
 #include <cm3p/cppdap/session.h>
 #include <cm3p/cppdap/types.h>
 
+#include "cmsys/FStream.hxx"
+
 #include "cmDebuggerBreakpointManager.h"
 #include "cmDebuggerSourceBreakpoint.h" // IWYU pragma: keep
+#include "cmSystemTools.h"
 
 #include "testCommon.h"
+#include "testConfig.h"
 #include "testDebugger.h"
 
 class cmListFileFunction;
+
+// Fictional absolute path used by the pre-existing breakpoint tests.
+// Must be absolute on all platforms so that ToNormalizedPathOnDisk
+// (used inside the breakpoint manager) does not resolve it relative
+// to the working directory.
+#ifdef _WIN32
+static std::string const kTestSourcePath = "C:/CMakeLists.txt";
+#else
+static std::string const kTestSourcePath = "/CMakeLists.txt";
+#endif
 
 static bool testHandleBreakpointRequestBeforeFileIsLoaded()
 {
@@ -30,7 +44,7 @@ static bool testHandleBreakpointRequestBeforeFileIsLoaded()
     helper.Debugger.get());
   helper.bind();
   dap::SetBreakpointsRequest setBreakpointRequest;
-  std::string sourcePath = "C:/CMakeLists.txt";
+  std::string sourcePath = kTestSourcePath;
   setBreakpointRequest.source.path = sourcePath;
   dap::array<dap::SourceBreakpoint> sourceBreakpoints(3);
   sourceBreakpoints[0].line = 1;
@@ -73,7 +87,7 @@ static bool testHandleBreakpointRequestAfterFileIsLoaded()
   cmDebugger::cmDebuggerBreakpointManager breakpointManager(
     helper.Debugger.get());
   helper.bind();
-  std::string sourcePath = "C:/CMakeLists.txt";
+  std::string sourcePath = kTestSourcePath;
   std::vector<cmListFileFunction> functions = helper.CreateListFileFunctions(
     "# Comment1\nset(var1 foo)\n# Comment2\nset(var2\nbar)\n", sourcePath);
 
@@ -138,7 +152,7 @@ static bool testSourceFileLoadedAfterHandleBreakpointRequest()
     helper.Debugger.get());
   helper.bind();
   dap::SetBreakpointsRequest setBreakpointRequest;
-  std::string sourcePath = "C:/CMakeLists.txt";
+  std::string sourcePath = kTestSourcePath;
   setBreakpointRequest.source.path = sourcePath;
   dap::array<dap::SourceBreakpoint> sourceBreakpoints(5);
   sourceBreakpoints[0].line = 1;
@@ -173,9 +187,204 @@ static bool testSourceFileLoadedAfterHandleBreakpointRequest()
   return true;
 }
 
+// RAII guard for temp directory cleanup on both success and assertion failure.
+struct TempDirGuard
+{
+  std::string Path;
+  ~TempDirGuard()
+  {
+    if (!Path.empty()) {
+      cmSystemTools::RemoveADirectory(Path);
+    }
+  }
+};
+
+static bool testBreakpointCaseMismatch_SourceLoadedFirst()
+{
+  std::string tempDir = std::string(BUILD_DIR) + "/cmakedbg-bp1-XXXXXX";
+  if (!cmSystemTools::MakeTempDirectory(tempDir)) {
+    std::cout << "Failed to create temp directory\n";
+    return false;
+  }
+  TempDirGuard guard;
+  guard.Path = tempDir;
+
+  std::string createdFile = tempDir + "/TestCase.cmake";
+  {
+    cmsys::ofstream f(createdFile.c_str());
+  }
+
+  // Detect case-insensitive filesystem at runtime.
+  std::string lowerFile = tempDir + "/testcase.cmake";
+  if (!cmSystemTools::FileExists(lowerFile)) {
+    std::cout << "Skipping: filesystem is case-sensitive\n";
+    return true;
+  }
+
+  std::string canonicalPath =
+    cmSystemTools::ToNormalizedPathOnDisk(createdFile);
+
+  // Arrange
+  DebuggerTestHelper helper;
+  std::atomic<bool> noBreakpointEvents(true);
+  helper.Client->registerHandler(
+    [&](dap::BreakpointEvent const&) { noBreakpointEvents.store(false); });
+  cmDebugger::cmDebuggerBreakpointManager breakpointManager(
+    helper.Debugger.get());
+  helper.bind();
+
+  std::vector<cmListFileFunction> functions =
+    helper.CreateListFileFunctions("set(var1 foo)\n", canonicalPath);
+
+  // Act: load source with lowercase path, set breakpoints with uppercase.
+  breakpointManager.SourceFileLoaded(lowerFile, functions);
+
+  dap::SetBreakpointsRequest req;
+  req.source.path = tempDir + "/TESTCASE.CMAKE";
+  dap::array<dap::SourceBreakpoint> bps(1);
+  bps[0].line = 1;
+  req.breakpoints = bps;
+  auto got = helper.Client->send(req).get();
+
+  // Assert: breakpoint verified because both paths normalize to canonicalPath.
+  ASSERT_TRUE(!got.error);
+  ASSERT_TRUE(got.response.breakpoints.size() == 1);
+  ASSERT_BREAKPOINT(got.response.breakpoints[0], 0, 1, canonicalPath, true);
+  ASSERT_TRUE(noBreakpointEvents.load());
+  ASSERT_TRUE(breakpointManager.GetBreakpointCount() == 1);
+
+  return true;
+}
+
+static bool testBreakpointCaseMismatch_BreakpointsSetFirst()
+{
+  std::string tempDir = std::string(BUILD_DIR) + "/cmakedbg-bp2-XXXXXX";
+  if (!cmSystemTools::MakeTempDirectory(tempDir)) {
+    std::cout << "Failed to create temp directory\n";
+    return false;
+  }
+  TempDirGuard guard;
+  guard.Path = tempDir;
+
+  std::string createdFile = tempDir + "/TestCase.cmake";
+  {
+    cmsys::ofstream f(createdFile.c_str());
+  }
+
+  std::string lowerFile = tempDir + "/testcase.cmake";
+  if (!cmSystemTools::FileExists(lowerFile)) {
+    std::cout << "Skipping: filesystem is case-sensitive\n";
+    return true;
+  }
+
+  std::string canonicalPath =
+    cmSystemTools::ToNormalizedPathOnDisk(createdFile);
+
+  // Arrange
+  DebuggerTestHelper helper;
+  std::vector<dap::BreakpointEvent> breakpointEvents;
+  std::atomic<int> remainingEvents(1);
+  std::promise<void> allEventsPromise;
+  std::future<void> allEventsFuture = allEventsPromise.get_future();
+  helper.Client->registerHandler([&](dap::BreakpointEvent const& event) {
+    breakpointEvents.emplace_back(event);
+    if (--remainingEvents == 0) {
+      allEventsPromise.set_value();
+    }
+  });
+  cmDebugger::cmDebuggerBreakpointManager breakpointManager(
+    helper.Debugger.get());
+  helper.bind();
+
+  // Act: set breakpoints with uppercase path before file is loaded.
+  dap::SetBreakpointsRequest req;
+  req.source.path = tempDir + "/TESTCASE.CMAKE";
+  dap::array<dap::SourceBreakpoint> bps(1);
+  bps[0].line = 1;
+  req.breakpoints = bps;
+  auto got = helper.Client->send(req).get();
+
+  ASSERT_TRUE(!got.error);
+  ASSERT_TRUE(got.response.breakpoints.size() == 1);
+  ASSERT_BREAKPOINT(got.response.breakpoints[0], 0, 1, canonicalPath, false);
+
+  // Act: load source with lowercase path.
+  std::vector<cmListFileFunction> functions =
+    helper.CreateListFileFunctions("set(var1 foo)\n", canonicalPath);
+  breakpointManager.SourceFileLoaded(lowerFile, functions);
+
+  ASSERT_TRUE(allEventsFuture.wait_for(std::chrono::seconds(10)) ==
+              std::future_status::ready);
+
+  // Assert: breakpoint event fires with verified status.
+  ASSERT_TRUE(breakpointEvents.size() == 1);
+  ASSERT_BREAKPOINT(breakpointEvents[0].breakpoint, 0, 1, canonicalPath, true);
+
+  return true;
+}
+
+static bool testGetBreakpoints_CaseMismatch()
+{
+  std::string tempDir = std::string(BUILD_DIR) + "/cmakedbg-bp3-XXXXXX";
+  if (!cmSystemTools::MakeTempDirectory(tempDir)) {
+    std::cout << "Failed to create temp directory\n";
+    return false;
+  }
+  TempDirGuard guard;
+  guard.Path = tempDir;
+
+  std::string createdFile = tempDir + "/TestCase.cmake";
+  {
+    cmsys::ofstream f(createdFile.c_str());
+  }
+
+  std::string lowerFile = tempDir + "/testcase.cmake";
+  if (!cmSystemTools::FileExists(lowerFile)) {
+    std::cout << "Skipping: filesystem is case-sensitive\n";
+    return true;
+  }
+
+  std::string canonicalPath =
+    cmSystemTools::ToNormalizedPathOnDisk(createdFile);
+
+  // Arrange
+  DebuggerTestHelper helper;
+  cmDebugger::cmDebuggerBreakpointManager breakpointManager(
+    helper.Debugger.get());
+  helper.bind();
+
+  std::vector<cmListFileFunction> functions =
+    helper.CreateListFileFunctions("set(var1 foo)\n", canonicalPath);
+
+  breakpointManager.SourceFileLoaded(canonicalPath, functions);
+
+  dap::SetBreakpointsRequest req;
+  req.source.path = canonicalPath;
+  dap::array<dap::SourceBreakpoint> bps(1);
+  bps[0].line = 1;
+  req.breakpoints = bps;
+  auto got = helper.Client->send(req).get();
+  ASSERT_TRUE(!got.error);
+  ASSERT_TRUE(got.response.breakpoints.size() == 1);
+  ASSERT_BREAKPOINT(got.response.breakpoints[0], 0, 1, canonicalPath, true);
+
+  // Act: query breakpoints with a different-case path.
+  auto breakpoints =
+    breakpointManager.GetBreakpoints(tempDir + "/TESTCASE.CMAKE", 1);
+
+  // Assert: found despite case mismatch.
+  ASSERT_TRUE(breakpoints.size() == 1);
+  ASSERT_TRUE(breakpoints[0] == 0);
+
+  return true;
+}
+
 int testDebuggerBreakpointManager(int, char*[])
 {
   return runTests({ testHandleBreakpointRequestBeforeFileIsLoaded,
                     testHandleBreakpointRequestAfterFileIsLoaded,
-                    testSourceFileLoadedAfterHandleBreakpointRequest });
+                    testSourceFileLoadedAfterHandleBreakpointRequest,
+                    testBreakpointCaseMismatch_SourceLoadedFirst,
+                    testBreakpointCaseMismatch_BreakpointsSetFirst,
+                    testGetBreakpoints_CaseMismatch });
 }
