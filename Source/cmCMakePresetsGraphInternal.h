@@ -86,7 +86,7 @@ public:
                                int version) const override;
 };
 
-template <class T>
+template <typename T>
 class PresetMacroExpander : public MacroExpander
 {
   cmCMakePresetsGraph const& Graph;
