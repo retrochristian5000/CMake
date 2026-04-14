@@ -7,6 +7,15 @@ set(common_test_options
   "-DCMAKE_INSTALL_LIBDIR=lib"
 )
 
+function(run_cmake_error test)
+  set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/${test}-build)
+  set(RunCMake_TEST_OPTIONS ${common_test_options})
+  if(NOT RunCMake_GENERATOR_IS_MULTI_CONFIG)
+    list(APPEND RunCMake_TEST_OPTIONS -DCMAKE_BUILD_TYPE=DEBUG)
+  endif()
+  run_cmake(${test})
+endfunction()
+
 function(run_cmake_install test)
   set(extra_options ${ARGN})
   set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/${test}-build)
@@ -28,5 +37,7 @@ run_cmake_install(InterfaceTarget)
 run_cmake_install(SharedTarget)
 
 run_cmake_install(MissingPackageNamespace)
-run_cmake_install(ReferencesNonExportedTarget)
 run_cmake_install(ProjectMetadata)
+run_cmake_install(PartialCoverage)
+
+run_cmake_error(ReferencesNonExportedTarget)
