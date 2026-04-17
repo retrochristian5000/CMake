@@ -71,6 +71,10 @@ macro(_record_compiler_features lang compile_flags feature_list)
 endmacro()
 
 macro(_record_compiler_features_c std)
+  if (CMAKE_C${std}_COMPILE_FEATURES)
+    return ()
+  endif ()
+
   list(APPEND CMAKE_C${std}_COMPILE_FEATURES c_std_${std})
 
   get_property(lang_level_has_features GLOBAL PROPERTY CMAKE_C${std}_KNOWN_FEATURES)
@@ -81,6 +85,10 @@ macro(_record_compiler_features_c std)
 endmacro()
 
 macro(_record_compiler_features_cxx std)
+  if (CMAKE_CXX${std}_COMPILE_FEATURES)
+    return ()
+  endif ()
+
   list(APPEND CMAKE_CXX${std}_COMPILE_FEATURES cxx_std_${std})
 
   get_property(lang_level_has_features GLOBAL PROPERTY CMAKE_CXX${std}_KNOWN_FEATURES)
