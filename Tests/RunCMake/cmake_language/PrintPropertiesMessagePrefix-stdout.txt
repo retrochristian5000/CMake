@@ -1,0 +1,11 @@
+-- Printing properties\.\.\.
+ Properties for TARGET mylib:
+   mylib\.MY_PROP = "my_value"
+
+-- CUSTOM_BANNER
+ Properties for TARGET mylib:
+   mylib\.MY_PROP = "my_value"
+
+-- BANNER
+ All properties for TARGET mylib matching name '\^MY_PROP\$':
+   mylib\.MY_PROP = "my_value"
