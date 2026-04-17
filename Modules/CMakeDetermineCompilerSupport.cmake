@@ -5,6 +5,27 @@
 function(cmake_determine_compiler_support lang)
 
   if("x${lang}" STREQUAL "xC" AND COMMAND cmake_record_c_compile_features)
+    set(compile_feature_vars
+      CMAKE_C_COMPILE_FEATURES
+      CMAKE_C90_COMPILE_FEATURES
+      CMAKE_C99_COMPILE_FEATURES
+      CMAKE_C11_COMPILE_FEATURES
+      CMAKE_C17_COMPILE_FEATURES
+      CMAKE_C23_COMPILE_FEATURES
+    )
+    set(all_defined 1)
+    set(any_non_empty 0)
+    foreach (var IN LISTS compile_feature_vars)
+      if (NOT DEFINED "${var}")
+        set(all_defined 0)
+      elseif (${var})
+        set(any_non_empty 0)
+      endif ()
+    endforeach ()
+    if (all_defined AND any_non_empty)
+      return ()
+    endif ()
+
     message(CHECK_START "Detecting ${lang} compile features")
 
     set(CMAKE_C90_COMPILE_FEATURES)
@@ -55,6 +76,32 @@ function(cmake_determine_compiler_support lang)
     message(CHECK_PASS "done")
 
   elseif("x${lang}" STREQUAL "xCXX" AND COMMAND cmake_record_cxx_compile_features)
+    set(compile_feature_vars
+      CMAKE_CXX_COMPILE_FEATURES
+      CMAKE_CXX98_COMPILE_FEATURES
+      CMAKE_CXX11_COMPILE_FEATURES
+      CMAKE_CXX14_COMPILE_FEATURES
+      CMAKE_CXX17_COMPILE_FEATURES
+      CMAKE_CXX20_COMPILE_FEATURES
+      CMAKE_CXX23_COMPILE_FEATURES
+      CMAKE_CXX26_COMPILE_FEATURES
+
+      CMAKE_CXX_COMPILER_IMPORT_STD
+      CMAKE_CXX_STDLIB_MODULES_JSON
+    )
+    set(all_defined 1)
+    set(any_non_empty 0)
+    foreach (var IN LISTS compile_feature_vars)
+      if (NOT DEFINED "${var}")
+        set(all_defined 0)
+      elseif (${var})
+        set(any_non_empty 0)
+      endif ()
+    endforeach ()
+    if (all_defined AND any_non_empty)
+      return ()
+    endif ()
+
     message(CHECK_START "Detecting ${lang} compile features")
 
     set(CMAKE_CXX98_COMPILE_FEATURES)
