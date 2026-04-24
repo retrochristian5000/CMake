@@ -537,6 +537,22 @@ Target Created:
 
 - ``CUDA::bin2c``
 
+.. _`FindCUDAToolkit_sanitizer`:
+
+compute-sanitizer
+"""""""""""""""""
+
+.. versionadded:: 4.4
+
+The compute-sanitizer library, which allows the tracing of CUDA runtime
+and driver calls.
+
+Target Created:
+
+- ``CUDA::sanitizer``
+
+.. _`NVIDIA Compute Sanitizer`: https://docs.nvidia.com/compute-sanitizer
+
 Result Variables
 ^^^^^^^^^^^^^^^^
 
@@ -1217,7 +1233,11 @@ unset(CUDAToolkit_INCLUDE_DIRECTORIES)
 if(CUDAToolkit_FOUND)
 
   function(_CUDAToolkit_find_and_add_import_lib lib_name)
-    cmake_parse_arguments(arg "" "" "ALT;DEPS;EXTRA_PATH_SUFFIXES;EXTRA_INCLUDE_DIRS;ONLY_SEARCH_FOR" ${ARGN})
+    cmake_parse_arguments(arg "" "" "ALT;DEPS;EXTRA_PATH_SUFFIXES;EXTRA_INCLUDE_DIRS;ONLY_SEARCH_FOR;LIBRARY_SEARCH_DIRS" ${ARGN})
+
+    if(NOT arg_LIBRARY_SEARCH_DIRS)
+      set(arg_LIBRARY_SEARCH_DIRS "${CUDAToolkit_LIBRARY_SEARCH_DIRS}")
+    endif()
 
     if(arg_ONLY_SEARCH_FOR)
       set(search_names ${arg_ONLY_SEARCH_FOR})
@@ -1227,7 +1247,7 @@ if(CUDAToolkit_FOUND)
 
     find_library(CUDA_${lib_name}_LIBRARY
       NAMES ${search_names}
-      HINTS ${CUDAToolkit_LIBRARY_SEARCH_DIRS}
+      HINTS ${arg_LIBRARY_SEARCH_DIRS}
             ENV CUDA_PATH
       PATH_SUFFIXES nvidia/current lib64 ${_CUDAToolkit_win_search_dirs} lib
                     # Support NVHPC splayed math library layout
@@ -1242,7 +1262,7 @@ if(CUDAToolkit_FOUND)
     if(NOT CUDA_${lib_name}_LIBRARY)
       find_library(CUDA_${lib_name}_LIBRARY
         NAMES ${search_names}
-        HINTS ${CUDAToolkit_LIBRARY_SEARCH_DIRS}
+        HINTS ${arg_LIBRARY_SEARCH_DIRS}
               ENV CUDA_PATH
         PATH_SUFFIXES lib64/stubs ${_CUDAToolkit_win_stub_search_dirs} lib/stubs stubs
       )
@@ -1509,6 +1529,13 @@ if(CUDAToolkit_FOUND)
     add_executable(CUDA::bin2c IMPORTED)
     set_property(TARGET CUDA::bin2c PROPERTY IMPORTED_LOCATION "${CUDA_bin2c_EXECUTABLE}")
   endif()
+
+  _CUDAToolkit_find_and_add_import_lib(
+    sanitizer
+    ONLY_SEARCH_FOR sanitizer-public
+    LIBRARY_SEARCH_DIRS "${CUDAToolkit_LIBRARY_ROOT}/compute-sanitizer"
+    EXTRA_INCLUDE_DIRS "${CUDAToolkit_LIBRARY_ROOT}/compute-sanitizer/include"
+  )
 endif()
 
 if(_CUDAToolkit_Pop_ROOT_PATH)
