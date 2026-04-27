@@ -645,7 +645,10 @@ class cmMakefile;
          0, WARN)                                                             \
   SELECT(POLICY, CMP0215,                                                     \
          "Ninja generators emit Swift modules separately from compilation.",  \
-         4, 4, 0, WARN)
+         4, 4, 0, WARN)                                                       \
+  SELECT(POLICY, CMP0216,                                                     \
+         "The MACROS directory property does not exist anymore.", 4, 4, 0,    \
+         WARN)
 
 #define CM_SELECT_ID(F, A1, A2, A3, A4, A5, A6) F(A1)
 #define CM_FOR_EACH_POLICY_ID(POLICY)                                         \
@@ -735,14 +738,15 @@ public:
 
     /** \brief Always the last entry.
      *
-     * Useful mostly to avoid adding a comma the last policy when adding a new
-     * one.
+     * Useful mostly to avoid adding a comma the last policy when adding
+     * a new one.
      */
     CMPCOUNT
   };
 
   //! convert a string policy ID into a number
-  static bool GetPolicyID(char const* id, /* out */ cmPolicies::PolicyID& pid);
+  static bool GetPolicyID(char const* id,
+                          /* out */ cmPolicies::PolicyID& pid);
 
   //! Return whether a policy has been removed.
   static bool IsRemoved(cmPolicies::PolicyID id);
