@@ -40,7 +40,7 @@ install(
 
 write_basic_package_version_file(
   ${CMAKE_CURRENT_BINARY_DIR}/SimpleTestConfigVersion.cmake
-  COMPATIBILITY ExactVersion
+  COMPATIBILITY SamePatchVersion
   ARCH_INDEPENDENT
 )
 
