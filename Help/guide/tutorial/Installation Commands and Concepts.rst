@@ -484,7 +484,7 @@ namely the :module:`CMakePackageConfigHelpers` module.
 
   write_basic_package_version_file(
     ${CMAKE_CURRENT_BINARY_DIR}/MyProjectConfigVersion.cmake
-    COMPATIBILITY ExactVersion
+    COMPATIBILITY SamePatchVersion
   )
 
 The available versions are:
@@ -492,7 +492,7 @@ The available versions are:
 * ``AnyNewerVersion``
 * ``SameMajorVersion``
 * ``SameMinorVersion``
-* ``ExactVersion``
+* ``SamePatchVersion``
 
 Additionally packages can mark themselves as ``ARCH_INDEPENDENT``, intended for
 packages which ship no binaries which would tie them to a specific machine
@@ -570,7 +570,7 @@ to generate the config version file.
   :name: CMakeLists.txt-write_basic_package_version_file
   :language: cmake
   :start-at: include(CMakePackageConfigHelpers
-  :end-at: COMPATIBILITY ExactVersion
+  :end-at: COMPATIBILITY SamePatchVersion
   :append: )
 
 .. raw:: html
