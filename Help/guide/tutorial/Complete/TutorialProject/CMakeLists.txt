@@ -49,7 +49,7 @@ include(CMakePackageConfigHelpers)
 
 write_basic_package_version_file(
   ${CMAKE_CURRENT_BINARY_DIR}/TutorialConfigVersion.cmake
-  COMPATIBILITY ExactVersion
+  COMPATIBILITY SamePatchVersion
 )
 
 install(

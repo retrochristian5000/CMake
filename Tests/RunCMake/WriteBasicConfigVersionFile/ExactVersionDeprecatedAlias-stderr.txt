@@ -1,0 +1,7 @@
+^CMake Warning \(deprecated\) at .*WriteBasicConfigVersionFile\.cmake:[0-9]+ \(message\):
+  The ExactVersion compatibility mode is deprecated\.  Use SamePatchVersion or
+  SameFullVersion instead, depending on whether the tweak version should be
+  ignored\.
+Call Stack \(most recent call first\):
+  ExactVersionDeprecatedAlias\.cmake:[0-9]+ \(write_basic_config_version_file\)
+  CMakeLists\.txt:[0-9]+ \(include\)$
