@@ -49,7 +49,7 @@ add_subdirectory(MathFunctions)
 
 # TODO11: Use write_basic_package_version_file to write a
 #         TutorialConfigVersion.cmake file to the CMAKE_CURRENT_BINARY_DIR.
-#         The version compatibility should be ExactVersion.
+#         The version compatibility should be SamePatchVersion.
 
 # TODO12: Add the generated TutorialConfigVersion.cmake file to the file list
 #         of the TODO7 install() command.

@@ -14,7 +14,9 @@ WriteBasicConfigVersionFile
 
   WRITE_BASIC_CONFIG_VERSION_FILE(filename
     [VERSION major.minor.patch]
-    COMPATIBILITY (AnyNewerVersion|SameMajorVersion|SameMinorVersion|ExactVersion)
+    COMPATIBILITY (AnyNewerVersion|SameMajorVersion|SameMinorVersion|
+                   SamePatchVersion|SameFullVersion|ExactVersion|
+                   SemanticVersion)
     [ARCH_INDEPENDENT]
     )
 
@@ -33,7 +35,12 @@ function(WRITE_BASIC_CONFIG_VERSION_FILE _filename)
     message(FATAL_ERROR "Unknown keywords given to WRITE_BASIC_CONFIG_VERSION_FILE(): \"${CVF_UNPARSED_ARGUMENTS}\"")
   endif()
 
-  set(versionTemplateFile "${CMAKE_ROOT}/Modules/BasicConfigVersion-${CVF_COMPATIBILITY}.cmake.in")
+  set(_compatibilityTemplate "${CVF_COMPATIBILITY}")
+  if(CVF_COMPATIBILITY STREQUAL "ExactVersion")
+    set(_compatibilityTemplate "SamePatchVersion")
+  endif()
+
+  set(versionTemplateFile "${CMAKE_ROOT}/Modules/BasicConfigVersion-${_compatibilityTemplate}.cmake.in")
   if(NOT EXISTS "${versionTemplateFile}")
     message(FATAL_ERROR "Bad COMPATIBILITY value used for WRITE_BASIC_CONFIG_VERSION_FILE(): \"${CVF_COMPATIBILITY}\"")
   endif()
@@ -44,6 +51,13 @@ function(WRITE_BASIC_CONFIG_VERSION_FILE _filename)
     else()
       set(CVF_VERSION "${PROJECT_VERSION}")
     endif()
+  endif()
+
+  if(CVF_COMPATIBILITY STREQUAL "ExactVersion")
+    message(DEPRECATION
+      "The ExactVersion compatibility mode is deprecated. "
+      "Use SamePatchVersion or SameFullVersion instead, depending on "
+      "whether the tweak version should be ignored.")
   endif()
 
   if(NOT CVF_ARCH_INDEPENDENT)
