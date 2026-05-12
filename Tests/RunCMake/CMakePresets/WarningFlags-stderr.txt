@@ -22,7 +22,8 @@ Call Stack \(most recent call first\):
   [^
 ]*/Tests/RunCMake/CMakePresets/WarningFlags\.cmake:[0-9]+ \(include\)
   CMakeLists\.txt:[0-9]+ \(include\)
-
+This warning is for project developers\.  Use -Wno-author or -Wno-deprecated
+to suppress it\.
 
 CMake Warning \(uninitialized\) at [^
 ]*/Tests/RunCMake/CMakePresets/WarningsBase\.cmake:[0-9]+ \(set\):
