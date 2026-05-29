@@ -126,7 +126,15 @@ cmDocumentationEntry const cmDocumentationOptions[] = {
   { "--no-subproject-summary",
     "Disable timing summary information for "
     "subprojects." },
-  { "--test-dir <dir>", "Specify the directory in which to look for tests." },
+  { "--test-dir <path-to-build>",
+    "Specify the directory in which to look for tests." },
+  { "--source-dir <path-to-source>",
+    "Specify the project source directory.  When combined with "
+    "-T Configure, this allows CTest to perform an initial configure "
+    "step for an empty binary directory." },
+  { "--build-dir <path-to-build>",
+    "Alias for --test-dir.  Provided as a more intuitive name when "
+    "using -T Configure to bootstrap a build directory." },
   { "--build-and-test <path-to-source> <path-to-build>",
     "Configure, build and run a test." },
   { "--build-target <tgt>", "Specify a specific target to build." },
