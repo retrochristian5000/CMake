@@ -2907,6 +2907,7 @@ std::string cmSystemToolsCMakeCursesCommand;
 std::string cmSystemToolsCMakeGUICommand;
 std::string cmSystemToolsCMClDepsCommand;
 std::string cmSystemToolsCMakeRoot;
+bool cmSystemToolsCMakeInBuildTree = false;
 std::string cmSystemToolsHTMLDoc;
 
 #if defined(__APPLE__)
@@ -3010,7 +3011,7 @@ bool FindCMakeResourcesInInstallTree(std::string const& exe_dir)
   return false;
 }
 
-void FindCMakeResourcesInBuildTree(std::string const& exe_dir)
+bool FindCMakeResourcesInBuildTree(std::string const& exe_dir)
 {
   // Build tree has "<build>/bin[/<config>]/cmake" and
   // "<build>/CMakeFiles/CMakeSourceDir.txt".
@@ -3018,9 +3019,11 @@ void FindCMakeResourcesInBuildTree(std::string const& exe_dir)
   std::string src_dir_txt = cmStrCat(dir, "/CMakeFiles/CMakeSourceDir.txt");
   cmsys::ifstream fin(src_dir_txt.c_str());
   std::string src_dir;
+  bool found = false;
   if (fin && cmSystemTools::GetLineFromStream(fin, src_dir) &&
       cmSystemTools::FileIsDirectory(src_dir)) {
     cmSystemToolsCMakeRoot = src_dir;
+    found = true;
   } else {
     dir = cmSystemTools::GetFilenamePath(dir);
     src_dir_txt = cmStrCat(dir, "/CMakeFiles/CMakeSourceDir.txt");
@@ -3028,13 +3031,18 @@ void FindCMakeResourcesInBuildTree(std::string const& exe_dir)
     if (fin2 && cmSystemTools::GetLineFromStream(fin2, src_dir) &&
         cmSystemTools::FileIsDirectory(src_dir)) {
       cmSystemToolsCMakeRoot = src_dir;
+      found = true;
     }
   }
-  if (!cmSystemToolsCMakeRoot.empty() && cmSystemToolsHTMLDoc.empty() &&
+  if (found) {
+    cmSystemToolsCMakeInBuildTree = true;
+  }
+  if (found && cmSystemToolsHTMLDoc.empty() &&
       cmSystemTools::FileExists(
         cmStrCat(dir, "/Utilities/Sphinx/html/index.html"))) {
     cmSystemToolsHTMLDoc = cmStrCat(dir, "/Utilities/Sphinx/html");
   }
+  return found;
 }
 #endif
 }
@@ -3042,9 +3050,11 @@ void FindCMakeResourcesInBuildTree(std::string const& exe_dir)
 void cmSystemTools::FindCMakeResources(char const* argv0)
 {
   std::string exe = FindOwnExecutable(argv0);
+  cmSystemToolsCMakeInBuildTree = false;
 #ifdef CMAKE_BOOTSTRAP
   // The bootstrap cmake knows its resource locations.
   cmSystemToolsCMakeRoot = CMAKE_BOOTSTRAP_SOURCE_DIR;
+  cmSystemToolsCMakeInBuildTree = true;
   cmSystemToolsCMakeCommand = exe;
   // The bootstrap cmake does not provide the other tools,
   // so use the directory where they are about to be built.
@@ -3067,7 +3077,7 @@ void cmSystemTools::FindCMakeResources(char const* argv0)
       FindCMakeResourcesInInstallTree(cmSystemTools::GetRealPath(exe_dir));
   }
   if (!found) {
-    FindCMakeResourcesInBuildTree(exe_dir);
+    found = FindCMakeResourcesInBuildTree(exe_dir);
   }
   cmSystemToolsCMakeCommand =
     cmStrCat(exe_dir, "/cmake", cmSystemTools::GetExecutableExtension());
@@ -3126,6 +3136,11 @@ std::string const& cmSystemTools::GetCMClDepsCommand()
 std::string const& cmSystemTools::GetCMakeRoot()
 {
   return cmSystemToolsCMakeRoot;
+}
+
+bool cmSystemTools::GetCMakeInBuildTree()
+{
+  return cmSystemToolsCMakeInBuildTree;
 }
 
 std::string const& cmSystemTools::GetHTMLDoc()
