@@ -117,6 +117,7 @@ endif ()
 run_cmake(InstallBMI)
 run_cmake(InstallBMIGenericArgs)
 run_cmake(InstallBMIIgnore)
+run_cmake(InstallBMIAbsDir)
 
 run_cmake(ExportBuildCxxModules)
 run_cmake(ExportBuildCxxModulesTargets)
