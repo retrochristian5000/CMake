@@ -222,6 +222,9 @@ public:
   {
     return "package_source";
   }
+  std::vector<std::string> GetTestBuildDependencyPaths(
+    std::string const& config, std::vector<cmGeneratorTarget*> const& targets,
+    std::vector<std::string> const& files) const override;
   char const* GetRebuildCacheTargetName() const override
   {
     return "rebuild_cache";
