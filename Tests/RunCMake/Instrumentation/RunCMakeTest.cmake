@@ -8,6 +8,7 @@ function(instrument test)
   set(OPTIONS
     "BUILD"
     "BUILD_MAKE_PROGRAM"
+    "INTERRUPT"
     "INSTALL"
     "INSTALL_PARALLEL"
     "TEST"
@@ -121,6 +122,10 @@ function(instrument test)
   if (ARGS_DISABLE_TEST)
     list(APPEND ARGS_CONFIGURE_ARGS "-DDISABLE_TEST=ON")
   endif()
+  if (ARGS_INTERRUPT)
+    list(APPEND ARGS_CONFIGURE_ARGS
+      "-DINTERRUPT_BUILD_SRC=${RunCMake_SOURCE_DIR}/InterruptBuild.c")
+  endif()
   set(RunCMake_TEST_SOURCE_DIR ${RunCMake_SOURCE_DIR}/project)
   if(NOT RunCMake_GENERATOR_IS_MULTI_CONFIG)
     set(maybe_CMAKE_BUILD_TYPE -DCMAKE_BUILD_TYPE=Debug)
@@ -175,6 +180,29 @@ function(instrument test)
     if (ARGS_FAIL)
       unset(RunCMake_TEST_OUTPUT_MERGE)
     endif()
+  endif()
+  if (ARGS_INTERRUPT)
+    # Build just the interrupt helper so it exists for the interrupted build.
+    # This uninterrupted build runs the postCMakeBuild hook, so remove the
+    # postCMakeBuild.hook file it produces; its absence after the interrupted
+    # build below then proves that build's hook was skipped.
+    run_cmake_command(${test}-helper
+      ${CMAKE_COMMAND} --build . --config Debug --target InterruptBuild)
+    file(REMOVE ${v1}/postCMakeBuild.hook)
+
+    # Run an instrumented build and interrupt it after a few seconds, while the
+    # slow target is still running.  Multi-config generators place the helper
+    # under a per-config subdirectory; the build below uses --config Debug.
+    set(helper_dir ${RunCMake_TEST_BINARY_DIR})
+    if (RunCMake_GENERATOR_IS_MULTI_CONFIG)
+      set(helper_dir ${helper_dir}/Debug)
+    endif()
+    set(helper ${helper_dir}/InterruptBuild${CMAKE_EXECUTABLE_SUFFIX})
+    set(RunCMake_QUIET_ERROR 1)
+    run_cmake_command(${test}-build
+      ${helper} 3
+      ${CMAKE_COMMAND} --build . --config Debug)
+    unset(RunCMake_QUIET_ERROR)
   endif()
   if (ARGS_BUILD_MAKE_PROGRAM)
     set(RunCMake_TEST_OUTPUT_MERGE 1)
@@ -435,3 +463,13 @@ if(NOT Skip_BUILD_MAKE_PROGRAM_Case)
     BUILD_MAKE_PROGRAM
     CHECK_SCRIPT check-data-dir.cmake)
 endif()
+
+# Test that interrupting `cmake --build` still writes the cmakeBuild snippet,
+# recording the interrupting signal.  The interrupt is delivered to the build's
+# process group and relies on the native tool sharing the foreground
+# console/process group.  The whole Instrumentation test is already restricted
+# to the Make, Ninja, and FASTBuild generators, all of which run the native
+# tool in the foreground, so no further generator restriction is applied here.
+instrument(interrupt INTERRUPT
+  CHECK_SCRIPT check-interrupted.cmake
+)

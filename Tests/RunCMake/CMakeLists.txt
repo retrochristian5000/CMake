@@ -443,6 +443,7 @@ if(CMAKE_GENERATOR MATCHES "Make|Ninja|FASTBuild")
                                     -DCMAKE_C_COMPILER_ID=${CMAKE_C_COMPILER_ID}
                                     -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
                                     -DCMAKE_C_COMPILER_VERSION=${CMAKE_C_COMPILER_VERSION}
+                                    -DCMAKE_EXECUTABLE_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}
                                     -DCMake_TEST_JSON_SCHEMA=${CMake_TEST_JSON_SCHEMA})
 endif()
 add_RunCMake_test(ConfigDir)
