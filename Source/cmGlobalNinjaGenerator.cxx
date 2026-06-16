@@ -1438,6 +1438,19 @@ void cmGlobalNinjaGenerator::AppendTargetOutputs(
   }
 }
 
+std::vector<std::string> cmGlobalNinjaGenerator::GetTestBuildDependencyPaths(
+  std::string const& config, std::vector<cmGeneratorTarget*> const& targets,
+  std::vector<std::string> const& files) const
+{
+  std::set<std::string> uniqueDeps(files.begin(), files.end());
+  for (cmGeneratorTarget* target : targets) {
+    cmNinjaDeps outputs;
+    this->AppendTargetOutputs(target, outputs, config, DependOnTargetArtifact);
+    uniqueDeps.insert(outputs.begin(), outputs.end());
+  }
+  return { uniqueDeps.begin(), uniqueDeps.end() };
+}
+
 void cmGlobalNinjaGenerator::AppendTargetDepends(
   cmGeneratorTarget const* target, cmNinjaDeps& outputs,
   std::string const& config, std::string const& fileConfig,

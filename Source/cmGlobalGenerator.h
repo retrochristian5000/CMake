@@ -130,6 +130,10 @@ public:
   //! Get the name for this generator
   virtual std::string GetName() const { return "Generic"; }
 
+  virtual std::vector<std::string> GetTestBuildDependencyPaths(
+    std::string const& config, std::vector<cmGeneratorTarget*> const& targets,
+    std::vector<std::string> const& files) const;
+
   /** Check whether the given name matches the current generator.  */
   virtual bool MatchesGeneratorName(std::string const& name) const
   {
