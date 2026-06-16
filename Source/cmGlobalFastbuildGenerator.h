@@ -543,6 +543,7 @@ public:
   void WriteTargetClean();
 
   void AddTargetAll();
+  void AddTestPrepTargets();
   void AddGlobCheckExec();
 
   void AddCompiler(std::string const& lang, cmMakefile* mf);
