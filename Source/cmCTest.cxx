@@ -2518,6 +2518,11 @@ int cmCTest::Run(std::vector<std::string> const& args)
                        this->Impl->TestOptions.RerunFailed = true;
                        return true;
                      } },
+    CommandArgument{ "--out-of-date", CommandArgument::Values::Zero,
+                     [this](std::string const&) -> bool {
+                       this->Impl->TestOptions.OutOfDateOnly = true;
+                       return true;
+                     } },
   };
 
   // Process command line arguments for presets first, since other arguments
@@ -3039,6 +3044,11 @@ std::string cmCTest::GetCurrentTag()
 std::string cmCTest::GetBinaryDir()
 {
   return this->Impl->BinaryDir;
+}
+
+std::string cmCTest::GetStampDir()
+{
+  return this->Impl->BinaryDir + "/Testing/Temporary/LastTestRun";
 }
 
 std::string const& cmCTest::GetConfigType()

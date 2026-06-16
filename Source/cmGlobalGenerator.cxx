@@ -2971,6 +2971,17 @@ bool cmGlobalGenerator::NameResolvesToFramework(
   return false;
 }
 
+std::vector<std::string> cmGlobalGenerator::GetTestBuildDependencyPaths(
+  std::string const& config, std::vector<cmGeneratorTarget*> const& targets,
+  std::vector<std::string> const& files) const
+{
+  std::set<std::string> uniqueDeps(files.begin(), files.end());
+  for (cmGeneratorTarget* target : targets) {
+    uniqueDeps.insert(target->GetFullPath(config));
+  }
+  return { uniqueDeps.begin(), uniqueDeps.end() };
+}
+
 // If the file has no extension it's either a raw executable or might
 // be a direct reference to a binary within a framework (bad practice!).
 // This is where we change the path to point to the framework directory.
