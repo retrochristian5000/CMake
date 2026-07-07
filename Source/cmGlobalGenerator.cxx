@@ -1944,10 +1944,19 @@ void cmGlobalGenerator::WriteInstallJson() const
       index["Configs"].append(config);
     }
   }
-  this->WriteJsonContent(
+  std::string const installJson =
     cmStrCat(this->CMakeInstance->GetHomeOutputDirectory(),
-             "/CMakeFiles/InstallScripts.json"),
-    index);
+             "/CMakeFiles/InstallScripts.json");
+  this->WriteJsonContent(installJson, index);
+
+  // The install handler trusts this index only when it is at least as new as
+  // CMakeFiles/cmake.check_cache, which SaveCache() wrote just before this
+  // call.  The two writes happen in one generate step, but on networked
+  // filesystems their committed modification times can be observed out of
+  // write order, which would spuriously demote a fresh index to the serial
+  // install fallback.  Re-stamp the index as a single event after the cache
+  // marker so its modification time is not earlier than the marker's.
+  cmSystemTools::Touch(installJson, false);
 }
 #endif
 
