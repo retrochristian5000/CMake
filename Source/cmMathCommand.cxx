@@ -3,6 +3,7 @@
 #include "cmMathCommand.h"
 
 #include <cstdio>
+#include <cstdlib>
 
 #include <cm3p/kwiml/int.h>
 
@@ -10,10 +11,14 @@
 #include "cmExecutionStatus.h"
 #include "cmExprParserHelper.h"
 #include "cmMakefile.h"
+#include "cmStringAlgorithms.h"
+#include "cmValue.h"
 
 namespace {
 bool HandleExprCommand(std::vector<std::string> const& args,
                        cmExecutionStatus& status);
+bool HandleIncDecCommand(std::vector<std::string> const& args,
+                         cmExecutionStatus& status, int amount);
 }
 
 bool cmMathCommand(std::vector<std::string> const& args,
@@ -26,6 +31,12 @@ bool cmMathCommand(std::vector<std::string> const& args,
   std::string const& subCommand = args[0];
   if (subCommand == "EXPR") {
     return HandleExprCommand(args, status);
+  }
+  if (subCommand == "INCREMENT") {
+    return HandleIncDecCommand(args, status, 1);
+  }
+  if (subCommand == "DECREMENT") {
+    return HandleIncDecCommand(args, status, -1);
   }
   std::string e = "does not recognize sub-command " + subCommand;
   status.SetError(e);
@@ -115,6 +126,37 @@ bool HandleExprCommand(std::vector<std::string> const& args,
   }
 
   status.GetMakefile().AddDefinition(outputVariable, buffer);
+  return true;
+}
+
+bool HandleIncDecCommand(std::vector<std::string> const& args,
+                         cmExecutionStatus& status, int amount)
+{
+  std::string const messageHint = cmStrCat("sub-command ", args[0], " ");
+  if (args.size() != 2) {
+    status.SetError(cmStrCat(messageHint, "wrong number of arguments"));
+    return false;
+  }
+  auto value = status.GetMakefile().GetDefinition(args[1]);
+  if (!value) {
+    status.SetError(
+      cmStrCat(messageHint, "variable \"", args[1], "\" is not defined"));
+    return false;
+  }
+  if (value->empty()) {
+    status.SetError(
+      cmStrCat(messageHint, "value \"\" is not a valid integer"));
+    return false;
+  }
+  char* end;
+  auto intValue = std::strtoll(value->c_str(), &end, 10);
+  if (end != &*value->end()) {
+    status.SetError(
+      cmStrCat(messageHint, "value \"", *value, "\" is not a valid integer"));
+    return false;
+  }
+  status.GetMakefile().AddDefinition(args[1],
+                                     std::to_string(intValue + amount));
   return true;
 }
 }
