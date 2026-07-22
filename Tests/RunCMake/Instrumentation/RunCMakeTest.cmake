@@ -616,6 +616,11 @@ instrument(cmake-command-trace
   BUILD PRESERVE_DATA
   CHECK_SCRIPT check-trace-removed.cmake
 )
+instrument(cmake-command-long-output
+  BUILD
+  CONFIGURE_ARGS "-DLONG_CUSTOM_COMMAND_OUTPUT=ON"
+  CHECK_SCRIPT check-long-output.cmake
+)
 
 # Test capture output
 instrument(cmake-command-capture-output
