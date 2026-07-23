@@ -1170,134 +1170,237 @@ static Json::Value DumpCTestProperty(std::string const& name,
   return property;
 }
 
+static Json::Value DumpCTestPropertyRaw(std::string const& name,
+                                        std::string const& value)
+{
+  Json::Value property = Json::objectValue;
+  property["name"] = name;
+  property["value"] = value;
+  return property;
+}
+
 static Json::Value DumpCTestProperties(
-  cmCTestTestHandler::cmCTestTestProperties& testProperties)
+  cmCTestTestHandler::cmCTestTestProperties& testProperties, bool raw)
 {
   Json::Value properties = Json::arrayValue;
   if (!testProperties.AttachOnFail.empty()) {
-    properties.append(DumpCTestProperty(
-      "ATTACHED_FILES_ON_FAIL", DumpToJsonArray(testProperties.AttachOnFail)));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("ATTACHED_FILES_ON_FAIL",
+                             testProperties.AttachOnFailRaw)
+      : DumpCTestProperty("ATTACHED_FILES_ON_FAIL",
+                          DumpToJsonArray(testProperties.AttachOnFail));
+    properties.append(std::move(property));
   }
   if (!testProperties.AttachedFiles.empty()) {
-    properties.append(DumpCTestProperty(
-      "ATTACHED_FILES", DumpToJsonArray(testProperties.AttachedFiles)));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("ATTACHED_FILES", testProperties.AttachedFilesRaw)
+      : DumpCTestProperty("ATTACHED_FILES",
+                          DumpToJsonArray(testProperties.AttachedFiles));
+    properties.append(std::move(property));
   }
   if (testProperties.Cost != 0.0f) {
-    properties.append(
-      DumpCTestProperty("COST", static_cast<double>(testProperties.Cost)));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("COST", testProperties.CostRaw)
+      : DumpCTestProperty("COST", static_cast<double>(testProperties.Cost));
+    properties.append(std::move(property));
   }
   if (!testProperties.Depends.empty()) {
-    properties.append(
-      DumpCTestProperty("DEPENDS", DumpToJsonArray(testProperties.Depends)));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("DEPENDS", testProperties.DependsRaw)
+      : DumpCTestProperty("DEPENDS", DumpToJsonArray(testProperties.Depends));
+    properties.append(std::move(property));
   }
   if (testProperties.Disabled) {
-    properties.append(DumpCTestProperty("DISABLED", testProperties.Disabled));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("DISABLED", testProperties.DisabledRaw)
+      : DumpCTestProperty("DISABLED", testProperties.Disabled);
+    properties.append(std::move(property));
   }
   if (!testProperties.Environment.empty()) {
-    properties.append(DumpCTestProperty(
-      "ENVIRONMENT", DumpToJsonArray(testProperties.Environment)));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("ENVIRONMENT", testProperties.EnvironmentRaw)
+      : DumpCTestProperty("ENVIRONMENT",
+                          DumpToJsonArray(testProperties.Environment));
+    properties.append(std::move(property));
   }
   if (!testProperties.EnvironmentModification.empty()) {
-    properties.append(DumpCTestProperty(
-      "ENVIRONMENT_MODIFICATION",
-      DumpToJsonArray(testProperties.EnvironmentModification)));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("ENVIRONMENT_MODIFICATION",
+                             testProperties.EnvironmentModificationRaw)
+      : DumpCTestProperty(
+          "ENVIRONMENT_MODIFICATION",
+          DumpToJsonArray(testProperties.EnvironmentModification));
+    properties.append(std::move(property));
   }
   if (!testProperties.ErrorRegularExpressions.empty()) {
-    properties.append(DumpCTestProperty(
-      "FAIL_REGULAR_EXPRESSION",
-      DumpRegExToJsonArray(testProperties.ErrorRegularExpressions)));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("FAIL_REGULAR_EXPRESSION",
+                             testProperties.ErrorRegularExpressionsRaw)
+      : DumpCTestProperty(
+          "FAIL_REGULAR_EXPRESSION",
+          DumpRegExToJsonArray(testProperties.ErrorRegularExpressions));
+    properties.append(std::move(property));
   }
   if (!testProperties.SkipRegularExpressions.empty()) {
-    properties.append(DumpCTestProperty(
-      "SKIP_REGULAR_EXPRESSION",
-      DumpRegExToJsonArray(testProperties.SkipRegularExpressions)));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("SKIP_REGULAR_EXPRESSION",
+                             testProperties.SkipRegularExpressionsRaw)
+      : DumpCTestProperty(
+          "SKIP_REGULAR_EXPRESSION",
+          DumpRegExToJsonArray(testProperties.SkipRegularExpressions));
+    properties.append(std::move(property));
   }
   if (!testProperties.FixturesCleanup.empty()) {
-    properties.append(DumpCTestProperty(
-      "FIXTURES_CLEANUP", DumpToJsonArray(testProperties.FixturesCleanup)));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("FIXTURES_CLEANUP",
+                             testProperties.FixturesCleanupRaw)
+      : DumpCTestProperty("FIXTURES_CLEANUP",
+                          DumpToJsonArray(testProperties.FixturesCleanup));
+    properties.append(std::move(property));
   }
   if (!testProperties.FixturesRequired.empty()) {
-    properties.append(DumpCTestProperty(
-      "FIXTURES_REQUIRED", DumpToJsonArray(testProperties.FixturesRequired)));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("FIXTURES_REQUIRED",
+                             testProperties.FixturesRequiredRaw)
+      : DumpCTestProperty("FIXTURES_REQUIRED",
+                          DumpToJsonArray(testProperties.FixturesRequired));
+    properties.append(std::move(property));
   }
   if (!testProperties.FixturesSetup.empty()) {
-    properties.append(DumpCTestProperty(
-      "FIXTURES_SETUP", DumpToJsonArray(testProperties.FixturesSetup)));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("FIXTURES_SETUP", testProperties.FixturesSetupRaw)
+      : DumpCTestProperty("FIXTURES_SETUP",
+                          DumpToJsonArray(testProperties.FixturesSetup));
+    properties.append(std::move(property));
   }
   if (!testProperties.GeneratedResourceSpecFile.empty()) {
-    properties.append(
-      DumpCTestProperty("GENERATED_RESOURCE_SPEC_FILE",
-                        testProperties.GeneratedResourceSpecFile));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("GENERATED_RESOURCE_SPEC_FILE",
+                             testProperties.GeneratedResourceSpecFileRaw)
+      : DumpCTestProperty("GENERATED_RESOURCE_SPEC_FILE",
+                          testProperties.GeneratedResourceSpecFile);
+    properties.append(std::move(property));
   }
   if (!testProperties.Labels.empty()) {
-    properties.append(
-      DumpCTestProperty("LABELS", DumpToJsonArray(testProperties.Labels)));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("LABELS", testProperties.LabelsRaw)
+      : DumpCTestProperty("LABELS", DumpToJsonArray(testProperties.Labels));
+    properties.append(std::move(property));
   }
   if (!testProperties.Measurements.empty()) {
-    properties.append(DumpCTestProperty(
-      "MEASUREMENT", DumpMeasurementToJsonArray(testProperties.Measurements)));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("MEASUREMENT", testProperties.MeasurementsRaw)
+      : DumpCTestProperty(
+          "MEASUREMENT",
+          DumpMeasurementToJsonArray(testProperties.Measurements));
+    properties.append(std::move(property));
   }
   if (!testProperties.RequiredRegularExpressions.empty()) {
-    properties.append(DumpCTestProperty(
-      "PASS_REGULAR_EXPRESSION",
-      DumpRegExToJsonArray(testProperties.RequiredRegularExpressions)));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("PASS_REGULAR_EXPRESSION",
+                             testProperties.RequiredRegularExpressionsRaw)
+      : DumpCTestProperty(
+          "PASS_REGULAR_EXPRESSION",
+          DumpRegExToJsonArray(testProperties.RequiredRegularExpressions));
+    properties.append(std::move(property));
   }
   if (!testProperties.ResourceGroups.empty()) {
-    properties.append(DumpCTestProperty(
-      "RESOURCE_GROUPS",
-      DumpResourceGroupsToJsonArray(testProperties.ResourceGroups)));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("RESOURCE_GROUPS",
+                             testProperties.ResourceGroupsRaw)
+      : DumpCTestProperty(
+          "RESOURCE_GROUPS",
+          DumpResourceGroupsToJsonArray(testProperties.ResourceGroups));
+    properties.append(std::move(property));
   }
   if (testProperties.WantAffinity) {
-    properties.append(
-      DumpCTestProperty("PROCESSOR_AFFINITY", testProperties.WantAffinity));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("PROCESSOR_AFFINITY",
+                             testProperties.WantAffinityRaw)
+      : DumpCTestProperty("PROCESSOR_AFFINITY", testProperties.WantAffinity);
+    properties.append(std::move(property));
   }
   if (testProperties.Processors != 1) {
-    properties.append(
-      DumpCTestProperty("PROCESSORS", testProperties.Processors));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("PROCESSORS", testProperties.ProcessorsRaw)
+      : DumpCTestProperty("PROCESSORS", testProperties.Processors);
+    properties.append(std::move(property));
   }
   if (!testProperties.RequiredFiles.empty()) {
-    properties.append(DumpCTestProperty(
-      "REQUIRED_FILES", DumpToJsonArray(testProperties.RequiredFiles)));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("REQUIRED_FILES", testProperties.RequiredFilesRaw)
+      : DumpCTestProperty("REQUIRED_FILES",
+                          DumpToJsonArray(testProperties.RequiredFiles));
+    properties.append(std::move(property));
   }
   if (!testProperties.ProjectResources.empty()) {
-    properties.append(DumpCTestProperty(
-      "RESOURCE_LOCK", DumpToJsonArray(testProperties.ProjectResources)));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("RESOURCE_LOCK",
+                             testProperties.ProjectResourcesRaw)
+      : DumpCTestProperty("RESOURCE_LOCK",
+                          DumpToJsonArray(testProperties.ProjectResources));
+    properties.append(std::move(property));
   }
   if (testProperties.RunSerial) {
-    properties.append(
-      DumpCTestProperty("RUN_SERIAL", testProperties.RunSerial));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("RUN_SERIAL", testProperties.RunSerialRaw)
+      : DumpCTestProperty("RUN_SERIAL", testProperties.RunSerial);
+    properties.append(std::move(property));
   }
   if (testProperties.SkipReturnCode != -1) {
-    properties.append(
-      DumpCTestProperty("SKIP_RETURN_CODE", testProperties.SkipReturnCode));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("SKIP_RETURN_CODE",
+                             testProperties.SkipReturnCodeRaw)
+      : DumpCTestProperty("SKIP_RETURN_CODE", testProperties.SkipReturnCode);
+    properties.append(std::move(property));
   }
   if (testProperties.Timeout) {
-    properties.append(
-      DumpCTestProperty("TIMEOUT", testProperties.Timeout->count()));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("TIMEOUT", testProperties.TimeoutRaw)
+      : DumpCTestProperty("TIMEOUT", testProperties.Timeout->count());
+    properties.append(std::move(property));
   }
   if (testProperties.TimeoutSignal) {
-    properties.append(DumpCTestProperty("TIMEOUT_SIGNAL_NAME",
-                                        testProperties.TimeoutSignal->Name));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("TIMEOUT_SIGNAL_NAME",
+                             testProperties.TimeoutSignalRaw)
+      : DumpCTestProperty("TIMEOUT_SIGNAL_NAME",
+                          testProperties.TimeoutSignal->Name);
+    properties.append(std::move(property));
   }
   if (testProperties.TimeoutGracePeriod) {
-    properties.append(
-      DumpCTestProperty("TIMEOUT_SIGNAL_GRACE_PERIOD",
-                        testProperties.TimeoutGracePeriod->count()));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("TIMEOUT_SIGNAL_GRACE_PERIOD",
+                             testProperties.TimeoutGracePeriodRaw)
+      : DumpCTestProperty("TIMEOUT_SIGNAL_GRACE_PERIOD",
+                          testProperties.TimeoutGracePeriod->count());
+    properties.append(std::move(property));
   }
   if (!testProperties.TimeoutRegularExpressions.empty()) {
-    properties.append(DumpCTestProperty(
-      "TIMEOUT_AFTER_MATCH", DumpTimeoutAfterMatch(testProperties)));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("TIMEOUT_AFTER_MATCH",
+                             testProperties.TimeoutRegularExpressionsRaw)
+      : DumpCTestProperty("TIMEOUT_AFTER_MATCH",
+                          DumpTimeoutAfterMatch(testProperties));
+    properties.append(std::move(property));
   }
   if (testProperties.WillFail) {
-    properties.append(DumpCTestProperty("WILL_FAIL", testProperties.WillFail));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("WILL_FAIL", testProperties.WillFailRaw)
+      : DumpCTestProperty("WILL_FAIL", testProperties.WillFail);
+    properties.append(std::move(property));
   }
   if (!testProperties.Directory.empty()) {
-    properties.append(
-      DumpCTestProperty("WORKING_DIRECTORY", testProperties.Directory));
+    Json::Value property = raw
+      ? DumpCTestPropertyRaw("WORKING_DIRECTORY", testProperties.DirectoryRaw)
+      : DumpCTestProperty("WORKING_DIRECTORY", testProperties.Directory);
+    properties.append(std::move(property));
   }
   if (!testProperties.CustomProperties.empty()) {
     for (auto const& it : testProperties.CustomProperties) {
-      properties.append(DumpCTestProperty(it.first, it.second));
+      Json::Value property = raw ? DumpCTestPropertyRaw(it.first, it.second)
+                                 : DumpCTestProperty(it.first, it.second);
+      properties.append(std::move(property));
     }
   }
   return properties;
@@ -1409,7 +1512,8 @@ static Json::Value DumpCTestInfo(
     }
     testInfo["command"] = DumpToJsonArray(commandAndArgs);
   }
-  Json::Value properties = DumpCTestProperties(testProperties);
+  Json::Value properties = DumpCTestProperties(
+    testProperties, testRun.GetCTest()->GetOutputAsJsonRaw());
   if (!properties.empty()) {
     testInfo["properties"] = properties;
   }
