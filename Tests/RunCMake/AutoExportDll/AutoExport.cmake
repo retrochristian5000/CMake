@@ -4,9 +4,24 @@ project(autoexport)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${autoexport_BINARY_DIR}/bin)
 add_subdirectory(sub)
+
 add_library(objlib OBJECT objlib.c)
 set_property(TARGET objlib PROPERTY POSITION_INDEPENDENT_CODE 1)
-add_library(autoexport SHARED hello.cxx world.cxx foo.c $<TARGET_OBJECTS:objlib>)
+
+add_library(objlib_maybe_lto OBJECT objlib_maybe_lto.c)
+set_property(TARGET objlib_maybe_lto PROPERTY POSITION_INDEPENDENT_CODE 1)
+# Automatic export definition generation for LTO objects is currently only
+# supported with the LLVM toolchain.
+if(CMAKE_NM)
+  cmake_path(GET CMAKE_NM STEM LAST_ONLY nm_name)
+  if(CMAKE_C_COMPILER_ID STREQUAL "Clang" AND nm_name MATCHES "llvm-nm")
+    set_property(TARGET objlib_maybe_lto PROPERTY INTERPROCEDURAL_OPTIMIZATION ON)
+  endif()
+endif()
+
+add_library(autoexport SHARED hello.cxx world.cxx foo.c)
+target_link_libraries(autoexport PRIVATE objlib objlib_maybe_lto)
+
 add_library(autoexport3 SHARED cppCLI.cxx)
 if(MSVC AND NOT MSVC_VERSION VERSION_LESS 1600
    AND NOT CMAKE_C_COMPILER_ARCHITECTURE_ID STREQUAL "ARM64")
