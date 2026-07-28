@@ -46,6 +46,7 @@
 #if !defined(CMAKE_BOOTSTRAP)
 #  include "cmDependsFortran.h" // For -E cmake_copy_f90_mod callback.
 #  include "cmFileTime.h"
+#  include "cmOutputConverter.h"
 
 #  include "bindexplib.h"
 #endif
@@ -1201,13 +1202,20 @@ int cmcmd::ExecuteCMakeCommand(std::vector<std::string> const& args,
         std::cerr << "could not open object list file: " << args[3] << '\n';
         return 1;
       }
-      std::vector<std::string> files;
+      std::vector<std::string> defFiles;
+      std::vector<std::string> objFiles;
       {
         std::string file;
         cmFileTime outTime;
         bool outValid = outTime.Load(args[2]);
         while (cmSystemTools::GetLineFromStream(fin, file)) {
-          files.push_back(file);
+          std::string const& ext =
+            cmSystemTools::GetFilenameLastExtension(file);
+          if (cmSystemTools::LowerCase(ext) == ".def") {
+            defFiles.push_back(file);
+          } else {
+            objFiles.push_back(file);
+          }
           if (outValid) {
             cmFileTime inTime;
             outValid = inTime.Load(file) && inTime.Older(outTime);
@@ -1219,29 +1227,70 @@ int cmcmd::ExecuteCMakeCommand(std::vector<std::string> const& args,
           return 0;
         }
       }
+      fin.close();
       FILE* fout = cmsys::SystemTools::Fopen(args[2], "w+");
       if (!fout) {
         std::cerr << "could not open output .def file: " << args[2] << '\n';
         return 1;
       }
       bindexplib deffile;
+      bool useNm = false;
       if (args.size() >= 5) {
         std::string const& a = args[4];
         if (cmHasLiteralPrefix(a, "--nm=")) {
-          deffile.SetNmPath(a.substr(5));
+          std::string const nmPath = a.substr(5);
+          deffile.SetNmPath(nmPath);
+          useNm = !nmPath.empty();
         } else {
           std::cerr << "unknown argument: " << a << '\n';
         }
       }
-      for (std::string const& file : files) {
-        std::string const& ext = cmSystemTools::GetFilenameLastExtension(file);
-        if (cmSystemTools::LowerCase(ext) == ".def") {
-          if (!deffile.AddDefinitionFile(file.c_str())) {
+      for (std::string const& defFile : defFiles) {
+        if (!deffile.AddDefinitionFile(defFile.c_str())) {
+          return 1;
+        }
+      }
+      if (!objFiles.empty()) {
+        if (useNm) {
+          // Use a response file (@filename syntax) to bypass command line
+          // argument limits and pass all objects to nm at once instead
+          // of invoking nm separately for each object file.
+          std::string const objOnlyListFile = cmStrCat(args[3], ".objonly");
+          cmsys::ofstream objListFile(objOnlyListFile.c_str(),
+                                      std::ios::out | std::ios::binary);
+          if (!objListFile) {
+            std::cerr << "could not open temporary object list file: "
+                      << objOnlyListFile << '\n';
+            return 1;
+          }
+          int responseFlags = cmOutputConverter::Shell_Flag_IsResponse;
+#  if !defined(_WIN32) || defined(__CYGWIN__)
+          responseFlags |= cmOutputConverter::Shell_Flag_IsUnix;
+#  endif
+          for (std::string const& objFile : objFiles) {
+            objListFile << cmOutputConverter::EscapeForShell(objFile,
+                                                             responseFlags)
+                        << '\n';
+          }
+          objListFile.close();
+          if (!objListFile) {
+            cmSystemTools::RemoveFile(objOnlyListFile);
+            std::cerr << "could not write temporary object list file: "
+                      << objOnlyListFile << '\n';
+            return 1;
+          }
+          std::string const nmRspFile = cmStrCat('@', objOnlyListFile);
+          bool const result = deffile.AddObjectFile(nmRspFile.c_str());
+          cmSystemTools::RemoveFile(objOnlyListFile);
+          if (!result) {
             return 1;
           }
         } else {
-          if (!deffile.AddObjectFile(file.c_str())) {
-            return 1;
+          // Pass object files individually when not using nm.
+          for (std::string const& objFile : objFiles) {
+            if (!deffile.AddObjectFile(objFile.c_str())) {
+              return 1;
+            }
           }
         }
       }

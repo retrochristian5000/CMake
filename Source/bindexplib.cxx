@@ -356,26 +356,30 @@ private:
 };
 #endif
 
-static bool DumpFileWithLlvmNm(std::string const& nmPath, char const* filename,
-                               std::set<std::string>& symbols,
-                               std::set<std::string>& dataSymbols)
+static bool DumpFileWithNm(std::string const& nmPath, char const* filename,
+                           std::set<std::string>& symbols,
+                           std::set<std::string>& dataSymbols)
 {
+  std::string const nmName = cmSystemTools::GetFilenameName(nmPath);
   std::string output;
+  std::string error;
   // break up command line into a vector
   std::vector<std::string> command;
   command.push_back(nmPath);
   command.emplace_back("--no-weak");
   command.emplace_back("--defined-only");
   command.emplace_back("--format=posix");
+  command.emplace_back("--print-file-name");
   command.emplace_back(filename);
 
   // run the command
   int exit_code = 0;
-  cmSystemTools::RunSingleCommand(command, &output, &output, &exit_code,
-                                  nullptr, cmSystemTools::OUTPUT_NONE);
+  bool const commandResult = cmSystemTools::RunSingleCommand(
+    command, &output, &error, &exit_code, nullptr, cmSystemTools::OUTPUT_NONE);
 
-  if (exit_code != 0) {
-    fprintf(stderr, "llvm-nm returned an error: %s\n", output.c_str());
+  if (!commandResult || exit_code != 0) {
+    fprintf(stderr, "%s returned an error: %s%s\n", nmName.c_str(),
+            output.c_str(), error.c_str());
     return false;
   }
 
@@ -385,25 +389,33 @@ static bool DumpFileWithLlvmNm(std::string const& nmPath, char const* filename,
     if (line.empty()) { // last line
       continue;
     }
-    size_t sym_end = line.find(' ');
-    if (sym_end == std::string::npos) {
-      fprintf(stderr, "Couldn't parse llvm-nm output line: %s\n",
+    size_t const filename_end = line.find(": ");
+    if (filename_end == std::string::npos) {
+      fprintf(stderr, "Couldn't parse %s output line: %s\n", nmName.c_str(),
               line.c_str());
       return false;
     }
-    if (line.size() < sym_end) {
-      fprintf(stderr, "Couldn't parse llvm-nm output line: %s\n",
+    size_t const sym_start = filename_end + 2;
+    size_t const sym_end = line.find(' ', sym_start);
+    if (sym_end == std::string::npos) {
+      fprintf(stderr, "Couldn't parse %s output line: %s\n", nmName.c_str(),
+              line.c_str());
+      return false;
+    }
+    if (line.size() <= sym_end + 1) {
+      fprintf(stderr, "Couldn't parse %s output line: %s\n", nmName.c_str(),
               line.c_str());
       return false;
     }
     char const sym_type = line[sym_end + 1];
-    line.resize(sym_end);
+    std::string const symbol = line.substr(sym_start, sym_end - sym_start);
     switch (sym_type) {
+      case 'B':
       case 'D':
-        dataSymbols.insert(line);
+        dataSymbols.insert(symbol);
         break;
       case 'T':
-        symbols.insert(line);
+        symbols.insert(symbol);
         break;
     }
   }
@@ -415,9 +427,15 @@ static bool DumpFile(std::string const& nmPath, char const* filename,
                      std::set<std::string>& symbols,
                      std::set<std::string>& dataSymbols)
 {
-#ifndef _WIN32
-  return DumpFileWithLlvmNm(nmPath, filename, symbols, dataSymbols);
-#else
+  if (!filename || filename[0] == '\0') {
+    fprintf(stderr, "No object file was specified.\n");
+    return false;
+  }
+  if (!nmPath.empty()) {
+    return DumpFileWithNm(nmPath, filename, symbols, dataSymbols);
+  }
+
+#ifdef _WIN32
   HANDLE hFile;
   HANDLE hFileMapping;
   LPVOID lpFileBase;
@@ -495,8 +513,9 @@ static bool DumpFile(std::string const& nmPath, char const* filename,
         // 0x0B17C0DE - llvm bitcode BC wrapper
         (h->Sig1 == 0x0B17 && h->Sig2 == 0xC0DE)) {
 
-        return DumpFileWithLlvmNm(nmPath, filename, symbols, dataSymbols);
-
+        fprintf(stderr, "LLVM bitcode file '%s' requires an nm tool.\n",
+                filename);
+        return false;
       } else {
         printf("unrecognized file format in '%s, %u'\n", filename,
                imageHeader->Machine);
@@ -508,6 +527,10 @@ static bool DumpFile(std::string const& nmPath, char const* filename,
   CloseHandle(hFileMapping);
   CloseHandle(hFile);
   return true;
+#else
+  fprintf(stderr, "No nm tool was specified for object file '%s'.\n",
+          filename);
+  return false;
 #endif
 }
 

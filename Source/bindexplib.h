@@ -11,7 +11,6 @@
 class bindexplib
 {
 public:
-  bindexplib() { NmPath = "nm"; }
   bool AddDefinitionFile(char const* filename);
   bool AddObjectFile(char const* filename);
   void WriteFile(FILE* file);
