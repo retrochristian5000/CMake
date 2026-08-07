@@ -790,6 +790,27 @@ bool testTransform()
       result = false;
     }
   }
+  {
+    // No cmMakefile through this overload, so APPLY must throw.
+    cmList list({ "AA", "BB" });
+
+    try {
+      list.transform(cmList::TransformAction::APPLY,
+                     std::vector<std::string>{ "someFunction" });
+      result = false;
+    } catch (cmList::transform_error const&) {
+    }
+  }
+  {
+    // Same for the one-string overload.
+    cmList list({ "AA", "BB" });
+
+    try {
+      list.transform(cmList::TransformAction::APPLY, "someFunction");
+      result = false;
+    } catch (cmList::transform_error const&) {
+    }
+  }
 
   checkResult(result);
 
