@@ -27,6 +27,10 @@
 #ifndef UV_COMMON_H_
 #define UV_COMMON_H_
 
+#if defined(_MSC_VER)
+# pragma warning(disable: 4090) /* 'function': different 'const' qualifiers */
+#endif
+
 #include <assert.h>
 #include <stdarg.h>
 #include <stddef.h>
