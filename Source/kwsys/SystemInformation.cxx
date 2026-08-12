@@ -3981,12 +3981,18 @@ std::string SystemInformationImplementation::GetProgramStack(int firstFrame,
 
   void* stack[TRACE_MAX_STACK_FRAMES];
   HANDLE process = GetCurrentProcess();
+  // SymSetOptions affects the process-global symbol handler options, so
+  // save the caller's options and restore them before returning.
+  DWORD options = SymGetOptions();
+  SymSetOptions(options | SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS |
+                SYMOPT_LOAD_LINES | SYMOPT_EXACT_SYMBOLS);
   SymInitialize(process, nullptr, TRUE);
   WORD numberOfFrames =
     CaptureStackBackTrace(firstFrame, TRACE_MAX_STACK_FRAMES, stack, nullptr);
   SYMBOL_INFO* symbol = static_cast<SYMBOL_INFO*>(
-    malloc(sizeof(SYMBOL_INFO) +
-           (TRACE_MAX_FUNCTION_NAME_LENGTH - 1) * sizeof(TCHAR)));
+    calloc(1,
+           sizeof(SYMBOL_INFO) +
+             (TRACE_MAX_FUNCTION_NAME_LENGTH - 1) * sizeof(TCHAR)));
   symbol->MaxNameLen = TRACE_MAX_FUNCTION_NAME_LENGTH;
   symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
   DWORD displacement;
@@ -3994,15 +4000,34 @@ std::string SystemInformationImplementation::GetProgramStack(int firstFrame,
   line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
   for (int i = 0; i < numberOfFrames; i++) {
     DWORD64 address = reinterpret_cast<DWORD64>(stack[i]);
-    SymFromAddr(process, address, nullptr, symbol);
-    if (SymGetLineFromAddr64(process, address, &displacement, &line)) {
+    // SYMOPT_EXACT_SYMBOLS makes SymFromAddr fail unless the address lies
+    // within the returned symbol's range, so a non-exported function cannot
+    // be misreported as an unrelated preceding export.
+    bool resolved = SymFromAddr(process, address, nullptr, symbol) != FALSE;
+    if (resolved &&
+        SymGetLineFromAddr64(process, address, &displacement, &line)) {
       oss << " at " << symbol->Name << " in " << line.FileName << " line "
           << line.LineNumber << std::endl;
-    } else {
+    } else if (resolved) {
       oss << " at " << symbol->Name << std::endl;
+    } else {
+      // No reliable symbol name is available; report the module containing
+      // the address together with the raw address.
+      wchar_t modulePath[MAX_PATH];
+      DWORD64 moduleBase = SymGetModuleBase64(process, address);
+      if (moduleBase &&
+          GetModuleFileNameW(reinterpret_cast<HMODULE>(moduleBase), modulePath,
+                             MAX_PATH) > 0) {
+        oss << " at " << modulePath << "!" << std::hex << address << std::dec
+            << std::endl;
+      } else {
+        oss << " at " << std::hex << address << std::dec << std::endl;
+      }
     }
   }
   free(symbol);
+  SymSetOptions(options);
+  SymCleanup(process);
 
 #else
   programStack += ""
