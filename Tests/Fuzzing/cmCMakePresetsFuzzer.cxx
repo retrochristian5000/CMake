@@ -99,7 +99,7 @@ void RunOneLayout(RootLayout layout, uint8_t const* data, size_t size)
   unlink(g_userFile.c_str());
   unlink(g_explicitFile.c_str());
 
-  std::string presetsFile;
+  std::string presetsFileArg;
   switch (layout) {
     case RootLayout::Project:
       if (!WriteWholeFile(g_projectFile, data, size)) {
@@ -115,7 +115,7 @@ void RunOneLayout(RootLayout layout, uint8_t const* data, size_t size)
       if (!WriteWholeFile(g_explicitFile, data, size)) {
         return;
       }
-      presetsFile = g_explicitFile;
+      presetsFileArg = g_explicitFile;
       break;
   }
 
@@ -123,9 +123,7 @@ void RunOneLayout(RootLayout layout, uint8_t const* data, size_t size)
   // leaves "errors" and "parseState" behind, so a reused graph would carry
   // diagnostic state from one layout into the next.
   cmCMakePresetsGraph graph;
-  if (!graph.ReadProjectPresets(
-        g_testDir, presetsFile,
-        cmCMakePresetsGraph::ReadOption::AllowNoFiles)) {
+  if (!graph.ReadProjectPresets(g_testDir, presetsFileArg)) {
     return;
   }
 
