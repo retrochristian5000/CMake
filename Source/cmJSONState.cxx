@@ -26,8 +26,6 @@ cmJSONState::cmJSONState(std::string jsonFile, Json::Value* root,
     this->AddError(cmStrCat("File not found: ", this->Filename));
     return;
   }
-  // If there's a BOM, toss it.
-  cmsys::FStream::ReadBOM(fin);
 
   this->ReadJSONStream(fin, root, strictMode);
 }
@@ -131,6 +129,14 @@ void cmJSONState::ReadJSONStream(std::istream& jsonIStream, Json::Value* root,
   std::streampos inBegin = jsonIStream.tellg();
   this->doc = std::string(std::istreambuf_iterator<char>(jsonIStream),
                           std::istreambuf_iterator<char>());
+
+  // If there's a BOM, toss it. Done on the buffered document rather than
+  // the stream itself so this works even for non-seekable streams (e.g.
+  // a pipe from a child process).
+  if (cmHasLiteralPrefix(this->doc, "\xEF\xBB\xBF")) {
+    this->doc.erase(0, 3);
+  }
+
   if (this->doc.empty()) {
     this->AddError("A JSON document cannot be empty");
     return;
