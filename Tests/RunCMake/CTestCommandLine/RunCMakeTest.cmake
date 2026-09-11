@@ -916,6 +916,33 @@ block()
     -V)
 endblock()
 
+# Environment variables from a test preset selected by -D CTEST_PRESET are
+# applied when dashboard mode runs the Test step.
+block()
+  set(src "${RunCMake_BINARY_DIR}/TestPresetCLIVarEnvironment")
+  set(bin "${RunCMake_BINARY_DIR}/TestPresetCLIVarEnvironment-build")
+  file(REMOVE_RECURSE "${src}" "${bin}")
+  file(MAKE_DIRECTORY "${src}" "${bin}")
+  configure_file("${RunCMake_SOURCE_DIR}/TestPresetCLIVarEnvironment-CMakePresets.json.in"
+                 "${src}/CMakePresets.json" @ONLY)
+  file(WRITE "${bin}/DartConfiguration.tcl"
+    "BuildDirectory: ${bin}\n"
+    "SourceDirectory: ${src}\n")
+  file(WRITE "${bin}/CTestTestfile.cmake" "
+add_test(print-env \"${CMAKE_COMMAND}\" -E environment)
+set_tests_properties(print-env PROPERTIES PASS_REGULAR_EXPRESSION \"DASHBOARD_PRESET_ENV=from-preset\")
+")
+  set(RunCMake_TEST_SOURCE_DIR "${src}")
+  set(RunCMake_TEST_BINARY_DIR "${bin}")
+  set(RunCMake_TEST_NO_CLEAN 1)
+  run_cmake_command(TestPresetCLIVarEnvironment
+    ${CMAKE_CTEST_COMMAND}
+    -M Experimental
+    -D "CTEST_PRESET=my-test-preset"
+    -T Test
+    -V)
+endblock()
+
 # Test --output-junit
 function(run_output_junit)
   set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/output-junit)
