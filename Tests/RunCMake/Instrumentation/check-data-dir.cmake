@@ -8,6 +8,7 @@ if (NOT snippets)
 endif()
 
 set(FOUND_SNIPPETS "")
+set(found_process_metrics_chain_tail FALSE)
 foreach(snippet IN LISTS snippets)
   get_filename_component(filename "${snippet}" NAME)
 
@@ -42,7 +43,18 @@ foreach(snippet IN LISTS snippets)
     if (filename MATCHES "^custom-")
       string(JSON outputs ERROR_VARIABLE noOutputs GET "${contents}" outputs)
       if (outputs MATCHES "process_metrics_custom\.stamp")
-        set(process_metrics_case "memory")
+        string(JSON command GET "${contents}" command)
+        if (command MATCHES "process_metrics_memory\\.py")
+          set(process_metrics_case "memory")
+        else()
+          set(found_process_metrics_chain_tail TRUE)
+          string(JSON max_rss GET "${process_metrics}" maxRSS)
+          if (max_rss GREATER_EQUAL 32768)
+            json_error("${snippet}"
+              "Expected final chained command maxRSS < 32768 KiB, got: ${max_rss}"
+            )
+          endif()
+        endif()
       elseif (outputs MATCHES "process_metrics_cpu_custom\.stamp")
         set(process_metrics_case "cpu")
       endif()
@@ -253,6 +265,11 @@ foreach(snippet IN LISTS snippets)
   endif()
 
 endforeach()
+
+# Verify that the final chained command produced a process-metrics snippet.
+if (ARGS_PROCESS_METRICS_QUERY AND ARGS_BUILD AND NOT found_process_metrics_chain_tail)
+  add_error("No process-metrics snippet found for the final chained command")
+endif()
 
 # Verify that listed snippets match expected roles
 set(EXPECTED_SNIPPETS configure generate)
