@@ -102,6 +102,12 @@ public:
   cm::optional<size_t> GetParallelLevel() const;
   void SetParallelLevel(cm::optional<size_t> level);
 
+  /**
+   * Check the CTEST_PARALLEL_LEVEL environment variable and update the
+   * parallel level accordingly (unless it was set via the command line).
+   */
+  void UpdateParallelLevelFromEnvironment();
+
   unsigned long GetTestLoad() const;
   void SetTestLoad(unsigned long);
 

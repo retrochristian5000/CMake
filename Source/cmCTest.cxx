@@ -374,6 +374,27 @@ void cmCTest::SetParallelLevel(cm::optional<size_t> level)
   this->Impl->ParallelLevel = level;
 }
 
+void cmCTest::UpdateParallelLevelFromEnvironment()
+{
+  if (!this->Impl->ParallelLevelSetInCli) {
+    if (cm::optional<std::string> parallelEnv =
+          cmSystemTools::GetEnvVar("CTEST_PARALLEL_LEVEL")) {
+      if (parallelEnv->empty() ||
+          parallelEnv->find_first_not_of(" \t") == std::string::npos) {
+        // An empty value tells ctest to choose a default.
+        this->SetParallelLevel(cm::nullopt);
+      } else {
+        // A non-empty value must be a non-negative integer.
+        // Otherwise, ignore it.
+        unsigned long plevel = 0;
+        if (cmStrToULong(*parallelEnv, &plevel)) {
+          this->SetParallelLevel(plevel);
+        }
+      }
+    }
+  }
+}
+
 unsigned long cmCTest::GetTestLoad() const
 {
   return this->Impl->TestLoad;
@@ -2629,24 +2650,7 @@ int cmCTest::Run(std::vector<std::string> const& args)
     }
   }
 
-  // handle CTEST_PARALLEL_LEVEL environment variable
-  if (!this->Impl->ParallelLevelSetInCli) {
-    if (cm::optional<std::string> parallelEnv =
-          cmSystemTools::GetEnvVar("CTEST_PARALLEL_LEVEL")) {
-      if (parallelEnv->empty() ||
-          parallelEnv->find_first_not_of(" \t") == std::string::npos) {
-        // An empty value tells ctest to choose a default.
-        this->SetParallelLevel(cm::nullopt);
-      } else {
-        // A non-empty value must be a non-negative integer.
-        // Otherwise, ignore it.
-        unsigned long plevel = 0;
-        if (cmStrToULong(*parallelEnv, &plevel)) {
-          this->SetParallelLevel(plevel);
-        }
-      }
-    }
-  }
+  this->UpdateParallelLevelFromEnvironment();
 
   // handle CTEST_NO_TESTS_ACTION environment variable
   if (!this->Impl->NoTestsModeSetInCli) {
