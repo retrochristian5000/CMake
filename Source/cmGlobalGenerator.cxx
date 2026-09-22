@@ -71,6 +71,7 @@
 #include "cmSystemTools.h"
 #include "cmTarget.h"
 #include "cmTargetExport.h"
+#include "cmTestGenerator.h"
 #include "cmUnreachable.h"
 #include "cmValue.h"
 #include "cmVersion.h"
@@ -1868,6 +1869,14 @@ bool cmGlobalGenerator::Compute()
   // Compute the manifest of main targets generated.
   for (auto const& localGen : this->LocalGenerators) {
     localGen->ComputeTargetManifest();
+  }
+
+  // Register test preparation dependencies after custom-command outputs are
+  // known, but before generators compute their build graphs.
+  for (auto const& localGen : this->LocalGenerators) {
+    for (auto const& tester : localGen->GetMakefile()->GetTestGenerators()) {
+      tester->Compute(localGen.get());
+    }
   }
 
   // Compute the inter-target dependencies.

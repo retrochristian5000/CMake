@@ -1013,6 +1013,10 @@ bool cmCTestTestHandler::ComputeTestList()
       }
     }
 
+    if (this->TestOptions.OutOfDateOnly && !tp.IsOutOfDate) {
+      continue;
+    }
+
     if (this->TestsToRunByName) {
       if (this->TestsToRunByName->find(tp.Name) ==
           this->TestsToRunByName->end()) {
@@ -1075,11 +1079,11 @@ bool cmCTestTestHandler::ComputeTestListForRerunFailed()
 
 void cmCTestTestHandler::ComputeOutOfDateTests()
 {
-  ListOfTests finalList;
   std::string const stampDir = this->CTest->GetStampDir();
   cmSystemTools::MakeDirectory(stampDir);
 
   for (cmCTestTestProperties& tp : this->TestList) {
+    tp.IsOutOfDate = false;
     if (tp.BuildDepends.empty()) {
       continue;
     }
@@ -1087,7 +1091,7 @@ void cmCTestTestHandler::ComputeOutOfDateTests()
     std::string const stampFile = cmStrCat(stampDir, '/', tp.GetStampFile());
 
     if (!cmSystemTools::FileExists(stampFile)) {
-      finalList.push_back(tp);
+      tp.IsOutOfDate = true;
       continue;
     }
 
@@ -1098,8 +1102,7 @@ void cmCTestTestHandler::ComputeOutOfDateTests()
         continue;
       }
       if (!cmSystemTools::FileExists(dep)) {
-        // If any dependencies don't exist, skip the test
-        outOfDate = false;
+        outOfDate = true;
         break;
       }
       int result = 0;
@@ -1109,11 +1112,8 @@ void cmCTestTestHandler::ComputeOutOfDateTests()
         outOfDate = true;
       }
     }
-    if (outOfDate) {
-      finalList.push_back(tp);
-    }
+    tp.IsOutOfDate = outOfDate;
   }
-  this->TestList = finalList;
 }
 
 void cmCTestTestHandler::UpdateForFixtures(ListOfTests& tests) const
