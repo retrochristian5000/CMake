@@ -160,7 +160,8 @@ std::string cmFastbuildTargetGenerator::GetCustomCommandTargetName(
   extras += std::to_string(static_cast<int>(step));
 
   cmCryptoHash hash(cmCryptoHash::AlgoSHA256);
-  targetName += "-" + hash.HashString(extras).substr(0, 14);
+  targetName =
+    cmStrCat(targetName, '-', hash.HashString(extras).substr(0, 14));
 
   return targetName;
 }
@@ -686,8 +687,8 @@ FastbuildExecNodes cmFastbuildTargetGenerator::GenerateCommands(
                execNode.PreBuildDependencies);
     for (auto const& util : ccg.GetUtilities()) {
       auto const& utilTargetName = util.Value.first;
-      LogMessage("Util: " + utilTargetName +
-                 ", cross: " + std::to_string(util.Value.second));
+      LogMessage(cmStrCat("Util: ", utilTargetName,
+                          ", cross: ", std::to_string(util.Value.second)));
       auto* const target = this->Makefile->FindTargetToUse(utilTargetName);
 
       if (target && target->IsImported()) {
