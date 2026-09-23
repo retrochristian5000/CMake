@@ -53,22 +53,40 @@ foreach (consumer IN LISTS expected_consumers)
     continue()
   endif ()
 
-  # For this test, expect exactly one linked target dir per consumer
-  if (NOT linked_dirs_len EQUAL 1)
+  # For this test, expect the `importable` target dir and the `std` synth dir.
+  if (linked_dirs_len LESS 2)
     list(APPEND RunCMake_TEST_FAILED
-      "Expected 1 linked-target-dir for '${consumer}' but found ${linked_dirs_len}: ${linked_dirs}")
+      "Expected the 'importable' and '@cmake_cxx_std' linked-target-dirs for '${consumer}' but found ${linked_dirs_len}: ${linked_dirs}")
     continue()
   endif ()
 
-  string(JSON linked_dir GET "${depend_info_json}" "linked-target-dirs" 0)
+  set(linked_dir "")
+  set(linked_tgt_name "")
+  set(std_linked_dir "")
+  foreach (idx RANGE "${linked_dirs_len}")
+    if (idx EQUAL linked_dirs_len)
+      break ()
+    endif ()
+    string(JSON candidate GET "${depend_info_json}" "linked-target-dirs" "${idx}")
+    if (RunCMake_GENERATOR_IS_MULTI_CONFIG)
+      cmake_path(GET candidate PARENT_PATH candidate_root)
+    else ()
+      set(candidate_root "${candidate}")
+    endif ()
+    cmake_path(GET candidate_root FILENAME candidate_name)
+    if (candidate_name MATCHES "^@cmake_cxx_std@synth_[A-Za-z0-9_]+\\.dir$")
+      set(std_linked_dir "${candidate}")
+    else ()
+      set(linked_dir "${candidate}")
+      set(linked_tgt_name "${candidate_name}")
+    endif ()
+  endforeach ()
 
-  if (RunCMake_GENERATOR_IS_MULTI_CONFIG)
-    cmake_path(GET linked_dir PARENT_PATH linked_tgt_root)
-  else ()
-    set(linked_tgt_root "${linked_dir}")
+  if (NOT std_linked_dir)
+    list(APPEND RunCMake_TEST_FAILED
+      "Consumer '${consumer}' does not link to the '@cmake_cxx_std' synth target")
+    continue ()
   endif ()
-
-  cmake_path(GET linked_tgt_root FILENAME linked_tgt_name)
 
   if (NOT linked_tgt_name MATCHES "${expected_linked_tgt_regex}")
     list(APPEND RunCMake_TEST_FAILED
