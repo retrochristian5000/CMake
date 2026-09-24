@@ -22,6 +22,7 @@ public:
     ExportBuildDatabase,
     GenerateSbom,
     Rust,
+    SYCL,
 
     Sentinel,
   };
