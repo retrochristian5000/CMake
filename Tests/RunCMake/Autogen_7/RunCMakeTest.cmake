@@ -61,6 +61,22 @@ if (DEFINED with_qt_version)
     endblock()
   endif ()
 
+  # A header that imports a module is moc'd into mocs_compilation.cpp, which
+  # includes the header and therefore the import.  That aggregated
+  # translation unit has to be scanned for module dependencies like any
+  # other, or the compiler has no module map and reports the module as not
+  # found.  A successful build IS the assertion.  This needs no particular
+  # Qt version: the module unit here carries no meta-object macro.
+  if (cxx_modules_supported)
+    block()
+      set(RunCMake_TEST_SOURCE_DIR "${RunCMake_SOURCE_DIR}/cxx_modules_header_import")
+      set(RunCMake_TEST_BINARY_DIR "${RunCMake_BINARY_DIR}/CxxModulesHeaderImport-build")
+      run_cmake_with_options(CxxModulesHeaderImport ${RunCMake_TEST_OPTIONS})
+      set(RunCMake_TEST_NO_CLEAN 1)
+      run_cmake_command(CxxModulesHeaderImport-build ${CMAKE_COMMAND} --build . --config Debug)
+    endblock()
+  endif ()
+
   # Toggling a module unit's macro must not require a reconfigure: autogen's
   # depfile lists module-unit sources so ninja rescans them on rebuild.  Use
   # a writable copy of the sources so the edit never touches the tracked
