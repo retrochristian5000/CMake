@@ -684,6 +684,7 @@ public:
   std::vector<std::pair<cmTarget::TLLSignature, cmListFileContext>>
     TLLCommands;
   std::map<std::string, cmFileSet> FileSets;
+  std::map<std::string, cm::GeneratedHeader> LanguageInteropHeaders;
   cmListFileBacktrace Backtrace;
   cmFindPackageStack FindPackageStack;
 
@@ -3662,6 +3663,22 @@ std::vector<std::string> cmTarget::GetAllInterfaceFileSets(
 bool cmTarget::HasFileSets() const
 {
   return !this->impl->FileSets.empty();
+}
+
+cm::GeneratedHeader const* cmTarget::GetLanguageCInteropHeader(
+  std::string const& lang) const
+{
+  auto it = this->impl->LanguageInteropHeaders.find(lang);
+  if (it != this->impl->LanguageInteropHeaders.end()) {
+    return &it->second;
+  }
+  return nullptr;
+}
+
+void cmTarget::SetLanguageCInteropHeader(std::string const& lang,
+                                         cm::GeneratedHeader&& header)
+{
+  this->impl->LanguageInteropHeaders[lang] = header;
 }
 
 bool cmTargetInternals::CheckImportedLibName(std::string const& prop,

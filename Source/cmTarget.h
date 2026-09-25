@@ -26,6 +26,14 @@
 #include "cmTargetTypes.h"
 #include "cmValue.h"
 
+namespace cm {
+struct GeneratedHeader
+{
+  std::string path;
+  cm::FileSetMetadata::Visibility scope;
+};
+}
+
 class cmCustomCommand;
 class cmFileSet;
 class cmFindPackageStack;
@@ -420,6 +428,12 @@ public:
   std::string GetInterfaceFileSetsPropertyName(std::string const& type) const;
 
   bool HasFileSets() const;
+
+  /// Returns the mapping of language to generated language interop header path
+  cm::GeneratedHeader const* GetLanguageCInteropHeader(
+    std::string const& lang) const;
+  void SetLanguageCInteropHeader(std::string const& lang,
+                                 cm::GeneratedHeader&& header);
 
 private:
   // Internal representation details.
