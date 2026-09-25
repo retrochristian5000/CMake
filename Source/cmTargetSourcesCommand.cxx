@@ -2,6 +2,7 @@
    file LICENSE.rst or https://cmake.org/licensing for details.  */
 #include "cmTargetSourcesCommand.h"
 
+#include <algorithm>
 #include <utility>
 
 #include <cm/optional>
@@ -19,6 +20,7 @@
 #include "cmMakefile.h"
 #include "cmMessageType.h"
 #include "cmPolicies.h"
+#include "cmRange.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
 #include "cmTarget.h"
@@ -48,6 +50,28 @@ struct FileSetsArgs
 
 auto const FileSetsArgsParser =
   cmArgumentParser<FileSetsArgs>().Bind("FILE_SET"_s, &FileSetsArgs::FileSets);
+
+struct InteropHeaderArgs
+{
+  // Language and Filename are positional arguments
+  ArgumentParser::MaybeEmpty<std::string> FileSet;
+  ArgumentParser::MaybeEmpty<std::string> BaseDir;
+};
+
+auto const InteropHeaderArgsParser =
+  cmArgumentParser<InteropHeaderArgs>()
+    .Bind("FILE_SET"_s, &InteropHeaderArgs::FileSet)
+    .Bind("BASE_DIR"_s, &InteropHeaderArgs::BaseDir);
+
+struct InteropHeaderListArgs
+{
+  ArgumentParser::MaybeEmpty<std::vector<std::vector<std::string>>>
+    InteropHeaders;
+};
+
+auto const InteropHeaderListArgsParser =
+  cmArgumentParser<InteropHeaderListArgs>().Bind(
+    "GENERATE_INTEROP_HEADER"_s, &InteropHeaderListArgs::InteropHeaders);
 
 class TargetSourcesImpl : public cmTargetPropCommandBase
 {
@@ -93,6 +117,9 @@ private:
     if (!content.empty() && content.front() == "FILE_SET"_s) {
       return this->HandleFileSetMode(scope, content);
     }
+    if (!content.empty() && content.front() == "GENERATE_INTEROP_HEADER"_s) {
+      return this->HandleInteropHeaderMode(scope, content);
+    }
     return this->cmTargetPropCommandBase::PopulateTargetProperties(
       scope, content, prepend, system);
   }
@@ -112,19 +139,31 @@ private:
     Yes,
     No,
   };
+
+  enum class TargetSourceDir
+  {
+    CurrentSourceDir,
+    CurrentBinaryDir,
+  };
   std::vector<std::string> ConvertToAbsoluteContent(
     cmTarget* tgt, std::vector<std::string> const& content,
-    IsInterface isInterfaceContent, CheckCMP0076 checkCmp0076);
+    IsInterface isInterfaceContent, CheckCMP0076 checkCmp0076,
+    TargetSourceDir outputDir = TargetSourceDir::CurrentSourceDir);
 
   bool HandleFileSetMode(std::string const& scope,
                          std::vector<std::string> const& content);
   bool HandleOneFileSet(std::string const& scope,
                         std::vector<std::string> const& content);
+  bool HandleInteropHeaderMode(std::string const& scope,
+                               std::vector<std::string> const& content);
+  bool HandleInteropHeader(std::string const& scope,
+                           std::vector<std::string> const& content);
 };
 
 std::vector<std::string> TargetSourcesImpl::ConvertToAbsoluteContent(
   cmTarget* tgt, std::vector<std::string> const& content,
-  IsInterface isInterfaceContent, CheckCMP0076 checkCmp0076)
+  IsInterface isInterfaceContent, CheckCMP0076 checkCmp0076,
+  TargetSourceDir outputDir)
 {
   // Skip conversion in case old behavior has been explicitly requested
   if (checkCmp0076 == CheckCMP0076::Yes &&
@@ -132,6 +171,16 @@ std::vector<std::string> TargetSourcesImpl::ConvertToAbsoluteContent(
         cmPolicies::OLD) {
     return content;
   }
+
+  std::string const& makefileRootDir =
+    outputDir == TargetSourceDir::CurrentSourceDir
+    ? this->Makefile->GetCurrentSourceDirectory()
+    : this->Makefile->GetCurrentBinaryDirectory();
+
+  std::string const& targetRootDir =
+    outputDir == TargetSourceDir::CurrentSourceDir
+    ? tgt->GetMakefile()->GetCurrentSourceDirectory()
+    : tgt->GetMakefile()->GetCurrentBinaryDirectory();
 
   bool changedPath = false;
   std::vector<std::string> absoluteContent;
@@ -141,13 +190,11 @@ std::vector<std::string> TargetSourcesImpl::ConvertToAbsoluteContent(
     if (cmSystemTools::FileIsFullPath(src) ||
         cmGeneratorExpression::Find(src) == 0 ||
         (isInterfaceContent == IsInterface::No &&
-         (this->Makefile->GetCurrentSourceDirectory() ==
-          tgt->GetMakefile()->GetCurrentSourceDirectory()))) {
+         (makefileRootDir == targetRootDir))) {
       absoluteSrc = src;
     } else {
       changedPath = true;
-      absoluteSrc =
-        cmStrCat(this->Makefile->GetCurrentSourceDirectory(), '/', src);
+      absoluteSrc = cmStrCat(makefileRootDir, '/', src);
     }
     absoluteContent.push_back(absoluteSrc);
   }
@@ -392,6 +439,138 @@ bool TargetSourcesImpl::HandleOneFileSet(
         }
       }
     }
+  }
+
+  return true;
+}
+
+bool TargetSourcesImpl::HandleInteropHeaderMode(
+  std::string const& scope, std::vector<std::string> const& content)
+{
+  auto args =
+    InteropHeaderListArgsParser.Parse(content, /*unparsedArguments=*/nullptr);
+  return std::all_of(args.InteropHeaders.begin(), args.InteropHeaders.end(),
+                     [&](auto const& argList) {
+                       return this->HandleInteropHeader(scope, argList);
+                     });
+}
+
+bool TargetSourcesImpl::HandleInteropHeader(
+  std::string const& scope, std::vector<std::string> const& content)
+{
+  if (content.size() < 2) {
+    this->SetError("GENERATE_INTEROP_HEADER must specify a language and "
+                   "generated header filename");
+    return false;
+  }
+
+  if (this->Target->GetType() == cm::TargetType::UTILITY) {
+    this->SetError(
+      "GENERATE_INTEROP_HEADER may not be added to custom targets");
+    return false;
+  }
+
+  if (this->Target->GetType() == cm::TargetType::INTERFACE_LIBRARY) {
+    this->SetError(
+      "GENERATE_INTEROP_HEADER may not be added to interface targets");
+    return false;
+  }
+
+  std::string const lang = content[0];
+  std::string const filename = content[1];
+
+  std::vector<std::string> unparsed;
+  auto args =
+    InteropHeaderArgsParser.Parse(cmMakeRange(content).advance(2), &unparsed);
+
+  if (!unparsed.empty()) {
+    this->SetError(
+      cmStrCat("Unrecognized keyword: \"", unparsed.front(), '"'));
+    return false;
+  }
+
+  if (lang != "Swift") {
+    this->SetError(cmStrCat(
+      "GENERATE_INTEROP_HEADER only implemented for Swift, received \"", lang,
+      '"'));
+    return false;
+  }
+
+  if (cm::GeneratedHeader const* interopHeader =
+        this->Target->GetLanguageCInteropHeader(lang)) {
+    this->SetError(cmStrCat("Language interop header already set on target \"",
+                            this->Target->GetName(), "\" to \"",
+                            interopHeader->path, '"'));
+    return false;
+  }
+
+  if (args.BaseDir.empty()) {
+    args.BaseDir = this->Makefile->GetCurrentBinaryDirectory();
+  }
+
+  std::string const absoluteBaseDir =
+    this
+      ->ConvertToAbsoluteContent(this->Target, { args.BaseDir },
+                                 IsInterface::Yes, CheckCMP0076::No,
+                                 TargetSourceDir::CurrentBinaryDir)
+      .front();
+
+  std::string const absoluteFilename =
+    this
+      ->ConvertToAbsoluteContent(this->Target, { filename }, IsInterface::Yes,
+                                 CheckCMP0076::No,
+                                 TargetSourceDir::CurrentBinaryDir)
+      .front();
+
+  this->Makefile->GetOrCreateGeneratedSource(absoluteFilename);
+
+  cm::FileSetMetadata::Visibility visibility =
+    cm::FileSetMetadata::VisibilityFromName(scope, this->Makefile);
+
+  if (!args.FileSet.empty()) {
+    std::string const type = cm::FileSetMetadata::IsKnownType(args.FileSet)
+      ? args.FileSet
+      : std::string(cm::FileSetMetadata::HEADERS);
+
+    auto foundFileSet =
+      this->Target->GetOrCreateFileSet(args.FileSet, type, visibility);
+    cmFileSet* fileSet = foundFileSet.first;
+
+    if (!foundFileSet.second) {
+      if (fileSet->GetType() != cm::FileSetMetadata::HEADERS) {
+        this->SetError(
+          cmStrCat("FILE_SET \"", args.FileSet,
+                   "\" must be of TYPE HEADERS for GENERATE_INTEROP_HEADER"));
+        return false;
+      }
+
+      if (fileSet->GetVisibility() != visibility) {
+        this->SetError(cmStrCat("Scope ", scope, " for file set \"",
+                                args.FileSet,
+                                "\" does not match its original scope"));
+        return false;
+      }
+    }
+    fileSet->AddDirectoryEntry(
+      BT<std::string>(absoluteBaseDir, this->Makefile->GetBacktrace()));
+    fileSet->AddFileEntry(
+      BT<std::string>(absoluteFilename, this->Makefile->GetBacktrace()));
+  }
+
+  this->Target->SetLanguageCInteropHeader(lang,
+                                          { absoluteFilename, visibility });
+
+  auto interfaceDirectoryGenex =
+    cmStrCat("$<BUILD_INTERFACE:", absoluteBaseDir, '>');
+  if (cm::FileSetMetadata::VisibilityIsForSelf(visibility)) {
+    this->Target->AppendProperty("INCLUDE_DIRECTORIES",
+                                 interfaceDirectoryGenex,
+                                 this->Makefile->GetBacktrace());
+  }
+  if (cm::FileSetMetadata::VisibilityIsForInterface(visibility)) {
+    this->Target->AppendProperty("INTERFACE_INCLUDE_DIRECTORIES",
+                                 interfaceDirectoryGenex,
+                                 this->Makefile->GetBacktrace());
   }
 
   return true;
