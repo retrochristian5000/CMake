@@ -129,9 +129,11 @@ private:
                                         bool scanForModules = false);
   cmSourceFile* AddGeneratedSource(std::string const& filename,
                                    GenVarsT const& genVars,
-                                   bool prepend = false);
+                                   bool prepend = false,
+                                   bool scanForModules = false);
   void AddGeneratedSource(ConfigString const& filename,
-                          GenVarsT const& genVars, bool prepend = false);
+                          GenVarsT const& genVars, bool prepend = false,
+                          bool scanForModules = false);
   void AddToSourceGroup(std::string const& fileName,
                         cm::string_view genNameUpper);
   void AddCMakeProcessToCommandLines(std::string const& infoFile,
