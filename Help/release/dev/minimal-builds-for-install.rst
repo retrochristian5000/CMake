@@ -9,3 +9,8 @@ minimal-builds-for-install
   a subsequent full or component-specific installation, including targets
   that produce installed C++ module BMIs, module export metadata, or
   generated files.
+
+* The :command:`install` command's ``FILES``, ``PROGRAMS``, ``DIRECTORY``,
+  ``SCRIPT``, and ``CODE`` signatures gained a ``BUILD_DEPENDS`` option to
+  specify targets or files needed to prepare files or run installation
+  code.

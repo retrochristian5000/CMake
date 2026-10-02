@@ -148,6 +148,25 @@ protected:
                        std::vector<std::string> const& files,
                        TweakMethod const& tweak);
 
+  // BUILD_DEPENDS entries of an install(<signature>) rule, resolved.
+  struct BuildDependsEntries
+  {
+    std::vector<cmGeneratorTarget const*> Targets;
+    std::vector<std::string> Files;
+  };
+
+  // Resolve each BUILD_DEPENDS entry to a target or, as for add_test(), to a
+  // file.  Returns false after reporting an error if an entry names neither
+  // a target nor a file that exists or that the build generates.
+  bool ResolveBuildDepends(cmLocalGenerator* lg, std::string const& signature,
+                           std::vector<std::string> const& names,
+                           BuildDependsEntries& entries);
+
+  // Add dependencies for resolved BUILD_DEPENDS entries.
+  static void AddBuildDependsDependencies(
+    cmLocalGenerator* lg, BuildDependsEntries const& entries,
+    std::vector<BuildDependency>& dependencies);
+
   // Add dependencies for the files that the build generates among the given
   // files.  Each file is attributed to the target owning the custom command
   // that produces it or, if no single target owns it, such as for a
