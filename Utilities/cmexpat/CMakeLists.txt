@@ -15,10 +15,6 @@ endif()
 include(ConfigureChecks.cmake)
 configure_file(expat_config.h.cmake expat_config.h @ONLY)
 
-if(NOT WIN32)
-  add_definitions(-DXML_DEV_URANDOM)
-endif()
-
 include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/lib
@@ -30,4 +26,44 @@ add_library(cmexpat STATIC
   lib/xmltok.c
   lib/xmltok_impl.c
   lib/xmltok_ns.c
+)
+if(HAVE_ARC4RANDOM)
+  target_sources(cmexpat PRIVATE
+    lib/random_arc4random.c
+    lib/random_arc4random.h
   )
+endif()
+
+if(HAVE_ARC4RANDOM_BUF)
+  target_sources(cmexpat PRIVATE
+    lib/random_arc4random_buf.c
+    lib/random_arc4random_buf.h
+  )
+endif()
+
+if(HAVE_GETENTROPY)
+  target_sources(cmexpat PRIVATE
+    lib/random_getentropy.c
+    lib/random_getentropy.h
+  )
+endif()
+
+if(HAVE_GETRANDOM OR HAVE_SYSCALL_GETRANDOM)
+  target_sources(cmexpat PRIVATE
+    lib/random_getrandom.c
+    lib/random_getrandom.h
+  )
+endif()
+
+if(WIN32)
+  target_sources(cmexpat PRIVATE
+    lib/random_rand_s.c
+    lib/random_rand_s.h
+  )
+else()
+  target_sources(cmexpat PRIVATE
+    lib/random_dev_urandom.c
+    lib/random_dev_urandom.h
+  )
+  target_compile_definitions(cmexpat PRIVATE XML_DEV_URANDOM)
+endif()
