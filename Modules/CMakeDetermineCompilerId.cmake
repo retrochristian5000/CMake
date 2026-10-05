@@ -727,7 +727,19 @@ Id flags: ${testflags} ${CMAKE_${lang}_COMPILER_ID_FLAGS_ALWAYS}
     set(id_Link_AdditionalDependencies "")
     if(lang STREQUAL CUDA)
       if(NOT CMAKE_VS_PLATFORM_TOOLSET_CUDA)
-        message(FATAL_ERROR "No CUDA toolset found.")
+        set(maybe_dir "")
+        if(_CMAKE_VS_PLATFORM_TOOLSET_CUDA_INTEGRATION_DIR)
+          string(CONCAT maybe_dir
+            "The folder:\n"
+            "  \"${_CMAKE_VS_PLATFORM_TOOLSET_CUDA_INTEGRATION_DIR}\"\n"
+            "does not contain any \"CUDA *.props\" files.  ")
+        endif()
+        message(FATAL_ERROR
+          "No CUDA Toolkit integration found in Visual Studio.  ${maybe_dir}"
+          "Install a CUDA Toolkit version that supports integration with\n"
+          "  ${CMAKE_GENERATOR}\n"
+          "and enable the Visual Studio integration component."
+        )
       endif()
       set(cuda_tools "CUDA ${CMAKE_VS_PLATFORM_TOOLSET_CUDA}")
       set(id_compile "CudaCompile")
