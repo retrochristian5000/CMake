@@ -53,6 +53,8 @@ sGetFileInformationByName pGetFileInformationByName;
 
 #if _WIN32_WINNT < 0x0602 /* _WIN32_WINNT_WIN8 */
 sGetSystemTimePreciseAsFileTime pGetSystemTimePreciseAsFileTime;
+sWaitOnAddress pWaitOnAddress;
+sWakeByAddressSingle pWakeByAddressSingle;
 #endif
 
 void uv__winapi_init(void) {
@@ -64,6 +66,7 @@ void uv__winapi_init(void) {
   HMODULE api_win_core_file_module;
 #if _WIN32_WINNT < 0x0602 /* _WIN32_WINNT_WIN8 */
   HMODULE kernel32_module;
+  HMODULE api_win_core_synch_module;
 #endif
 
   union {
@@ -84,6 +87,8 @@ void uv__winapi_init(void) {
     sGetFileInformationByName pGetFileInformationByName;
 #if _WIN32_WINNT < 0x0602 /* _WIN32_WINNT_WIN8 */
     sGetSystemTimePreciseAsFileTime pGetSystemTimePreciseAsFileTime;
+    sWaitOnAddress pWaitOnAddress;
+    sWakeByAddressSingle pWakeByAddressSingle;
 #endif
   } u;
 
@@ -190,6 +195,18 @@ void uv__winapi_init(void) {
     if (pGetSystemTimePreciseAsFileTime == NULL) {
       pGetSystemTimePreciseAsFileTime = GetSystemTimeAsFileTime;
     }
+  }
+
+  api_win_core_synch_module =
+    GetModuleHandleW(L"api-ms-win-core-synch-l1-2-0.dll");
+  if (api_win_core_synch_module != NULL) {
+    u.proc = GetProcAddress(api_win_core_synch_module,
+                            "WaitOnAddress");
+    pWaitOnAddress = u.pWaitOnAddress;
+
+    u.proc = GetProcAddress(api_win_core_synch_module,
+                            "WakeByAddressSingle");
+    pWakeByAddressSingle = u.pWakeByAddressSingle;
   }
 #endif
 }
