@@ -564,12 +564,15 @@ void cmGeneratorTarget::ClearSourcesCache()
   this->LinkDirectoriesCache.clear();
   this->RuntimeBinaryFullNameCache.clear();
   this->ImportLibraryFullNameCache.clear();
+  this->PGOObjects.clear();
+  this->PGOCompileLanguages.clear();
 }
 
 void cmGeneratorTarget::ClearLinkInterfaceCache()
 {
   this->LinkInterfaceMap.clear();
   this->LinkInterfaceUsageRequirementsOnlyMap.clear();
+  this->PGOObjects.clear();
 }
 
 void cmGeneratorTarget::AddSourceCommon(std::string const& src, bool before)
@@ -871,6 +874,327 @@ bool cmGeneratorTarget::IsIPOEnabled(std::string const& lang,
   this->LocalGenerator->GetCMakeInstance()->IssueMessage(
     MessageType::FATAL_ERROR, message, this->GetBacktrace());
   return false;
+}
+
+std::string const& cmGeneratorTarget::GetPGOProperty(
+  std::string const& config) const
+{
+  auto const cached = this->PGOProperties.find(config);
+  if (cached != this->PGOProperties.end()) {
+    return cached->second;
+  }
+
+  static std::string const propName = "PROFILE_GUIDED_OPTIMIZATION";
+  std::string value;
+  if (cmValue prop = this->GetProperty(propName)) {
+    // The mode is used to compile and link all languages, so the generator
+    // expressions are evaluated without a language.
+    cm::GenEx::Context context(this->LocalGenerator, config);
+    cmGeneratorExpressionDAGChecker dagChecker{
+      this, propName, nullptr, nullptr, context,
+    };
+    value = cmGeneratorExpression::Evaluate(*prop, context.LG, context.Config,
+                                            this, &dagChecker);
+    if (cmIsOff(value)) {
+      value.clear();
+    }
+  }
+  return this->PGOProperties.emplace(config, std::move(value)).first->second;
+}
+
+std::string cmGeneratorTarget::GetPGOMode(std::string const& lang,
+                                          std::string const& config) const
+{
+  std::string const& feature = this->GetPGOProperty(config);
+  if (feature.empty()) {
+    return std::string();
+  }
+
+  std::string message;
+  if (feature != "GENERATE"_s && feature != "USE"_s) {
+    message =
+      cmStrCat("PROFILE_GUIDED_OPTIMIZATION property value \"", feature,
+               "\" is not valid for target '", this->GetName(),
+               "'.  It must be one of GENERATE or USE.");
+  } else if (lang != "C" && lang != "CXX" && lang != "OBJC" &&
+             lang != "OBJCXX" && lang != "Fortran") {
+    // We do not define PGO behavior for other languages.
+    return std::string();
+  } else if (!this->Makefile->IsDefinitionSet(
+               cmStrCat("CMAKE_", lang, "_COMPILE_OPTIONS_PGO_", feature))) {
+    // The compiler information modules may disable a phase for which a
+    // needed tool is missing, and tell why.
+    cmValue reason = this->Makefile->GetDefinition(
+      cmStrCat("_CMAKE_", lang, "_PGO_", feature, "_UNSUPPORTED_REASON"));
+    if (cmNonempty(reason)) {
+      message = cmStrCat("CMake doesn't support the ", feature,
+                         " phase of profile guided optimization for the ",
+                         lang, " compiler used by target '", this->GetName(),
+                         "', because ", *reason, '.');
+    } else {
+      message =
+        cmStrCat("CMake doesn't support profile guided optimization for the ",
+                 lang, " compiler used by target '", this->GetName(), "'.");
+    }
+  }
+
+  if (message.empty()) {
+    return feature;
+  }
+
+  if (!this->PGOProblemReported) {
+    this->PGOProblemReported = true;
+    this->LocalGenerator->GetCMakeInstance()->IssueMessage(
+      MessageType::FATAL_ERROR, message, this->GetBacktrace());
+  }
+  return std::string();
+}
+
+std::set<std::string> const& cmGeneratorTarget::GetPGOCompileLanguages(
+  std::string const& config) const
+{
+  // The languages of static and object libraries are needed for each
+  // binary linking them.
+  auto const cached = this->PGOCompileLanguages.find(config);
+  if (cached != this->PGOCompileLanguages.end()) {
+    return cached->second;
+  }
+
+  // Unlike GetLanguages, do not include the languages of the object
+  // libraries in the sources, which are compiled with their own properties.
+  std::set<std::string>& languages = this->PGOCompileLanguages[config];
+  if (!this->CanCompileSources()) {
+    return languages;
+  }
+  for (SourceAndKind const& src : this->GetKindedSources(config).Sources) {
+    if (src.Kind != SourceKindObjectSource) {
+      continue;
+    }
+    std::string lang = this->GetSourceFileLanguage(src.Source.Value, config);
+    if (!lang.empty()) {
+      languages.insert(std::move(lang));
+    }
+  }
+  return languages;
+}
+
+cmGeneratorTarget::PGOObjectsInfo cmGeneratorTarget::GetPGOObjects(
+  std::string const& lang, std::string const& config) const
+{
+  // Avoid computing the link closure if no target uses profile guided
+  // optimization.  This is not cached, as it is known only once the
+  // dependencies of all targets are traced.
+  if (!this->GlobalGenerator->IsPGOEnabled()) {
+    PGOObjectsInfo info;
+    info.Mode = this->GetPGOMode(lang, config);
+    if (!info.Mode.empty()) {
+      info.Directory = this->GetPGODirectory(config);
+    }
+    return info;
+  }
+
+  std::string const key = cmStrCat(lang, ';', config);
+  auto const cached = this->PGOObjects.find(key);
+  if (cached != this->PGOObjects.end()) {
+    return cached->second;
+  }
+
+  PGOObjectsInfo info;
+  info.Mode = this->GetPGOMode(lang, config);
+
+  bool const linked = this->IsPGOLinkTarget();
+  // The profile data directories of the objects of linked targets are
+  // checked below.
+  if (!linked &&
+      (info.Mode == "GENERATE"_s ||
+       this->GetType() != cm::TargetType::STATIC_LIBRARY)) {
+    if (!info.Mode.empty()) {
+      info.Directory = this->GetPGODirectory(config);
+    }
+    return this->PGOObjects.emplace(key, std::move(info)).first->second;
+  }
+
+  // The objects of this target, of the static libraries it links, and of
+  // the object libraries in the sources of all of them, may be built for
+  // profile guided optimization even if the given language is not, or in
+  // another mode, e.g. a library with PROFILE_GUIDED_OPTIMIZATION set to
+  // GENERATE linked by an executable without it, or set to USE.  The
+  // sources include the objects of the directly linked object libraries,
+  // and static libraries only archive those.
+  std::vector<cmGeneratorTarget const*> targets{ this };
+  std::set<cmGeneratorTarget const*> seen{ this };
+  if (linked) {
+    for (cmGeneratorTarget const* dep :
+         this->GetLinkImplementationClosure(config, UseTo::Link)) {
+      if (dep->GetType() == cm::TargetType::STATIC_LIBRARY &&
+          seen.insert(dep).second) {
+        targets.push_back(dep);
+      }
+    }
+  }
+  // The objects of the object libraries in the sources of an object library
+  // are not part of its objects, so they are not scanned recursively.
+  for (std::size_t i = 0, n = targets.size(); i < n; ++i) {
+    for (cmGeneratorTarget const* objLib :
+         targets[i]->GetSourceObjectLibraries(config)) {
+      if (seen.insert(objLib).second) {
+        targets.push_back(objLib);
+      }
+    }
+  }
+  // The objects of this target itself may be compiled for profile guided
+  // optimization in languages other than the given one, e.g. its linker
+  // language.  The profile data directory is the one of this target if the
+  // property is set on it, or else the one of the first target holding
+  // objects built for profile guided optimization in either mode, so that
+  // it is the same in both phases, e.g. for the MSVC '.pgd' files.  Some
+  // compilers, e.g. Clang, write the profile data of a binary to the
+  // directory of only one of its instrumented objects.
+  cmGeneratorTarget const* generateTarget = nullptr;
+  std::string generateDir;
+  std::string firstDir;
+  for (cmGeneratorTarget const* tgt : targets) {
+    if (tgt->GetPGOProperty(config).empty()) {
+      continue;
+    }
+    for (std::string const& l : tgt->GetPGOCompileLanguages(config)) {
+      std::string const m = tgt->GetPGOMode(l, config);
+      if (m.empty()) {
+        continue;
+      }
+      if (info.Mode != "GENERATE"_s) {
+        info.Mode = m;
+      }
+      std::string const& dir = tgt->GetPGODirectory(config);
+      if (firstDir.empty()) {
+        firstDir = dir;
+      }
+      if (m != "GENERATE"_s) {
+        continue;
+      }
+      if (!generateTarget) {
+        generateTarget = tgt;
+        generateDir = dir;
+        continue;
+      }
+      if (linked && dir != generateDir && !this->PGOProblemReported &&
+          tgt->Makefile->IsOn(
+            cmStrCat("_CMAKE_", l, "_PGO_DIRECTORY_PER_BINARY"))) {
+        this->PGOProblemReported = true;
+        this->LocalGenerator->GetCMakeInstance()->IssueMessage(
+          MessageType::FATAL_ERROR,
+          cmStrCat("Target '", this->GetName(),
+                   "' links objects instrumented for profile guided "
+                   "optimization with different profile data directories:\n"
+                   "  ",
+                   generateDir, "\nof target '", generateTarget->GetName(),
+                   "', and:\n  ", dir, "\nof target '", tgt->GetName(),
+                   "'.  The profile data of a binary is written to only one "
+                   "of them, so their PGO_DATA_DIRECTORY must match."),
+          this->GetBacktrace());
+      }
+    }
+  }
+  if (info.Mode.empty()) {
+    // No profile data directory is used.
+  } else if (!this->GetPGOProperty(config).empty() || firstDir.empty()) {
+    info.Directory = this->GetPGODirectory(config);
+  } else {
+    info.Directory = std::move(firstDir);
+  }
+  return this->PGOObjects.emplace(key, std::move(info)).first->second;
+}
+
+cmGeneratorTarget::PGOObjectsInfo cmGeneratorTarget::GetPGOLinkInfo(
+  std::string const& lang, std::string const& config) const
+{
+  // The linker language may be unknown, which is diagnosed elsewhere.
+  if (lang.empty() || !this->IsPGOLinkTarget()) {
+    return {};
+  }
+
+  PGOObjectsInfo info = this->GetPGOObjects(lang, config);
+  std::string const& mode = info.Mode;
+  if (mode.empty()) {
+    return info;
+  }
+
+  if (!this->Makefile->IsDefinitionSet(
+        cmStrCat("CMAKE_", lang, "_LINK_OPTIONS_PGO_", mode))) {
+    // Linking objects instrumented for profile guided optimization without
+    // the profiling runtime library fails.
+    if (mode == "GENERATE"_s && !this->PGOProblemReported) {
+      this->PGOProblemReported = true;
+      this->LocalGenerator->GetCMakeInstance()->IssueMessage(
+        MessageType::FATAL_ERROR,
+        cmStrCat("Target '", this->GetName(),
+                 "' links objects instrumented for profile guided "
+                 "optimization, but CMake doesn't support profile guided "
+                 "optimization for the ",
+                 lang, " linker."),
+        this->GetBacktrace());
+    }
+    return {};
+  }
+  return info;
+}
+
+bool cmGeneratorTarget::IsPGORequiringIPO(std::string const& lang,
+                                          std::string const& config,
+                                          PGOObjectsScope scope) const
+{
+  // Some toolchains, e.g. MSVC, need whole program optimization to build,
+  // archive and link objects for profile guided optimization.
+  if (!this->Makefile->IsOn(cmStrCat("_CMAKE_", lang, "_PGO_REQUIRES_IPO"))) {
+    return false;
+  }
+  std::string const mode = scope == PGOObjectsScope::Own
+    ? this->GetPGOMode(lang, config)
+    : this->GetPGOObjects(lang, config).Mode;
+  return !mode.empty();
+}
+
+bool cmGeneratorTarget::IsPGOLinkTarget() const
+{
+  cm::TargetType const type = this->GetType();
+  return type == cm::TargetType::EXECUTABLE ||
+    type == cm::TargetType::SHARED_LIBRARY ||
+    type == cm::TargetType::MODULE_LIBRARY;
+}
+
+std::string const& cmGeneratorTarget::GetPGODirectory(
+  std::string const& config) const
+{
+  auto const cached = this->PGODirectories.find(config);
+  if (cached != this->PGODirectories.end()) {
+    return cached->second;
+  }
+
+  static std::string const propName = "PGO_DATA_DIRECTORY";
+  std::string dir;
+  if (cmValue prop = this->GetProperty(propName)) {
+    // The directory is used to compile and link all languages, so the
+    // generator expressions are evaluated without a language.
+    cm::GenEx::Context context(this->LocalGenerator, config);
+    cmGeneratorExpressionDAGChecker dagChecker{
+      this, propName, nullptr, nullptr, context,
+    };
+    dir = cmGeneratorExpression::Evaluate(*prop, context.LG, context.Config,
+                                          this, &dagChecker);
+  }
+  if (dir.empty()) {
+    dir = "pgo";
+    if (this->GlobalGenerator->IsMultiConfig()) {
+      dir = cmStrCat(std::move(dir), '/', config);
+    }
+  }
+  // Relative paths are interpreted with respect to the top-level build
+  // directory, so that all targets share the same profile data directory.
+  return this->PGODirectories
+    .emplace(config,
+             cmSystemTools::CollapseFullPath(
+               dir, this->LocalGenerator->GetBinaryDirectory()))
+    .first->second;
 }
 
 std::string const& cmGeneratorTarget::GetObjectName(
@@ -3121,7 +3445,8 @@ std::string cmGeneratorTarget::GetFeatureSpecificLinkRuleVariable(
   std::string const& var, std::string const& lang,
   std::string const& config) const
 {
-  if (this->IsIPOEnabled(lang, config)) {
+  if (this->IsIPOEnabled(lang, config) ||
+      this->IsPGORequiringIPO(lang, config, PGOObjectsScope::All)) {
     std::string varIPO = var + "_IPO";
     if (this->Makefile->IsDefinitionSet(varIPO)) {
       return varIPO;

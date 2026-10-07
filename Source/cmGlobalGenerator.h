@@ -584,6 +584,9 @@ public:
   std::set<std::string> const& GetDirectoryContent(std::string const& dir,
                                                    bool needDisk = true);
 
+  /** Whether any target uses profile guided optimization.  */
+  bool IsPGOEnabled() const { return this->PGOEnabled; }
+
   void IndexTarget(cmTarget* t);
   void IndexGeneratorTarget(cmGeneratorTarget* gt);
 
@@ -896,6 +899,11 @@ protected:
 
   bool AddHeaderSetVerification();
 
+  // Add the 'cmake_pgo_merge' target if profile data needs to be merged.
+  bool AddPGOMergeTarget();
+  // Create a profile guided optimization data directory, once.
+  void CreatePGODirectory(std::string const& dir);
+
   void CreateFileGenerateOutputs();
   bool AddAutomaticSources();
 
@@ -1141,6 +1149,10 @@ private:
 
   // Set of binary directories on disk.
   std::set<std::string> BinaryDirectories;
+
+  // Profile guided optimization data directories created on disk.
+  std::set<std::string> PGODirectories;
+  bool PGOEnabled = false;
 
   // track targets to issue CMP0068 warning for.
   std::set<std::string> CMP0068WarnTargets;

@@ -72,3 +72,38 @@ find_program(CMAKE_${_CMAKE_PROCESSING_LANGUAGE}_COMPILER_CLANG_SCAN_DEPS
   DOC "`clang-scan-deps` dependency scanner"
 )
 mark_as_advanced(CMAKE_${_CMAKE_PROCESSING_LANGUAGE}_COMPILER_CLANG_SCAN_DEPS)
+
+# llvm-profdata must match the version of Clang, as the format of the raw
+# profile data changes between versions.  Elsewhere than next to Clang,
+# accept only the names with the version.
+find_program(CMAKE_${_CMAKE_PROCESSING_LANGUAGE}_COMPILER_LLVM_PROFDATA
+  NAMES
+    "${_CMAKE_TOOLCHAIN_PREFIX}llvm-profdata-${__version_x_y}"
+    "${_CMAKE_TOOLCHAIN_PREFIX}llvm-profdata-${__version_x}"
+    "${_CMAKE_TOOLCHAIN_PREFIX}llvm-profdata${__version_x}"
+    "${_CMAKE_TOOLCHAIN_PREFIX}llvm-profdata"
+    "llvm-profdata-${__version_x_y}"
+    "llvm-profdata-${__version_x}"
+    "llvm-profdata${__version_x}"
+    "llvm-profdata"
+  HINTS ${__clang_hints}
+  NAMES_PER_DIR
+  NO_DEFAULT_PATH
+  DOC "LLVM profile data tool"
+)
+if(__version_x)
+  find_program(CMAKE_${_CMAKE_PROCESSING_LANGUAGE}_COMPILER_LLVM_PROFDATA
+    NAMES
+      "${_CMAKE_TOOLCHAIN_PREFIX}llvm-profdata-${__version_x_y}"
+      "${_CMAKE_TOOLCHAIN_PREFIX}llvm-profdata-${__version_x}"
+      "${_CMAKE_TOOLCHAIN_PREFIX}llvm-profdata${__version_x}"
+      "llvm-profdata-${__version_x_y}"
+      "llvm-profdata-${__version_x}"
+      "llvm-profdata${__version_x}"
+    NAMES_PER_DIR
+    NO_CMAKE_PATH
+    NO_CMAKE_ENVIRONMENT_PATH
+    DOC "LLVM profile data tool"
+  )
+endif()
+mark_as_advanced(CMAKE_${_CMAKE_PROCESSING_LANGUAGE}_COMPILER_LLVM_PROFDATA)

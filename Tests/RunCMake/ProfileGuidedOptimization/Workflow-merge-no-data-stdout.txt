@@ -1,0 +1,1 @@
+No profile data found\.  Run the instrumented binaries before merging their

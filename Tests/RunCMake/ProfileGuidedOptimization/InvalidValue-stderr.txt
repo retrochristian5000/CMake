@@ -1,0 +1,3 @@
+^CMake Error at InvalidValue\.cmake:[0-9]+ \(add_library\):
+  PROFILE_GUIDED_OPTIMIZATION property value "INVALID" is not valid for
+  target 'foo'\.  It must be one of GENERATE or USE\.

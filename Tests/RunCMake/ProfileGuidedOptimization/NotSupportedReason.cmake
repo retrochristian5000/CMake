@@ -1,0 +1,5 @@
+enable_language(C)
+unset(CMAKE_C_COMPILE_OPTIONS_PGO_GENERATE)
+set(_CMAKE_C_PGO_GENERATE_UNSUPPORTED_REASON "the 'merge-tool' tool was not found")
+set(CMAKE_PROFILE_GUIDED_OPTIMIZATION GENERATE)
+add_library(foo STATIC foo.c)

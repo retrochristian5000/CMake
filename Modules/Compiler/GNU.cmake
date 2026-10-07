@@ -129,6 +129,44 @@ macro(__compiler_gnu lang)
     )
   endif()
 
+  # Profile guided optimization.  The profile data directory is shared by
+  # all targets, as GCC names the '.gcda' files after the mangled object
+  # file path.  Other compilers reusing this macro, e.g. Clang, set their
+  # own options, if they support it.
+  if("x${CMAKE_${lang}_COMPILER_ID}" STREQUAL "xGNU"
+      AND "${lang}" MATCHES "^(C|CXX|OBJC|OBJCXX|Fortran)$")
+    set(CMAKE_${lang}_COMPILE_OPTIONS_PGO_GENERATE "-fprofile-generate=<PGO_DIRECTORY>")
+    set(CMAKE_${lang}_COMPILE_OPTIONS_PGO_USE "-fprofile-use=<PGO_DIRECTORY>")
+    # Name the '.gcda' files after the object file path relative to the
+    # build tree, so that profile data can be used by another build tree.
+    # GCC strips the prefix from its working directory, which may be the
+    # build tree path given to CMake, or the one with the symbolic links
+    # resolved, depending on how the build tool is invoked.  As only one
+    # prefix may be given, do not use it if the paths differ.  On Windows,
+    # the paths may also differ in case, and GCC compares the prefix with
+    # its working directory using backslashes.  Without a matching prefix,
+    # the '.gcda' file names hold the whole object file path, which may
+    # exceed the maximum path length on Windows.
+    file(REAL_PATH "${CMAKE_BINARY_DIR}" _gnu_pgo_binary_dir)
+    if(NOT CMAKE_${lang}_COMPILER_VERSION VERSION_LESS 11
+        AND (CMAKE_HOST_WIN32 OR _gnu_pgo_binary_dir STREQUAL CMAKE_BINARY_DIR))
+      # Do not use 'file(TO_NATIVE_PATH)', as it escapes spaces on UNIX.
+      set(_gnu_pgo_binary_dir "${CMAKE_BINARY_DIR}")
+      if(CMAKE_HOST_WIN32)
+        string(REPLACE "/" "\\" _gnu_pgo_binary_dir "${_gnu_pgo_binary_dir}")
+      endif()
+      list(APPEND CMAKE_${lang}_COMPILE_OPTIONS_PGO_GENERATE
+        "-fprofile-prefix-path=${_gnu_pgo_binary_dir}")
+      list(APPEND CMAKE_${lang}_COMPILE_OPTIONS_PGO_USE
+        "-fprofile-prefix-path=${_gnu_pgo_binary_dir}")
+    endif()
+    unset(_gnu_pgo_binary_dir)
+    # The compiler driver links the profiling runtime, and with IPO
+    # the code generation happens at link time.
+    set(CMAKE_${lang}_LINK_OPTIONS_PGO_GENERATE ${CMAKE_${lang}_COMPILE_OPTIONS_PGO_GENERATE})
+    set(CMAKE_${lang}_LINK_OPTIONS_PGO_USE ${CMAKE_${lang}_COMPILE_OPTIONS_PGO_USE})
+  endif()
+
   if("${lang}" STREQUAL "CXX")
     set(CMAKE_${lang}_COMPILER_PREDEFINES_COMMAND "${CMAKE_${lang}_COMPILER}")
     if(CMAKE_${lang}_COMPILER_ARG1)

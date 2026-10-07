@@ -433,12 +433,14 @@ Properties on Targets
    /prop_tgt/PDB_NAME_CONFIG
    /prop_tgt/PDB_OUTPUT_DIRECTORY
    /prop_tgt/PDB_OUTPUT_DIRECTORY_CONFIG
+   /prop_tgt/PGO_DATA_DIRECTORY
    /prop_tgt/POSITION_INDEPENDENT_CODE
    /prop_tgt/PRECOMPILE_HEADERS
    /prop_tgt/PRECOMPILE_HEADERS_REUSE_FROM
    /prop_tgt/PREFIX
    /prop_tgt/PRIVATE_HEADER
    /prop_tgt/PRIVATE_HEADER_SETS_TO_VERIFY
+   /prop_tgt/PROFILE_GUIDED_OPTIMIZATION
    /prop_tgt/PROJECT_LABEL
    /prop_tgt/PUBLIC_HEADER
    /prop_tgt/RESOURCE
