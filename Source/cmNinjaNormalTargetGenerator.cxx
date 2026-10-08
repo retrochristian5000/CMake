@@ -792,10 +792,17 @@ std::vector<std::string> cmNinjaNormalTargetGenerator::ComputeLinkCmd(
     case cm::TargetType::STATIC_LIBRARY: {
       // We have archive link commands set. First, delete the existing archive.
       {
+#ifdef _WIN32
+        // This rule always has more than one command, so it already runs
+        // under cmd.exe: delete with its builtin instead of starting
+        // cmake.exe.  Discard the message 'del' prints for a missing file.
+        linkCmds.emplace_back("del /f /q $TARGET_FILE 2>nul");
+#else
         std::string cmakeCommand =
           this->GetLocalGenerator()->ConvertToOutputFormat(
             cmSystemTools::GetCMakeCommand(), cmOutputConverter::SHELL);
         linkCmds.push_back(cmakeCommand + " -E rm -f $TARGET_FILE");
+#endif
       }
       // TODO: Use ARCHIVE_APPEND for archives over a certain size.
       {
