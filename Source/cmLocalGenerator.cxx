@@ -5525,6 +5525,14 @@ cmSourcesWithOutput cmLocalGenerator::GetSourcesWithOutput(
   return {};
 }
 
+void cmLocalGenerator::AppendOutputsAndByproducts(
+  std::unordered_set<std::string>& outputs) const
+{
+  for (auto const& entry : this->OutputToSource) {
+    outputs.insert(entry.first);
+  }
+}
+
 cmSourceFile* cmLocalGenerator::GetSourceFileWithOutput(
   std::string const& name, cmSourceOutputKind kind) const
 {
@@ -5650,6 +5658,7 @@ void cmLocalGenerator::UpdateOutputToSourceMap(std::string const& byproduct,
 
   auto pr = this->OutputToSource.emplace(byproduct, entry);
   if (pr.second) {
+    this->GlobalGenerator->InvalidateGeneratedByBuildIndex();
     CreateGeneratedSource(*this, byproduct, OutputRole::Byproduct, origin, bt);
   } else {
     SourceEntry& current = pr.first->second;
@@ -5678,6 +5687,7 @@ void cmLocalGenerator::UpdateOutputToSourceMap(std::string const& output,
 
   auto pr = this->OutputToSource.emplace(output, entry);
   if (pr.second) {
+    this->GlobalGenerator->InvalidateGeneratedByBuildIndex();
     CreateGeneratedSource(*this, output, role, origin, bt);
   } else {
     SourceEntry& current = pr.first->second;
