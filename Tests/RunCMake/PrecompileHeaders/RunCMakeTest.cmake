@@ -36,6 +36,12 @@ if(RunCMake_GENERATOR MATCHES "Make|Ninja")
     run_cmake(PchInstantiateTemplates)
   endif()
 endif()
+# Only Clang-based compilers take the '-Xclang -include<file>' spelling that
+# the Xcode generator uses to keep a force include out of the driver's way.
+if(CMAKE_C_COMPILER_ID MATCHES "^(Clang|AppleClang|IntelLLVM)$" AND
+    NOT CMAKE_C_SIMULATE_ID STREQUAL "MSVC")
+  run_test(PchForceInclude)
+endif()
 run_test(PchIncludedAllLanguages)
 run_test(PchIncludedOneLanguage)
 run_test(PchLibObjLibExe)
