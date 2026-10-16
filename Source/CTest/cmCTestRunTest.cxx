@@ -82,7 +82,8 @@ void cmCTestRunTest::CheckOutput(std::string const& line)
   this->ProcessOutput = cmStrCat(std::move(this->ProcessOutput), line, '\n');
 
   // Check for TIMEOUT_AFTER_MATCH property.
-  if (!this->TestProperties->TimeoutRegularExpressions.empty()) {
+  if (!this->TimeoutAfterMatch &&
+      !this->TestProperties->TimeoutRegularExpressions.empty()) {
     for (auto& reg : this->TestProperties->TimeoutRegularExpressions) {
       if (reg.first.find(this->ProcessOutput)) {
         cmCTestLog(this->CTest, HANDLER_VERBOSE_OUTPUT, this->GetIndex(), ": ",
@@ -94,7 +95,9 @@ void cmCTestRunTest::CheckOutput(std::string const& line)
         this->TestProcess->ResetStartTime();
         this->TestProcess->ChangeTimeout(
           this->TestProperties->AlternateTimeout);
-        this->TestProperties->TimeoutRegularExpressions.clear();
+        // Test properties are reused when a test is repeated, so record this
+        // state separately rather than clearing the shared regex list.
+        this->TimeoutAfterMatch = true;
         break;
       }
     }
@@ -563,6 +566,7 @@ bool cmCTestRunTest::StartTest(size_t completed, size_t total)
   }
 
   this->ProcessOutput.clear();
+  this->TimeoutAfterMatch = false;
 
   this->TestResult.Properties = this->TestProperties;
   this->TestResult.ExecutionTime = cmDuration::zero();
