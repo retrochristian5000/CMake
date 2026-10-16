@@ -167,6 +167,8 @@ private:
   int RunNumber = 1; // which run of the test this is
   int RunCount = 1;  // how many runs it may be given
   bool RunAgain = false;
+  // Whether TIMEOUT_AFTER_MATCH has been applied for this run.
+  bool TimeoutAfterMatch = false;
   bool UseLLVMCov = false;
   size_t TotalNumberOfTests;
 };
