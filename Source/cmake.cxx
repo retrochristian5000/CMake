@@ -90,6 +90,7 @@
 #  include "cmInstrumentation.h"
 #  include "cmInstrumentationInterrupt.h"
 #  include "cmInstrumentationQuery.h"
+#  include "cmListFileCoverage.h"
 #  include "cmMakefileProfilingData.h"
 #  include "cmVariableWatch.h"
 #endif
@@ -3290,6 +3291,17 @@ int cmake::Run(std::vector<std::string> const& args, bool noconfigure)
     cmSystemTools::RemoveFile(FBuildRestatFile);
     return 0;
   }
+
+#if !defined(CMAKE_BOOTSTRAP)
+  // A --check-build-system run records coverage only if it re-runs.
+  if (!this->CheckBuildSystemArgument.empty()) {
+    std::string error;
+    if (!cmListFileCoverage::Start(error)) {
+      cmSystemTools::Error(error);
+      return -1;
+    }
+  }
+#endif
 
 #ifdef CMake_ENABLE_DEBUGGER
   if (!this->StartDebuggerIfEnabled()) {
