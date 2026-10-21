@@ -760,6 +760,8 @@ public:
   cmGeneratorTarget* GetPchReuseTarget();
   std::vector<std::string> GetPchArchs(std::string const& config,
                                        std::string const& lang) const;
+  // Whether the given language can use a precompiled header at all.
+  static bool LanguageSupportsPch(std::string const& language);
   std::string GetPchHeader(std::string const& config,
                            std::string const& language,
                            std::string const& arch = std::string()) const;

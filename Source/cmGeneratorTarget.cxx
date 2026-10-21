@@ -3311,12 +3311,17 @@ std::vector<std::string> cmGeneratorTarget::GetPchArchs(
   return pchArchs;
 }
 
+bool cmGeneratorTarget::LanguageSupportsPch(std::string const& language)
+{
+  return language == "C" || language == "CXX" || language == "OBJC" ||
+    language == "OBJCXX";
+}
+
 std::string cmGeneratorTarget::GetPchHeader(std::string const& config,
                                             std::string const& language,
                                             std::string const& arch) const
 {
-  if (language != "C" && language != "CXX" && language != "OBJC" &&
-      language != "OBJCXX") {
+  if (!cmGeneratorTarget::LanguageSupportsPch(language)) {
     return std::string();
   }
 
@@ -3434,8 +3439,7 @@ std::string cmGeneratorTarget::GetPchSource(std::string const& config,
                                             std::string const& language,
                                             std::string const& arch) const
 {
-  if (language != "C" && language != "CXX" && language != "OBJC" &&
-      language != "OBJCXX") {
+  if (!cmGeneratorTarget::LanguageSupportsPch(language)) {
     return std::string();
   }
   auto const inserted = this->PchSources.insert(
@@ -3496,8 +3500,7 @@ std::string cmGeneratorTarget::GetPchFileObject(std::string const& config,
                                                 std::string const& language,
                                                 std::string const& arch)
 {
-  if (language != "C" && language != "CXX" && language != "OBJC" &&
-      language != "OBJCXX") {
+  if (!cmGeneratorTarget::LanguageSupportsPch(language)) {
     return std::string();
   }
   auto const inserted = this->PchObjectFiles.insert(
