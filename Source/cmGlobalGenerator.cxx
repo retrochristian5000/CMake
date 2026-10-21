@@ -484,7 +484,7 @@ void cmGlobalGenerator::MarkTargetsForPchReuse() const
   for (auto const& generator : this->LocalGenerators) {
     for (auto const& target : generator->GetGeneratorTargets()) {
       if (auto* reuseTarget = target->GetPchReuseTarget()) {
-        reuseTarget->MarkAsPchReused();
+        reuseTarget->MarkAsPchReusedBy(target.get());
       }
     }
   }

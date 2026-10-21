@@ -15,12 +15,27 @@ function(run_build_verbose name)
   run_cmake_command(${name}-build ${CMAKE_COMMAND} --build . --verbose --config Debug)
 endfunction()
 
+function(run_test_verbose name)
+  set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/${name}-build)
+  run_build_verbose(${name})
+  set(RunCMake_TEST_NO_CLEAN 1)
+  run_cmake_command(${name}-test ${CMAKE_CTEST_COMMAND} -C Debug)
+endfunction()
+
 run_test(PchReuseFrom-CMP0141-OLD)
 run_test(PchReuseFrom-CMP0141-NEW)
 if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
   run_test(PchReuseFrom-CMP0141-NEW-empty)
 endif()
 run_test(PchReuseFromPrefixed)
+run_test_verbose(PchReusePic)
+if(NOT RunCMake_GENERATOR MATCHES "Visual Studio")
+  # The Visual Studio generators never add the position-independent code
+  # flags, which they do not need because Windows has none, so they do not
+  # diagnose a change to them either.
+  run_cmake(PchReusePic-CMP0227-WARN)
+endif()
+run_cmake(PchReusePic-CMP0227-OLD)
 run_test(PchReuseFromSubdir)
 run_build_verbose(PchReuseFromSharedPdbDir)
 run_build_verbose(PchReuseFromIgnoreOwnProps)

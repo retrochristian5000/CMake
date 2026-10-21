@@ -1,0 +1,51 @@
+CMP0227
+-------
+
+.. versionadded:: 4.6
+
+Targets sharing a precompiled header use consistent position-independent
+code flags.
+
+A precompiled header records the position-independent code state of the
+translation unit that created it, so compilers reject using it from a
+translation unit that is compiled with a different state.  CMake 4.5 and
+below computed the position-independent code flags of every target on its
+own, even for targets that share a precompiled header through the
+:prop_tgt:`PRECOMPILE_HEADERS_REUSE_FROM` target property.  The flags could
+therefore differ, e.g. an executable used the ``PIE`` flavor of the flags
+while the precompiled header of a library was created with the ``PIC``
+flavor, which Clang rejects with::
+
+  error: PIE level differs in precompiled file 'f.pch' vs. current file
+
+CMake 4.6 and above prefer to compute the flags for all targets that
+compile against a precompiled header together:
+
+* The flags are enabled if the :prop_tgt:`POSITION_INDEPENDENT_CODE` target
+  property is enabled on any target of the group, so that no target loses
+  position independence.
+
+* The ``PIC`` flavor of the flags is used unless every target of the group
+  is an executable, because the ``PIE`` flavor is not valid for shared
+  libraries.
+
+A target of such a group may therefore be compiled with flags other than
+the ones it would use on its own, which affects the generated code and not
+just the compilation speed.  Set :prop_tgt:`DISABLE_PRECOMPILE_HEADERS` on
+such a target, or :prop_sf:`SKIP_PRECOMPILE_HEADERS` on its sources, to keep
+its own flags.  Targets that do not compile against a precompiled header are
+not affected, and neither is the link step of any target.
+
+The ``OLD`` behavior for this policy is to compute the position-independent
+code flags of every target on its own.  The ``NEW`` behavior is to compute
+them for all targets that share a precompiled header together.
+
+This policy is checked for each target separately, as recorded when the
+target was created, so all targets that share a precompiled header should
+use the same setting.
+
+.. |INTRODUCED_IN_CMAKE_VERSION| replace:: 4.6
+.. |WARNS_OR_DOES_NOT_WARN| replace:: warns
+.. include:: include/STANDARD_ADVICE.rst
+
+.. include:: include/DEPRECATED.rst

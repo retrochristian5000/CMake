@@ -2,6 +2,14 @@
 #include "foo.h"
 #include "foo2.h"
 
+#if defined(EXPECT_PIC) && !defined(__PIC__)
+#  error "position independent code flags are missing"
+#endif
+
+#if defined(EXPECT_PIE) && !defined(__PIE__)
+#  error "position independent executable flags are missing"
+#endif
+
 int main(void)
 {
   int zeroSize = 0;

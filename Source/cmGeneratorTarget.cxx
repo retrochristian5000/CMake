@@ -1394,9 +1394,7 @@ std::string cmGeneratorTarget::GetCompilePDBName(
 
   // If the target is PCH-reused or PCH-reuses, we need a stable name for the
   // PDB file so that reusing targets can construct a stable name for it.
-  cmGeneratorTarget const* reuseTarget = this->GetPchReuseTarget();
-  bool const hasReuse = reuseTarget && reuseTarget != this;
-  if (this->PchReused || hasReuse) {
+  if (this->InPchReuseGroup()) {
     NameComponents const& components = GetFullNameInternalComponents(
       config, cmStateEnums::RuntimeBinaryArtifact);
     return cmStrCat(components.prefix, this->GetName(), ".pdb");
@@ -3192,6 +3190,158 @@ struct CycleWatcher
   bool& Flag;
 };
 
+void cmGeneratorTarget::MarkAsPchReusedBy(cmGeneratorTarget const* consumer)
+{
+  // A target that names itself in "PRECOMPILE_HEADERS_REUSE_FROM" is
+  // diagnosed as a cycle by "GetPchReuseTarget", which still returns the
+  // target itself.  Do not record it as a consumer of its own precompiled
+  // header.
+  if (consumer != this) {
+    this->PchReuseConsumers.emplace_back(consumer);
+  }
+}
+
+bool cmGeneratorTarget::InPchReuseGroup() const
+{
+  cmGeneratorTarget const* reuseTarget = this->GetPchReuseTarget();
+  return (reuseTarget && reuseTarget != this) ||
+    !this->PchReuseConsumers.empty();
+}
+
+cmGeneratorTarget::PositionIndependentCode
+cmGeneratorTarget::GetPositionIndependentCode(
+  std::string const& config, std::string const& language) const
+{
+  PositionIndependentCode own;
+  own.Enabled = this->GetLinkInterfaceDependentBoolProperty(
+    "POSITION_INDEPENDENT_CODE", config);
+  own.Pie = (this->GetType() == cm::TargetType::EXECUTABLE);
+
+  cmPolicies::PolicyStatus const cmp0227 = this->GetPolicyStatusCMP0227();
+  if (cmp0227 == cmPolicies::OLD) {
+    return own;
+  }
+
+  // A precompiled header records the position-independent code state of the
+  // translation unit that created it, so all targets compiling against it
+  // must use the same position-independent code flags.  Targets that do not
+  // compile against one, e.g. because the compiler does not support
+  // precompiled headers or because their sources skip them, keep their own
+  // flags.
+  if (!this->UsesPrecompileHeaders(config, language)) {
+    return own;
+  }
+
+  cmGeneratorTarget const* pchTarget = this->GetPchReuseTarget();
+  if (!pchTarget) {
+    pchTarget = this;
+  }
+
+  // The group consists of the target that creates the precompiled header and
+  // the targets that compile against it, one of which is this target, so
+  // compute the flags over all of them from scratch.  Enable them if any
+  // target of the group needs them, so that none of the targets loses
+  // position independence, and use the PIC flavor unless every target of the
+  // group is an executable, because the PIE flavor is not valid for shared
+  // libraries.
+  PositionIndependentCode group;
+  group.Enabled = pchTarget->GetLinkInterfaceDependentBoolProperty(
+    "POSITION_INDEPENDENT_CODE", config);
+  group.Pie = (pchTarget->GetType() == cm::TargetType::EXECUTABLE);
+  for (cmGeneratorTarget const* consumer : pchTarget->GetPchReuseConsumers()) {
+    if (!consumer->UsesPrecompileHeaders(config, language)) {
+      continue;
+    }
+    group.Enabled = group.Enabled ||
+      consumer->GetLinkInterfaceDependentBoolProperty(
+        "POSITION_INDEPENDENT_CODE", config);
+    group.Pie =
+      group.Pie && (consumer->GetType() == cm::TargetType::EXECUTABLE);
+  }
+
+  // Resolve the flags that a state produces, mirroring the selection of
+  // "cmLocalGenerator::AddPositionIndependentFlags", so that the states are
+  // only told apart where they make a difference, e.g. not on compilers that
+  // have no position-independent code flags at all, like MSVC, or no PIE
+  // flavor of them.
+  auto const flagsFor = [this, &language](PositionIndependentCode state) {
+    std::string flags;
+    if (state.Enabled) {
+      if (state.Pie) {
+        flags = this->Makefile->GetSafeDefinition(
+          cmStrCat("CMAKE_", language, "_COMPILE_OPTIONS_PIE"));
+      }
+      if (flags.empty()) {
+        flags = this->Makefile->GetSafeDefinition(
+          cmStrCat("CMAKE_", language, "_COMPILE_OPTIONS_PIC"));
+      }
+    }
+    return flags;
+  };
+
+  if (flagsFor(group) == flagsFor(own)) {
+    return group;
+  }
+
+  // Sharing the precompiled header changes how this target is compiled
+  // compared to building it on its own, which affects the generated code and
+  // not just the compilation speed, so the project has to opt in.  Warn at
+  // most once per target, because the flags are computed for every language
+  // and configuration.
+  if (cmp0227 == cmPolicies::WARN) {
+    if (!this->PchPicWarningIssued) {
+      this->PchPicWarningIssued = true;
+
+      // The group enables the flags as soon as one of its targets needs
+      // them, and gives up the PIE flavor as soon as one of them is not an
+      // executable, so those are the only two ways the flags can change.
+      cm::string_view const reason = own.Enabled
+        ? R"(with the "PIC" flavor of the position-independent code flags )"
+          R"(rather than the "PIE" flavor, because a target that is not an )"
+          "executable shares the precompiled header"_s
+        : "with position-independent code flags even though its "
+          R"("POSITION_INDEPENDENT_CODE" property is off, because another )"
+          "target that shares the precompiled header needs them"_s;
+
+      // The target that creates the precompiled header cannot keep its own
+      // flags by giving up the precompiled header, because that would take
+      // it away from the whole group, so point at the other targets.
+      std::string share;
+      cm::string_view remedy;
+      if (pchTarget == this) {
+        share =
+          "creates a precompiled header that other targets compile against";
+        remedy =
+          R"(Set "DISABLE_PRECOMPILE_HEADERS" on the targets that reuse the )"
+          R"(precompiled header, or "SKIP_PRECOMPILE_HEADERS" on their )"
+          "sources, to keep its own flags."_s;
+      } else {
+        share =
+          cmStrCat("compiles against the precompiled header of target \"",
+                   pchTarget->GetName(), '"');
+        remedy =
+          R"(Set "DISABLE_PRECOMPILE_HEADERS" on this target, or )"
+          R"("SKIP_PRECOMPILE_HEADERS" on its sources, to keep its own )"
+          "flags."_s;
+      }
+
+      this->Makefile->IssuePolicyWarning(
+        cmPolicies::CMP0227, {},
+        cmStrCat("Target \"", this->GetName(), "\" ", share,
+                 ".  The NEW behavior would compile it ", reason,
+                 ".\n"
+                 "For compatibility with older versions of CMake, it is "
+                 "compiled with its own flags, which the compiler may reject "
+                 "when it uses the precompiled header.  ",
+                 remedy),
+        this->GetBacktrace());
+    }
+    return own;
+  }
+
+  return group;
+}
+
 cmGeneratorTarget const* cmGeneratorTarget::GetPchReuseTarget() const
 {
   if (this->ComputingPchReuse) {
@@ -3315,6 +3465,53 @@ bool cmGeneratorTarget::LanguageSupportsPch(std::string const& language)
 {
   return language == "C" || language == "CXX" || language == "OBJC" ||
     language == "OBJCXX";
+}
+
+bool cmGeneratorTarget::UsesPrecompileHeaders(
+  std::string const& config, std::string const& language) const
+{
+  if (!cmGeneratorTarget::LanguageSupportsPch(language)) {
+    return false;
+  }
+
+  // Compilers that do not support precompiled headers have no extension
+  // for them.
+  if (this->Makefile->GetDefinition("CMAKE_PCH_EXTENSION").IsEmpty()) {
+    return false;
+  }
+
+  auto const inserted =
+    this->PchUsage.insert({ cmStrCat(language, config), false });
+  if (!inserted.second) {
+    return inserted.first->second;
+  }
+
+  // Match the condition under which cmLocalGenerator::AddPchDependencies
+  // sets up the precompiled header: the target must compile at least one
+  // source of this language that does not skip it, and there must be a
+  // precompiled header to compile against.
+  std::vector<cmSourceFile*> sources;
+  this->GetSourceFiles(sources, config);
+  bool const haveSources =
+    std::any_of(sources.begin(), sources.end(), [&](cmSourceFile* sf) {
+      cmGeneratorFileSet const* const fileSet =
+        this->GetFileSetForSource(config, sf);
+      return language == this->GetSourceFileLanguage(sf, config) &&
+        !((fileSet && fileSet->GetProperty("SKIP_PRECOMPILE_HEADERS")) ||
+          sf->GetProperty("SKIP_PRECOMPILE_HEADERS"));
+    });
+
+  // Ask for one of the architectures that the precompiled header is created
+  // for, because the getters below generate the files they name, and the
+  // build uses per-arch names when there is more than one architecture.
+  std::vector<std::string> const pchArchs =
+    this->GetPchArchs(config, language);
+  std::string const& arch = pchArchs.front();
+
+  bool& used = inserted.first->second;
+  used = haveSources && !this->GetPchHeader(config, language, arch).empty() &&
+    !this->GetPchSource(config, language, arch).empty();
+  return used;
 }
 
 std::string cmGeneratorTarget::GetPchHeader(std::string const& config,
@@ -5080,10 +5277,8 @@ bool cmGeneratorTarget::ComputePDBOutputDir(std::string const& kind,
     }
   }
   if (out.empty()) {
-    cmGeneratorTarget const* reuseTarget = this->GetPchReuseTarget();
-    bool const hasReuse = reuseTarget && reuseTarget != this;
     // Compiler-generated PDB output always needed for REUSE_FROM.
-    if (kind == "COMPILE_PDB"_s && (this->PchReused || hasReuse)) {
+    if (kind == "COMPILE_PDB"_s && this->InPchReuseGroup()) {
       out = this->GetSupportDirectory();
     } else {
       return false;

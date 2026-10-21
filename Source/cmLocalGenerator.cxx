@@ -2709,9 +2709,10 @@ void cmLocalGenerator::AddFeatureFlags(std::string& flags,
   bool shared = ((targetType == cm::TargetType::SHARED_LIBRARY) ||
                  (targetType == cm::TargetType::MODULE_LIBRARY));
 
-  if (target->GetLinkInterfaceDependentBoolProperty(
-        "POSITION_INDEPENDENT_CODE", config)) {
-    this->AddPositionIndependentFlags(flags, lang, targetType);
+  cmGeneratorTarget::PositionIndependentCode const pic =
+    target->GetPositionIndependentCode(config, lang);
+  if (pic.Enabled) {
+    this->AddPositionIndependentFlags(flags, lang, pic.Pie);
   }
   if (shared) {
     this->AppendFeatureOptions(flags, lang, "DLL");
@@ -2720,11 +2721,11 @@ void cmLocalGenerator::AddFeatureFlags(std::string& flags,
 
 void cmLocalGenerator::AddPositionIndependentFlags(std::string& flags,
                                                    std::string const& lang,
-                                                   cm::TargetType targetType)
+                                                   bool pie)
 {
   std::string picFlags;
 
-  if (targetType == cm::TargetType::EXECUTABLE) {
+  if (pie) {
     picFlags = this->Makefile->GetSafeDefinition(
       cmStrCat("CMAKE_", lang, "_COMPILE_OPTIONS_PIE"));
   }

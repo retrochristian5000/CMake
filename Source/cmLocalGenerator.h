@@ -54,10 +54,6 @@ class cmake;
 template <typename Iter>
 class cmRange;
 
-namespace cm {
-enum class TargetType;
-} // namespace cm
-
 /** Target and source file which have a specific output.  */
 struct cmSourcesWithOutput
 {
@@ -790,8 +786,10 @@ private:
                                OutputRole role, cmListFileBacktrace const& bt,
                                cmCommandOrigin origin);
 
+  // Add the position-independent code flags for the given language, using
+  // the PIE flavor of the flags if 'pie' is set, and the PIC flavor if not.
   void AddPositionIndependentFlags(std::string& flags, std::string const& l,
-                                   cm::TargetType targetType);
+                                   bool pie);
 
   void ComputeObjectMaxPath();
   bool AllAppleArchSysrootsAreTheSame(std::vector<std::string> const& archs,

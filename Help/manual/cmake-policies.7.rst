@@ -94,6 +94,14 @@ Supported Policies
 
 The following policies are supported.
 
+Policies Introduced by CMake 4.6
+--------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   CMP0227: Targets sharing a precompiled header use consistent position-independent code flags. </policy/CMP0227>
+
 Policies Introduced by CMake 4.5
 --------------------------------
 
