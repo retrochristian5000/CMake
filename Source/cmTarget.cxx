@@ -364,6 +364,8 @@ TargetProperty const StaticTargetProperties[] = {
   { "VS_USE_DEBUG_LIBRARIES"_s, IC::NonImportedTarget },
   // ---- OpenWatcom
   { "WATCOM_RUNTIME_LIBRARY"_s, IC::CanCompileSources },
+  // ---- Embarcadero
+  { "EMBT_RUNTIME_LIBRARY"_s, IC::CanCompileSources },
   // ---- AIX
   { "AIX_SHARED_LIBRARY_ARCHIVE"_s, IC::SharedLibraryTarget },
   // -- Language
@@ -1999,6 +2001,8 @@ void cmTarget::CopyCxxModulesProperties(cmTarget const* tgt)
     "VS_PLATFORM_TOOLSET",
     // ---- OpenWatcom
     "WATCOM_RUNTIME_LIBRARY",
+    // ---- Embarcadero
+    "EMBT_RUNTIME_LIBRARY",
     // -- Language
     // ---- C++
     "CXX_COMPILER_LAUNCHER",
