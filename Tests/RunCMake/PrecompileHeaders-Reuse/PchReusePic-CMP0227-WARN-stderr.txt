@@ -1,0 +1,85 @@
+^CMake Warning \(policy\) at PchReusePic-common\.cmake:[0-9]+ \(add_executable\):
+  Policy CMP0227 is not set: Targets sharing a precompiled header use
+  consistent position-independent code flags\.  Run "cmake --help-policy
+  CMP0227" for policy details\.  Use the cmake_policy command to set the
+  policy and suppress this warning\.
+
+  Target "foobar_pie" compiles against the precompiled header of target
+  "empty"\.  The NEW behavior would compile it with the "PIC" flavor of the
+  position-independent code flags rather than the "PIE" flavor, because a
+  target that is not an executable shares the precompiled header\.
+
+  For compatibility with older versions of CMake, it is compiled with its own
+  flags, which the compiler may reject when it uses the precompiled header\.
+  Set "DISABLE_PRECOMPILE_HEADERS" on this target, or
+  "SKIP_PRECOMPILE_HEADERS" on its sources, to keep its own flags\.
+Call Stack \(most recent call first\):
+  PchReusePic-CMP0227-WARN\.cmake:[0-9]+ \(include\)
+  CMakeLists\.txt:[0-9]+ \(include\)
+This warning is for project developers\.  Use -Wno-author or -Wno-policy to
+suppress it\.
+
+CMake Warning \(policy\) at PchReusePic-common\.cmake:[0-9]+ \(add_executable\):
+  Policy CMP0227 is not set: Targets sharing a precompiled header use
+  consistent position-independent code flags\.  Run "cmake --help-policy
+  CMP0227" for policy details\.  Use the cmake_policy command to set the
+  policy and suppress this warning\.
+
+  Target "foobar_nopie" compiles against the precompiled header of target
+  "empty"\.  The NEW behavior would compile it with position-independent code
+  flags even though its "POSITION_INDEPENDENT_CODE" property is off, because
+  another target that shares the precompiled header needs them\.
+
+  For compatibility with older versions of CMake, it is compiled with its own
+  flags, which the compiler may reject when it uses the precompiled header\.
+  Set "DISABLE_PRECOMPILE_HEADERS" on this target, or
+  "SKIP_PRECOMPILE_HEADERS" on its sources, to keep its own flags\.
+Call Stack \(most recent call first\):
+  PchReusePic-CMP0227-WARN\.cmake:[0-9]+ \(include\)
+  CMakeLists\.txt:[0-9]+ \(include\)
+This warning is for project developers\.  Use -Wno-author or -Wno-policy to
+suppress it\.
+
+CMake Warning \(policy\) at PchReusePic-common\.cmake:[0-9]+ \(add_library\):
+  Policy CMP0227 is not set: Targets sharing a precompiled header use
+  consistent position-independent code flags\.  Run "cmake --help-policy
+  CMP0227" for policy details\.  Use the cmake_policy command to set the
+  policy and suppress this warning\.
+
+  Target "empty_nopic" creates a precompiled header that other targets
+  compile against\.  The NEW behavior would compile it with
+  position-independent code flags even though its "POSITION_INDEPENDENT_CODE"
+  property is off, because another target that shares the precompiled header
+  needs them\.
+
+  For compatibility with older versions of CMake, it is compiled with its own
+  flags, which the compiler may reject when it uses the precompiled header\.
+  Set "DISABLE_PRECOMPILE_HEADERS" on the targets that reuse the precompiled
+  header, or "SKIP_PRECOMPILE_HEADERS" on their sources, to keep its own
+  flags\.
+Call Stack \(most recent call first\):
+  PchReusePic-CMP0227-WARN\.cmake:[0-9]+ \(include\)
+  CMakeLists\.txt:[0-9]+ \(include\)
+This warning is for project developers\.  Use -Wno-author or -Wno-policy to
+suppress it\.
+
+CMake Warning \(policy\) at PchReusePic-common\.cmake:[0-9]+ \(add_executable\):
+  Policy CMP0227 is not set: Targets sharing a precompiled header use
+  consistent position-independent code flags\.  Run "cmake --help-policy
+  CMP0227" for policy details\.  Use the cmake_policy command to set the
+  policy and suppress this warning\.
+
+  Target "foobar_nopic" compiles against the precompiled header of target
+  "empty_nopic"\.  The NEW behavior would compile it with position-independent
+  code flags even though its "POSITION_INDEPENDENT_CODE" property is off,
+  because another target that shares the precompiled header needs them\.
+
+  For compatibility with older versions of CMake, it is compiled with its own
+  flags, which the compiler may reject when it uses the precompiled header\.
+  Set "DISABLE_PRECOMPILE_HEADERS" on this target, or
+  "SKIP_PRECOMPILE_HEADERS" on its sources, to keep its own flags\.
+Call Stack \(most recent call first\):
+  PchReusePic-CMP0227-WARN\.cmake:[0-9]+ \(include\)
+  CMakeLists\.txt:[0-9]+ \(include\)
+This warning is for project developers\.  Use -Wno-author or -Wno-policy to
+suppress it\.$

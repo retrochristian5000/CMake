@@ -810,11 +810,39 @@ public:
   std::vector<BT<std::string>> GetPrecompileHeaders(
     std::string const& config, std::string const& language) const;
 
-  void MarkAsPchReused() { this->PchReused = true; }
+  void MarkAsPchReusedBy(cmGeneratorTarget const* consumer);
+  // The targets that name this one in "PRECOMPILE_HEADERS_REUSE_FROM",
+  // directly or through another such target.  Not all of them necessarily
+  // compile against the precompiled header, see "UsesPrecompileHeaders".
+  // Empty until cmGlobalGenerator::MarkTargetsForPchReuse has run.
+  std::vector<cmGeneratorTarget const*> const& GetPchReuseConsumers() const
+  {
+    return this->PchReuseConsumers;
+  }
   cmGeneratorTarget const* GetPchReuseTarget() const;
   cmGeneratorTarget* GetPchReuseTarget();
+  // Whether this target reuses the precompiled header of another target or
+  // has its own precompiled header reused by another target.
+  bool InPchReuseGroup() const;
+  // The position-independent code flags to compile the given language of
+  // this target with.
+  struct PositionIndependentCode
+  {
+    // Whether to add the flags at all.
+    bool Enabled = false;
+    // Whether to prefer the "PIE" flavor of the flags over the "PIC" one.
+    bool Pie = false;
+  };
+  PositionIndependentCode GetPositionIndependentCode(
+    std::string const& config, std::string const& language) const;
   std::vector<std::string> GetPchArchs(std::string const& config,
                                        std::string const& lang) const;
+  // Whether the given language can use a precompiled header at all.
+  static bool LanguageSupportsPch(std::string const& language);
+  // Whether this target actually compiles sources of the given language
+  // against a precompiled header, its own or one it reuses.
+  bool UsesPrecompileHeaders(std::string const& config,
+                             std::string const& language) const;
   std::string GetPchHeader(std::string const& config,
                            std::string const& language,
                            std::string const& arch = std::string()) const;
@@ -1466,6 +1494,7 @@ private:
   TargetPropertyEntryVector PrecompileHeadersEntries;
   TargetPropertyEntryVector SourceEntries;
   mutable std::set<std::string> LinkImplicitNullProperties;
+  mutable std::map<std::string, bool> PchUsage;
   mutable std::map<std::string, std::string> PchHeaders;
   mutable std::map<std::string, std::string> PchSources;
   mutable std::map<std::string, std::string> PchObjectFiles;
@@ -1717,7 +1746,8 @@ private:
   mutable std::map<std::string, cmCxxModuleUsageEffects> CxxModuleUsageEffects;
   mutable std::map<std::string, InfoByConfig> Configs;
   std::unique_ptr<cmGeneratorFileSets> FileSets;
-  bool PchReused = false;
+  std::vector<cmGeneratorTarget const*> PchReuseConsumers;
   mutable bool ComputingPchReuse = false;
   mutable bool PchReuseCycleDetected = false;
+  mutable bool PchPicWarningIssued = false;
 };

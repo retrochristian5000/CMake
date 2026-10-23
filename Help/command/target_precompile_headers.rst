@@ -117,6 +117,17 @@ the ``REUSE_FROM`` form is used.
   ``<other_target>``.  Some compilers (e.g. GCC) may issue a warning if the
   precompiled header file cannot be used (``-Winvalid-pch``).
 
+  .. versionchanged:: 4.6
+    The position-independent code flags, controlled by the
+    :prop_tgt:`POSITION_INDEPENDENT_CODE` target property, are made
+    consistent among all targets that compile against a shared precompiled
+    header, because the precompiled header records them.  Previously the
+    flags could differ, e.g. an executable used the ``PIE`` flavor of the
+    flags while the precompiled header was created with the ``PIC`` flavor.
+    Note that a target may therefore be compiled with position-independent
+    code even though its own property is off, or with the ``PIC`` flavor of
+    the flags even though it is an executable.  See policy :policy:`CMP0227`.
+
 See Also
 ^^^^^^^^
 

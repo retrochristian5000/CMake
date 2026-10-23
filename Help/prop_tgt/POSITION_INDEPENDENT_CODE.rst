@@ -42,6 +42,18 @@ Enabling PIC can result in slightly larger or slower code on some
 architectures, but this is often outweighed by the benefits of flexibility
 and security.
 
+.. versionchanged:: 4.6
+  Targets that compile against a shared precompiled header, through the
+  :prop_tgt:`PRECOMPILE_HEADERS_REUSE_FROM` target property, use consistent
+  position-independent code flags, because the precompiled header records
+  them.  As soon as one of those targets has this property enabled, the
+  flags are enabled for all of them, including those that have it
+  disabled, and their ``PIC`` flavor is used unless all of those targets
+  are executables.  This affects the generated code and not just the
+  compilation speed.  The link step is not affected, and neither are targets
+  that do not compile against a precompiled header.  See policy
+  :policy:`CMP0227`.
+
 Examples
 ^^^^^^^^
 
