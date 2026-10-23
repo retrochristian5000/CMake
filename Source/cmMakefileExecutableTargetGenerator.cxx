@@ -440,6 +440,8 @@ void cmMakefileExecutableTargetGenerator::WriteExecutableRule(bool relink)
 
   this->LocalGenerator->AppendIPOLinkerFlags(
     linkFlags, this->GeneratorTarget, this->GetConfigName(), linkLanguage);
+  this->LocalGenerator->AppendPGOLinkerFlags(
+    linkFlags, this->GeneratorTarget, this->GetConfigName(), linkLanguage);
 
   // Construct a list of files associated with this executable that
   // may need to be cleaned.

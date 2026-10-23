@@ -394,6 +394,16 @@ function(CMAKE_DETERMINE_COMPILER_ID lang flagvar src)
     endif ()
   endif ()
 
+  # MSVC's `link.exe` needs to know the `clang-cl` runtime library directory,
+  # e.g. for profile guided optimization.
+  set(CMAKE_${lang}_COMPILER_CLANG_RUNTIME_DIR "")
+  if (("x${lang}" STREQUAL "xC" OR "x${lang}" STREQUAL "xCXX") AND
+      "x${CMAKE_${lang}_COMPILER_ID}" STREQUAL "xClang" AND
+      "x${CMAKE_${lang}_COMPILER_FRONTEND_VARIANT}" STREQUAL "xMSVC")
+    include(Internal/CMakeClangRuntimeDir)
+    cmake_clang_cl_runtime_dir(${lang} CMAKE_${lang}_COMPILER_CLANG_RUNTIME_DIR)
+  endif ()
+
   set(CMAKE_${lang}_STANDARD_LIBRARY "")
   set(CMAKE_${lang}_STANDARD_LIBRARY_INCLUDE_DIRECTORY "")
   if ("x${lang}" STREQUAL "xCXX" AND
@@ -528,6 +538,7 @@ function(CMAKE_DETERMINE_COMPILER_ID lang flagvar src)
   set(CMAKE_${lang}_COMPILER_PRODUCED_OUTPUT "${COMPILER_${lang}_PRODUCED_OUTPUT}" PARENT_SCOPE)
   set(CMAKE_${lang}_COMPILER_PRODUCED_FILES "${COMPILER_${lang}_PRODUCED_FILES}" PARENT_SCOPE)
   set(CMAKE_${lang}_COMPILER_CLANG_RESOURCE_DIR "${CMAKE_${lang}_COMPILER_CLANG_RESOURCE_DIR}" PARENT_SCOPE)
+  set(CMAKE_${lang}_COMPILER_CLANG_RUNTIME_DIR "${CMAKE_${lang}_COMPILER_CLANG_RUNTIME_DIR}" PARENT_SCOPE)
   set(CMAKE_${lang}_STANDARD_LIBRARY "${CMAKE_${lang}_STANDARD_LIBRARY}" PARENT_SCOPE)
   set(CMAKE_${lang}_STANDARD_LIBRARY_INCLUDE_DIRECTORY "${CMAKE_${lang}_STANDARD_LIBRARY_INCLUDE_DIRECTORY}" PARENT_SCOPE)
   set(CMAKE_${lang}_COMPILER_APPLE_SYSROOT "${CMAKE_${lang}_COMPILER_APPLE_SYSROOT}" PARENT_SCOPE)

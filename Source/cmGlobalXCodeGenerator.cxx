@@ -2839,6 +2839,8 @@ void cmGlobalXCodeGenerator::CreateBuildSettings(cmGeneratorTarget* gtgt,
     if (gtgt->IsIPOEnabled(lang, configName)) {
       this->CurrentLocalGenerator->AppendFeatureOptions(flags, lang, "IPO");
     }
+    this->CurrentLocalGenerator->AppendPGOCompileFlags(flags, gtgt, configName,
+                                                       lang);
 
     this->CurrentLocalGenerator->AddFeatureFlags(flags, gtgt, lang,
                                                  configName);
@@ -2977,6 +2979,8 @@ void cmGlobalXCodeGenerator::CreateBuildSettings(cmGeneratorTarget* gtgt,
                                                        configName, llang);
     this->CurrentLocalGenerator->AppendWarningAsErrorLinkerFlags(
       extraLinkOptions, gtgt, llang);
+    this->CurrentLocalGenerator->AppendPGOLinkerFlags(extraLinkOptions, gtgt,
+                                                      configName, llang);
 
     this->CurrentLocalGenerator->AddTargetPropertyLinkFlags(extraLinkOptions,
                                                             gtgt, configName);

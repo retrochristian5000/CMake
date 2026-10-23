@@ -1828,6 +1828,7 @@ void cmLocalGenerator::GetTargetFlags(
                                              linkLanguage);
   this->AppendWarningAsErrorLinkerFlags(extraLinkFlags, target, linkLanguage);
   this->AppendIPOLinkerFlags(extraLinkFlags, target, config, linkLanguage);
+  this->AppendPGOLinkerFlags(extraLinkFlags, target, config, linkLanguage);
   this->AppendModuleDefinitionFlag(extraLinkFlags, target, linkLineComputer,
                                    config, linkLanguage);
 
@@ -1864,6 +1865,7 @@ std::vector<BT<std::string>> cmLocalGenerator::GetTargetCompileFlags(
   if (target->IsIPOEnabled(lang, config)) {
     this->AppendFeatureOptions(compileFlags, lang, "IPO");
   }
+  this->AppendPGOCompileFlags(compileFlags, target, config, lang);
 
   this->AddArchitectureFlags(compileFlags, target, lang, config, arch);
 
@@ -3858,6 +3860,19 @@ void cmLocalGenerator::AppendIPOLinkerFlags(std::string& flags,
   }
 }
 
+void cmLocalGenerator::AppendPGOLinkerFlags(std::string& flags,
+                                            cmGeneratorTarget const* target,
+                                            std::string const& config,
+                                            std::string const& lang)
+{
+  cmGeneratorTarget::PGOObjectsInfo const info =
+    target->GetPGOLinkInfo(lang, config);
+  if (!info.Mode.empty()) {
+    this->AppendPGOOptions(flags, target, lang, "LINK", info.Mode,
+                           info.Directory);
+  }
+}
+
 void cmLocalGenerator::AppendPositionIndependentLinkerFlags(
   std::string& flags, cmGeneratorTarget* target, std::string const& config,
   std::string const& lang)
@@ -4269,6 +4284,36 @@ void cmLocalGenerator::AppendFeatureOptions(std::string& flags,
     for (std::string const& o : options) {
       this->AppendFlagEscape(flags, o);
     }
+  }
+}
+
+void cmLocalGenerator::AppendPGOCompileFlags(std::string& flags,
+                                             cmGeneratorTarget const* target,
+                                             std::string const& config,
+                                             std::string const& lang)
+{
+  std::string const mode = target->GetPGOMode(lang, config);
+  if (!mode.empty()) {
+    this->AppendPGOOptions(flags, target, lang, "COMPILE", mode,
+                           target->GetPGODirectory(config));
+  }
+}
+
+void cmLocalGenerator::AppendPGOOptions(
+  std::string& flags, cmGeneratorTarget const* target, std::string const& lang,
+  cm::string_view kind, std::string const& mode, std::string const& dir)
+{
+  cmValue optionList = this->Makefile->GetDefinition(
+    cmStrCat("CMAKE_", lang, '_', kind, "_OPTIONS_PGO_", mode));
+  if (!optionList) {
+    return;
+  }
+
+  cmList options{ *optionList };
+  for (std::string& o : options) {
+    cmSystemTools::ReplaceString(o, "<PGO_DIRECTORY>", dir);
+    cmSystemTools::ReplaceString(o, "<TARGET_NAME>", target->GetName());
+    this->AppendFlagEscape(flags, o);
   }
 }
 

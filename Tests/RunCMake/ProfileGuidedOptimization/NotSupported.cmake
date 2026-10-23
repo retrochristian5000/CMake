@@ -1,0 +1,4 @@
+enable_language(C)
+unset(CMAKE_C_COMPILE_OPTIONS_PGO_USE)
+set(CMAKE_PROFILE_GUIDED_OPTIMIZATION USE)
+add_library(foo STATIC foo.c)

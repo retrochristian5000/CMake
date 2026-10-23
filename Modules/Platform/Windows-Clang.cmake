@@ -90,6 +90,13 @@ macro(__windows_compiler_clang_gnu lang)
   set(CMAKE_${lang}_ARCHIVE_APPEND_IPO "<CMAKE_AR> q <TARGET> <LINK_FLAGS> <OBJECTS>")
   set(CMAKE_${lang}_ARCHIVE_FINISH_IPO "<CMAKE_RANLIB> <TARGET>")
 
+  __compiler_clang_pgo(${lang})
+  # MSVC's link.exe, used unless another linker is selected, discards the
+  # unreferenced profile data sections unless '-OPT:NOREF' is used.
+  if(DEFINED CMAKE_${lang}_LINK_OPTIONS_PGO_GENERATE)
+    list(APPEND CMAKE_${lang}_LINK_OPTIONS_PGO_GENERATE -Xlinker -OPT:NOREF)
+  endif()
+
   # Create archiving rules to support large object file lists for static libraries.
   set(CMAKE_${lang}_ARCHIVE_CREATE "<CMAKE_AR> qc <TARGET> <LINK_FLAGS> <OBJECTS>")
   set(CMAKE_${lang}_ARCHIVE_APPEND "<CMAKE_AR> q <TARGET> <LINK_FLAGS> <OBJECTS>")
@@ -252,6 +259,42 @@ if("x${CMAKE_C_SIMULATE_ID}" STREQUAL "xMSVC"
       set(CMAKE_INCLUDE_SYSTEM_FLAG_${lang} "-imsvc")
 
       set(CMAKE_${lang}_LINK_MODE LINKER)
+
+      __compiler_clang_pgo(${lang})
+      # MSVC's link.exe discards the unreferenced profile data sections
+      # unless '-OPT:NOREF' is used, and does not find the profiling runtime
+      # library referenced by the instrumented objects on its own.  Without
+      # the runtime library directory, instrumented binaries cannot be linked,
+      # so that the GENERATE phase is reported as not supported.  The linker
+      # needs no options in the USE phase.
+      unset(CMAKE_${lang}_LINK_OPTIONS_PGO_USE)
+      if(DEFINED CMAKE_${lang}_COMPILE_OPTIONS_PGO_GENERATE)
+        # The runtime library directory, named after the Clang version, is
+        # determined with the compiler, which may have been upgraded in
+        # place since.  Determine it again only once, not on every
+        # configuration.
+        if(CMAKE_${lang}_COMPILER_CLANG_RUNTIME_DIR
+            AND NOT IS_DIRECTORY "${CMAKE_${lang}_COMPILER_CLANG_RUNTIME_DIR}")
+          if(NOT IS_DIRECTORY "${_CMAKE_${lang}_COMPILER_CLANG_RUNTIME_DIR_UPDATED}")
+            include(Internal/CMakeClangRuntimeDir)
+            cmake_clang_cl_runtime_dir(${lang} _CMAKE_${lang}_COMPILER_CLANG_RUNTIME_DIR_UPDATED)
+            set(_CMAKE_${lang}_COMPILER_CLANG_RUNTIME_DIR_UPDATED
+              "${_CMAKE_${lang}_COMPILER_CLANG_RUNTIME_DIR_UPDATED}"
+              CACHE INTERNAL "Runtime library directory of the upgraded ${lang} compiler")
+          endif()
+          set(CMAKE_${lang}_COMPILER_CLANG_RUNTIME_DIR
+            "${_CMAKE_${lang}_COMPILER_CLANG_RUNTIME_DIR_UPDATED}")
+        endif()
+        if(CMAKE_${lang}_COMPILER_CLANG_RUNTIME_DIR)
+          set(CMAKE_${lang}_LINK_OPTIONS_PGO_GENERATE "-OPT:NOREF"
+            "-LIBPATH:${CMAKE_${lang}_COMPILER_CLANG_RUNTIME_DIR}")
+        else()
+          unset(CMAKE_${lang}_COMPILE_OPTIONS_PGO_GENERATE)
+          unset(CMAKE_${lang}_LINK_OPTIONS_PGO_GENERATE)
+          set(_CMAKE_${lang}_PGO_GENERATE_UNSUPPORTED_REASON
+            "its runtime library directory, holding the profiling runtime library, was not found")
+        endif()
+      endif()
     endmacro()
   else()
     cmake_policy(GET CMP0091 __WINDOWS_CLANG_CMP0091)

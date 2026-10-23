@@ -1218,6 +1218,7 @@ set_property(TEST RunCMake.CheckSourceCompiles
     APPEND PROPERTY LABELS "ISPC")
 add_RunCMake_test(CheckModules)
 add_RunCMake_test(CheckIPOSupported)
+add_RunCMake_test(ProfileGuidedOptimization)
 if (CMAKE_SYSTEM_NAME MATCHES "(Linux|Darwin)"
     AND (CMAKE_C_COMPILER_ID MATCHES "Clang|GNU|LCC" OR CMAKE_Fortran_COMPILER_ID MATCHES "GNU|LCC"))
   add_RunCMake_test(CheckLinkerFlag -DCMAKE_C_COMPILER_ID=${CMAKE_C_COMPILER_ID}

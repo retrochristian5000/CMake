@@ -495,6 +495,8 @@ void cmMakefileLibraryTargetGenerator::WriteLibraryRules(
   this->LocalGenerator->AppendFlags(linkFlags, extraFlags);
   this->LocalGenerator->AppendIPOLinkerFlags(
     linkFlags, this->GeneratorTarget, this->GetConfigName(), linkLanguage);
+  this->LocalGenerator->AppendPGOLinkerFlags(
+    linkFlags, this->GeneratorTarget, this->GetConfigName(), linkLanguage);
 
   // Add OSX version flags, if any.
   if (this->GeneratorTarget->GetType() == cm::TargetType::SHARED_LIBRARY ||

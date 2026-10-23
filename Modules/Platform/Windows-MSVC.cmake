@@ -474,6 +474,36 @@ macro(__windows_compiler_msvc lang)
     set(CMAKE_${lang}_LINK_OPTIONS_IPO "/INCREMENTAL:NO" "/LTCG")
     string(REPLACE "<LINK_FLAGS> " "/LTCG <LINK_FLAGS> "
       CMAKE_${lang}_CREATE_STATIC_LIBRARY_IPO "${CMAKE_${lang}_CREATE_STATIC_LIBRARY}")
+
+    # Profile guided optimization requires whole program optimization.
+    # The '/GENPROFILE' and '/USEPROFILE' options are available since VS 2015.
+    if(NOT CMAKE_${lang}_COMPILER_VERSION VERSION_LESS 19.0)
+      set(CMAKE_${lang}_COMPILE_OPTIONS_PGO_GENERATE "/GL")
+      set(CMAKE_${lang}_COMPILE_OPTIONS_PGO_USE "/GL")
+      set(CMAKE_${lang}_LINK_OPTIONS_PGO_GENERATE "/INCREMENTAL:NO" "/LTCG"
+        "/GENPROFILE:PGD=<PGO_DIRECTORY>/<TARGET_NAME>.pgd")
+      set(CMAKE_${lang}_LINK_OPTIONS_PGO_USE "/INCREMENTAL:NO" "/LTCG"
+        "/USEPROFILE:PGD=<PGO_DIRECTORY>/<TARGET_NAME>.pgd")
+      # Use the IPO rules, e.g. to archive with '/LTCG'.
+      set(_CMAKE_${lang}_PGO_REQUIRES_IPO YES)
+      # The instrumented binaries write '<pgd-name>!<n>.pgc' files next to
+      # themselves, but the linker only merges those next to the '.pgd' file.
+      # Without 'pgomgr' to merge them, the profile data collected by the
+      # binaries linked in the GENERATE phase would not be used, so that the
+      # GENERATE phase is reported as not supported.
+      if(CMAKE_${lang}_COMPILER_PGOMGR)
+        set(CMAKE_${lang}_PGO_MERGE "${CMAKE_${lang}_COMPILER_PGOMGR}" /merge
+          "<PGO_MERGE_FILES>" "<PGO_MERGE_OUTPUT>")
+        set(CMAKE_${lang}_PGO_MERGE_FILES "<TARGET_NAME>!*.pgc")
+        set(CMAKE_${lang}_PGO_MERGE_OUTPUT "<PGO_DIRECTORY>/<TARGET_NAME>.pgd")
+        set(_CMAKE_${lang}_PGO_MERGE_PER_BINARY YES)
+      else()
+        unset(CMAKE_${lang}_COMPILE_OPTIONS_PGO_GENERATE)
+        unset(CMAKE_${lang}_LINK_OPTIONS_PGO_GENERATE)
+        set(_CMAKE_${lang}_PGO_GENERATE_UNSUPPORTED_REASON
+          "the 'pgomgr' tool, which merges the profile data, was not found next to it")
+      endif()
+    endif()
   elseif("x${CMAKE_${lang}_COMPILER_ID}" STREQUAL "xClang" OR
          "x${CMAKE_${lang}_COMPILER_ID}" STREQUAL "xFlang")
     set(_CMAKE_${lang}_IPO_SUPPORTED_BY_CMAKE YES)

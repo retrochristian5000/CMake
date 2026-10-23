@@ -255,6 +255,61 @@ public:
 
   bool IsIPOEnabled(std::string const& lang, std::string const& config) const;
 
+  /** Get the profile guided optimization mode, "GENERATE" or "USE", for
+      the given language and configuration, or an empty string if profile
+      guided optimization is not enabled.  */
+  std::string GetPGOMode(std::string const& lang,
+                         std::string const& config) const;
+
+  // The profile guided optimization mode, and data directory, of the
+  // objects linked or archived by the target, which may come from other
+  // targets.
+  struct PGOObjectsInfo
+  {
+    std::string Mode;
+    std::string Directory;
+  };
+
+  /** Get the profile guided optimization mode, and data directory, used to
+      link the target with the given link language, which also accounts for
+      the objects of the static and object libraries it links.  The
+      directory is the one of these libraries if the property is not set on
+      the target itself.  The mode is empty for targets that are not
+      linked.  */
+  PGOObjectsInfo GetPGOLinkInfo(std::string const& lang,
+                                std::string const& config) const;
+
+  enum class PGOObjectsScope
+  {
+    // The objects compiled from the sources of the target itself.
+    Own,
+    // Also the objects of the static and object libraries it links.
+    All,
+  };
+
+  /** Whether whole program optimization is needed to build, archive or link
+      the objects of the target in the given scope, because they are built
+      for profile guided optimization.  */
+  bool IsPGORequiringIPO(std::string const& lang, std::string const& config,
+                         PGOObjectsScope scope) const;
+
+  /** Get the evaluated PROFILE_GUIDED_OPTIMIZATION value for the given
+      configuration, or an empty string if profile guided optimization is
+      not enabled.  */
+  std::string const& GetPGOProperty(std::string const& config) const;
+
+  /** Get the directory holding profile guided optimization data.  */
+  std::string const& GetPGODirectory(std::string const& config) const;
+
+  /** Whether the target is linked into a binary, which gets the profile
+      guided optimization link options.  */
+  bool IsPGOLinkTarget() const;
+
+  /** Get the languages of the sources compiled by the target itself for the
+      given configuration, which may use profile guided optimization.  */
+  std::set<std::string> const& GetPGOCompileLanguages(
+    std::string const& config) const;
+
   bool IsLinkInterfaceDependentBoolProperty(std::string const& p,
                                             std::string const& config) const;
   bool IsLinkInterfaceDependentStringProperty(std::string const& p,
@@ -1483,12 +1538,26 @@ private:
   void ComputeModuleDefinitionInfo(std::string const& config,
                                    ModuleDefinitionInfo& info) const;
 
+  PGOObjectsInfo GetPGOObjects(std::string const& lang,
+                               std::string const& config) const;
+
   using OutputNameKey = std::pair<std::string, cmStateEnums::ArtifactType>;
   using OutputNameMapType = std::map<OutputNameKey, std::string>;
   mutable OutputNameMapType OutputNameMap;
   mutable std::set<cmLinkItem> UtilityItems;
   cmPolicies::PolicyMap PolicyMap;
   mutable bool PolicyReportedCMP0069 = false;
+  mutable bool PGOProblemReported = false;
+  // Profile guided optimization mode, and data directory, of the objects of
+  // the target, and of the libraries it links or archives, by
+  // "<LANG>;<CONFIG>".
+  mutable std::map<std::string, PGOObjectsInfo> PGOObjects;
+  // Languages of the sources compiled by the target by configuration.
+  mutable std::map<std::string, std::set<std::string>> PGOCompileLanguages;
+  // Evaluated PROFILE_GUIDED_OPTIMIZATION value by configuration.
+  mutable std::map<std::string, std::string> PGOProperties;
+  // Profile guided optimization data directory by configuration.
+  mutable std::map<std::string, std::string> PGODirectories;
   mutable bool DebugIncludesDone = false;
   mutable bool DebugCompileOptionsDone = false;
   mutable bool DebugCompileFeaturesDone = false;

@@ -1,0 +1,14 @@
+^CMake Error at DirectoryConflict\.cmake:[0-9]+ \(add_executable\):
+  Target 'main' links objects instrumented for profile guided optimization
+  with different profile data directories:
+
+    [^
+]*/DirectoryConflict-build/pgo(/[A-Za-z]+)?
+
+  of target 'main', and:
+
+    [^
+]*/DirectoryConflict-build/pgo-foo
+
+  of target 'foo'\.  The profile data of a binary is written to only one of
+  them, so their PGO_DATA_DIRECTORY must match\.

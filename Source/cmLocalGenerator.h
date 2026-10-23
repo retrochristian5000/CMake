@@ -240,6 +240,10 @@ public:
   void AppendIPOLinkerFlags(std::string& flags, cmGeneratorTarget* target,
                             std::string const& config,
                             std::string const& lang);
+  void AppendPGOLinkerFlags(std::string& flags,
+                            cmGeneratorTarget const* target,
+                            std::string const& config,
+                            std::string const& lang);
   void AppendPositionIndependentLinkerFlags(std::string& flags,
                                             cmGeneratorTarget* target,
                                             std::string const& config,
@@ -337,6 +341,12 @@ public:
   /** Lookup and append options associated with a particular feature.  */
   void AppendFeatureOptions(std::string& flags, std::string const& lang,
                             char const* feature);
+
+  /** Append the profile guided optimization compile options, if enabled.  */
+  void AppendPGOCompileFlags(std::string& flags,
+                             cmGeneratorTarget const* target,
+                             std::string const& config,
+                             std::string const& lang);
 
   cmValue GetFeature(std::string const& feature, std::string const& config);
 
@@ -760,6 +770,10 @@ protected:
 private:
   std::map<std::string, std::vector<DirectoryTestPrepDependency>>
     DiscoveryTestPrepDependencies;
+
+  void AppendPGOOptions(std::string& flags, cmGeneratorTarget const* target,
+                        std::string const& lang, cm::string_view kind,
+                        std::string const& mode, std::string const& dir);
   /**
    * See LinearGetSourceFileWithOutput for background information
    */

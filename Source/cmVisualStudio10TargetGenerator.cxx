@@ -3596,6 +3596,8 @@ bool cmVisualStudio10TargetGenerator::ComputeClOptions(
     this->LocalGenerator->AddLanguageFlags(flags, this->GeneratorTarget,
                                            cmBuildStep::Compile,
                                            langForClCompile, configName);
+    this->LocalGenerator->AppendPGOCompileFlags(flags, this->GeneratorTarget,
+                                                configName, langForClCompile);
     this->LocalGenerator->AddCompileOptions(flags, this->GeneratorTarget,
                                             langForClCompile, configName);
   }
@@ -3608,8 +3610,16 @@ bool cmVisualStudio10TargetGenerator::ComputeClOptions(
     return languages.find("C") != languages.end();
   }();
 
-  // Put the IPO enabled configurations into a set.
-  if (this->GeneratorTarget->IsIPOEnabled(linkLanguage, configName)) {
+  // Put the IPO enabled configurations into a set.  Whole program
+  // optimization compiles all sources of the target with '/GL', so profile
+  // guided optimization enables it only for targets compiling their own
+  // sources for it.  The objects of other targets are linked with the
+  // profile guided optimization link options, and archived with '/LTCG'.
+  if (this->GeneratorTarget->IsIPOEnabled(linkLanguage, configName) ||
+      (!langForClCompile.empty() &&
+       this->GeneratorTarget->IsPGORequiringIPO(
+         langForClCompile, configName,
+         cmGeneratorTarget::PGOObjectsScope::Own))) {
     this->IPOEnabledConfigurations.insert(configName);
   }
 
@@ -4548,6 +4558,14 @@ void cmVisualStudio10TargetGenerator::WriteLibOptions(
   std::string libflags;
   this->LocalGenerator->GetStaticLibraryFlags(libflags, config, linkLanguage,
                                               this->GeneratorTarget);
+  // Archive the objects of object libraries built for profile guided
+  // optimization with '/LTCG', which whole program optimization does
+  // otherwise.
+  if (this->IPOEnabledConfigurations.count(config) == 0 &&
+      this->GeneratorTarget->IsPGORequiringIPO(
+        linkLanguage, config, cmGeneratorTarget::PGOObjectsScope::All)) {
+    this->LocalGenerator->AppendFlags(libflags, "/LTCG");
+  }
   if (!libflags.empty()) {
     Elem e2(e1, "Lib");
     cmGlobalVisualStudio10Generator* gg = this->GlobalGenerator;
@@ -4903,6 +4921,9 @@ bool cmVisualStudio10TargetGenerator::ComputeLinkOptions(
 
   this->LocalGenerator->AppendWarningAsErrorLinkerFlags(
     flags, this->GeneratorTarget, linkLanguage);
+
+  this->LocalGenerator->AppendPGOLinkerFlags(flags, this->GeneratorTarget,
+                                             config, linkLanguage);
 
   cmComputeLinkInformation* pcli =
     this->GeneratorTarget->GetLinkInformation(config);

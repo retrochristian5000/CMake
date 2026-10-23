@@ -1726,6 +1726,11 @@ bool cmGlobalGenerator::Compute()
   // clear tests to issue warning CMP0224 for
   this->CMP0224WarnTests.clear();
 
+  // Profile guided optimization data directories may have been removed
+  // since the last generation.
+  this->PGODirectories.clear();
+  this->PGOEnabled = false;
+
   // Check whether this generator is allowed to run.
   if (!this->CheckALLOW_DUPLICATE_CUSTOM_TARGETS()) {
     return false;
@@ -1897,6 +1902,13 @@ bool cmGlobalGenerator::Compute()
   }
 
   this->ForceLinkerLanguages();
+
+  // Add the profile data merge target once the sources, including those
+  // found by tracing the dependencies, and thus the languages of all targets
+  // are known, as their link closures and linker languages are cached.
+  if (!this->AddPGOMergeTarget()) {
+    return false;
+  }
 
   // Compute the manifest of main targets generated.
   for (auto const& localGen : this->LocalGenerators) {
@@ -2267,6 +2279,331 @@ bool cmGlobalGenerator::AddHeaderSetVerification()
     }
   }
 
+  return true;
+}
+
+namespace {
+// Get the script code merging the raw profile data files matching the
+// 'files' pattern in the 'dir' directory, using the 'command' line.  The
+// placeholders are replaced with the profile data directory 'pgoDir', the
+// 'targetName', the merged profile data file 'output', and the 'filesList'
+// file listing the raw profile data files, or batches of the raw profile
+// data files, relative to 'dir'.  The 'linkerCreatesOutput' tells whether
+// the linker creates the 'output' file before any profile data is merged
+// into it.
+std::string GetPGOMergeCode(std::string const& command,
+                            std::string const& files, std::string const& dir,
+                            std::string const& pgoDir,
+                            std::string const& targetName, std::string output,
+                            std::string const& filesList,
+                            bool linkerCreatesOutput)
+{
+  auto const replacePlaceholders = [&](std::string& s) {
+    cmSystemTools::ReplaceString(s, "<PGO_DIRECTORY>", pgoDir);
+    cmSystemTools::ReplaceString(s, "<TARGET_NAME>", targetName);
+  };
+  replacePlaceholders(output);
+
+  // The names of a batch of raw profile data files, relative to the
+  // directory, are expanded in the script as separate arguments.  They are
+  // named after the target, so they do not contain ';'.
+  static std::string const filesArg = "<PGO_MERGE_FILES>";
+  bool batched = false;
+  std::string args;
+  for (std::string arg : cmList{ command }) {
+    if (arg == filesArg) {
+      batched = true;
+      args += " ${batch}";
+      continue;
+    }
+    replacePlaceholders(arg);
+    cmSystemTools::ReplaceString(arg, "<PGO_MERGE_OUTPUT>", output);
+    cmSystemTools::ReplaceString(arg, "<PGO_MERGE_FILES_LIST>", filesList);
+    args =
+      cmStrCat(std::move(args), ' ', cmOutputConverter::EscapeForCMake(arg));
+  }
+  std::string pattern = files;
+  replacePlaceholders(pattern);
+
+  // Match the directory literally.
+  std::string globDir;
+  for (char c : dir) {
+    if (c == '[' || c == '*' || c == '?') {
+      globDir = cmStrCat(std::move(globDir), '[', c, ']');
+    } else {
+      globDir += c;
+    }
+  }
+  std::string const quotedDir = cmOutputConverter::EscapeForCMake(dir);
+  // Glob the file names relative to the directory, which may
+  // contain ';', and add the directory only to the resulting string.
+  std::string const filePrefix = cmOutputConverter::EscapeForCMake(
+    cmStrCat(dir, '/'), cmOutputConverter::WrapQuotes::NoWrap);
+  std::string code = cmStrCat(
+    "file(GLOB files LIST_DIRECTORIES false RELATIVE ", quotedDir, ' ',
+    cmOutputConverter::EscapeForCMake(cmStrCat(globDir, '/', pattern)),
+    ")\n"
+    "if(files)\n"
+    "  message(STATUS \"Merging profile data in \" ",
+    quotedDir, ")\n");
+  std::string const quotedOutput = cmOutputConverter::EscapeForCMake(output);
+  if (batched) {
+    // Merge the files in batches small enough for the command line.
+    code = cmStrCat(std::move(code),
+                    "  list(LENGTH files count)\n"
+                    "  foreach(first RANGE 0 ${count} 64)\n"
+                    "    if(first LESS count)\n"
+                    "      list(SUBLIST files ${first} 64 batch)\n"
+                    "      execute_process(COMMAND",
+                    args, " WORKING_DIRECTORY ", quotedDir,
+                    " COMMAND_ERROR_IS_FATAL ANY)\n"
+                    "    endif()\n"
+                    "  endforeach()\n");
+  } else {
+    // Pass the profile data files through a file listing them, as there
+    // may be too many of them for the command line.  The previously merged
+    // profile data is merged too, so that it accumulates the profile data
+    // of all training runs, as with the other toolchains.
+    std::string const entryPrefix = cmStrCat("1,", filePrefix);
+    code = cmStrCat(std::move(code), "  list(JOIN files \"\\n", entryPrefix,
+                    "\" entries)\n"
+                    "  set(entries \"",
+                    entryPrefix, "${entries}\\n\")\n");
+    if (!output.empty()) {
+      code =
+        cmStrCat(std::move(code), "  if(EXISTS ", quotedOutput,
+                 ")\n"
+                 "    string(APPEND entries ",
+                 cmOutputConverter::EscapeForCMake(cmStrCat("1,", output)),
+                 " \"\\n\")\n"
+                 "  endif()\n");
+    }
+    code = cmStrCat(std::move(code), "  file(WRITE ",
+                    cmOutputConverter::EscapeForCMake(filesList),
+                    " \"${entries}\")\n"
+                    "  execute_process(COMMAND",
+                    args, " COMMAND_ERROR_IS_FATAL ANY)\n");
+  }
+  // The merged raw profile data files are removed, so that those written
+  // by previous builds of the instrumented binaries, e.g. with an older
+  // compiler, are not merged again with new ones.
+  code = cmStrCat(std::move(code),
+                  "  foreach(file IN LISTS files)\n"
+                  "    file(REMOVE \"",
+                  filePrefix,
+                  "${file}\")\n"
+                  "  endforeach()\n");
+  if (output.empty()) {
+    code += "  set(merged 1)\n";
+  } else if (!linkerCreatesOutput) {
+    // An existing merged profile data file, e.g. copied from another build
+    // tree, holds profile data.
+    code = cmStrCat(std::move(code),
+                    "  set(merged 1)\n"
+                    "elseif(EXISTS ",
+                    quotedOutput,
+                    ")\n"
+                    "  message(STATUS \"No new profile data found in \" ",
+                    quotedDir, " \", keeping \" ", quotedOutput,
+                    ")\n"
+                    "  set(merged 1)\n");
+  } else {
+    // The merged profile data file created when linking the instrumented
+    // binaries holds no profile data, so a stamp file not older than it
+    // records that it holds merged profile data.
+    std::string const quotedStamp =
+      cmOutputConverter::EscapeForCMake(cmStrCat(output, ".merged"));
+    code = cmStrCat(std::move(code), "  file(TOUCH ", quotedStamp,
+                    ")\n"
+                    "  set(merged 1)\n"
+                    "elseif(EXISTS ",
+                    quotedOutput, " AND EXISTS ", quotedStamp, " AND ",
+                    quotedStamp, " IS_NEWER_THAN ", quotedOutput,
+                    ")\n"
+                    "  message(STATUS \"No new profile data found in \" ",
+                    quotedDir, " \", keeping \" ", quotedOutput,
+                    ")\n"
+                    "  set(merged 1)\n");
+  }
+  code = cmStrCat(std::move(code),
+                  "else()\n"
+                  "  message(STATUS \"No profile data found in \" ",
+                  quotedDir,
+                  ")\n"
+                  "endif()\n");
+  return code;
+}
+}
+
+bool cmGlobalGenerator::AddPGOMergeTarget()
+{
+  static std::string const targetName = "cmake_pgo_merge";
+
+  cmMakefile* mf = this->Makefiles.front().get();
+  cmLocalGenerator* lg = this->LocalGenerators.front().get();
+
+  // Collect, for each configuration, the script code merging the raw
+  // profile data of the targets whose toolchains need it to be merged, by
+  // the location of the raw profile data files.
+  std::vector<std::string> const configs =
+    mf->GetGeneratorConfigs(cmMakefile::IncludeEmptyConfig);
+  bool const multiConfig = this->IsMultiConfig();
+  std::string const scriptBase =
+    cmStrCat(mf->GetHomeOutputDirectory(), "/CMakeFiles/", targetName);
+  std::map<std::string, std::map<std::string, std::string>> merges;
+  // Some toolchains, e.g. Clang, write the raw profile data to the profile
+  // data directory, and others, e.g. MSVC, next to each instrumented binary.
+  auto const addMerge = [&](cmMakefile* tmf, cmGeneratorTarget const* tgt,
+                            std::string const& lang, std::string const& config,
+                            std::string const& pgoDir, bool perBinary) {
+    cmValue command =
+      tmf->GetDefinition(cmStrCat("CMAKE_", lang, "_PGO_MERGE"));
+    cmValue files =
+      tmf->GetDefinition(cmStrCat("CMAKE_", lang, "_PGO_MERGE_FILES"));
+    if (!command || !files ||
+        perBinary !=
+          tmf->IsOn(cmStrCat("_CMAKE_", lang, "_PGO_MERGE_PER_BINARY"))) {
+      return;
+    }
+    std::string const dir = perBinary ? tgt->GetDirectory(config) : pgoDir;
+    std::string const name = perBinary ? tgt->GetName() : std::string();
+    std::string pattern = *files;
+    cmSystemTools::ReplaceString(pattern, "<TARGET_NAME>", name);
+    auto& configMerges = merges[config];
+    std::string key = cmStrCat(dir, '/', pattern);
+    if (configMerges.count(key)) {
+      return;
+    }
+    std::string const filesList = multiConfig
+      ? cmStrCat(scriptBase, '-', config, "-files.txt")
+      : cmStrCat(scriptBase, "-files.txt");
+    cmValue output =
+      tmf->GetDefinition(cmStrCat("CMAKE_", lang, "_PGO_MERGE_OUTPUT"));
+    configMerges.emplace(std::move(key),
+                         // The toolchains merging the profile data of each
+                         // binary, e.g. MSVC, create the merged profile data
+                         // file when linking it.
+                         GetPGOMergeCode(*command, *files, dir, pgoDir, name,
+                                         output ? *output : std::string(),
+                                         filesList, perBinary));
+  };
+  for (auto const& gen : this->LocalGenerators) {
+    for (auto const& tgt : gen->GetGeneratorTargets()) {
+      if (!tgt->CanCompileSources()) {
+        continue;
+      }
+      for (std::string const& config : configs) {
+        // Avoid computing the languages of targets not using PGO.
+        if (tgt->GetPGOProperty(config).empty()) {
+          continue;
+        }
+        // Diagnose invalid values also for targets without languages
+        // supporting PGO.
+        tgt->GetPGOMode(std::string(), config);
+        for (std::string const& lang : tgt->GetPGOCompileLanguages(config)) {
+          if (tgt->GetPGOMode(lang, config).empty()) {
+            continue;
+          }
+          this->PGOEnabled = true;
+          addMerge(gen->GetMakefile(), tgt.get(), lang, config,
+                   tgt->GetPGODirectory(config), false);
+        }
+      }
+    }
+  }
+
+  // The raw profile data written next to the binaries is merged for all
+  // binaries linked with the GENERATE options, which includes those linking
+  // instrumented objects of other targets.  Avoid computing the linker
+  // languages unless a toolchain of the directory of the target needs it,
+  // as languages may be enabled only in some directories.
+  std::vector<std::string> const languages = this->PGOEnabled
+    ? mf->GetState()->GetEnabledLanguages()
+    : std::vector<std::string>();
+  for (auto const& gen : this->LocalGenerators) {
+    cmMakefile* gmf = gen->GetMakefile();
+    if (std::none_of(languages.begin(), languages.end(),
+                     [gmf](std::string const& lang) {
+                       return gmf->IsOn(
+                         cmStrCat("_CMAKE_", lang, "_PGO_MERGE_PER_BINARY"));
+                     })) {
+      continue;
+    }
+    for (auto const& tgt : gen->GetGeneratorTargets()) {
+      if (!tgt->IsPGOLinkTarget()) {
+        continue;
+      }
+      for (std::string const& config : configs) {
+        std::string const lang = tgt->GetLinkerLanguage(config);
+        cmGeneratorTarget::PGOObjectsInfo const info =
+          tgt->GetPGOLinkInfo(lang, config);
+        if (info.Mode == "GENERATE"_s) {
+          // These toolchains, e.g. MSVC, link the binaries writing their
+          // merged profile data file to the profile data directory, but do
+          // not create it.
+          this->CreatePGODirectory(info.Directory);
+          addMerge(gmf, tgt.get(), lang, config, info.Directory, true);
+        }
+      }
+    }
+  }
+
+  // Reserve the target name whenever profile guided optimization is used,
+  // regardless of the compiler, so that projects stay portable.
+  if (this->PGOEnabled &&
+      !this->CheckReservedTargetName(
+        targetName, "when profile guided optimization is enabled")) {
+    return false;
+  }
+
+  if (merges.empty()) {
+    return true;
+  }
+
+  // Write a script for each configuration.
+  for (std::string const& config : configs) {
+    std::string const script = multiConfig
+      ? cmStrCat(scriptBase, '-', config, ".cmake")
+      : cmStrCat(scriptBase, ".cmake");
+    cmGeneratedFileStream fout(script);
+    fout.SetCopyIfDifferent(true);
+    fout << "# CMake generated file: merge profile guided optimization data."
+            "\n\n";
+    auto const configMerges = merges.find(config);
+    if (configMerges == merges.end()) {
+      fout << "message(STATUS \"No profile data needs to be merged for the "
+           << config << " configuration.\")\n";
+      continue;
+    }
+    fout << "set(merged 0)\n";
+    for (auto const& dir : configMerges->second) {
+      fout << dir.second;
+    }
+    fout << "if(NOT merged)\n"
+            "  message(FATAL_ERROR \"No profile data found.  Run the "
+            "instrumented binaries before merging their profile data.\")\n"
+            "endif()\n";
+  }
+
+  std::string const script = multiConfig
+    ? cmStrCat(scriptBase, "-$<CONFIG>.cmake")
+    : cmStrCat(scriptBase, ".cmake");
+  auto cc = cm::make_unique<cmCustomCommand>();
+  cc->SetCommandLines(cmMakeSingleCommandLine(
+    { cmSystemTools::GetCMakeCommand(), "-P", script }));
+  cc->SetComment("Merging profile guided optimization data");
+  cmTarget* target = lg->AddUtilityCommand(targetName, true, std::move(cc));
+  // The IDE generators make all targets depend on the build system check
+  // target, which re-runs CMake, before this target is added, so that the
+  // merge script is up to date.
+  static std::string const checkTargetName = "ZERO_CHECK";
+  if (this->FindGeneratorTarget(checkTargetName)) {
+    target->AddUtility(checkTargetName, false);
+  }
+  auto gt = cm::make_unique<cmGeneratorTarget>(target, lg);
+  // The dependencies of the other targets have already been traced.
+  gt->TraceDependencies();
+  lg->AddGeneratorTarget(std::move(gt));
   return true;
 }
 
@@ -4519,6 +4856,13 @@ void cmGlobalGenerator::AddToManifest(std::string const& f)
   DirectoryContent& dc = this->DirectoryContentMap[dir];
   dc.Generated.insert(file);
   dc.All.insert(file);
+}
+
+void cmGlobalGenerator::CreatePGODirectory(std::string const& dir)
+{
+  if (this->PGODirectories.insert(dir).second) {
+    cmSystemTools::MakeDirectory(dir);
+  }
 }
 
 std::set<std::string> const& cmGlobalGenerator::GetDirectoryContent(

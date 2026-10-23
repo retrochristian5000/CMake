@@ -1,0 +1,5 @@
+if(NOT IS_DIRECTORY "${RunCMake_TEST_BINARY_DIR}/pgo-foo")
+  set(RunCMake_TEST_FAILED "Profile data directory of 'foo' not found.")
+elseif(EXISTS "${RunCMake_TEST_BINARY_DIR}/pgo")
+  set(RunCMake_TEST_FAILED "Unused default profile data directory created.")
+endif()

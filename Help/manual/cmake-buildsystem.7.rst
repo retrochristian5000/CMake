@@ -61,8 +61,15 @@ project-wide convenience targets.
 * The names ``all``, ``ALL_BUILD``, ``help``, ``install``, ``INSTALL``,
   ``preinstall``, ``clean``, ``edit_cache``, ``rebuild_cache``, and
   ``ZERO_CHECK`` are always reserved.
-* Some modules reserve additional names: e.g., ``test`` when :module:`CTest`
-  is enabled, and ``package`` when :module:`CPack` is enabled.
+* Some names are reserved only when the corresponding feature is enabled:
+
+  * ``test`` and ``RUN_TESTS`` when testing is enabled, e.g., by
+    :command:`enable_testing` or the :module:`CTest` module.
+  * ``package`` and ``PACKAGE`` when :module:`CPack` is enabled, and
+    ``package_source`` when CPack source packaging is enabled.
+  * .. versionadded:: 4.6
+      The name ``cmake_pgo_merge`` is reserved when
+      :prop_tgt:`PROFILE_GUIDED_OPTIMIZATION` is enabled for any target.
 * Generators may also create their own convenience targets, such as
   ``install/parallel`` with the :ref:`Ninja Generators`.  See the
   :manual:`cmake-generators(7)` manual for the target names documented by

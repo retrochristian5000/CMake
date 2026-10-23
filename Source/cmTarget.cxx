@@ -331,6 +331,8 @@ TargetProperty const StaticTargetProperties[] = {
   { "INTERPROCEDURAL_OPTIMIZATION"_s, IC::CanCompileSources },
   { "INTERPROCEDURAL_OPTIMIZATION_"_s, IC::TargetWithArtifact, R::PerConfig },
   { "NO_SYSTEM_FROM_IMPORTED"_s, IC::CanCompileSources },
+  { "PROFILE_GUIDED_OPTIMIZATION"_s, IC::CanCompileSources },
+  { "PGO_DATA_DIRECTORY"_s, IC::CanCompileSources },
   // Set to `True` for `SHARED` and `MODULE` targets.
   { "POSITION_INDEPENDENT_CODE"_s, IC::CanCompileSources },
   { "VISIBILITY_INLINES_HIDDEN"_s, IC::CanCompileSources },

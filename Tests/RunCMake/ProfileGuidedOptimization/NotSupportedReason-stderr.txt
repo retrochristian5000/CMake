@@ -1,0 +1,4 @@
+^CMake Error at NotSupportedReason\.cmake:[0-9]+ \(add_library\):
+  CMake doesn't support the GENERATE phase of profile guided optimization for
+  the C compiler used by target 'foo', because the 'merge-tool' tool was not
+  found\.

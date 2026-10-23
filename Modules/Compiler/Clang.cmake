@@ -15,6 +15,61 @@ set(__pch_header_CXX "c++-header")
 set(__pch_header_OBJC "objective-c-header")
 set(__pch_header_OBJCXX "objective-c++-header")
 
+# Profile guided optimization options.  Instrumented binaries write raw
+# '.profraw' profile data files, which 'llvm-profdata' merges into the
+# 'default.profdata' file read by '-fprofile-use=<PGO_DIRECTORY>'.  The
+# '<PGO_MERGE_FILES_LIST>' file lists the raw profile data files, and the
+# previously merged profile data, one '<weight>,<file>' entry per line.
+# Other compilers reusing this module, e.g. CrayClang, or other languages,
+# e.g. CUDA, do not get them.  The '-fprofile-generate=<dir>' flags, and
+# the 'llvm-profdata merge --input-files' option, are available since
+# Clang 3.9, or AppleClang 8.0.
+macro(__compiler_clang_pgo lang)
+  set(_clang_pgo_supported FALSE)
+  if("${lang}" MATCHES "^(C|CXX|OBJC|OBJCXX)$")
+    if("x${CMAKE_${lang}_COMPILER_ID}" STREQUAL "xClang")
+      if(NOT CMAKE_${lang}_COMPILER_VERSION VERSION_LESS 3.9)
+        set(_clang_pgo_supported TRUE)
+      endif()
+    elseif("x${CMAKE_${lang}_COMPILER_ID}" STREQUAL "xAppleClang")
+      if(NOT CMAKE_${lang}_COMPILER_VERSION VERSION_LESS 8.0)
+        set(_clang_pgo_supported TRUE)
+      endif()
+    endif()
+  elseif("${lang}" STREQUAL "Fortran"
+      AND "x${CMAKE_${lang}_COMPILER_ID}" STREQUAL "xFlang")
+    set(_clang_pgo_supported TRUE)
+  endif()
+
+  if(_clang_pgo_supported)
+    set(CMAKE_${lang}_COMPILE_OPTIONS_PGO_GENERATE "-fprofile-generate=<PGO_DIRECTORY>")
+    set(CMAKE_${lang}_COMPILE_OPTIONS_PGO_USE "-fprofile-use=<PGO_DIRECTORY>")
+    # The compiler driver links the profiling runtime, and with IPO
+    # the code generation happens at link time.
+    set(CMAKE_${lang}_LINK_OPTIONS_PGO_GENERATE ${CMAKE_${lang}_COMPILE_OPTIONS_PGO_GENERATE})
+    set(CMAKE_${lang}_LINK_OPTIONS_PGO_USE ${CMAKE_${lang}_COMPILE_OPTIONS_PGO_USE})
+    # The raw profile data file of a binary is named after the directory of
+    # only one of its instrumented objects.
+    set(_CMAKE_${lang}_PGO_DIRECTORY_PER_BINARY YES)
+    # Without 'llvm-profdata' to merge them, the raw profile data collected
+    # by the instrumented binaries would not be used, so that the GENERATE
+    # phase is reported as not supported.
+    if(CMAKE_${lang}_COMPILER_LLVM_PROFDATA)
+      set(CMAKE_${lang}_PGO_MERGE "${CMAKE_${lang}_COMPILER_LLVM_PROFDATA}" merge
+        "-output=<PGO_MERGE_OUTPUT>"
+        "--input-files=<PGO_MERGE_FILES_LIST>")
+      set(CMAKE_${lang}_PGO_MERGE_FILES "*.profraw")
+      set(CMAKE_${lang}_PGO_MERGE_OUTPUT "<PGO_DIRECTORY>/default.profdata")
+    else()
+      unset(CMAKE_${lang}_COMPILE_OPTIONS_PGO_GENERATE)
+      unset(CMAKE_${lang}_LINK_OPTIONS_PGO_GENERATE)
+      set(_CMAKE_${lang}_PGO_GENERATE_UNSUPPORTED_REASON
+        "the 'llvm-profdata' tool matching its version, which merges the profile data, was not found.  Set CMAKE_${lang}_COMPILER_LLVM_PROFDATA to its path")
+    endif()
+  endif()
+  unset(_clang_pgo_supported)
+endmacro()
+
 if("x${CMAKE_C_SIMULATE_ID}" STREQUAL "xMSVC"
     OR "x${CMAKE_CXX_SIMULATE_ID}" STREQUAL "xMSVC"
     OR "x${CMAKE_CUDA_SIMULATE_ID}" STREQUAL "xMSVC"
@@ -53,6 +108,8 @@ else()
         list(APPEND CMAKE_${lang}_COMPILER_PREDEFINES_COMMAND "--target=${CMAKE_${lang}_COMPILER_TARGET}")
       endif()
     endif()
+
+    __compiler_clang_pgo(${lang})
 
     set(_CMAKE_${lang}_IPO_SUPPORTED_BY_CMAKE YES)
     set(_CMAKE_${lang}_IPO_MAY_BE_SUPPORTED_BY_COMPILER YES)
