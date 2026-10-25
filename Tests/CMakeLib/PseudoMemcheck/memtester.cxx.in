@@ -3,6 +3,7 @@
 
 #include "cmsys/Encoding.hxx"
 
+#include <cmStringAlgorithms.h>
 #include <cmSystemTools.h>
 
 // clang-format off
@@ -45,7 +46,7 @@ int main(int ac, char** av)
     std::string logfile;
     for (int i = 1; i < argc; i++) {
       std::string arg = argv[i];
-      if (arg.find(logarg) == 0) {
+      if (cmHasPrefix(arg, logarg)) {
         if (nextarg) {
           if (i == argc - 1) {
             return 1; // invalid command line
@@ -62,7 +63,7 @@ int main(int ac, char** av)
     int lastarg_pos = 1;
     for (int i = 1; i < argc; ++i) {
       std::string arg = argv[i];
-      if (arg.find("--") == 0) {
+      if (cmHasLiteralPrefix(arg, "--")) {
         lastarg_pos = i;
       }
     }

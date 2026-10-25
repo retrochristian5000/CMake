@@ -326,7 +326,7 @@ void cmGhsMultiTargetGenerator::WriteTargetLinkLine(std::ostream& fout,
   std::vector<std::string> llibs =
     cmSystemTools::ParseArguments(linkLibraries);
   for (std::string const& l : llibs) {
-    if (l.compare(0, 2, "-l") == 0) {
+    if (cmHasLiteralPrefix(l, "-l")) {
       fout << "    \"" << l << "\"\n";
     } else {
       std::string rl = cmSystemTools::CollapseFullPath(l, cbd);

@@ -796,7 +796,7 @@ std::pair<size_t, bool> cmComputeLinkDepends::AddLinkEntry(
   entry.Feature = item.Feature;
   if (!entry.Target && entry.Item.Value[0] == '-' &&
       entry.Item.Value[1] != 'l' &&
-      entry.Item.Value.substr(0, 10) != "-framework") {
+      !cmHasLiteralPrefix(entry.Item.Value, "-framework")) {
     entry.Kind = LinkEntry::Flag;
     entry.Feature = LinkEntry::DEFAULT;
   } else if (cmHasPrefix(entry.Item.Value, LG_BEGIN) &&

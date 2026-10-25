@@ -315,6 +315,7 @@ inline bool cmHasPrefix(cm::string_view str, char prefix)
 /** Returns true if string @a str starts with string @a prefix.  */
 inline bool cmHasPrefix(cm::string_view str, cm::string_view prefix)
 {
+  // NOLINTNEXTLINE(modernize-use-starts-ends-with)
   return str.compare(0, prefix.size(), prefix) == 0;
 }
 
@@ -345,6 +346,7 @@ inline bool cmHasSuffix(cm::string_view str, char suffix)
 inline bool cmHasSuffix(cm::string_view str, cm::string_view suffix)
 {
   return str.size() >= suffix.size() &&
+    // NOLINTNEXTLINE(modernize-use-starts-ends-with)
     str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
 }
 

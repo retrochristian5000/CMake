@@ -13,6 +13,7 @@
 #include <cm3p/json/value.h>
 
 #include "cmJSONState.h"
+#include "cmStringAlgorithms.h"
 
 namespace JsonErrors {
 ErrorGenerator EXPECTED_TYPE(std::string const& type)
@@ -113,7 +114,7 @@ ErrorGenerator INVALID_NAMED_OBJECT_KEY(
     [](Json::Value const*, cmJSONState* state) -> std::string {
       for (auto it = state->parseStack.rbegin();
            it != state->parseStack.rend(); ++it) {
-        if (it->first.rfind("$vector_item_", 0) == 0) {
+        if (cmHasLiteralPrefix(it->first, "$vector_item_")) {
           continue;
         }
         return cmStrCat('"', it->first, '"');

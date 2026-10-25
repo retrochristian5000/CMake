@@ -3925,7 +3925,7 @@ void cmCTest::ConvertInstrumentationSnippetsToXML(cmXMLWriter& xml,
   for (unsigned int i = 0; i < d.GetNumberOfFiles(); i++) {
     std::string fpath = d.GetFilePath(i);
     std::string const& fname = d.GetFileName(i);
-    if (fname.rfind('.', 0) == 0) {
+    if (cmHasPrefix(fname, '.')) {
       continue;
     }
     this->ConvertInstrumentationJSONFileToXML(fpath, xml);

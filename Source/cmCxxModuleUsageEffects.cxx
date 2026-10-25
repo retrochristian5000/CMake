@@ -37,7 +37,7 @@ bool IsMSVCWarning(cm::string_view flag)
     return true;
   }
 
-  if (flag.substr(0, 9) == "external:") {
+  if (cmHasLiteralPrefix(flag, "external:")) {
     return true;
   }
 
@@ -120,7 +120,7 @@ struct CompileOptionClassification
 CompileOptionClassification SaveIfStartsWith(cm::string_view flag,
                                              cm::string_view prefix)
 {
-  if (flag.rfind(prefix, 0) == 0) {
+  if (cmHasPrefix(flag, prefix)) {
     return { CompileOptionUsage::SavePreprocessor,
              flag.size() == prefix.size() };
   }
