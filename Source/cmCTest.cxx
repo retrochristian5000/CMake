@@ -803,8 +803,8 @@ int cmCTest::ProcessSteps()
   }
 
   if (!this->Impl->SourceDir.empty() && this->Impl->TestDir.empty() &&
-      this->Impl->CTestConfigurationOverwrites.find("BuildDirectory") ==
-        this->Impl->CTestConfigurationOverwrites.end()) {
+      !cm::contains(this->Impl->CTestConfigurationOverwrites,
+                    "BuildDirectory")) {
     std::string const configurePresetName =
       cmNonempty(mf.GetDefinition("CTEST_CONFIGURE_PRESET"))
       ? *mf.GetDefinition("CTEST_CONFIGURE_PRESET")
@@ -3047,8 +3047,7 @@ std::string cmCTest::GetShortPathToFile(std::string const& cfname)
 
 std::string cmCTest::GetCTestConfiguration(std::string const& name)
 {
-  if (this->Impl->CTestConfigurationOverwrites.find(name) !=
-      this->Impl->CTestConfigurationOverwrites.end()) {
+  if (cm::contains(this->Impl->CTestConfigurationOverwrites, name)) {
     return this->Impl->CTestConfigurationOverwrites[name];
   }
   return this->Impl->CTestConfiguration[name];

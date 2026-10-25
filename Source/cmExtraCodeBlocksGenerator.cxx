@@ -424,7 +424,7 @@ void cmExtraCodeBlocksGenerator::CreateNewProjectFile(
     for (std::string const& ext : headerExts) {
       std::string hname = cmStrCat(headerBasename, '.', ext);
       // if it's already in the set, don't check if it exists on disk
-      if (allFiles.find(hname) != allFiles.end()) {
+      if (cm::contains(allFiles, hname)) {
         break;
       }
 

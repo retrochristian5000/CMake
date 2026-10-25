@@ -2414,13 +2414,14 @@ bool cmMakefile::PlatformIsAppleEmbedded() const
 
 bool cmMakefile::PlatformIsAppleSimulator() const
 {
-  return std::set<AppleSDK>{
-    AppleSDK::AppleTVSimulator,
-    AppleSDK::IPhoneSimulator,
-    AppleSDK::WatchSimulator,
-    AppleSDK::XRSimulator,
-  }
-    .count(this->GetAppleSDKType());
+  return cm::contains(
+    std::set<AppleSDK>{
+      AppleSDK::AppleTVSimulator,
+      AppleSDK::IPhoneSimulator,
+      AppleSDK::WatchSimulator,
+      AppleSDK::XRSimulator,
+    },
+    this->GetAppleSDKType());
 }
 
 bool cmMakefile::PlatformIsAppleCatalyst() const

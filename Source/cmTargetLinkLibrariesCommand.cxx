@@ -11,6 +11,7 @@
 
 #include <cm/optional>
 #include <cm/string_view>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmDiagnostics.h"
@@ -169,7 +170,7 @@ bool cmTargetLinkLibrariesCommand(std::vector<std::string> const& args,
   // Add libraries, note that there is an optional prefix
   // of debug and optimized that can be used.
   for (unsigned int i = 1; i < args.size(); ++i) {
-    if (keywords.count(args[i])) {
+    if (cm::contains(keywords, args[i])) {
       // A keyword argument terminates any accumulated partial genex.
       if (!processCurrentEntry()) {
         return false;

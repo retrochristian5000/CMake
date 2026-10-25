@@ -531,8 +531,7 @@ void cmGlobalNinjaGenerator::WriteVariable(std::ostream& os,
   static std::unordered_set<std::string> const variablesShouldNotBeTrimmed = {
     "CODE_CHECK", "LAUNCHER"
   };
-  if (variablesShouldNotBeTrimmed.find(name) ==
-      variablesShouldNotBeTrimmed.end()) {
+  if (!cm::contains(variablesShouldNotBeTrimmed, name)) {
     val = cmTrimWhitespace(value);
     // If the value ends with `\n` and a `$` was left at the end of the trimmed
     // value, put the newline back. Otherwise the next stanza is hidden by the
@@ -1065,7 +1064,7 @@ void cmGlobalNinjaGenerator::AddRule(cmNinjaRule const& rule)
 
 bool cmGlobalNinjaGenerator::HasRule(std::string const& name)
 {
-  return (this->Rules.find(name) != this->Rules.end());
+  return cm::contains(this->Rules, name);
 }
 
 // Private virtual overrides
@@ -1137,7 +1136,7 @@ cm::optional<std::set<std::string>> cmGlobalNinjaGenerator::ListSubsetWithAll(
       } else {
         return cm::nullopt;
       }
-    } else if (all.count(item)) {
+    } else if (cm::contains(all, item)) {
       result.insert(item);
     } else {
       return cm::nullopt;
@@ -1469,7 +1468,7 @@ void cmGlobalNinjaGenerator::WritePerConfigPhony(std::string const& config,
                                                  cmNinjaBuild const& build)
 {
   this->WriteBuild(this->EnableCrossConfigBuild() &&
-                       this->CrossConfigs.count(config)
+                       cm::contains(this->CrossConfigs, config)
                      ? *this->GetCommonFileStream()
                      : *this->GetImplFileStream(config),
                    build);
@@ -1499,7 +1498,7 @@ void cmGlobalNinjaGenerator::WritePerConfigPhonyAliases(
     if (!this->DefaultConfigs.empty()) {
       build.ExplicitDeps.clear();
       for (std::string const& config : this->DefaultConfigs) {
-        if (configs.count(config)) {
+        if (cm::contains(configs, config)) {
           build.ExplicitDeps.push_back(this->BuildAlias(name, config));
         }
       }
@@ -1512,7 +1511,7 @@ void cmGlobalNinjaGenerator::WritePerConfigPhonyAliases(
     if (this->EnableCrossConfigBuild()) {
       build.ExplicitDeps.clear();
       for (std::string const& config : this->CrossConfigs) {
-        if (configs.count(config)) {
+        if (cm::contains(configs, config)) {
           build.ExplicitDeps.push_back(this->BuildAlias(name, config));
         }
       }
@@ -1736,7 +1735,7 @@ void cmGlobalNinjaGenerator::AppendCodegenTargetDepends(
   for (cmTargetDepend const& targetDep :
        this->GetTargetDirectDepends(target)) {
     if (targetDep->IsInBuildSystem() &&
-        codegenDeps.count(targetDep->GetName()) &&
+        cm::contains(codegenDeps, targetDep->GetName()) &&
         visited.insert(targetDep).second) {
       this->AppendCodegenOutputs(targetDep, deps, config);
       this->AppendCodegenTargetDepends(targetDep, deps, config, visited);
@@ -1783,7 +1782,7 @@ void cmGlobalNinjaGenerator::AddTargetAlias(std::string const& alias,
       newAliasConfig.first->second.GeneratorTarget != target) {
     newAliasConfig.first->second.GeneratorTarget = nullptr;
   }
-  if (this->DefaultConfigs.count(config)) {
+  if (cm::contains(this->DefaultConfigs, config)) {
     auto newAliasDefaultGlobal =
       this->DefaultTargetAliases.insert(std::make_pair(outputPath, ta));
     if (newAliasDefaultGlobal.second &&
@@ -1826,7 +1825,7 @@ void cmGlobalNinjaGenerator::WriteTargetAliases(std::ostream& os)
     }
     this->WriteBuild(this->EnableCrossConfigBuild() &&
                          (ta.second.Config == "all" ||
-                          this->CrossConfigs.count(ta.second.Config))
+                          cm::contains(this->CrossConfigs, ta.second.Config))
                        ? os
                        : *this->GetImplFileStream(ta.second.Config),
                      build);
@@ -1933,7 +1932,7 @@ void cmGlobalNinjaGenerator::WriteFolderTargets(std::ostream& os)
 
         // Write target
         this->WriteBuild(this->EnableCrossConfigBuild() &&
-                             this->CrossConfigs.count(config)
+                             cm::contains(this->CrossConfigs, config)
                            ? os
                            : *this->GetImplFileStream(config),
                          build);
@@ -2003,7 +2002,7 @@ void cmGlobalNinjaGenerator::WriteFolderTargets(std::ostream& os)
       }
       // Write target
       this->WriteBuild(this->EnableCrossConfigBuild() &&
-                           this->CrossConfigs.count(config)
+                           cm::contains(this->CrossConfigs, config)
                          ? os
                          : *this->GetImplFileStream(config),
                        build);
@@ -2540,7 +2539,7 @@ std::string cmGlobalNinjaGenerator::NinjaOutputPath(
 void cmGlobalNinjaGenerator::EnsureDirectoryExists(std::string const& path)
 {
   // The same object and PDB directories are requested for every source.
-  if (this->ExistingDirectories.count(path)) {
+  if (cm::contains(this->ExistingDirectories, path)) {
     return;
   }
   if (cmSystemTools::MakeDirectory(path)) {
@@ -2852,7 +2851,7 @@ cm::optional<cmSourceInfo> cmcmd_cmake_ninja_depends_fortran(
   }
   for (std::string const& require : requiredModules) {
     // Require modules not provided in the same source.
-    if (finfo.Provides.count(require)) {
+    if (cm::contains(finfo.Provides, require)) {
       continue;
     }
     cmSourceReqInfo src_info;
@@ -3011,7 +3010,7 @@ bool cmGlobalNinjaGenerator::WriteDyndepFile(
     for (cmScanDepInfo const& object : objects) {
       for (auto const& r : object.Requires) {
         for (auto const& ie : importErrors) {
-          if (ie.Modules.count(r.LogicalName)) {
+          if (cm::contains(ie.Modules, r.LogicalName)) {
             cmSystemTools::Error(ie.Message);
             return false;
           }
@@ -3296,7 +3295,7 @@ bool cmGlobalNinjaGenerator::WriteDyndepFile(
     if (directObjects.isObject()) {
       for (auto i = directObjects.begin(); i != directObjects.end(); ++i) {
         std::string moduleName = i.key().asString();
-        if (usedModules.count(moduleName) &&
+        if (cm::contains(usedModules, moduleName) &&
             !transitiveInterfaceObjects.isMember(moduleName)) {
           transitiveInterfaceObjects[i.key().asString()] = *i;
         }
@@ -3511,7 +3510,7 @@ bool cmGlobalNinjaGenerator::IsSingleConfigUtility(
   cmGeneratorTarget const* target) const
 {
   return target->GetType() == cm::TargetType::UTILITY &&
-    !this->PerConfigUtilityTargets.count(target->GetName());
+    !cm::contains(this->PerConfigUtilityTargets, target->GetName());
 }
 
 std::string cmGlobalNinjaGenerator::ConvertToOutputPath(std::string path) const
@@ -3681,7 +3680,7 @@ bool cmGlobalNinjaMultiGenerator::InspectConfigTypeVariables()
   if (this->DefaultFileConfig.empty()) {
     this->DefaultFileConfig = configsList.front();
   }
-  if (!configs.count(this->DefaultFileConfig)) {
+  if (!cm::contains(configs, this->DefaultFileConfig)) {
     this->GetCMakeInstance()->IssueMessage(
       MessageType::FATAL_ERROR,
       cmStrCat("The configuration specified by "

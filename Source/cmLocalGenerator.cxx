@@ -3074,8 +3074,7 @@ void cmLocalGenerator::AddPchDependencies(cmGeneratorTarget* target)
             !((fileSet && fileSet->GetProperty("SKIP_PRECOMPILE_HEADERS")) ||
               sf->GetProperty("SKIP_PRECOMPILE_HEADERS"));
         });
-      if (langSources == 0 &&
-          pchSourceLangs.find(lang) == pchSourceLangs.end()) {
+      if (langSources == 0 && !cm::contains(pchSourceLangs, lang)) {
         continue;
       }
 
@@ -3110,7 +3109,7 @@ void cmLocalGenerator::AddPchDependencies(cmGeneratorTarget* target)
               auto const sourceLanguage =
                 target->GetSourceFileLanguage(sf, config);
               if (!sourceLanguage.empty() &&
-                  pchLangSet.find(sourceLanguage) == pchLangSet.end()) {
+                  !cm::contains(pchLangSet, sourceLanguage)) {
                 sf->SetProperty("SKIP_PRECOMPILE_HEADERS", "ON");
               }
             }

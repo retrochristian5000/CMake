@@ -6,6 +6,7 @@
 
 #include <cm/optional>
 #include <cm/string_view>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmGenExContext.h"
@@ -45,7 +46,7 @@ cmGeneratorExpressionDAGChecker::cmGeneratorExpressionDAGChecker(
     auto it = top->Seen.find(this->Target);
     if (it != top->Seen.end()) {
       std::set<std::string> const& propSet = it->second;
-      if (propSet.find(this->Property) != propSet.end()) {
+      if (cm::contains(propSet, this->Property)) {
         this->CheckResult = ALREADY_SEEN;
         return;
       }

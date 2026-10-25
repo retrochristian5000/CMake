@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <cm/string_view>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmCryptoHash.h"
@@ -69,7 +70,7 @@ bool IsGNUWarning(cm::string_view flag)
     "no-warnings"
   };
 
-  return long_names.find(flag) != long_names.end();
+  return cm::contains(long_names, flag);
 }
 
 void AppendUsage(std::string& usageHashInput, std::string const& entry)

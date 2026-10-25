@@ -7,6 +7,7 @@
 #include <utility>
 
 #include <cm/string_view>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmArgumentParser.h"
@@ -88,7 +89,7 @@ static void PassParsedArguments(
   cmPolicies::PolicyStatus const cmp0174 =
     makefile.GetPolicyStatus(cmPolicies::CMP0174);
   for (auto const& iter : singleValArgs) {
-    if (keywordsSeen.find(iter.first) == keywordsSeen.end()) {
+    if (!cm::contains(keywordsSeen, iter.first)) {
       makefile.RemoveDefinition(cmStrCat(prefix, iter.first));
     } else if ((parseFromArgV && cmp0174 == cmPolicies::NEW) ||
                !iter.second.empty()) {

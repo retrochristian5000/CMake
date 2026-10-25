@@ -10,6 +10,7 @@
 #include <utility>
 
 #include <cm/optional>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmCustomCommand.h"
@@ -197,7 +198,7 @@ bool cmAddCustomCommandCommand(std::vector<std::string> const& args,
   auto const cmp0175 = mf.GetPolicyStatus(cmPolicies::CMP0175);
 
   for (std::string const& copy : args) {
-    if (keywords.count(copy)) {
+    if (cm::contains(keywords, copy)) {
       // Check if a preceding keyword expected a value but there wasn't one
       if (keywordExpectingValue) {
         std::string const msg =

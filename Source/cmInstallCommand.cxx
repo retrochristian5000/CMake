@@ -12,6 +12,7 @@
 
 #include <cm/optional>
 #include <cm/string_view>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmsys/Glob.hxx"
@@ -149,7 +150,7 @@ void CollectEvaluatedTransitiveSharedModuleTargets(
     }
     cm::TargetType type = dep->GetType();
     if (type == cm::TargetType::SHARED_LIBRARY) {
-      if (rootNameSet.find(dep->GetName()) == rootNameSet.end()) {
+      if (!cm::contains(rootNameSet, dep->GetName())) {
         out.insert(dep->Target);
       }
       stack.push_back(dep);
@@ -1035,7 +1036,7 @@ bool InstallTargetsGroupedByConfig(
       continue;
     }
     for (cmTarget* dep : it->second) {
-      if (common.find(dep) == common.end()) {
+      if (!cm::contains(common, dep)) {
         configSpecific[dep].push_back(config);
       }
     }
@@ -1850,7 +1851,7 @@ bool HandleFilesMode(std::vector<std::string> const& args,
   }
 
   std::string type = ica.GetType();
-  if (!type.empty() && allowedTypes.count(type) == 0) {
+  if (!type.empty() && !cm::contains(allowedTypes, type)) {
     status.SetError(cmStrCat(args[0], " given non-type \""_s, type,
                              "\" with TYPE argument."_s));
     return false;
@@ -2136,7 +2137,7 @@ bool HandleDirectoryMode(std::vector<std::string> const& args,
       }
       doing = DoingNone;
     } else if (doing == DoingType) {
-      if (allowedTypes.count(args[i]) == 0) {
+      if (!cm::contains(allowedTypes, args[i])) {
         status.SetError(cmStrCat(args[0], " given non-type \""_s, args[i],
                                  "\" with TYPE argument."_s));
         return false;

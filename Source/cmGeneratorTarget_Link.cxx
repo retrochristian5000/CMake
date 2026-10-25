@@ -858,8 +858,7 @@ void cmGeneratorTarget::ComputeLinkInterfaceRuntimeLibraries(
 {
   for (std::string const& lang : iface.Languages) {
     if ((lang == "CUDA" || lang == "HIP") &&
-        iface.LanguageRuntimeLibraries.find(lang) ==
-          iface.LanguageRuntimeLibraries.end()) {
+        !cm::contains(iface.LanguageRuntimeLibraries, lang)) {
       iface.LanguageRuntimeLibraries[lang] =
         this->ComputeImplicitLanguageTargets(lang, config);
     }
@@ -871,8 +870,7 @@ void cmGeneratorTarget::ComputeLinkImplementationRuntimeLibraries(
 {
   for (std::string const& lang : impl.Languages) {
     if ((lang == "CUDA" || lang == "HIP") &&
-        impl.LanguageRuntimeLibraries.find(lang) ==
-          impl.LanguageRuntimeLibraries.end()) {
+        !cm::contains(impl.LanguageRuntimeLibraries, lang)) {
       impl.LanguageRuntimeLibraries[lang] =
         this->ComputeImplicitLanguageTargets(lang, config);
     }
@@ -1104,7 +1102,7 @@ void TransitiveLinkImpl::Compute()
   this->Impl.Libraries.erase(
     std::remove_if(this->Impl.Libraries.begin(), this->Impl.Libraries.end(),
                    [this](cmLinkItem const& item) {
-                     return this->Excluded.find(item) != this->Excluded.end();
+                     return cm::contains(this->Excluded, item);
                    }),
     this->Impl.Libraries.end());
 }

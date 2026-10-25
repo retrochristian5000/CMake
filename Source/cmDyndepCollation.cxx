@@ -12,6 +12,7 @@
 #include <vector>
 
 #include <cm/string_view>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include <cm3p/json/value.h>
@@ -870,7 +871,7 @@ bool cmDyndepCollation::WriteDyndepMetadata(
   // Check that public sources only require public modules.
   for (auto const& pub_reqs : public_source_requires) {
     for (auto const& req : pub_reqs.second) {
-      if (private_modules.count(req)) {
+      if (cm::contains(private_modules, req)) {
         cmSystemTools::Error(cmStrCat(
           "Public C++ module source `"_s, pub_reqs.first, "` requires the `"_s,
           req, "` C++ module which is provided by a private source"_s));

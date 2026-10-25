@@ -12,6 +12,7 @@
 
 #include <cm/optional>
 #include <cm/string_view>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmArgumentParser.h"
@@ -173,7 +174,7 @@ bool HandleGetCommand(std::vector<std::string> const& args,
 
   auto const& action = args[2];
 
-  if (actions.find(action) == actions.end()) {
+  if (!cm::contains(actions, action)) {
     status.SetError(
       cmStrCat("GET called with an unknown action: "_s, action, '.'));
     return false;

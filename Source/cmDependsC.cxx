@@ -4,6 +4,7 @@
 
 #include <utility>
 
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmsys/FStream.hxx"
@@ -169,7 +170,7 @@ bool cmDependsC::WriteDependencies(std::set<std::string> const& sources,
       }
 
       // Scan the file if it was found and has not been scanned already.
-      if (!fullName.empty() && (scanned.find(fullName) == scanned.end())) {
+      if (!fullName.empty() && (!cm::contains(scanned, fullName))) {
         // Record scanned files.
         scanned.insert(fullName);
 

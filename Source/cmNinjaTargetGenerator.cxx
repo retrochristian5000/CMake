@@ -542,7 +542,7 @@ bool cmNinjaTargetGenerator::HasCxxModuleDyndep(
 {
   auto const it = this->Configs.find(config);
   return it != this->Configs.end() &&
-    it->second.ScanningInfo.count("CXX") != 0;
+    cm::contains(it->second.ScanningInfo, "CXX");
 }
 
 std::string cmNinjaTargetGenerator::GetTargetDependInfoPath(
@@ -1320,7 +1320,7 @@ void cmNinjaTargetGenerator::WriteObjectBuildStatements(
   // Check if there are Fortran objects which need to participate in forwarding
   // module requirements.
   if (this->GeneratorTarget->HaveFortranSources(config) &&
-      !this->Configs[config].ScanningInfo.count("Fortran")) {
+      !cm::contains(this->Configs[config].ScanningInfo, "Fortran")) {
     ScanningFiles files;
     this->Configs[config].ScanningInfo["Fortran"].emplace_back(files);
     this->WriteCompileRule("Fortran", config, WithScanning::Yes);
@@ -1678,7 +1678,7 @@ void cmNinjaTargetGenerator::WriteObjectBuildStatement(
     for (std::string const& arch : pchArchs) {
       depList.push_back(
         this->GeneratorTarget->GetPchHeader(config, language, arch));
-      if (pchSources.find(source->GetFullPath()) == pchSources.end()) {
+      if (!cm::contains(pchSources, source->GetFullPath())) {
         depList.push_back(
           this->GeneratorTarget->GetPchFile(config, language, arch));
       }

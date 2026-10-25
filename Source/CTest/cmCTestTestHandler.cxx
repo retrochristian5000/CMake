@@ -1002,15 +1002,13 @@ bool cmCTestTestHandler::ComputeTestList()
     }
 
     if (this->TestsToRunByName) {
-      if (this->TestsToRunByName->find(tp.Name) ==
-          this->TestsToRunByName->end()) {
+      if (!cm::contains(*this->TestsToRunByName, tp.Name)) {
         continue;
       }
     }
 
     if (this->TestsToExcludeByName) {
-      if (this->TestsToExcludeByName->find(tp.Name) !=
-          this->TestsToExcludeByName->end()) {
+      if (cm::contains(*this->TestsToExcludeByName, tp.Name)) {
         continue;
       }
     }

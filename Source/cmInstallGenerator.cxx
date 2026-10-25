@@ -357,7 +357,8 @@ bool cmInstallGenerator::ResolveBuildDepends(
       for (std::string const& value : evaluated) {
         if (value.empty() ||
             (cmSystemTools::FileIsFullPath(value) &&
-             referenced.count(gg->FindArtifactOwningTarget(value, config)))) {
+             cm::contains(referenced,
+                          gg->FindArtifactOwningTarget(value, config)))) {
           continue;
         }
         if (!resolve(value, name, true)) {

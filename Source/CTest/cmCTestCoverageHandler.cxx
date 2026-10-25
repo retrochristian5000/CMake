@@ -396,8 +396,7 @@ int cmCTestCoverageHandler::ProcessHandler()
     cmCTestCoverageHandlerContainer::SingleFileCoverageVector const& fcov =
       file.second;
     cmCTestCoverageHandlerContainer::SingleFileBranchCoverageVector fBranchcov;
-    if (cont.TotalBranchCoverage.find(file.first) !=
-        cont.TotalBranchCoverage.end()) {
+    if (cm::contains(cont.TotalBranchCoverage, file.first)) {
       fBranchcov = cont.TotalBranchCoverage[file.first];
     }
     covLogXML.StartElement("File");
@@ -1189,7 +1188,7 @@ int cmCTestCoverageHandler::HandleGCovCoverage(
         }
 
         if (actualSourceFile.empty()) {
-          if (missingFiles.find(sourceFile) == missingFiles.end()) {
+          if (!cm::contains(missingFiles, sourceFile)) {
             cmCTestOptionalLog(this->CTest, HANDLER_VERBOSE_OUTPUT,
                                this->Quiet, "Something went wrong\n"_s);
             cmCTestOptionalLog(this->CTest, HANDLER_VERBOSE_OUTPUT,
@@ -1991,7 +1990,7 @@ int cmCTestCoverageHandler::RunBullseyeCoverageBranch(
     bool startFile = false;
     if (lineIn.size() > 1 && lineIn[lineIn.size() - 1] == ':') {
       file = lineIn.substr(0, lineIn.size() - 1);
-      if (coveredFileNames.find(file) != coveredFileNames.end()) {
+      if (cm::contains(coveredFileNames, file)) {
         startFile = true;
       }
     }

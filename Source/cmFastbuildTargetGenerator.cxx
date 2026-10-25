@@ -10,6 +10,7 @@
 
 #include <cm/optional>
 #include <cm/string_view>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmCryptoHash.h"
@@ -870,16 +871,16 @@ void cmFastbuildTargetGenerator::AddObjectDependencies(
   FastbuildTarget& fastbuildTarget,
   std::vector<std::string>& allObjectDepends) const
 {
-  auto const FindObjListWhichOutputs = [&fastbuildTarget](
-                                         std::string const& output) {
-    for (FastbuildObjectListNode const& objList :
-         fastbuildTarget.ObjectListNodes) {
-      if (objList.ObjectOutputs.find(output) != objList.ObjectOutputs.end()) {
-        return objList.Name;
+  auto const FindObjListWhichOutputs =
+    [&fastbuildTarget](std::string const& output) {
+      for (FastbuildObjectListNode const& objList :
+           fastbuildTarget.ObjectListNodes) {
+        if (cm::contains(objList.ObjectOutputs, output)) {
+          return objList.Name;
+        }
       }
-    }
-    return std::string{};
-  };
+      return std::string{};
+    };
 
   for (FastbuildObjectListNode& objList : fastbuildTarget.ObjectListNodes) {
     for (auto const& objDep : objList.ObjectDepends) {

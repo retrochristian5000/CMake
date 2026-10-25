@@ -13,6 +13,7 @@
 #include <utility>
 
 #include <cm/string_view>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmsys/RegularExpression.hxx"
@@ -162,7 +163,8 @@ bool VisitPreset(
     }
 
     auto& parentPreset = parent->second.Unexpanded;
-    if (!preset.OriginFile->ReachableFiles.count(parentPreset.OriginFile)) {
+    if (!cm::contains(preset.OriginFile->ReachableFiles,
+                      parentPreset.OriginFile)) {
       cmCMakePresetsErrors::INHERITED_PRESET_UNREACHABLE_FROM_FILE(
         preset.Name, i, preset.kind(), &graph.parseState);
       return false;
@@ -827,8 +829,8 @@ bool TryReachPresetFromWorkflow(
                                                  state);
     return false;
   }
-  if (!origin.OriginFile->ReachableFiles.count(
-        it->second.Unexpanded.OriginFile)) {
+  if (!cm::contains(origin.OriginFile->ReachableFiles,
+                    it->second.Unexpanded.OriginFile)) {
     cmCMakePresetsErrors::WORKFLOW_STEP_UNREACHABLE_FROM_FILE(workflowStepType,
                                                               name, state);
     return false;
@@ -1015,7 +1017,7 @@ bool cmCMakePresetsGraph::ConfigurePreset::VisitPresetInherit(
 bool cmCMakePresetsGraph::ConfigurePreset::VisitPresetBeforeInherit()
 {
   auto& preset = *this;
-  if (preset.Environment.count("") != 0) {
+  if (cm::contains(preset.Environment, "")) {
     this->ErrorDetail =
       "Empty environment variable names are not allowed in configure presets";
     return false;
@@ -1058,7 +1060,7 @@ bool cmCMakePresetsGraph::ConfigurePreset::VisitPresetAfterInherit(
       }
     }
 
-    if (preset.CacheVariables.count("") != 0) {
+    if (cm::contains(preset.CacheVariables, "")) {
       this->ErrorDetail = "Empty cache variable names are not allowed";
       return false;
     }
@@ -1328,8 +1330,8 @@ bool cmCMakePresetsGraph::ResolveDependentPresets(
           &this->parseState);
         return false;
       }
-      if (!it.second.Unexpanded.OriginFile->ReachableFiles.count(
-            configurePreset->second.Unexpanded.OriginFile)) {
+      if (!cm::contains(it.second.Unexpanded.OriginFile->ReachableFiles,
+                        configurePreset->second.Unexpanded.OriginFile)) {
         cmCMakePresetsErrors::CONFIGURE_PRESET_UNREACHABLE_FROM_FILE(
           it.first, T::kind(), it.second.Unexpanded.ConfigurePreset,
           &this->parseState);

@@ -12,6 +12,8 @@
 #  include <utility>
 #endif
 
+#include <cmext/algorithm>
+
 #include "cmsys/String.h"
 
 #include "cmList.h"
@@ -230,7 +232,7 @@ static bool cmOutputConverterIsShellOperator(cm::string_view str)
   static std::set<cm::string_view> const shellOperators{
     "<", ">", "<<", ">>", "|", "||", "&&", "&>", "1>", "2>", "2>&1", "1>&2"
   };
-  return (shellOperators.count(str) != 0);
+  return (cm::contains(shellOperators, str));
 }
 
 std::string cmOutputConverter::EscapeForShell(cm::string_view str,

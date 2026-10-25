@@ -1433,7 +1433,7 @@ std::string cmLocalUnixMakefileGenerator3::CreateMakeVariable(
     char buffer[12];
     // make sure the _ version is not already used, if
     // it is used then add number to the end of the variable
-    while (this->ShortMakeVariableMap.count(ret) && ni < 1000) {
+    while (cm::contains(this->ShortMakeVariableMap, ret) && ni < 1000) {
       ++ni;
       snprintf(buffer, sizeof(buffer), "%04d", ni);
       ret = unmodified + buffer;
@@ -1462,7 +1462,7 @@ std::string cmLocalUnixMakefileGenerator3::CreateMakeVariable(
     int ni = 0;
     snprintf(buffer, sizeof(buffer), "%04d", ni);
     ret = cmStrCat(str1, str2, buffer);
-    while (this->ShortMakeVariableMap.count(ret) && ni < 1000) {
+    while (cm::contains(this->ShortMakeVariableMap, ret) && ni < 1000) {
       ++ni;
       snprintf(buffer, sizeof(buffer), "%04d", ni);
       ret = cmStrCat(str1, str2, buffer);

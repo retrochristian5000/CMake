@@ -7,6 +7,7 @@
 #include <utility>
 
 #include <cm/string_view>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmCPackComponentGroup.h"
@@ -436,11 +437,11 @@ int cmCPackIFWPackage::ConfigureFromPrefix(std::string const& prefix)
   }
   for (auto const& d : deps) {
     DependenceStruct dep(d);
-    if (this->Generator->Packages.count(dep.Name)) {
+    if (cm::contains(this->Generator->Packages, dep.Name)) {
       cmCPackIFWPackage& depPkg = this->Generator->Packages[dep.Name];
       dep.Name = depPkg.Name;
     }
-    bool hasDep = this->Generator->DependentPackages.count(dep.Name) > 0;
+    bool hasDep = cm::contains(this->Generator->DependentPackages, dep.Name);
     DependenceStruct& depRef = this->Generator->DependentPackages[dep.Name];
     if (!hasDep) {
       depRef = dep;
@@ -456,11 +457,11 @@ int cmCPackIFWPackage::ConfigureFromPrefix(std::string const& prefix)
     cmList depsOn{ value };
     for (std::string const& d : depsOn) {
       DependenceStruct dep(d);
-      if (this->Generator->Packages.count(dep.Name)) {
+      if (cm::contains(this->Generator->Packages, dep.Name)) {
         cmCPackIFWPackage& depPkg = this->Generator->Packages[dep.Name];
         dep.Name = depPkg.Name;
       }
-      bool hasDep = this->Generator->DependentPackages.count(dep.Name) > 0;
+      bool hasDep = cm::contains(this->Generator->DependentPackages, dep.Name);
       DependenceStruct& depRef = this->Generator->DependentPackages[dep.Name];
       if (!hasDep) {
         depRef = dep;

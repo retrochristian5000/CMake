@@ -1287,7 +1287,7 @@ std::string cmGlobalGenerator::GetLanguageOutputExtension(
   // and in this map, so it will not be compiled but will just be used.
   std::string const& ext = source.GetExtension();
   if (!ext.empty()) {
-    if (this->OutputExtensions.count(ext)) {
+    if (cm::contains(this->OutputExtensions, ext)) {
       return ext;
     }
   }
@@ -1478,7 +1478,7 @@ bool cmGlobalGenerator::IgnoreFile(cm::string_view ext) const
   if (!this->GetLanguageFromExtension(ext).empty()) {
     return false;
   }
-  return (this->IgnoreExtensions.count(std::string(ext)) > 0);
+  return (cm::contains(this->IgnoreExtensions, std::string(ext)));
 }
 
 bool cmGlobalGenerator::GetLanguageEnabled(std::string const& l) const
@@ -2467,14 +2467,14 @@ bool cmGlobalGenerator::IsGeneratedByBuild(std::string const& file)
   }
 
   std::string const collapsed = cmSystemTools::CollapseFullPath(file);
-  if (this->GeneratedByBuildIndex.count(collapsed)) {
+  if (cm::contains(this->GeneratedByBuildIndex, collapsed)) {
     return true;
   }
   if (file == collapsed) {
     return false;
   }
   if (cmSystemTools::FileIsFullPath(file)) {
-    return this->GeneratedByBuildIndex.count(file) > 0;
+    return cm::contains(this->GeneratedByBuildIndex, file);
   }
 
   // A relative path may name an output by suffix, which only the linear
@@ -2994,7 +2994,7 @@ void cmGlobalGenerator::MarkAsGeneratedFile(std::string const& filepath)
 
 bool cmGlobalGenerator::IsGeneratedFile(std::string const& filepath)
 {
-  return this->GeneratedFiles.find(filepath) != this->GeneratedFiles.end();
+  return cm::contains(this->GeneratedFiles, filepath);
 }
 
 void cmGlobalGenerator::EnableInstallTarget()
@@ -4550,7 +4550,7 @@ void cmGlobalGenerator::AddToManifest(std::string const& f)
 
 bool cmGlobalGenerator::SourceFileExists(std::string const& path)
 {
-  if (this->ExistingSourceFiles.count(path)) {
+  if (cm::contains(this->ExistingSourceFiles, path)) {
     return true;
   }
   if (cmSystemTools::FileExists(path, true)) {

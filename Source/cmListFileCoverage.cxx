@@ -154,7 +154,7 @@ void cmListFileCoverage::FileParsed(
 void cmListFileCoverage::CommandRan(cmListFileFunction const& lff,
                                     std::string const& path, long line)
 {
-  if (this->SyntheticCommands.count(&lff)) {
+  if (cm::contains(this->SyntheticCommands, &lff)) {
     return;
   }
   auto file = this->FindFile(path);

@@ -74,8 +74,7 @@ bool TargetUsesSYCLCompileFeatures(cmMakefile* makefile,
         globalGenerator->FindGeneratorTarget(targetName)) {
     std::set<std::string> const languages =
       generatorTarget->GetAllConfigCompileLanguages();
-    return languages.find("SYCL") != languages.end() &&
-      languages.find("CXX") == languages.end();
+    return cm::contains(languages, "SYCL") && !cm::contains(languages, "CXX");
   }
 
   bool hasCxxSource = false;

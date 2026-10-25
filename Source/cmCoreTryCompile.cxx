@@ -9,6 +9,7 @@
 #include <utility>
 
 #include <cm/string_view>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmsys/Directory.hxx"
@@ -652,7 +653,7 @@ cm::optional<cmTryCompileResult> cmCoreTryCompile::TryCompileCode(
     /* Set CUDA architectures policy to match outer project.  */
     if (this->Makefile->GetPolicyStatus(cmPolicies::CMP0104) !=
           cmPolicies::NEW &&
-        testLangs.find("CUDA") != testLangs.end() &&
+        cm::contains(testLangs, "CUDA") &&
         this->Makefile->GetSafeDefinition(kCMAKE_CUDA_ARCHITECTURES).empty()) {
       fprintf(fout, "cmake_policy(SET CMP0104 OLD)\n");
     }
@@ -756,7 +757,7 @@ cm::optional<cmTryCompileResult> cmCoreTryCompile::TryCompileCode(
       // the underlying host compiler
       static std::array<std::string, 2> const noRSP{ { "CUDA", "HIP" } };
       for (std::string const& lang : noRSP) {
-        if (testLangs.find(lang) != testLangs.end()) {
+        if (cm::contains(testLangs, lang)) {
           fprintf(fout, "set(CMAKE_%s_USE_RESPONSE_FILE_FOR_INCLUDES OFF)\n",
                   lang.c_str());
           fprintf(fout, "set(CMAKE_%s_USE_RESPONSE_FILE_FOR_LIBRARIES OFF)\n",
@@ -1039,7 +1040,7 @@ cm::optional<cmTryCompileResult> cmCoreTryCompile::TryCompileCode(
         { "_STANDARD"_s, "_STANDARD_REQUIRED"_s, "_EXTENSIONS"_s }
       };
       for (std::string const& lang : possibleLangs) {
-        if (testLangs.find(lang) == testLangs.end()) {
+        if (!cm::contains(testLangs, lang)) {
           continue;
         }
         for (cm::string_view propSuffix : langPropSuffixes) {
@@ -1047,7 +1048,7 @@ cm::optional<cmTryCompileResult> cmCoreTryCompile::TryCompileCode(
             lang == "SYCL" && propSuffix != "_EXTENSIONS"_s ? "SYCL_CXX"
                                                             : lang,
             propSuffix);
-          if (!arguments.LangProps.count(langProp)) {
+          if (!cm::contains(arguments.LangProps, langProp)) {
             std::string langPropVar = cmStrCat("CMAKE_"_s, langProp);
             std::string value = this->Makefile->GetSafeDefinition(langPropVar);
             if (warnCMP0067 && !value.empty()) {
@@ -1100,7 +1101,7 @@ cm::optional<cmTryCompileResult> cmCoreTryCompile::TryCompileCode(
 
     if (arguments.LinkerLanguage) {
       std::string LinkerLanguage = *arguments.LinkerLanguage;
-      if (testLangs.find(LinkerLanguage) == testLangs.end()) {
+      if (!cm::contains(testLangs, LinkerLanguage)) {
         this->Makefile->IssueMessage(
           MessageType::FATAL_ERROR,
           cmStrCat("Linker language '"_s, LinkerLanguage,

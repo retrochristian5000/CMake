@@ -10,6 +10,7 @@
 #include <vector>
 
 #include <cm/optional>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmCustomCommand.h"
@@ -831,7 +832,7 @@ bool cmGhsMultiTargetGenerator::VisitCustomCommand(
   std::vector<cmSourceFile const*>& order, cmSourceFile const* si)
 {
   /* check if permanent mark is set*/
-  if (perm.find(si) == perm.end()) {
+  if (!cm::contains(perm, si)) {
     /* set temporary mark; check if revisit*/
     if (temp.insert(si).second) {
       for (auto const& di : si->GetCustomCommand()->GetDepends()) {

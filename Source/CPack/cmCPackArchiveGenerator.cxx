@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmCPackComponentGroup.h"
@@ -69,7 +70,7 @@ private:
    */
   DeduplicateStatus CompareFolder(std::string const& path)
   {
-    if (this->Folders.find(path) != this->Folders.end()) {
+    if (cm::contains(this->Folders, path)) {
       return DeduplicateStatus::Skip;
     }
 

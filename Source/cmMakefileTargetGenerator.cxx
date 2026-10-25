@@ -625,7 +625,7 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
     cmStrCat(this->TargetBuildDirectory, '/', objectName);
 
   // Avoid generating duplicate rules.
-  if (this->ObjectFiles.find(obj) == this->ObjectFiles.end()) {
+  if (!cm::contains(this->ObjectFiles, obj)) {
     this->ObjectFiles.insert(obj);
   } else {
     cmSystemTools::Message(
@@ -695,7 +695,7 @@ void cmMakefileTargetGenerator::WriteObjectRuleFiles(
       std::string const& pchHeader =
         this->GeneratorTarget->GetPchHeader(config, lang, arch);
       depends.push_back(pchHeader);
-      if (pchSources.find(source.GetFullPath()) == pchSources.end()) {
+      if (!cm::contains(pchSources, source.GetFullPath())) {
         depends.push_back(
           this->GeneratorTarget->GetPchFile(config, lang, arch));
       }

@@ -351,8 +351,7 @@ void cmOrderDirectories::SetImplicitDirectories(
 bool cmOrderDirectories::IsImplicitDirectory(std::string const& dir)
 {
   std::string const& real = this->GetRealPath(dir);
-  return this->ImplicitDirectories.find(real) !=
-    this->ImplicitDirectories.end();
+  return cm::contains(this->ImplicitDirectories, real);
 }
 
 void cmOrderDirectories::SetLinkExtensionInfo(

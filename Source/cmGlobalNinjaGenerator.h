@@ -15,6 +15,7 @@
 #include <vector>
 
 #include <cm/optional>
+#include <cmext/algorithm>
 
 #include "cm_codecvt_Encoding.hxx"
 
@@ -320,8 +321,7 @@ public:
 
   bool HasCustomCommandOutput(std::string const& output)
   {
-    return this->CustomCommandOutputs.find(output) !=
-      this->CustomCommandOutputs.end();
+    return cm::contains(this->CustomCommandOutputs, output);
   }
 
   /// Called when we have seen the given custom command.  Returns true

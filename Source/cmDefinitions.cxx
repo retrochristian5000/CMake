@@ -7,6 +7,7 @@
 #include <utility>
 
 #include <cm/string_view>
+#include <cmext/algorithm>
 
 cmDefinitions::Def cmDefinitions::NoDef;
 
@@ -50,7 +51,7 @@ bool cmDefinitions::HasKey(std::string const& key, StackIter begin,
                            StackIter end)
 {
   for (StackIter it = begin; it != end; ++it) {
-    if (it->Map.find(cm::String::borrow(key)) != it->Map.end()) {
+    if (cm::contains(it->Map, cm::String::borrow(key))) {
       return true;
     }
   }
@@ -65,8 +66,8 @@ cmDefinitions cmDefinitions::MakeClosure(StackIter begin, StackIter end)
     // Consider local definitions.
     for (auto const& mi : it->Map) {
       // Use this key if it is not already set or unset.
-      if (closure.Map.find(mi.first) == closure.Map.end() &&
-          undefined.find(mi.first.view()) == undefined.end()) {
+      if (!cm::contains(closure.Map, mi.first) &&
+          !cm::contains(undefined, mi.first.view())) {
         if (mi.second.Value) {
           closure.Map.insert(mi);
         } else {

@@ -7,6 +7,7 @@
 #include <utility>
 
 #include <cm/string_view>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include <sys/types.h>
@@ -144,7 +145,7 @@ bool cmConfigureFileCommand(std::vector<std::string> const& args,
         doing = Doing::DoingFilePermissions;
         filePermissions = true;
       }
-    } else if (noopOptions.find(args[i]) != noopOptions.end()) {
+    } else if (cm::contains(noopOptions, args[i])) {
       /* Ignore no-op options.  */
     } else if (doing == Doing::DoingFilePermissions) {
       filePermissionOptions.push_back(args[i]);

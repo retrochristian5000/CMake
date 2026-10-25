@@ -11,6 +11,7 @@
 #include <utility>
 #include <vector>
 
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmsys/Encoding.hxx"
@@ -317,8 +318,9 @@ static int doVerify(int argc, char const* const* argv)
           std::cout << "Could not read begin line" << std::endl;
           return 1;
         }
-        if (!testNameSet.count(testName) || inProgressTests.count(testName) ||
-            completedTests.count(testName)) {
+        if (!cm::contains(testNameSet, testName) ||
+            cm::contains(inProgressTests, testName) ||
+            cm::contains(completedTests, testName)) {
           std::cout << "Could not begin test" << std::endl;
           return 1;
         }

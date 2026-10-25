@@ -5133,7 +5133,7 @@ static const struct TargetObjectsNode : public cmGeneratorExpressionNode
       }
 
       auto const* sf = gt->Makefile->GetSource(path);
-      if (!sf || !sourceFiles.count(sf)) {
+      if (!sf || !cm::contains(sourceFiles, sf)) {
         reportError(eval, content->GetOriginalExpression(),
                     cmStrCat("Source file:\n  "_s, path,
                              "\ndoes not exist for target \""_s, tgtName,
@@ -5157,7 +5157,8 @@ static const struct TargetObjectsNode : public cmGeneratorExpressionNode
     } else {
       auto const filter =
         [&filteredSourceFiles](cmSourceFile const& sf) -> bool {
-        return filteredSourceFiles.empty() || filteredSourceFiles.count(&sf);
+        return filteredSourceFiles.empty() ||
+          cm::contains(filteredSourceFiles, &sf);
       };
       gt->GetTargetObjectNames(eval->Context.Config, filter, objects);
 
@@ -5320,7 +5321,7 @@ static const struct CompileFeaturesNode : public cmGeneratorExpressionNode
       }
       testedFeatures[lang].push_back(p);
 
-      if (availableFeatures.find(lang) == availableFeatures.end()) {
+      if (!cm::contains(availableFeatures, lang)) {
         cmValue featuresKnown =
           standardResolver.CompileFeaturesAvailable(lang, &error);
         if (!featuresKnown) {

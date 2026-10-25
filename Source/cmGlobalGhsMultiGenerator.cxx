@@ -342,8 +342,7 @@ void cmGlobalGhsMultiGenerator::WriteSubProjects(std::ostream& fout,
       continue;
     }
     /* Check if the current target is a predefined CMake target */
-    bool predefinedTarget =
-      predefinedTargets.find(target->GetName()) != predefinedTargets.end();
+    bool predefinedTarget = cm::contains(predefinedTargets, target->GetName());
     if ((filterPredefined && predefinedTarget) ||
         (!filterPredefined && !predefinedTarget)) {
       fout << cmStrCat(target->GetName(), ".tgt"_s, FILE_EXTENSION)
@@ -626,7 +625,7 @@ bool cmGlobalGhsMultiGenerator::VisitTarget(
   std::vector<cmGeneratorTarget const*>& order, cmGeneratorTarget const* ti)
 {
   /* check if permanent mark is set*/
-  if (perm.find(ti) == perm.end()) {
+  if (!cm::contains(perm, ti)) {
     /* set temporary mark; check if revisit*/
     if (temp.insert(ti).second) {
       /* sort targets lexicographically to ensure that nodes are always visited

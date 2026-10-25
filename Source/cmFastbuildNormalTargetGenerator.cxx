@@ -17,6 +17,7 @@
 
 #include <cm/optional>
 #include <cm/string_view>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmsys/FStream.hxx"
@@ -786,7 +787,7 @@ cmFastbuildNormalTargetGenerator::GetCompileObjectCommand() const
 }
 std::string cmFastbuildNormalTargetGenerator::GetCudaCompileMode() const
 {
-  if (Languages.find("CUDA") == Languages.end()) {
+  if (!cm::contains(Languages, "CUDA")) {
     return {};
   }
   // TODO: unify it with makefile / ninja generators.
@@ -1682,7 +1683,7 @@ FastbuildUnityNode cmFastbuildNormalTargetGenerator::GetOneUnity(
     std::string pathToFile = std::move(*iter);
     iter = files.erase(iter);
     // This source must be excluded from the generated unity file.
-    if (excludedFiles.find(pathToFile) != excludedFiles.end()) {
+    if (cm::contains(excludedFiles, pathToFile)) {
       result.UnityInputFiles.emplace_back(pathToFile);
       result.UnityInputExcludedFiles.emplace_back(std::move(pathToFile));
     } else {

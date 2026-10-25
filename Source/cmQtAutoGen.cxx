@@ -397,8 +397,9 @@ static void RccListWriteCache(std::string const& cacheFile,
     RccListParseContent(qrcContent, entries);
     std::unordered_set<std::string> const listed(first, last);
     for (std::string const& entry : entries) {
-      if (!listed.count(cmSystemTools::CollapseFullPath(
-            cmTrimWhitespace(entry), qrcDir))) {
+      if (!cm::contains(listed,
+                        cmSystemTools::CollapseFullPath(
+                          cmTrimWhitespace(entry), qrcDir))) {
         cmSystemTools::RemoveFile(cacheFile);
         return;
       }

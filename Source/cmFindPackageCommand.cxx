@@ -3347,8 +3347,8 @@ bool cmFindPackageCommand::SearchPrefix(std::string const& prefix)
   if (prefixWithoutSlash != "/" && prefixWithoutSlash.back() == '/') {
     prefixWithoutSlash.erase(prefixWithoutSlash.length() - 1);
   }
-  if (this->IgnoredPaths.count(prefixWithoutSlash) ||
-      this->IgnoredPrefixPaths.count(prefixWithoutSlash)) {
+  if (cm::contains(this->IgnoredPaths, prefixWithoutSlash) ||
+      cm::contains(this->IgnoredPrefixPaths, prefixWithoutSlash)) {
     return false;
   }
 
@@ -3727,8 +3727,7 @@ void cmFindPackageDebugState::WriteEvent(cmConfigureLog& log,
       log.NextArrayElement();
       log.WriteValue("name"_s, component);
       log.WriteValue("required"_s,
-                     fpc->RequiredComponents.find(component) !=
-                       fpc->RequiredComponents.end());
+                     cm::contains(fpc->RequiredComponents, component));
       log.WriteValue("found"_s,
                      mf.IsOn(cmStrCat(fpc->Name, '_', component, "_FOUND"_s)));
     }

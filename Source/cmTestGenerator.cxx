@@ -10,6 +10,7 @@
 #include <utility>
 #include <vector>
 
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmGeneratorExpression.h"
@@ -173,7 +174,8 @@ bool cmTestGenerator::EvaluateBuildDependencies(
     for (std::string const& value : evaluated) {
       if (value.empty() ||
           (cmSystemTools::FileIsFullPath(value) &&
-           referenced.count(gg->FindArtifactOwningTarget(value, config)))) {
+           cm::contains(referenced,
+                        gg->FindArtifactOwningTarget(value, config)))) {
         continue;
       }
       addBuildDependency(value);

@@ -5,6 +5,8 @@
 #include <memory>
 #include <utility>
 
+#include <cmext/algorithm>
+
 #include "cmGeneratorExpression.h"
 #include "cmList.h"
 #include "cmStringAlgorithms.h"
@@ -178,7 +180,7 @@ cmSourceGroup* cmSourceGroup::MatchChildrenFileSets(std::string const& target,
 {
   auto item = this->GroupFileSets.find(target);
   if (item != this->GroupFileSets.end() &&
-      item->second.find(fileSet) != item->second.end()) {
+      cm::contains(item->second, fileSet)) {
     return this;
   }
   for (auto const& group : this->Internal->GroupChildren) {

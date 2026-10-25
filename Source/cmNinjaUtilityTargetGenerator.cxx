@@ -12,6 +12,7 @@
 #include <vector>
 
 #include <cm/optional>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmCustomCommand.h"
@@ -46,9 +47,8 @@ void cmNinjaUtilityTargetGenerator::Generate(std::string const& config)
   }
 
   for (auto const& fileConfig : this->GetConfigNames()) {
-    if (!this->GetGlobalGenerator()
-           ->GetCrossConfigs(fileConfig)
-           .count(config)) {
+    if (!cm::contains(this->GetGlobalGenerator()->GetCrossConfigs(fileConfig),
+                      config)) {
       continue;
     }
     if (fileConfig != config &&
@@ -184,7 +184,7 @@ void cmNinjaUtilityTargetGenerator::WriteUtilBuildStatements(
       ccConfig = config;
     }
     if (config == fileConfig ||
-        gg->GetPerConfigUtilityTargets().count(genTarget->GetName())) {
+        cm::contains(gg->GetPerConfigUtilityTargets(), genTarget->GetName())) {
       gg->WriteCustomCommandBuild(
         command, desc, "Utility command for " + this->GetTargetName(),
         /*depfile*/ "", /*job_pool*/ "", uses_terminal,
