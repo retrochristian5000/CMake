@@ -23,6 +23,7 @@ set(CMakeLib_TESTS
   testRST.cxx
   testRange.cxx
   testOptional.cxx
+  testPackageInfoJSON.cxx
   testPathResolver.cxx
   testScriptGenerator.cxx
   testSpdxSerializer.cxx

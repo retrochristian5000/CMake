@@ -456,6 +456,10 @@ add_library(
   cmNewLineStyle.cxx
   cmOrderDirectories.cxx
   cmOrderDirectories.h
+  cmPackageInfo.cxx
+  cmPackageInfo.h
+  cmPackageInfoReadJSON.cxx
+  cmPackageInfoWriteJSON.cxx
   cmPackageInfoArguments.cxx
   cmPackageInfoArguments.h
   cmPackageInfoReader.cxx

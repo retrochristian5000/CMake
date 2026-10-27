@@ -460,6 +460,9 @@ CMAKE_CXX_SOURCES="\
   cmGccDepfileLexerHelper \
   cmGccDepfileReader \
   cmReturnCommand \
+  cmPackageInfo \
+  cmPackageInfoReadJSON \
+  cmPackageInfoWriteJSON \
   cmPackageInfoReader \
   cmPlaceholderExpander \
   cmPlistParser \
