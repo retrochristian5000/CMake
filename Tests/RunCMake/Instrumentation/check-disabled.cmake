@@ -1,0 +1,18 @@
+file(GLOB_RECURSE data_files LIST_DIRECTORIES false "${v1}/data/*")
+if(ARGS_DISABLE_AFTER_CONFIGURE)
+  set(expected_data_files "${v1}/data/do-not-remove.json;${v1}/data/test/do-not-remove.json")
+  if(NOT data_files STREQUAL expected_data_files)
+    set(RunCMake_TEST_FAILED "Existing instrumentation data changed while disabled.")
+  endif()
+elseif(data_files)
+  set(RunCMake_TEST_FAILED "Instrumentation data was collected while disabled.")
+endif()
+if(EXISTS "${v1}/cdash" OR
+   EXISTS "${v1}/.build.lock" OR EXISTS "${v1}/.index.lock" OR
+   EXISTS "${RunCMake_TEST_BINARY_DIR}/instrumentation-hook")
+  set(RunCMake_TEST_FAILED "Instrumentation collected data or ran hooks while disabled.")
+endif()
+file(GLOB queries "${v1}/query/generated/*.json")
+if(NOT queries)
+  set(RunCMake_TEST_FAILED "Instrumentation queries were not generated while disabled.")
+endif()
