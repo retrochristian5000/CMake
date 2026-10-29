@@ -1314,6 +1314,7 @@ private:
   using cmTargetLinkInformationMap =
     std::map<std::string, std::unique_ptr<cmComputeLinkInformation>>;
   mutable cmTargetLinkInformationMap LinkInformation;
+  mutable std::set<std::string> LinkInformationInProgress;
 
   void CheckPropertyCompatibility(cmComputeLinkInformation& info,
                                   std::string const& config) const;
