@@ -366,6 +366,7 @@ TargetProperty const StaticTargetProperties[] = {
   { "EMBT_RUNTIME_LIBRARY"_s, IC::CanCompileSources },
   // ---- AIX
   { "AIX_SHARED_LIBRARY_ARCHIVE"_s, IC::SharedLibraryTarget },
+  { "AIX_SHARED_LIBRARY_SYMLINKS"_s, IC::SharedLibraryTarget },
   // -- Language
   // ---- C
   COMMON_LANGUAGE_PROPERTIES(C),
@@ -1144,7 +1145,9 @@ cmTarget::cmTarget(std::string name, cm::TargetType type, Visibility vis,
     }
 
     // Imported targets must set AIX_SHARED_LIBRARY_ARCHIVE explicitly.
-    if (this->IsImported() && property == "AIX_SHARED_LIBRARY_ARCHIVE"_s) {
+    if (this->IsImported() &&
+        (property == "AIX_SHARED_LIBRARY_ARCHIVE"_s ||
+         property == "AIX_SHARED_LIBRARY_SYMLINKS"_s)) {
       return;
     }
 
@@ -1413,6 +1416,33 @@ bool cmTarget::IsArchivedAIXSharedLibrary() const
         // The NEW behavior's default is to enable shared library archives.
         return true;
     }
+  }
+  return false;
+}
+
+bool cmTarget::IsAIXSharedLibraryWithSymlinks() const
+{
+  if (this->GetType() != cm::TargetType::SHARED_LIBRARY || !this->IsAIX() ||
+      this->IsArchivedAIXSharedLibrary()) {
+    return false;
+  }
+  if (this->IsImported()) {
+    // The soname of an imported plain shared object, if any, names the
+    // file to link.  Without one, linking uses the imported location.
+    return true;
+  }
+  cmValue value = this->GetProperty("AIX_SHARED_LIBRARY_SYMLINKS");
+  if (!value.IsEmpty()) {
+    return value.IsOn();
+  }
+  switch (this->GetPolicyStatusCMP0227()) {
+    case cmPolicies::WARN:
+    case cmPolicies::OLD:
+      // The OLD behavior's default is to not create versioned names.
+      break;
+    case cmPolicies::NEW:
+      // The NEW behavior's default is to create versioned names.
+      return true;
   }
   return false;
 }
