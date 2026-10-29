@@ -32,6 +32,12 @@ public:
   LIBATTRIBUTES_NO_EXPORT int method_excluded() const;
 };
 
+class LIBATTRIBUTES_DEPRECATED_EXPORT_MSG("use ExportedClass") DeprecatedClass
+{
+public:
+  int method() const;
+};
+
 int function();
 
 LIBATTRIBUTES_EXPORT int function_exported();
@@ -39,6 +45,16 @@ LIBATTRIBUTES_EXPORT int function_exported();
 LIBATTRIBUTES_DEPRECATED_EXPORT int function_deprecated_exported();
 
 LIBATTRIBUTES_NO_EXPORT int function_excluded();
+
+LIBATTRIBUTES_DEPRECATED_MSG("libattributes DEPRECATED_MSG")
+int function_deprecated_msg();
+
+LIBATTRIBUTES_DEPRECATED_EXPORT_MSG("libattributes DEPRECATED_EXPORT_MSG")
+int function_deprecated_exported_msg();
+
+LIBATTRIBUTES_DEPRECATED_NO_EXPORT_MSG(
+  "libattributes DEPRECATED_NO_EXPORT_MSG")
+int function_deprecated_excluded_msg();
 
 extern int const data;
 

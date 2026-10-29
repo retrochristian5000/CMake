@@ -79,6 +79,7 @@ macro_add_test_library(libstatic)
 macro_add_test_library(libattributes)
 
 add_subdirectory(nodeprecated)
+add_subdirectory(deprecated_msg)
 add_subdirectory(includeguard)
 if(NOT BORLAND)
   add_subdirectory(c_identifier)
