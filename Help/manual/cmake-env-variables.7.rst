@@ -23,6 +23,7 @@ Environment Variables that Change Behavior
    /envvar/CLICOLOR
    /envvar/CLICOLOR_FORCE
    /envvar/CMAKE_APPBUNDLE_PATH
+   /envvar/CMAKE_DISABLE_INSTRUMENTATION
    /envvar/CMAKE_FRAMEWORK_PATH
    /envvar/CMAKE_INCLUDE_PATH
    /envvar/CMAKE_LIBRARY_PATH
