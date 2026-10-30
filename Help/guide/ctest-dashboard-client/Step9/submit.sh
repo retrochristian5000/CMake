@@ -1,7 +1,7 @@
 #!/bin/sh
 
 cd "$(dirname "$0")"
-site=$(hostname)
+site=$(uname -n)
 presets="$(pwd)/../Step8/CMakePresets.json"
 rm -rf build
 
