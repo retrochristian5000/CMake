@@ -959,6 +959,9 @@ bool cmCTestTestHandler::ComputeTestList()
   int inREcnt = 0;
   for (cmCTestTestProperties& tp : this->TestList) {
     this->CheckLabelFilter(tp);
+    if (tp.Manual && !this->UseIncludeRegExpFlag) {
+      tp.IsInBasedOnREOptions = false;
+    }
     if (tp.IsInBasedOnREOptions) {
       inREcnt++;
     }
@@ -977,6 +980,10 @@ bool cmCTestTestHandler::ComputeTestList()
     cnt++;
     if (tp.IsInBasedOnREOptions) {
       inREcnt++;
+    }
+
+    if (tp.Manual && !tp.IsInBasedOnREOptions) {
+      continue;
     }
 
     if (this->TestOptions.UseUnion) {
@@ -2405,6 +2412,9 @@ bool cmCTestTestHandler::SetTestsProperties(
           } else if (key == "DISABLED"_s) {
             rt.RawProperties[key] = val;
             rt.Disabled = cmIsOn(val);
+          } else if (key == "MANUAL"_s) {
+            rt.RawProperties[key] = val;
+            rt.Manual = cmIsOn(val);
           } else if (key == "ATTACHED_FILES"_s) {
             AppendRawProperty(rt.RawProperties[key], val);
             cmExpandList(val, rt.AttachedFiles);
