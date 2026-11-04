@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <cstring>
 #include <ostream>
+#include <set>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -5823,9 +5824,30 @@ bool cmGeneratorTarget::DiscoverSyntheticTargets(
 
   auto& SyntheticDeps = configInfo.SyntheticDeps;
 
+  // Module providers may be reached through intermediate targets that do not
+  // provide modules themselves (e.g. an INTERFACE library linking a provider),
+  // so walk through those to find the providers.
+  std::vector<cmGeneratorTarget const*> pending;
+  std::set<cmGeneratorTarget const*> visited;
   for (auto const& entry : impl.Libraries) {
-    auto const* gt = entry.Target;
-    if (!gt || !gt->HaveInterfaceCxx20ModuleSources()) {
+    if (entry.Target && visited.insert(entry.Target).second) {
+      pending.push_back(entry.Target);
+    }
+  }
+
+  while (!pending.empty()) {
+    auto const* gt = pending.back();
+    pending.pop_back();
+
+    if (!gt->HaveInterfaceCxx20ModuleSources()) {
+      if (cmLinkInterfaceLibraries const* iface =
+            gt->GetLinkInterfaceLibraries(config, this, UseTo::Link)) {
+        for (cmLinkItem const& item : iface->Libraries) {
+          if (item.Target && visited.insert(item.Target).second) {
+            pending.push_back(item.Target);
+          }
+        }
+      }
       continue;
     }
 
