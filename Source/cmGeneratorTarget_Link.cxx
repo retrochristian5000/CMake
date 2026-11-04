@@ -1238,6 +1238,22 @@ void cmGeneratorTarget::ComputeLinkImplementationLibraries(
     cge->GetMaxLanguageStandard(this, this->MaxLanguageStandards);
   }
 
+  // Module providers reached only through intermediate targets are not
+  // linked directly, but their synthetic targets must still be dependencies.
+  for (auto const& synthDeps : synthTargetsForConfig) {
+    bool const linkedDirectly =
+      std::any_of(impl.Libraries.begin(), impl.Libraries.end(),
+                  [&synthDeps](cmLinkItem const& item) {
+                    return item.Target == synthDeps.first;
+                  });
+    if (linkedDirectly) {
+      continue;
+    }
+    for (auto const* synth : synthDeps.second) {
+      impl.Libraries.emplace_back(synth, false, cmListFileBacktrace());
+    }
+  }
+
   // Update the list of direct link dependencies from usage requirements.
   ComputeLinkImplTransitive(this, config, usage, impl);
 
