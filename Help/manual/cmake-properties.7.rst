@@ -640,6 +640,7 @@ Properties on Tests
    /prop_test/FIXTURES_SETUP
    /prop_test/GENERATED_RESOURCE_SPEC_FILE
    /prop_test/LABELS
+   /prop_test/MANUAL
    /prop_test/MEASUREMENT
    /prop_test/PASS_REGULAR_EXPRESSION
    /prop_test/PROCESSOR_AFFINITY

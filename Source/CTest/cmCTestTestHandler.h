@@ -196,6 +196,8 @@ public:
     std::string WillFailRaw;
     bool Disabled = false;
     std::string DisabledRaw;
+    bool Manual = false;
+    std::string ManualRaw;
     float Cost = 0;
     std::string CostRaw;
     int PreviousRuns = 0;
