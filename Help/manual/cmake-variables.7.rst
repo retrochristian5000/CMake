@@ -178,6 +178,7 @@ Variables that Provide Information
    /variable/PROJECT-NAME_IS_TOP_LEVEL
    /variable/PROJECT-NAME_SOURCE_DIR
    /variable/PROJECT-NAME_SPDX_LICENSE
+   /variable/PROJECT-NAME_USE_SPDX_LICENSE_FOR_TARGETS
    /variable/PROJECT-NAME_VERSION
    /variable/PROJECT-NAME_VERSION_MAJOR
    /variable/PROJECT-NAME_VERSION_MINOR
@@ -191,6 +192,7 @@ Variables that Provide Information
    /variable/PROJECT_NAME
    /variable/PROJECT_SOURCE_DIR
    /variable/PROJECT_SPDX_LICENSE
+   /variable/PROJECT_USE_SPDX_LICENSE_FOR_TARGETS
    /variable/PROJECT_VERSION
    /variable/PROJECT_VERSION_MAJOR
    /variable/PROJECT_VERSION_MINOR
