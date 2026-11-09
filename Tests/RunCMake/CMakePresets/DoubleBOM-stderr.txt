@@ -1,0 +1,8 @@
+^CMake Error: Could not read presets from [^
+]*/Tests/RunCMake/CMakePresets/DoubleBOM:
+CMakePresets.json:1: Syntax error: value, object or array expected\.
+﻿{
+\^
+CMakePresets.json:1: Extra non-whitespace after JSON value\.
+﻿{
+ \^
