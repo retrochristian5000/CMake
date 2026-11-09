@@ -28,6 +28,7 @@
 class cmGlobalGenerator;
 
 namespace cm {
+class static_string_view;
 enum class TargetType;
 } // namespace cm
 
@@ -35,6 +36,24 @@ class cmInstrumentation
 {
 public:
   using Callback = cmInstrumentationQuery::Callback;
+
+  enum class SnippetType
+  {
+    Configure,
+    Generate,
+    Compile,
+    Link,
+    Custom,
+    Test,
+    Install,
+    Build,
+    CMakeBuild,
+    CTest,
+    CMakeInstall,
+  };
+  static char const* SnippetTypeToString(SnippetType type);
+  static cm::optional<SnippetType> SnippetTypeFromString(
+    std::string const& type);
 
   enum class LoadQueriesAfter
   {
@@ -78,7 +97,7 @@ public:
   };
 
   int InstrumentCommand(
-    std::string command_type, std::vector<std::string> const& command,
+    SnippetType command_type, std::vector<std::string> const& command,
     std::function<CommandResult()> const& callback,
     cm::optional<std::map<std::string, std::string>> options = cm::nullopt,
     cm::optional<std::map<std::string, std::string>> arrayOptions =
@@ -178,7 +197,7 @@ private:
   std::set<cmInstrumentationQuery::Hook> hooks;
   std::vector<Callback> callbacks;
   std::vector<std::string> queryFiles;
-  static std::map<std::string, std::string> cdashSnippetsMap;
+  static std::map<SnippetType, cm::static_string_view> const cdashSnippetsMap;
   Json::Value preTestStats;
   std::string errorMsg;
   bool disabled = false;
