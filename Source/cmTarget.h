@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <iosfwd>
+#include <map>
 #include <memory>
 #include <set>
 #include <string>
@@ -434,6 +435,9 @@ public:
     std::string const& lang) const;
   void SetLanguageCInteropHeader(std::string const& lang,
                                  cm::GeneratedHeader&& header);
+  /// Returns all registered language interop headers, keyed by language
+  std::map<std::string, cm::GeneratedHeader> const&
+  GetLanguageCInteropHeaders() const;
 
 private:
   // Internal representation details.

@@ -522,8 +522,6 @@ bool TargetSourcesImpl::HandleInteropHeader(
                                  TargetSourceDir::CurrentBinaryDir)
       .front();
 
-  this->Makefile->GetOrCreateGeneratedSource(absoluteFilename);
-
   cm::FileSetMetadata::Visibility visibility =
     cm::FileSetMetadata::VisibilityFromName(scope, this->Makefile);
 

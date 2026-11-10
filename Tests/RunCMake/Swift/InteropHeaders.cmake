@@ -32,3 +32,8 @@ target_link_libraries(C4 PRIVATE C3)
 
 add_library(C5 interop-no-use.cpp)
 target_link_libraries(C5 PUBLIC C4)
+
+## Verify generator expressions are supported in the filename and base dir
+
+add_library(L6 interop-lib.swift interop-use.cpp)
+target_sources(L6 PRIVATE GENERATE_INTEROP_HEADER Swift L6/$<CONFIG>/swift/answer.h BASE_DIR L6/$<CONFIG>)

@@ -3681,6 +3681,12 @@ void cmTarget::SetLanguageCInteropHeader(std::string const& lang,
   this->impl->LanguageInteropHeaders[lang] = header;
 }
 
+std::map<std::string, cm::GeneratedHeader> const&
+cmTarget::GetLanguageCInteropHeaders() const
+{
+  return this->impl->LanguageInteropHeaders;
+}
+
 bool cmTargetInternals::CheckImportedLibName(std::string const& prop,
                                              std::string const& value) const
 {
