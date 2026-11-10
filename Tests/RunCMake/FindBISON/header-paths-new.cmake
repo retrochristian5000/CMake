@@ -1,7 +1,8 @@
 find_package(BISON REQUIRED)
 
 BISON_TARGET(NewDefault parser.y parser.cpp)
-if(NOT BISON_NewDefault_OUTPUT_HEADER STREQUAL "parser.hpp")
+if(NOT BISON_NewDefault_OUTPUT_HEADER STREQUAL
+  "${CMAKE_CURRENT_BINARY_DIR}/parser.hpp")
   message(FATAL_ERROR "Unexpected default Bison header: ${BISON_NewDefault_OUTPUT_HEADER}")
 endif()
 list(FIND BISON_NewDefault_OUTPUTS "${BISON_NewDefault_OUTPUT_HEADER}" _default_header_index)

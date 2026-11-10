@@ -30,3 +30,5 @@ endblock()
 
 run_cmake_build(header-paths-new)
 run_cmake(header-paths-old)
+
+run_cmake_build(header-paths-cross-directory)

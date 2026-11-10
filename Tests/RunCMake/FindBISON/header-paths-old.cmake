@@ -3,7 +3,8 @@ cmake_policy(SET CMP0088 OLD)
 find_package(BISON REQUIRED)
 
 BISON_TARGET(OldDefault parser.y parser-old-default.cpp)
-if(NOT BISON_OldDefault_OUTPUT_HEADER STREQUAL "parser-old-default.hpp")
+if(NOT BISON_OldDefault_OUTPUT_HEADER STREQUAL
+  "${CMAKE_CURRENT_SOURCE_DIR}/parser-old-default.hpp")
   message(FATAL_ERROR "Unexpected CMP0088 OLD default header: ${BISON_OldDefault_OUTPUT_HEADER}")
 endif()
 
