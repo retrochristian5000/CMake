@@ -42,6 +42,7 @@ struct ProjectArguments : ArgumentParser::ParseResult
   cm::optional<std::string> Description;
   cm::optional<std::string> HomepageURL;
   cm::optional<ArgumentParser::MaybeEmpty<std::vector<std::string>>> Languages;
+  bool UseSpdxLicenseForTargets = false;
 };
 
 struct ProjectArgumentParser : public cmArgumentParser<void>
@@ -72,7 +73,8 @@ bool cmProjectCommand(std::vector<std::string> const& args,
     .Bind("SPDX_LICENSE"_s, prArgs.License)
     .Bind("DESCRIPTION"_s, prArgs.Description)
     .Bind("HOMEPAGE_URL"_s, prArgs.HomepageURL)
-    .Bind("LANGUAGES"_s, prArgs.Languages);
+    .Bind("LANGUAGES"_s, prArgs.Languages)
+    .Bind("USE_SPDX_LICENSE_FOR_TARGETS"_s, prArgs.UseSpdxLicenseForTargets);
 
   if (args.empty()) {
     status.SetError("PROJECT called with incorrect number of arguments");
@@ -300,6 +302,20 @@ bool cmProjectCommand(std::vector<std::string> const& args,
 
   createVariables("COMPAT_VERSION"_s, prArgs.CompatVersion.value_or(""));
   createVariables("SPDX_LICENSE"_s, prArgs.License.value_or(""));
+  if (prArgs.UseSpdxLicenseForTargets &&
+      (!prArgs.License || prArgs.License->empty())) {
+    mf.IssueMessage(MessageType::FATAL_ERROR,
+                    "USE_SPDX_LICENSE_FOR_TARGETS requires SPDX_LICENSE to "
+                    "be specified with a non-empty value.");
+    cmSystemTools::SetFatalErrorOccurred();
+    return true;
+  }
+
+  mf.AddDefinitionBool("PROJECT_USE_SPDX_LICENSE_FOR_TARGETS",
+                       prArgs.UseSpdxLicenseForTargets);
+  mf.AddDefinitionBool(cmStrCat(projectName, "_USE_SPDX_LICENSE_FOR_TARGETS"),
+                       prArgs.UseSpdxLicenseForTargets);
+
   createVariables("DESCRIPTION"_s, prArgs.Description.value_or(""));
   createVariables("HOMEPAGE_URL"_s, prArgs.HomepageURL.value_or(""));
 

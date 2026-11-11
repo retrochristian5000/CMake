@@ -1201,6 +1201,17 @@ cmTarget::cmTarget(std::string name, cm::TargetType type, Visibility vis,
     }
   }
 
+  // Initialize SPDX_LICENSE from the project license when opted in
+  if (!this->IsImported()) {
+    std::string const projectName = mf->GetStateSnapshot().GetProjectName();
+    if (!projectName.empty() &&
+        mf->IsOn(cmStrCat(projectName, "_USE_SPDX_LICENSE_FOR_TARGETS"))) {
+      cmValue license =
+        mf->GetDefinition(cmStrCat(projectName, "_SPDX_LICENSE"));
+      this->SetProperty("SPDX_LICENSE", license);
+    }
+  }
+
   // check for "CMAKE_VS_GLOBALS" variable and set up target properties
   // if any
   cmValue globals = mf->GetDefinition("CMAKE_VS_GLOBALS");

@@ -13,6 +13,7 @@ Synopsis
          [VERSION <major>[.<minor>[.<patch>[.<tweak>]]]]
          [COMPAT_VERSION <major>[.<minor>[.<patch>[.<tweak>]]]]
          [SPDX_LICENSE <license-string>]
+         [USE_SPDX_LICENSE_FOR_TARGETS]
          [DESCRIPTION <description-string>]
          [HOMEPAGE_URL <url-string>]
          [LANGUAGES <language-name>...])
@@ -122,15 +123,28 @@ The options are:
   individual software artifacts.
 
   .. note::
-    The project license is *not* used to initialize the
+    By default, the project license is *not* used to initialize the
     :prop_tgt:`SPDX_LICENSE` property of individual targets.  This allows the
     package license and default component license, which are specified when
     exporting package information, to be meaningful.  Only |CPS| exports make
-    use of this information.
+    use of this information.  See ``USE_SPDX_LICENSE_FOR_TARGETS`` to opt in.
 
     The project license *is* inherited as the package license in some cases.
     Refer to the ``PROJECT`` option and related documentation of the
     :command:`export` and :command:`install` commands for more information.
+
+``USE_SPDX_LICENSE_FOR_TARGETS``
+  .. versionadded:: 4.6
+
+  Optional.  Requires ``SPDX_LICENSE`` to be given with a non-empty value,
+  otherwise an error is issued.  Sets the variables
+
+  * :variable:`PROJECT_USE_SPDX_LICENSE_FOR_TARGETS`,
+    :variable:`<PROJECT-NAME>_USE_SPDX_LICENSE_FOR_TARGETS`
+
+  to ``ON``, and initializes the :prop_tgt:`SPDX_LICENSE` property of each
+  non-imported target created within this project to the value of
+  :variable:`<PROJECT-NAME>_SPDX_LICENSE`.
 
 .. _SPDX: https://spdx.dev/
 .. |SPDX| replace:: System Package Data Exchange

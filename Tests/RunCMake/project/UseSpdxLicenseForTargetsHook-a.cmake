@@ -1,0 +1,2 @@
+set(HookA_SPDX_LICENSE "GPL-2.0-only")
+set(HookA_USE_SPDX_LICENSE_FOR_TARGETS ON)
