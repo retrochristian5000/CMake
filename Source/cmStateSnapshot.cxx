@@ -8,7 +8,6 @@
 #include <cassert>
 #include <set>
 #include <string>
-#include <unordered_map>
 
 #include <cm/iterator>
 #include <cmext/algorithm>
@@ -16,7 +15,6 @@
 #include "cmDefinitions.h"
 #include "cmLinkedTree.h"
 #include "cmListFileCache.h"
-#include "cmPackageState.h"
 #include "cmPropertyMap.h"
 #include "cmState.h"
 #include "cmStateDirectory.h"
@@ -664,12 +662,6 @@ std::string cmStateSnapshot::GetProjectName() const
 bool cmStateSnapshot::CheckProjectName(std::string const& name) const
 {
   return cm::contains(this->Position->BuildSystemDirectory->Projects, name);
-}
-
-cmPackageState& cmStateSnapshot::GetPackageState(
-  std::string const& packagePath)
-{
-  return this->Position->BuildSystemDirectory->Packages[packagePath];
 }
 
 void cmStateSnapshot::InitializeFromParent_ForSubdirsCommand()

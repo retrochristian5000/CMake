@@ -9,7 +9,6 @@
 #include <functional>
 #include <iterator>
 #include <sstream>
-#include <unordered_set>
 #include <utility>
 
 #include <cm/memory>
@@ -34,7 +33,6 @@
 #include "cmListFileCache.h"
 #include "cmMakefile.h"
 #include "cmMessageType.h"
-#include "cmPackageState.h"
 #include "cmPolicies.h"
 #include "cmRange.h"
 #include "cmSearchPath.h"
@@ -1731,7 +1729,7 @@ bool cmFindPackageCommand::HandlePackageMode(
       if (found && !this->RequiredTargets.empty()) {
         for (std::string const& t : this->RequiredTargets) {
           std::string qualifiedTarget = cmStrCat(this->Name, "::"_s, t);
-          if (!this->Makefile->FindImportedTarget(qualifiedTarget)) {
+          if (!this->Makefile->FindTargetToUse(qualifiedTarget)) {
             missingTargets.emplace_back(std::move(qualifiedTarget));
             found = false;
           }
@@ -2141,6 +2139,10 @@ bool cmFindPackageCommand::ReadListFile(std::string const& f,
 
 bool cmFindPackageCommand::ReadPackage()
 {
+  using ITScope = cm::ImportedTargetScope;
+  cmMakefile::SetGlobalTargetImportScope globScope(
+    this->Makefile, this->GlobalScope ? ITScope::Global : ITScope::Local);
+
   // Resolve any transitive dependencies for the root file.
   if (!FindPackageDependencies(this->FileFound, *this->CpsReader,
                                this->Required)) {
@@ -2198,15 +2200,8 @@ bool cmFindPackageCommand::ReadPackage()
     }
   }
 
-  // If we made it here, we want to actually import something, but we also
-  // need to ensure we don't try to import the same file more than once (which
-  // will fail due to the targets already existing). Retrieve the package state
-  // so we can record what we're doing.
-  cmPackageState& state =
-    this->Makefile->GetStateSnapshot().GetPackageState(this->FileFound);
-
   // Import targets from root file.
-  if (!this->ImportPackageTargets(state, this->FileFound, *this->CpsReader)) {
+  if (!this->ImportPackageTargets(this->FileFound, *this->CpsReader)) {
     return false;
   }
 
@@ -2215,7 +2210,7 @@ bool cmFindPackageCommand::ReadPackage()
   for (auto const& appendix : this->CpsAppendices) {
     cmMakefile::CallRAII appendixScope{ this->Makefile, appendix.first,
                                         this->Status };
-    if (!this->ImportPackageTargets(state, appendix.first, appendix.second)) {
+    if (!this->ImportPackageTargets(appendix.first, appendix.second)) {
       return false;
     }
   }
@@ -2275,22 +2270,21 @@ bool cmFindPackageCommand::FindPackageDependencies(
   return true;
 }
 
-bool cmFindPackageCommand::ImportPackageTargets(cmPackageState& packageState,
-                                                std::string const& filePath,
+bool cmFindPackageCommand::ImportPackageTargets(std::string const& filePath,
                                                 cmPackageInfoReader& reader)
 {
-  // Check if we've already imported this file.
-  std::string fileName = cmSystemTools::GetFilenameName(filePath);
-  if (cm::contains(packageState.ImportedFiles, fileName)) {
-    return true;
-  }
-
   // Import base file.
-  if (!reader.ImportTargets(this->Makefile, this->Status,
-                            this->GlobalScope
-                              ? cm::ImportedTargetScope::Global
-                              : cm::ImportedTargetScope::Local)) {
-    return false;
+  using ITScope = cm::ImportedTargetScope;
+  ITScope const scope = this->Makefile->IsImportedTargetGlobalScope()
+    ? ITScope::Global
+    : ITScope::Local;
+  switch (reader.ImportTargets(this->Makefile, this->Status, scope)) {
+    case cmPackageInfoReader::ImportResult::AlreadyExist:
+      return true;
+    case cmPackageInfoReader::ImportResult::Failed:
+      return false;
+    case cmPackageInfoReader::ImportResult::Imported:
+      break;
   }
 
   // Find supplemental configuration files.
@@ -2316,7 +2310,6 @@ bool cmFindPackageCommand::ImportPackageTargets(cmPackageState& packageState,
     }
   }
 
-  packageState.ImportedFiles.emplace(std::move(fileName));
   return true;
 }
 

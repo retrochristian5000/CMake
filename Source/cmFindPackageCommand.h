@@ -37,7 +37,6 @@ enum class PolicyScope : bool;
 }
 
 class cmExecutionStatus;
-class cmPackageState;
 class cmSearchPath;
 class cmPackageInformation;
 
@@ -168,8 +167,7 @@ private:
                                cmPackageInfoReader const& reader,
                                RequiredStatus required);
 
-  bool ImportPackageTargets(cmPackageState& packageState,
-                            std::string const& filePath,
+  bool ImportPackageTargets(std::string const& filePath,
                             cmPackageInfoReader& reader);
   void StoreVersionFound();
   void SetConfigDirCacheVariable(std::string const& value);

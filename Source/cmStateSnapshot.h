@@ -15,7 +15,6 @@
 #include "cmStateTypes.h"
 #include "cmValue.h"
 
-class cmPackageState;
 class cmState;
 class cmStateDirectory;
 
@@ -97,8 +96,6 @@ public:
   void SetProjectName(std::string const& name);
   std::string GetProjectName() const;
   bool CheckProjectName(std::string const& name) const;
-
-  cmPackageState& GetPackageState(std::string const& packagePath);
 
   void InitializeFromParent_ForSubdirsCommand();
 
