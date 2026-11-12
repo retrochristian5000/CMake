@@ -150,7 +150,8 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t const* data, size_t size)
 
       cmExecutionStatus status(*fx.MF);
       if (reader->ImportTargets(fx.MF.get(), status,
-                                cm::ImportedTargetScope::Local)) {
+                                cm::ImportedTargetScope::Local) ==
+          cmPackageInfoReader::ImportResult::Imported) {
         reader->ImportTargetConfigurations(fx.MF.get(), status);
       }
     }
@@ -168,7 +169,8 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t const* data, size_t size)
 
         cmExecutionStatus status(*fx.MF);
         if (appendix->ImportTargets(fx.MF.get(), status,
-                                    cm::ImportedTargetScope::Global)) {
+                                    cm::ImportedTargetScope::Global) ==
+            cmPackageInfoReader::ImportResult::Imported) {
           appendix->ImportTargetConfigurations(fx.MF.get(), status);
         }
       }

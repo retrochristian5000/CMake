@@ -1,0 +1,10 @@
+CMake Error at PartialDefaultTargetConflict\.cmake:[0-9]+ \(find_package\):
+  find_package cannot import targets because some \(but not all\) already
+  exist\.
+
+  Existing targets: ScopeTest
+
+  Missing targets: ScopeTest::symbolic, ScopeTest::target, ScopeTest::tool
+
+Call Stack \(most recent call first\):
+  CMakeLists\.txt:[0-9]+ \(include\)

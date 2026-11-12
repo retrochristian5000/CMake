@@ -996,79 +996,116 @@ void cmPackageInfoReader::AddTargetSources(cmMakefile* makefile,
   }
 }
 
-bool cmPackageInfoReader::ImportTargets(cmMakefile* makefile,
-                                        cmExecutionStatus& status,
-                                        cm::ImportedTargetScope scope)
+cmPackageInfoReader::ImportResult cmPackageInfoReader::ImportTargets(
+  cmMakefile* makefile, cmExecutionStatus& status,
+  cm::ImportedTargetScope scope)
 {
   std::string const& package = this->GetName();
 
-  // Read components.
+  // Determine which components create targets before checking visibility.
+  struct Component
+  {
+    std::string Name;
+    Json::Value const* Data;
+    cm::optional<cm::TargetType> Type;
+    bool Symbolic;
+  };
+  std::vector<Component> toImport;
   Json::Value const& components = this->Data["components"];
 
   for (auto ci = components.begin(), ce = components.end(); ci != ce; ++ci) {
     cm::string_view const name = IterKey(ci);
 
-    // Get and validate full target name.
+    // Get full target name.
     std::string const& fullName = cmStrCat(package, "::"_s, name);
-    {
-      std::string msg;
-      if (!makefile->EnforceUniqueName(fullName, msg)) {
-        status.SetError(msg);
-        return false;
-      }
-    }
 
     Json::Value const& component = *ci;
-    if (!component.isObject()) {
-      makefile->IssueMessage(
-        MessageType::WARNING,
-        cmStrCat(R"(Component ")"_s, fullName, R"(" is not an object.)"_s));
-      continue;
-    }
-
-    auto createTarget = [&](cm::TargetType typeEnum) {
-      return this->AddComponent(makefile, typeEnum, fullName, component,
-                                package, scope);
-    };
-
-    cmTarget* target = nullptr;
-    std::string const& type =
-      cmSystemTools::LowerCase(ToString(component["type"]));
-    if (type == "symbolic"_s) {
-      target = createTarget(cm::TargetType::INTERFACE_LIBRARY);
-      target->SetSymbolic(true);
+    cm::optional<cm::TargetType> targetType;
+    std::string const type = component.isObject()
+      ? cmSystemTools::LowerCase(ToString(component["type"]))
+      : std::string{};
+    if (type == "symbolic"_s || type == "interface"_s) {
+      targetType = cm::TargetType::INTERFACE_LIBRARY;
     } else if (type == "executable"_s) {
-      target = createTarget(cm::TargetType::EXECUTABLE);
+      targetType = cm::TargetType::EXECUTABLE;
     } else if (type == "dylib"_s) {
-      target = createTarget(cm::TargetType::SHARED_LIBRARY);
+      targetType = cm::TargetType::SHARED_LIBRARY;
     } else if (type == "module"_s) {
-      target = createTarget(cm::TargetType::MODULE_LIBRARY);
+      targetType = cm::TargetType::MODULE_LIBRARY;
     } else if (type == "archive"_s) {
-      target = createTarget(cm::TargetType::STATIC_LIBRARY);
-    } else if (type == "interface"_s) {
-      target = createTarget(cm::TargetType::INTERFACE_LIBRARY);
-    } else {
-      makefile->IssueMessage(MessageType::WARNING,
-                             cmStrCat(R"(component ")"_s, fullName,
-                                      R"(" has unknown type ")"_s, type,
-                                      R"(" and was not imported)"_s));
+      targetType = cm::TargetType::STATIC_LIBRARY;
     }
 
-    if (target) {
-      this->ComponentTargets.emplace(std::string{ name }, target);
-    }
+    toImport.push_back(
+      { fullName, &component, targetType, type == "symbolic"_s });
   }
 
   // Read default components.
   std::vector<std::string> const& defaultComponents =
     ReadList(this->Data, "default_components");
-  if (!defaultComponents.empty()) {
-    std::string msg;
-    if (!makefile->EnforceUniqueName(package, msg)) {
-      status.SetError(msg);
-      return false;
-    }
 
+  // Reuse targets if all are visible. A partially visible set is an error.
+  std::vector<std::string> existing;
+  std::vector<std::string> missing;
+  auto checkTarget = [&](std::string const& name) {
+    (makefile->FindTargetToUse(name) ? existing : missing).push_back(name);
+  };
+  for (auto const& component : toImport) {
+    if (component.Type) {
+      checkTarget(component.Name);
+    }
+  }
+  if (!defaultComponents.empty()) {
+    checkTarget(package);
+  }
+  if (!existing.empty()) {
+    if (missing.empty()) {
+      return ImportResult::AlreadyExist;
+    }
+    status.SetError(cmStrCat(
+      "cannot import targets because some (but not all) already exist.\n"
+      "Existing targets: "_s,
+      cmJoin(existing, ", "_s), "\nMissing targets: "_s,
+      cmJoin(missing, ", "_s), '\n'));
+    return ImportResult::Failed;
+  }
+
+  // Check all names before creating any targets.
+  for (auto const& name : missing) {
+    std::string msg;
+    if (!makefile->EnforceUniqueName(name, msg)) {
+      status.SetError(msg);
+      return ImportResult::Failed;
+    }
+  }
+
+  for (auto const& component : toImport) {
+    if (!component.Data->isObject()) {
+      makefile->IssueMessage(MessageType::WARNING,
+                             cmStrCat(R"(Component ")"_s, component.Name,
+                                      R"(" is not an object.)"_s));
+      continue;
+    }
+    if (!component.Type) {
+      makefile->IssueMessage(
+        MessageType::WARNING,
+        cmStrCat(R"(component ")"_s, component.Name,
+                 R"(" has unknown type ")"_s,
+                 cmSystemTools::LowerCase(ToString((*component.Data)["type"])),
+                 R"(" and was not imported)"_s));
+      continue;
+    }
+    cmTarget* target =
+      this->AddComponent(makefile, *component.Type, component.Name,
+                         *component.Data, package, scope);
+    if (component.Symbolic) {
+      target->SetSymbolic(true);
+    }
+    this->ComponentTargets.emplace(component.Name.substr(package.size() + 2),
+                                   target);
+  }
+
+  if (!defaultComponents.empty()) {
     cmTarget* const target = makefile->AddImportedTarget(
       package, cm::TargetType::INTERFACE_LIBRARY, scope);
     for (std::string const& name : defaultComponents) {
@@ -1078,7 +1115,7 @@ bool cmPackageInfoReader::ImportTargets(cmMakefile* makefile,
     target->SetExportPassthrough(true);
   }
 
-  return true;
+  return ImportResult::Imported;
 }
 
 bool cmPackageInfoReader::ImportTargetConfigurations(

@@ -466,7 +466,6 @@ add_library(
   cmPackageInfoArguments.h
   cmPackageInfoReader.cxx
   cmPackageInfoReader.h
-  cmPackageState.h
   cmPathResolver.cxx
   cmPathResolver.h
   cmPlistParser.cxx

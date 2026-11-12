@@ -85,9 +85,16 @@ public:
   }
   std::vector<std::string> GetComponentNames() const;
 
-  /// Create targets for components specified in the CPS file.
-  bool ImportTargets(cmMakefile* makefile, cmExecutionStatus& status,
-                     cm::ImportedTargetScope scope);
+  enum class ImportResult
+  {
+    Imported,
+    AlreadyExist,
+    Failed
+  };
+  /// Create targets for components specified in the CPS file, unless all are
+  /// already visible. Fail if only some of the targets are visible.
+  ImportResult ImportTargets(cmMakefile* makefile, cmExecutionStatus& status,
+                             cm::ImportedTargetScope scope);
 
   /// Add configuration-specific properties for targets.
   bool ImportTargetConfigurations(cmMakefile* makefile,
