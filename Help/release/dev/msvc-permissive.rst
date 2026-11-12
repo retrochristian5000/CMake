@@ -6,3 +6,7 @@ msvc-permissive
   standard is permissive by default, and ``ON`` adds ``/permissive`` when
   the selected standard implies ``/permissive-``.  See policy
   :policy:`CMP0231`.
+
+* ``clang-cl`` 13 and above also honors :prop_tgt:`CXX_EXTENSIONS` for
+  permissive mode: ``OFF`` adds ``-permissive-``.  See policy
+  :policy:`CMP0231`.
