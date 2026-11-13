@@ -110,6 +110,15 @@ on ``<other_target>``.  CMake will halt with an error if the
 :prop_tgt:`PRECOMPILE_HEADERS` property of ``<target>`` is already set when
 the ``REUSE_FROM`` form is used.
 
+With MSVC and a separate program database (``/Zi`` or ``/ZI``, see
+:prop_tgt:`MSVC_DEBUG_INFORMATION_FORMAT`), sources of ``<target>`` compiled
+with the precompiled header write their debug information to a copy of the
+compiler ``.pdb`` file of ``<other_target>``.  Policy :policy:`CMP0233`
+decides where its other sources, such as those with
+:prop_sf:`SKIP_PRECOMPILE_HEADERS`, write theirs.  The ``Embedded`` format
+(``/Z7``) needs no compiler ``.pdb`` files and is recommended with
+``REUSE_FROM``.
+
 .. note::
 
   The ``REUSE_FROM`` form requires the same set of compiler options,
