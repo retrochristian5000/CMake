@@ -888,8 +888,16 @@ public:
   /** Get the name of the compiler pdb file for the target.  */
   std::string GetCompilePDBName(std::string const& config) const;
 
-  /** Get the path for the MSVC /Fd option for this target.  */
-  std::string GetCompilePDBPath(std::string const& config) const;
+  /** Get the path for the MSVC /Fd option for this target, or for the
+      given source of this target.  */
+  std::string GetCompilePDBPath(std::string const& config,
+                                cmSourceFile const* sf = nullptr) const;
+
+  /** Get the path for the MSVC /Fd option for sources of the given
+      language compiled with a PCH reused from another target.  Empty
+      unless policy CMP0234 is NEW.  */
+  std::string GetPchReuseCompilePDBPath(std::string const& config,
+                                        std::string const& language) const;
 
   // Get the target base name.
   std::string GetOutputName(std::string const& config,
@@ -1449,6 +1457,10 @@ private:
   mutable std::map<std::string, std::string> PchCreateCompileOptions;
   mutable std::map<std::string, std::string> PchUseCompileOptions;
   std::set<std::pair<std::string, std::string>> PchLanguages;
+  mutable std::map<std::string, std::set<std::string>> PchReuseLanguages;
+
+  std::string GetSourcePchLanguage(cmSourceFile const* sf,
+                                   std::string const& config) const;
 
   std::unordered_set<std::string> UnityBatchedSourceFiles;
 
