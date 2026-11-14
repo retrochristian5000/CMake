@@ -5,12 +5,12 @@
 #include <ctime>
 #include <iomanip>
 #include <iterator>
+#include <memory>
 #include <set>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
 
-#include <cm/memory>
 #include <cm/optional>
 #include <cm/string_view>
 #include <cmext/algorithm>
@@ -180,7 +180,7 @@ void cmInstrumentation::CheckCDashVariable()
 cmsys::SystemInformation& cmInstrumentation::GetSystemInformation()
 {
   if (!this->systemInformation) {
-    this->systemInformation = cm::make_unique<cmsys::SystemInformation>();
+    this->systemInformation = std::make_unique<cmsys::SystemInformation>();
   }
   return *this->systemInformation;
 }
