@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <utility>
 
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmsys/Glob.hxx"
@@ -487,8 +488,9 @@ bool DebGenerator::generateControlTar(std::string const& md5Filename) const
       std::string localcopy = cmStrCat(this->WorkDir, '/', filenamename);
 
       if (this->PermissionStrictPolicy) {
-        control_tar.SetPermissions(
-          setStrictFiles.count(filenamename) ? permission755 : permission644);
+        control_tar.SetPermissions(cm::contains(setStrictFiles, filenamename)
+                                     ? permission755
+                                     : permission644);
       }
 
       // if we can copy the file, it means it does exist, let's add it:

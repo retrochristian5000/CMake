@@ -626,8 +626,7 @@ void cmGeneratorTarget::AddSystemIncludeDirectory(std::string const& inc,
     }
     auto const& key = cmStrCat(config_upper, '/', lang);
     this->Target->AddSystemIncludeDirectories({ inc_with_config });
-    if (this->SystemIncludesCache.find(key) ==
-        this->SystemIncludesCache.end()) {
+    if (!cm::contains(this->SystemIncludesCache, key)) {
       this->AddSystemIncludeCacheKey(key, config, lang);
     }
     this->SystemIncludesCache[key].emplace_back(inc_with_config);
@@ -707,7 +706,7 @@ void cmGeneratorTarget::GetObjectSources(
 {
   IMPLEMENT_VISIT(SourceKindObjectSource);
 
-  if (this->VisitedConfigsForObjects.count(config)) {
+  if (cm::contains(this->VisitedConfigsForObjects, config)) {
     return;
   }
 
@@ -1182,7 +1181,7 @@ void cmGeneratorTarget::AppendLanguageSideEffects(
   };
 
   for (auto const& lang : this->GetAllConfigCompileLanguages()) {
-    if (!LANGS_WITH_NO_SIDE_EFFECTS.count(lang)) {
+    if (!cm::contains(LANGS_WITH_NO_SIDE_EFFECTS, lang)) {
       sideEffects[lang].insert(this);
     }
   }
@@ -2779,7 +2778,7 @@ void cmGeneratorTarget::AddSYCLDeviceTargetFlags(cmBuildStep compileOrLink,
     for (auto const& entry : cmList{ targets }) {
       std::string const flow = cmSystemTools::LowerCase(
         cmTrimWhitespace(entry.substr(0, entry.find(':'))));
-      if (multipassFlows.find(flow) != multipassFlows.end()) {
+      if (cm::contains(multipassFlows, flow)) {
         multipass = true;
       }
     }
@@ -3698,8 +3697,7 @@ bool cmGeneratorTarget::IsSourceFilePartOfUnityBatch(
     return false;
   }
 
-  return this->UnityBatchedSourceFiles.find(sourceFilename) !=
-    this->UnityBatchedSourceFiles.end();
+  return cm::contains(this->UnityBatchedSourceFiles, sourceFilename);
 }
 
 void cmGeneratorTarget::ComputeTargetManifest(std::string const& config) const
@@ -5535,7 +5533,7 @@ bool cmGeneratorTarget::IsLanguageUsed(std::string const& language,
 {
   std::set<std::string> languages;
   this->GetLanguages(languages, config);
-  return languages.count(language);
+  return cm::contains(languages, language);
 }
 
 bool cmGeneratorTarget::IsCSharpOnly() const
@@ -5553,7 +5551,7 @@ bool cmGeneratorTarget::IsCSharpOnly() const
   if (cmNonempty(linkLang)) {
     languages.insert(*linkLang);
   }
-  return languages.size() == 1 && languages.count("CSharp") > 0;
+  return languages.size() == 1 && cm::contains(languages, "CSharp");
 }
 
 bool cmGeneratorTarget::IsDotNetSdkTarget() const
@@ -6289,7 +6287,7 @@ bool cmGeneratorTarget::HaveFortranSources(std::string const& config) const
 bool cmGeneratorTarget::HaveFortranSources() const
 {
   bool const have_direct =
-    this->GetAllConfigCompileLanguages().count("Fortran") != 0;
+    cm::contains(this->GetAllConfigCompileLanguages(), "Fortran");
   bool have_via_target_objects = false;
   if (!have_direct) {
     std::vector<std::string> configs =

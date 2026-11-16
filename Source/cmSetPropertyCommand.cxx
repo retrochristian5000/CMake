@@ -7,6 +7,7 @@
 
 #include <cm/optional>
 #include <cm/string_view>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmDiagnostics.h"
@@ -169,8 +170,7 @@ bool HandleSourceFileDirectoryScopes(
         status.SetError(cmStrCat("given non-existent DIRECTORY "_s, dir_path));
         return false;
       }
-      if (directory_makefiles_set.find(dir_mf) ==
-          directory_makefiles_set.end()) {
+      if (!cm::contains(directory_makefiles_set, dir_mf)) {
         directory_makefiles.push_back(dir_mf);
         directory_makefiles_set.insert(dir_mf);
       }
@@ -190,8 +190,7 @@ bool HandleSourceFileDirectoryScopes(
         status.GetMakefile().GetGlobalGenerator()->FindMakefile(
           *target_source_dir);
 
-      if (directory_makefiles_set.find(target_dir_mf) ==
-          directory_makefiles_set.end()) {
+      if (!cm::contains(directory_makefiles_set, target_dir_mf)) {
         directory_makefiles.push_back(target_dir_mf);
         directory_makefiles_set.insert(target_dir_mf);
       }

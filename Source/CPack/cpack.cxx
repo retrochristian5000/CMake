@@ -292,8 +292,8 @@ int main(int argc, char const* const* argv)
       [&generators](cmCMakePresetsGraph::PackagePreset const& p) {
         return std::all_of(p.Generators.begin(), p.Generators.end(),
                            [&generators](std::string const& gen) {
-                             return generators.GetGeneratorsList().count(
-                                      gen) != 0;
+                             return cm::contains(
+                               generators.GetGeneratorsList(), gen);
                            });
       };
     auto configureUsabilityCheck =

@@ -1165,7 +1165,7 @@ cmTarget::cmTarget(std::string name, cm::TargetType type, Visibility vis,
   std::string dflt_storage;
   for (auto const& tp : StaticTargetProperties) {
     // Ignore properties that we have not met the condition for.
-    if (!metConditions.count(tp.InitConditional)) {
+    if (!cm::contains(metConditions, tp.InitConditional)) {
       continue;
     }
 
@@ -1197,7 +1197,8 @@ cmTarget::cmTarget(std::string name, cm::TargetType type, Visibility vis,
   }
 
   if (this->GetPolicyStatus(cmPolicies::CMP0229) == cmPolicies::NEW &&
-      metConditions.count(TargetProperty::InitCondition::CanCompileSources)) {
+      cm::contains(metConditions,
+                   TargetProperty::InitCondition::CanCompileSources)) {
     if (cmValue value = mf->GetDefinition("CMAKE_SKIP_INSTALL_RPATH")) {
       this->SetProperty("SKIP_INSTALL_RPATH", value);
     }
@@ -2908,7 +2909,7 @@ cmValue cmTarget::GetComputedProperty(std::string const& prop,
 cmValue cmTarget::GetProperty(std::string const& prop) const
 {
   auto const& specialProps = cmTarget::GetSpecialPropertyNames();
-  if (specialProps.count(prop)) {
+  if (cm::contains(specialProps, prop)) {
     if (prop == propC_STANDARD || prop == propCXX_STANDARD ||
         prop == propCUDA_STANDARD || prop == propHIP_STANDARD ||
         prop == propOBJC_STANDARD || prop == propOBJCXX_STANDARD ||

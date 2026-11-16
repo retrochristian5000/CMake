@@ -13,6 +13,7 @@
 #include <utility>
 
 #include <cm/string_view>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmsys/RegularExpression.hxx"
@@ -563,8 +564,8 @@ private:
       auto const& featureAttributes = GetLinkLibraryFeatureAttributes(
         this->Target->Makefile, this->LinkLanguage, entry.Feature);
       if ((!entry.Target ||
-           featureAttributes.LibraryTypes.find(entry.Target->GetType()) !=
-             featureAttributes.LibraryTypes.end()) &&
+           cm::contains(featureAttributes.LibraryTypes,
+                        entry.Target->GetType())) &&
           featureAttributes.Deduplication !=
             LinkLibraryFeatureAttributeSet::Default) {
         return featureAttributes.Deduplication ==
@@ -796,7 +797,7 @@ std::pair<size_t, bool> cmComputeLinkDepends::AddLinkEntry(
   entry.Feature = item.Feature;
   if (!entry.Target && entry.Item.Value[0] == '-' &&
       entry.Item.Value[1] != 'l' &&
-      entry.Item.Value.substr(0, 10) != "-framework") {
+      !cmHasLiteralPrefix(entry.Item.Value, "-framework")) {
     entry.Kind = LinkEntry::Flag;
     entry.Feature = LinkEntry::DEFAULT;
   } else if (cmHasPrefix(entry.Item.Value, LG_BEGIN) &&
@@ -1158,8 +1159,8 @@ void cmComputeLinkDepends::AddLinkEntries(cm::optional<size_t> depender_index,
     if (itemFeature != LinkEntry::DEFAULT && entry.Target) {
       auto const& featureAttributes = GetLinkLibraryFeatureAttributes(
         this->Makefile, this->LinkLanguage, itemFeature);
-      if (featureAttributes.LibraryTypes.find(entry.Target->GetType()) ==
-          featureAttributes.LibraryTypes.end()) {
+      if (!cm::contains(featureAttributes.LibraryTypes,
+                        entry.Target->GetType())) {
         supportedItem = false;
         this->CMakeInstance->IssueDiagnostic(
           cmDiagnostics::CMD_AUTHOR,
@@ -1210,10 +1211,8 @@ void cmComputeLinkDepends::AddLinkEntries(cm::optional<size_t> depender_index,
           this->Makefile, this->LinkLanguage, entry.Feature);
         auto const& itemFeatureAttributes = GetLinkLibraryFeatureAttributes(
           this->Makefile, this->LinkLanguage, itemFeature);
-        if (itemFeatureAttributes.Override.find(entry.Feature) !=
-              itemFeatureAttributes.Override.end() &&
-            entryFeatureAttributes.Override.find(itemFeature) !=
-              entryFeatureAttributes.Override.end()) {
+        if (cm::contains(itemFeatureAttributes.Override, entry.Feature) &&
+            cm::contains(entryFeatureAttributes.Override, itemFeature)) {
           // features override each other
           this->CMakeInstance->IssueMessage(
             MessageType::FATAL_ERROR,
@@ -1226,12 +1225,11 @@ void cmComputeLinkDepends::AddLinkEntries(cm::optional<size_t> depender_index,
                      "the other. Such cycles are not allowed."_s),
             this->Target->GetBacktrace());
         } else {
-          if (itemFeatureAttributes.Override.find(entry.Feature) !=
-              itemFeatureAttributes.Override.end()) {
+          if (cm::contains(itemFeatureAttributes.Override, entry.Feature)) {
             entry.Feature = itemFeature;
             incompatibleFeatures = false;
-          } else if (entryFeatureAttributes.Override.find(itemFeature) !=
-                     entryFeatureAttributes.Override.end()) {
+          } else if (cm::contains(entryFeatureAttributes.Override,
+                                  itemFeature)) {
             incompatibleFeatures = false;
           }
           if (incompatibleFeatures) {

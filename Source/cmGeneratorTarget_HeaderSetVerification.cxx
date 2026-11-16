@@ -17,6 +17,7 @@
 
 #include <cm/optional>
 #include <cm/string_view>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmFileSetMetadata.h"
@@ -88,7 +89,7 @@ bool cmGeneratorTarget::AddHeaderSetVerification()
 
     std::set<cmGeneratorFileSet const*> fileSets;
     for (auto const& fileSet : fileSetEntries) {
-      if (all || verifySet.count(fileSet->GetName())) {
+      if (all || cm::contains(verifySet, fileSet->GetName())) {
         verifySet.erase(fileSet->GetName());
         if (fileSet->GetProperty("SKIP_LINTING").IsOn()) {
           continue;
@@ -379,16 +380,17 @@ cm::optional<std::string> cmGeneratorTarget::ResolveHeaderLanguage(
     }
 
     cm::optional<std::string> resolved;
-    if (langs.count("OBJCXX") ||
-        ((langs.count("CXX") || langs.count("SYCL")) && langs.count("OBJC"))) {
+    if (cm::contains(langs, "OBJCXX") ||
+        ((cm::contains(langs, "CXX") || cm::contains(langs, "SYCL")) &&
+         cm::contains(langs, "OBJC"))) {
       resolved = "OBJCXX"; // promote
-    } else if (langs.count("SYCL")) {
+    } else if (cm::contains(langs, "SYCL")) {
       resolved = "SYCL";
-    } else if (langs.count("CXX")) {
+    } else if (cm::contains(langs, "CXX")) {
       resolved = "CXX";
-    } else if (langs.count("OBJC")) {
+    } else if (cm::contains(langs, "OBJC")) {
       resolved = "OBJC";
-    } else if (langs.count("C")) {
+    } else if (cm::contains(langs, "C")) {
       resolved = "C";
     }
     defaultLanguage = resolved;

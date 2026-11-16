@@ -6,6 +6,7 @@
 #include <tuple>
 #include <utility>
 
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmGeneratorTarget.h"
@@ -42,8 +43,7 @@ bool cmExportSet::Compute(cmLocalGenerator* lg)
       tgtExport->Target->Target->GetAllInterfaceFileSets();
     auto const fileSetInTargetExport =
       [&tgtExport, lg](std::string const& fileSetName) -> bool {
-      if (tgtExport->FileSetGenerators.find(fileSetName) ==
-          tgtExport->FileSetGenerators.end()) {
+      if (!cm::contains(tgtExport->FileSetGenerators, fileSetName)) {
         lg->IssueMessage(MessageType::FATAL_ERROR,
                          cmStrCat("File set \""_s, fileSetName,
                                   "\" is listed in interface file sets of "_s,

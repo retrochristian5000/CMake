@@ -139,7 +139,7 @@ void cmGlobalCommonGenerator::RemoveUnknownClangTidyExportFixesFiles() const
     g.SetListDirs(false);
     g.FindFiles(cmStrCat(dir, "/*.yaml"_s));
     for (auto const& file : g.GetFiles()) {
-      if (!this->ClangTidyExportFixesFiles.count(file) &&
+      if (!cm::contains(this->ClangTidyExportFixesFiles, file) &&
           !std::any_of(this->ClangTidyExportFixesFiles.begin(),
                        this->ClangTidyExportFixesFiles.end(),
                        [&file](std::string const& knownFile) -> bool {

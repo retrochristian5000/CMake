@@ -603,7 +603,7 @@ std::vector<BT<std::string>>& cmGeneratorTarget::ResolvePrefixWrapper(
   std::string const PREFIX_SHELL = cmStrCat(PREFIX, SHELL);
 
   for (auto entry = result.begin(); entry != result.end();) {
-    if (entry->Value.compare(0, PREFIX.length(), PREFIX) != 0) {
+    if (!cmHasPrefix(entry->Value, PREFIX)) {
       ++entry;
       continue;
     }
@@ -613,7 +613,7 @@ std::vector<BT<std::string>>& cmGeneratorTarget::ResolvePrefixWrapper(
     entry = result.erase(entry);
 
     std::vector<std::string> options;
-    if (value.compare(0, PREFIX_SHELL.length(), PREFIX_SHELL) == 0) {
+    if (cmHasPrefix(value, PREFIX_SHELL)) {
       cmSystemTools::ParseUnixCommandLine(
         value.c_str() + PREFIX_SHELL.length(), options);
     } else {

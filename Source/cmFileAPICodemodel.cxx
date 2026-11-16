@@ -2072,7 +2072,7 @@ Json::Value Target::DumpInterfaceIncludes()
          evaluateIncludes(*includesExpression, context)) {
       cmSystemTools::ConvertToUnixSlashes(include);
       bool const isSystem = targetTreatsOwnIncludesAsSystem ||
-        systemIncludes.find(include) != systemIncludes.end();
+        cm::contains(systemIncludes, include);
       auto entry = std::find_if(
         includes.begin(), includes.end(),
         [&include, isSystem](InterfaceInclude const& candidate) {

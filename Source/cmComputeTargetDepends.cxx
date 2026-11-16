@@ -9,6 +9,7 @@
 #include <sstream>
 #include <utility>
 
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmComputeComponentGraph.h"
@@ -438,7 +439,7 @@ void cmComputeTargetDepends::CollectSideEffects()
 void cmComputeTargetDepends::CollectSideEffectsForTarget(
   std::set<size_t>& visited, size_t depender_index)
 {
-  if (!visited.count(depender_index)) {
+  if (!cm::contains(visited, depender_index)) {
     auto& se = this->SideEffects[depender_index];
     visited.insert(depender_index);
     this->Targets[depender_index]->AppendCustomCommandSideEffects(
@@ -502,7 +503,7 @@ void cmComputeTargetDepends::OptimizeLinkDependencies(
       // Add edges that have custom command side effects
       for (cmGeneratorTarget const* dep : dse.CustomCommandSideEffects) {
         auto index = this->TargetIndex[dep];
-        if (!emitted.count(index)) {
+        if (!cm::contains(emitted, index)) {
           emitted.insert(index);
           outputEdges.push_back(
             cmGraphEdge(index, false, edge.IsCross(), edge.GetBacktrace()));
@@ -516,7 +517,7 @@ void cmComputeTargetDepends::OptimizeLinkDependencies(
         if (it != dse.LanguageSideEffects.end()) {
           for (cmGeneratorTarget const* dep : it->second) {
             auto index = this->TargetIndex[dep];
-            if (!emitted.count(index)) {
+            if (!cm::contains(emitted, index)) {
               emitted.insert(index);
               outputEdges.push_back(cmGraphEdge(index, false, edge.IsCross(),
                                                 edge.GetBacktrace()));

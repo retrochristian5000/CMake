@@ -222,8 +222,7 @@ int cmCPackNSISGenerator::PackageFiles()
       if (!wantedPosition->empty()) {
         std::set<std::string> const possiblePositions{ "CENTER", "LEFT",
                                                        "RIGHT" };
-        if (possiblePositions.find(*wantedPosition) ==
-            possiblePositions.end()) {
+        if (!cm::contains(possiblePositions, *wantedPosition)) {
           cmCPackLogger(cmCPackLog::LOG_ERROR,
                         "Unsupported branding text trim position "
                           << *wantedPosition << std::endl);
@@ -918,7 +917,7 @@ std::string cmCPackNSISGenerator::CreateSelectionDependenciesDescription(
   cmCPackComponent* component, std::set<cmCPackComponent*>& visited)
 {
   // Don't visit a component twice
-  if (visited.count(component)) {
+  if (cm::contains(visited, component)) {
     return {};
   }
   visited.insert(component);
@@ -945,7 +944,7 @@ std::string cmCPackNSISGenerator::CreateDeselectionDependenciesDescription(
   cmCPackComponent* component, std::set<cmCPackComponent*>& visited)
 {
   // Don't visit a component twice
-  if (visited.count(component)) {
+  if (cm::contains(visited, component)) {
     return {};
   }
   visited.insert(component);

@@ -11,6 +11,8 @@
 #include <utility>
 #include <vector>
 
+#include <cmext/algorithm>
+
 #include <cmllpkgc/llpkgc.h>
 
 cmPkgConfigValueItem::cmPkgConfigValueItem(std::string text,
@@ -528,7 +530,7 @@ std::string cmPkgConfigParser::ResolveValueImpl(
 
   for (auto const& item : items) {
     if (item.IsSubstitution) {
-      if (resolving.count(item.Text)) {
+      if (cm::contains(resolving, item.Text)) {
         result += "${";
         result += item.Text;
         result += "}";

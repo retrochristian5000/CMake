@@ -8,6 +8,8 @@
 #include <utility>
 #include <vector>
 
+#include <cmext/algorithm>
+
 #include "cmFortranParser.h"
 #include "cmStringAlgorithms.h"
 #include "cmSystemTools.h"
@@ -349,8 +351,7 @@ void cmFortranParser_RuleIfdef(cmFortranParser* parser, char const* macro)
 
   if (parser->InPPFalseBranch) {
     parser->InPPFalseBranch++;
-  } else if (parser->PPDefinitions.find(macro) ==
-             parser->PPDefinitions.end()) {
+  } else if (!cm::contains(parser->PPDefinitions, macro)) {
     parser->InPPFalseBranch = 1;
   } else {
     parser->SkipToEnd.top() = true;
@@ -364,8 +365,7 @@ void cmFortranParser_RuleIfndef(cmFortranParser* parser, char const* macro)
 
   if (parser->InPPFalseBranch) {
     parser->InPPFalseBranch++;
-  } else if (parser->PPDefinitions.find(macro) !=
-             parser->PPDefinitions.end()) {
+  } else if (cm::contains(parser->PPDefinitions, macro)) {
     parser->InPPFalseBranch = 1;
   } else {
     // ignore other branches

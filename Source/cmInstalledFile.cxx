@@ -4,6 +4,8 @@
 
 #include <utility>
 
+#include <cmext/algorithm>
+
 #include "cmGeneratorExpression.h"
 #include "cmList.h"
 #include "cmListFileCache.h"
@@ -64,7 +66,7 @@ void cmInstalledFile::AppendProperty(cmMakefile const* mf,
 
 bool cmInstalledFile::HasProperty(std::string const& prop) const
 {
-  return this->Properties.find(prop) != this->Properties.end();
+  return cm::contains(this->Properties, prop);
 }
 
 bool cmInstalledFile::GetProperty(std::string const& prop,

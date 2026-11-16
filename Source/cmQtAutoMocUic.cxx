@@ -762,8 +762,7 @@ cmQtAutoMocUicT::MocSettingsT::~MocSettingsT() = default;
 
 bool cmQtAutoMocUicT::MocSettingsT::skipped(std::string const& fileName) const
 {
-  return (!this->Enabled ||
-          (this->SkipList.find(fileName) != this->SkipList.end()));
+  return (!this->Enabled || (cm::contains(this->SkipList, fileName)));
 }
 
 std::string cmQtAutoMocUicT::MocSettingsT::MacrosString() const
@@ -798,8 +797,7 @@ cmQtAutoMocUicT::UicSettingsT::~UicSettingsT() = default;
 
 bool cmQtAutoMocUicT::UicSettingsT::skipped(std::string const& fileName) const
 {
-  return (!this->Enabled ||
-          (this->SkipList.find(fileName) != this->SkipList.end()));
+  return (!this->Enabled || (cm::contains(this->SkipList, fileName)));
 }
 
 void cmQtAutoMocUicT::JobT::LogError(GenT genType,

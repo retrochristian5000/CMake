@@ -11,6 +11,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include <cmext/algorithm>
+
 #include <cm3p/json/value.h>
 #include <cm3p/json/writer.h>
 
@@ -88,7 +90,7 @@ public:
 
     std::vector<std::string> toRemove;
     for (std::string const& entry : entries) {
-      if (replyNames.find(entry) != replyNames.end()) {
+      if (cm::contains(replyNames, entry)) {
         continue;
       }
       FileIdT id;

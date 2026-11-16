@@ -4,6 +4,7 @@
 
 #include <cassert>
 
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmGeneratorTarget.h"
@@ -136,8 +137,7 @@ void cmOSXBundleGenerator::CreateFramework(
   }
 
   // Resources -> Versions/Current/Resources
-  if (this->MacContentFolders->find("Resources") !=
-      this->MacContentFolders->end()) {
+  if (cm::contains(*this->MacContentFolders, "Resources")) {
     oldName = "Versions/Current/Resources";
     newName = cmStrCat(contentdir, "Resources"_s);
     cmSystemTools::RemoveFile(newName);
@@ -146,8 +146,7 @@ void cmOSXBundleGenerator::CreateFramework(
   }
 
   // Headers -> Versions/Current/Headers
-  if (this->MacContentFolders->find("Headers") !=
-      this->MacContentFolders->end()) {
+  if (cm::contains(*this->MacContentFolders, "Headers")) {
     oldName = "Versions/Current/Headers";
     newName = cmStrCat(contentdir, "Headers"_s);
     cmSystemTools::RemoveFile(newName);
@@ -156,8 +155,7 @@ void cmOSXBundleGenerator::CreateFramework(
   }
 
   // PrivateHeaders -> Versions/Current/PrivateHeaders
-  if (this->MacContentFolders->find("PrivateHeaders") !=
-      this->MacContentFolders->end()) {
+  if (cm::contains(*this->MacContentFolders, "PrivateHeaders")) {
     oldName = "Versions/Current/PrivateHeaders";
     newName = cmStrCat(contentdir, "PrivateHeaders"_s);
     cmSystemTools::RemoveFile(newName);

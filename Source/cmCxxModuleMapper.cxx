@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmScanDepFormat.h"
@@ -111,7 +112,7 @@ std::vector<TransitiveUsage> GetTransitiveUsages(
   }
 
   for (auto const& transitive_name : transitive_usage_names) {
-    if (transitive_usage_directs.count(transitive_name)) {
+    if (cm::contains(transitive_usage_directs, transitive_name)) {
       continue;
     }
 
@@ -347,7 +348,7 @@ std::set<std::string> CxxModuleUsageSeed(
         this_usages.insert(r.LogicalName);
 
         if (transitive_usages == usages.Usage.end() ||
-            internal_usages.find(r.LogicalName) != internal_usages.end()) {
+            cm::contains(internal_usages, r.LogicalName)) {
           // Mark that we need to update transitive usages later.
           if (bmi_loc.IsKnown()) {
             internal_usages[p.LogicalName].insert(r.LogicalName);
@@ -378,7 +379,7 @@ std::set<std::string> CxxModuleUsageSeed(
            /* see end of loop */) {
         // Check if this required module uses other internal modules; defer
         // if so.
-        if (internal_usages.count(*use)) {
+        if (cm::contains(internal_usages, *use)) {
           // Advance the iterator.
           ++use;
           continue;

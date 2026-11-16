@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmBinUtilsLinuxELFLinker.h"
@@ -418,5 +419,5 @@ bool cmRuntimeDependencyArchive::PlatformSupportsRuntimeDependencies(
     "Darwin",
     "FreeBSD",
   };
-  return supportedPlatforms.count(platform);
+  return cm::contains(supportedPlatforms, platform);
 }

@@ -7,6 +7,8 @@
 #include <cstdint>
 #include <utility>
 
+#include <cmext/algorithm>
+
 #include <cm3p/cppdap/optional.h>
 #include <cm3p/cppdap/session.h>
 #include <cm3p/cppdap/types.h>
@@ -87,12 +89,12 @@ cmDebuggerBreakpointManager::HandleSetBreakpointsRequest(
   dap::array<dap::SourceBreakpoint> const defaultValue{};
   auto const& breakpoints = request.breakpoints.value(defaultValue);
 
-  if (Breakpoints.find(sourcePath) != Breakpoints.end()) {
+  if (cm::contains(Breakpoints, sourcePath)) {
     Breakpoints[sourcePath].clear();
   }
   response.breakpoints.resize(breakpoints.size());
 
-  if (ListFileFunctionLines.find(sourcePath) != ListFileFunctionLines.end()) {
+  if (cm::contains(ListFileFunctionLines, sourcePath)) {
     // The file has loaded, we can validate breakpoints.
     for (size_t i = 0; i < breakpoints.size(); i++) {
       int64_t correctedLine =
@@ -138,8 +140,7 @@ void cmDebuggerBreakpointManager::SourceFileLoaded(
   auto normalizedPath = NormalizePath(sourcePath);
 
   std::unique_lock<std::mutex> lock(Mutex);
-  if (ListFileFunctionLines.find(normalizedPath) !=
-      ListFileFunctionLines.end()) {
+  if (cm::contains(ListFileFunctionLines, normalizedPath)) {
     // this is not expected.
     return;
   }
@@ -149,8 +150,7 @@ void cmDebuggerBreakpointManager::SourceFileLoaded(
       cmDebuggerFunctionLocation{ func.Line(), func.LineEnd() });
   }
 
-  if (ListFilePendingValidations.find(normalizedPath) ==
-      ListFilePendingValidations.end()) {
+  if (!cm::contains(ListFilePendingValidations, normalizedPath)) {
     return;
   }
 

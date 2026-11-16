@@ -72,7 +72,7 @@ bool cmGeneratorTarget::IsLinkInterfaceDependentBoolProperty(
       this->GetType() == cm::TargetType::INTERFACE_LIBRARY) {
     return false;
   }
-  return this->GetCompatibleInterfaces(config).PropsBool.count(p) > 0;
+  return cm::contains(this->GetCompatibleInterfaces(config).PropsBool, p);
 }
 
 bool cmGeneratorTarget::IsLinkInterfaceDependentStringProperty(
@@ -82,7 +82,7 @@ bool cmGeneratorTarget::IsLinkInterfaceDependentStringProperty(
       this->GetType() == cm::TargetType::INTERFACE_LIBRARY) {
     return false;
   }
-  return this->GetCompatibleInterfaces(config).PropsString.count(p) > 0;
+  return cm::contains(this->GetCompatibleInterfaces(config).PropsString, p);
 }
 
 bool cmGeneratorTarget::IsLinkInterfaceDependentNumberMinProperty(
@@ -92,7 +92,7 @@ bool cmGeneratorTarget::IsLinkInterfaceDependentNumberMinProperty(
       this->GetType() == cm::TargetType::INTERFACE_LIBRARY) {
     return false;
   }
-  return this->GetCompatibleInterfaces(config).PropsNumberMin.count(p) > 0;
+  return cm::contains(this->GetCompatibleInterfaces(config).PropsNumberMin, p);
 }
 
 bool cmGeneratorTarget::IsLinkInterfaceDependentNumberMaxProperty(
@@ -102,7 +102,7 @@ bool cmGeneratorTarget::IsLinkInterfaceDependentNumberMaxProperty(
       this->GetType() == cm::TargetType::INTERFACE_LIBRARY) {
     return false;
   }
-  return this->GetCompatibleInterfaces(config).PropsNumberMax.count(p) > 0;
+  return cm::contains(this->GetCompatibleInterfaces(config).PropsNumberMax, p);
 }
 
 enum CompatibleType

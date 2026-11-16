@@ -4,6 +4,8 @@
 
 #include <set>
 
+#include <cmext/algorithm>
+
 #include "cmsys/FStream.hxx"
 
 #include "cmExecutionStatus.h"
@@ -171,7 +173,7 @@ static void CheckLine(cmMakefile& mf, std::string const& prefix,
   cmStateEnums::CacheEntryType type = cmStateEnums::UNINITIALIZED;
   if (cmake::ParseCacheEntry(line, var, value, type)) {
     // Found a real entry.  See if this one was requested.
-    if (variablesToRead.find(var) != variablesToRead.end()) {
+    if (cm::contains(variablesToRead, var)) {
       // This was requested.  Set this variable locally with the given
       // prefix.
       var = prefix + var;

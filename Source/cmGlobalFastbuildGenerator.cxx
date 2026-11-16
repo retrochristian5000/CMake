@@ -11,6 +11,7 @@
 #include <memory>
 #include <queue>
 
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmsys/FStream.hxx"
@@ -856,7 +857,7 @@ void cmGlobalFastbuildGenerator::TopologicalSort(
   // Build reverse dependency graph and in-degree map
   for (auto const& node : nodes) {
     for (auto const& dep : node->PreBuildDependencies) {
-      if (inDegree.count(dep.Name)) {
+      if (cm::contains(inDegree, dep.Name)) {
         reverseDeps[dep.Name].insert(node->Name);
         ++inDegree[node->Name];
       }
@@ -1069,8 +1070,7 @@ void cmGlobalFastbuildGenerator::WriteCompilers()
 void cmGlobalFastbuildGenerator::AddCompiler(std::string const& language,
                                              cmMakefile* mf)
 {
-  if (this->Compilers.find(FASTBUILD_COMPILER_PREFIX + language) !=
-      this->Compilers.end()) {
+  if (cm::contains(this->Compilers, FASTBUILD_COMPILER_PREFIX + language)) {
     return;
   }
 
@@ -1104,7 +1104,7 @@ void cmGlobalFastbuildGenerator::AddCompiler(std::string const& language,
   cmExpandList(mf->GetSafeDefinition(FASTBUILD_COMPILER_EXTRA_FILES),
                compilerDef.ExtraFiles);
 
-  if (supportedLanguages.find(language) != supportedLanguages.end()) {
+  if (cm::contains(supportedLanguages, language)) {
     auto const iter =
       compilerIdToFastbuildFamily.find(compilerDef.CmakeCompilerID);
     if (iter != compilerIdToFastbuildFamily.end()) {
@@ -1192,7 +1192,7 @@ void cmGlobalFastbuildGenerator::AddLauncher(std::string const& prefix,
                                              std::string const& language,
                                              std::string const& args)
 {
-  if (this->Compilers.find(prefix + language) != this->Compilers.end()) {
+  if (cm::contains(this->Compilers, prefix + language)) {
     return;
   }
   LogMessage("Launcher: " + launcher);

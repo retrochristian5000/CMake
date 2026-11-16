@@ -296,7 +296,7 @@ bool cmCTestMultiProcessHandler::ComputeFixtureRepetition()
       // Keep only dependencies within the group.  Dependencies on other
       // tests are satisfied once, by the group's first repetition.
       for (int depend : this->PendingTests[t.first].Depends) {
-        if (group.Tests.count(depend) != 0) {
+        if (cm::contains(group.Tests, depend)) {
           t.second.insert(depend);
         }
       }
@@ -467,7 +467,7 @@ void cmCTestMultiProcessHandler::StartTestProcess(int test)
       // The group repeats the test, so report the repetition it is running.
       int const left = this->RepeatGroups[gi->second].RepetitionsLeft;
       testRun->SetRunNumber(this->RepeatCount - left, this->RepeatCount);
-    } else if (this->TestsRunOnce.count(test) == 0) {
+    } else if (!cm::contains(this->TestsRunOnce, test)) {
       testRun->SetRepeatMode(this->RepeatMode);
       testRun->SetRunNumber(1, this->RepeatCount);
     }
@@ -601,7 +601,7 @@ bool cmCTestMultiProcessHandler::TryAllocateResources(
   bool result = true;
   auto const& availableResources = this->ResourceAllocator.GetResources();
   for (auto& it : allocations) {
-    if (!availableResources.count(it.first)) {
+    if (!cm::contains(availableResources, it.first)) {
       if (errors) {
         (*errors)[it.first] = ResourceAvailabilityError::NoResourceType;
         result = false;
@@ -1139,7 +1139,7 @@ void cmCTestMultiProcessHandler::RequeueRepeatGroup(RepeatGroup const& group)
   }
   cm::erase_if(*this->TestResults,
                [&group](cmCTestTestHandler::cmCTestTestResult const& result) {
-                 return group.Tests.count(result.TestCount) != 0;
+                 return cm::contains(group.Tests, result.TestCount);
                });
   this->Completed -= group.Tests.size();
 
@@ -2036,8 +2036,8 @@ bool cmCTestMultiProcessHandler::CheckGeneratedResourceSpec()
   if (!this->ResourceSpecSetupFixture.empty()) {
     for (auto& test : this->Properties) {
       if (!test.second->ResourceGroups.empty() &&
-          !test.second->FixturesRequired.count(
-            this->ResourceSpecSetupFixture)) {
+          !cm::contains(test.second->FixturesRequired,
+                        this->ResourceSpecSetupFixture)) {
         cmCTestLog(
           this->CTest, ERROR_MESSAGE,
           "All tests that have RESOURCE_GROUPS must include the "

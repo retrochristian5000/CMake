@@ -10,6 +10,7 @@
 
 #include <cm/optional>
 #include <cm/string_view>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmsys/RegularExpression.hxx"
@@ -151,7 +152,7 @@ bool cmProjectCommand(std::vector<std::string> const& args,
 
   std::set<cm::string_view> seenKeywords;
   for (cm::string_view keyword : parsedKeywords) {
-    if (seenKeywords.find(keyword) != seenKeywords.end()) {
+    if (cm::contains(seenKeywords, keyword)) {
       mf.IssueMessage(MessageType::FATAL_ERROR,
                       cmStrCat(keyword, " may be specified at most once."_s));
       cmSystemTools::SetFatalErrorOccurred();

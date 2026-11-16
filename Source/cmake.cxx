@@ -2243,7 +2243,7 @@ cmake::CreateConfigurePresetUsabilityCheck() const
   return [generatorNames](cmCMakePresetsGraph::ConfigurePreset const& preset)
            -> cm::optional<std::string> {
     if (preset.Generator.empty() ||
-        generatorNames.count(preset.Generator) != 0) {
+        cm::contains(generatorNames, preset.Generator)) {
       return cm::nullopt;
     }
     return cmStrCat("generator \""_s, preset.Generator,
@@ -2478,7 +2478,8 @@ int cmake::HandleDeleteCacheVariables(
 
   // Toolchain changes trigger a fatal error, but reconfiguring with the new
   // toolchain should fix them.
-  if (vars.count("CMAKE_TOOLCHAIN_FILE") && !this->State->IsReconfiguring()) {
+  if (cm::contains(vars, "CMAKE_TOOLCHAIN_FILE") &&
+      !this->State->IsReconfiguring()) {
     cmSystemTools::ResetErrorOccurredFlag();
     this->State->SetReconfiguring(true);
     return this->Configure();
@@ -4692,12 +4693,12 @@ void cmake::SetDebugFindOutputVars(std::string const& args)
 
 bool cmake::GetDebugFindOutput(std::string const& var) const
 {
-  return this->DebugFindVars.count(var);
+  return cm::contains(this->DebugFindVars, var);
 }
 
 bool cmake::GetDebugFindPkgOutput(std::string const& pkg) const
 {
-  return this->DebugFindPkgs.count(pkg);
+  return cm::contains(this->DebugFindPkgs, pkg);
 }
 
 void cmake::SetCMakeListName(std::string const& name)

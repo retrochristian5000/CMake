@@ -8,6 +8,7 @@
 #include <utility>
 
 #include <cm/optional>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmsys/Directory.hxx"
@@ -111,7 +112,7 @@ cmQtAutoGenGlobalInitializer::cmQtAutoGenGlobalInitializer(
         // initialized after this target get their added mocs_compilation.cpp
         // source acknowledged by this target.
         target->ClearSourcesCache();
-        if (languages.count("CSharp")) {
+        if (cm::contains(languages, "CSharp")) {
           // Don't process target if it's a CSharp target
           continue;
         }
@@ -200,7 +201,7 @@ bool cmQtAutoGenGlobalInitializer::CachedFileExists(std::string const& path)
       }
     }
     if (it != this->DirectoryNames_.end() &&
-        !it->second.count(cmSystemTools::LowerCase(name))) {
+        !cm::contains(it->second, cmSystemTools::LowerCase(name))) {
       return false;
     }
   }

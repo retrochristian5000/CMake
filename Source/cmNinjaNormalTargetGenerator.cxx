@@ -12,6 +12,7 @@
 
 #include <cm/optional>
 #include <cm/vector>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmComputeLinkInformation.h"
@@ -83,9 +84,8 @@ void cmNinjaNormalTargetGenerator::Generate(std::string const& config)
   // Write the build statements
   bool firstForConfig = true;
   for (auto const& fileConfig : this->GetConfigNames()) {
-    if (!this->GetGlobalGenerator()
-           ->GetCrossConfigs(fileConfig)
-           .count(config)) {
+    if (!cm::contains(this->GetGlobalGenerator()->GetCrossConfigs(fileConfig),
+                      config)) {
       continue;
     }
     this->WriteObjectBuildStatements(config, fileConfig, firstForConfig);
@@ -112,9 +112,8 @@ void cmNinjaNormalTargetGenerator::Generate(std::string const& config)
 
     firstForConfig = true;
     for (auto const& fileConfig : this->GetConfigNames()) {
-      if (!this->GetGlobalGenerator()
-             ->GetCrossConfigs(fileConfig)
-             .count(config)) {
+      if (!cm::contains(
+            this->GetGlobalGenerator()->GetCrossConfigs(fileConfig), config)) {
         continue;
       }
       if (haveCxxModuleSources) {
@@ -126,9 +125,8 @@ void cmNinjaNormalTargetGenerator::Generate(std::string const& config)
   } else {
     firstForConfig = true;
     for (auto const& fileConfig : this->GetConfigNames()) {
-      if (!this->GetGlobalGenerator()
-             ->GetCrossConfigs(fileConfig)
-             .count(config)) {
+      if (!cm::contains(
+            this->GetGlobalGenerator()->GetCrossConfigs(fileConfig), config)) {
         continue;
       }
       // If this target has cuda language link inputs, and we need to do

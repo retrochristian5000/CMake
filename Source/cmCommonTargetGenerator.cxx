@@ -247,7 +247,7 @@ cmCommonTargetGenerator::GetLinkedTargetDirectories(
       // (their transitive deps will be explored via the substitute).
       for (auto const& item : cli->GetItems()) {
         if (item.Target && item.Target->HaveCxx20ModuleSources() &&
-            synthDeps.find(item.Target) == synthDeps.end() &&
+            !cm::contains(synthDeps, item.Target) &&
             visited.insert(item.Target).second) {
           pending.push_back(item.Target);
         }

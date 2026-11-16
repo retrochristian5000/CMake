@@ -6,6 +6,8 @@
 #include <string>
 #include <thread>
 
+#include <cmext/algorithm>
+
 #include "cmsys/String.h"
 #include "cmsys/SystemTools.hxx"
 
@@ -54,7 +56,7 @@ int main(int argc, char** argv)
       std::set<char> seen;
       std::string output;
       for (auto c : input) {
-        if (!seen.count(c)) {
+        if (!cm::contains(seen, c)) {
           seen.insert(c);
           output += c;
         }

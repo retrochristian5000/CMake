@@ -48,7 +48,7 @@ bool cmVariableWatch::AddWatch(std::string const& variable, WatchMethod method,
 void cmVariableWatch::RemoveWatch(std::string const& variable,
                                   WatchMethod method, void* client_data /*=0*/)
 {
-  if (!this->WatchMap.count(variable)) {
+  if (!cm::contains(this->WatchMap, variable)) {
     return;
   }
   cmVariableWatch::VectorOfPairs* vp = &this->WatchMap[variable];

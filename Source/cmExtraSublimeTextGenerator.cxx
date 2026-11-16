@@ -116,7 +116,7 @@ void cmExtraSublimeTextGenerator::CreateNewProjectFile(
                                   lgs[0]->GetBinaryDirectory());
     if ((!outputRelativeToSourceRoot.empty()) &&
         ((outputRelativeToSourceRoot.length() < 3) ||
-         (outputRelativeToSourceRoot.substr(0, 3) != "../"))) {
+         (!cmHasLiteralPrefix(outputRelativeToSourceRoot, "../")))) {
       if (this->ExcludeBuildFolder) {
         fout << ",\n\t\t\t\"folder_exclude_patterns\": [\""
              << outputRelativeToSourceRoot << "\"]";

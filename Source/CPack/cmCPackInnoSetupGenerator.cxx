@@ -8,6 +8,7 @@ file LICENSE.rst or https://cmake.org/licensing for details. */
 #include <ostream>
 #include <utility>
 
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmsys/RegularExpression.hxx"
@@ -399,7 +400,7 @@ bool cmCPackInnoSetupGenerator::ProcessFiles()
 
     if (cmSystemTools::FileIsDirectory(i)) {
       // Custom instructions replace the automatic generated instructions
-      if (customFileInstructions.count(QuotePath(i))) {
+      if (cm::contains(customFileInstructions, QuotePath(i))) {
         dirInstructions.push_back(customFileInstructions[QuotePath(i)]);
       } else {
         std::string destDir = cmSystemTools::ConvertToWindowsOutputPath(
@@ -413,7 +414,7 @@ bool cmCPackInnoSetupGenerator::ProcessFiles()
       }
     } else {
       // Custom instructions replace the automatic generated instructions
-      if (customFileInstructions.count(QuotePath(i))) {
+      if (cm::contains(customFileInstructions, QuotePath(i))) {
         fileInstructions.push_back(customFileInstructions[QuotePath(i)]);
       } else {
         std::string destDir = cmSystemTools::ConvertToWindowsOutputPath(
@@ -454,7 +455,7 @@ bool cmCPackInnoSetupGenerator::ProcessFiles()
         std::string const& extension =
           cmSystemTools::GetFilenameLastExtension(i);
         if ((extension == ".exe" || extension == ".com") && // only .exe, .com
-            icons.count(name)) {
+            cm::contains(icons, name)) {
           cmCPackInnoSetupKeyValuePairs iconParams;
 
           iconParams["Name"] = QuotePath(cmStrCat(iconsPrefix, icons[name]));
@@ -1076,7 +1077,7 @@ std::string cmCPackInnoSetupGenerator::ISKeyValueLine(
 
   std::vector<std::string> keys;
   for (char const* i : availableKeys) {
-    if (params.count(i)) {
+    if (cm::contains(params, i)) {
       keys.emplace_back(cmStrCat(i, ": "_s, params.at(i)));
     }
   }

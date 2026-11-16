@@ -10,6 +10,7 @@
 #include <utility>
 
 #include <cm/unordered_set>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmsys/FStream.hxx"
@@ -672,7 +673,7 @@ void cmLocalNinjaGenerator::WriteCustomCommandBuildStatement(
         this->GetGlobalNinjaGenerator()->AppendTargetDependsClosure(
           *j, jDeps, ccg.GetOutputConfig(), fileConfig, ccgs.size() > 1);
         cm::erase_if(orderOnlyDeps, [&jDeps](std::string const& dep) {
-          return jDeps.find(dep) == jDeps.end();
+          return !cm::contains(jDeps, dep);
         });
       }
     }

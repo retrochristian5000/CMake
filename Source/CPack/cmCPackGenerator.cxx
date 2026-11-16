@@ -7,6 +7,7 @@
 #include <memory>
 #include <utility>
 
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmsys/FStream.hxx"
@@ -1721,7 +1722,7 @@ cmCPackInstallationType* cmCPackGenerator::GetInstallationType(
   std::string const& projectName, std::string const& name)
 {
   (void)projectName;
-  bool hasInstallationType = this->InstallationTypes.count(name) != 0;
+  bool hasInstallationType = cm::contains(this->InstallationTypes, name);
   cmCPackInstallationType* installType = &this->InstallationTypes[name];
   if (!hasInstallationType) {
     // Define the installation type
@@ -1744,7 +1745,7 @@ cmCPackInstallationType* cmCPackGenerator::GetInstallationType(
 cmCPackComponent* cmCPackGenerator::GetComponent(
   std::string const& projectName, std::string const& name)
 {
-  bool hasComponent = this->Components.count(name) != 0;
+  bool hasComponent = cm::contains(this->Components, name);
   cmCPackComponent* component = &this->Components[name];
   if (!hasComponent) {
     // Define the component
@@ -1816,7 +1817,7 @@ cmCPackComponentGroup* cmCPackGenerator::GetComponentGroup(
   (void)projectName;
   std::string macroPrefix =
     "CPACK_COMPONENT_GROUP_" + cmsys::SystemTools::UpperCase(name);
-  bool hasGroup = this->ComponentGroups.count(name) != 0;
+  bool hasGroup = cm::contains(this->ComponentGroups, name);
   cmCPackComponentGroup* group = &this->ComponentGroups[name];
   if (!hasGroup) {
     // Define the group

@@ -364,12 +364,12 @@ bool cmInstrumentation::HasQuery() const
 
 bool cmInstrumentation::HasOption(cmInstrumentationQuery::Option option) const
 {
-  return (this->options.find(option) != this->options.end());
+  return (cm::contains(this->options, option));
 }
 
 bool cmInstrumentation::HasHook(cmInstrumentationQuery::Hook hook) const
 {
-  return (this->hooks.find(hook) != this->hooks.end());
+  return (cm::contains(this->hooks, hook));
 }
 
 int cmInstrumentation::CollectTimingData(cmInstrumentationQuery::Hook hook)
@@ -400,7 +400,7 @@ int cmInstrumentation::CollectTimingData(cmInstrumentationQuery::Hook hook)
     for (unsigned int i = 0; i < d.GetNumberOfFiles(); i++) {
       std::string fpath = d.GetFilePath(i);
       std::string const& fname = d.GetFileName(i);
-      if (fname.rfind('.', 0) == 0 || d.FileIsDirectory(i)) {
+      if (cmHasPrefix(fname, '.') || d.FileIsDirectory(i)) {
         continue;
       }
       files.push_back(snippet(fname, std::move(fpath)));

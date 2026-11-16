@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <cm/string_view>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmCryptoHash.h"
@@ -37,7 +38,7 @@ bool IsMSVCWarning(cm::string_view flag)
     return true;
   }
 
-  if (flag.substr(0, 9) == "external:") {
+  if (cmHasLiteralPrefix(flag, "external:")) {
     return true;
   }
 
@@ -69,7 +70,7 @@ bool IsGNUWarning(cm::string_view flag)
     "no-warnings"
   };
 
-  return long_names.find(flag) != long_names.end();
+  return cm::contains(long_names, flag);
 }
 
 void AppendUsage(std::string& usageHashInput, std::string const& entry)
@@ -120,7 +121,7 @@ struct CompileOptionClassification
 CompileOptionClassification SaveIfStartsWith(cm::string_view flag,
                                              cm::string_view prefix)
 {
-  if (flag.rfind(prefix, 0) == 0) {
+  if (cmHasPrefix(flag, prefix)) {
     return { CompileOptionUsage::SavePreprocessor,
              flag.size() == prefix.size() };
   }

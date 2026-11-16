@@ -1022,7 +1022,7 @@ void cmGlobalUnixMakefileGenerator3::AppendCodegenTargetDepends(
     if (!dep->IsInBuildSystem()) {
       continue;
     }
-    if (codegen_depends.find(dep->GetName()) != codegen_depends.end()) {
+    if (cm::contains(codegen_depends, dep->GetName())) {
       cmLocalUnixMakefileGenerator3* lg3 =
         static_cast<cmLocalUnixMakefileGenerator3*>(dep->GetLocalGenerator());
       std::string const tgtDir =

@@ -7,6 +7,7 @@
 #include <utility>
 
 #include <cm/optional>
+#include <cmext/algorithm>
 
 #include "cmFindCommon.h"
 #include "cmList.h"
@@ -28,8 +29,8 @@ void cmSearchPath::ExtractWithout(std::set<std::string> const& ignorePaths,
                                   std::vector<std::string>& outPaths) const
 {
   for (auto const& path : this->Paths) {
-    if (ignorePaths.find(path.Path) == ignorePaths.end() &&
-        ignorePrefixes.find(path.Prefix) == ignorePrefixes.end()) {
+    if (!cm::contains(ignorePaths, path.Path) &&
+        !cm::contains(ignorePrefixes, path.Prefix)) {
       outPaths.push_back(path.Path);
     }
   }

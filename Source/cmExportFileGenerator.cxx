@@ -10,6 +10,7 @@
 
 #include <cm/optional>
 #include <cm/string_view>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmsys/FStream.hxx"
@@ -424,7 +425,7 @@ bool cmExportFileGenerator::AddTargetNamespace(std::string& input,
     return this->NoteLinkedTarget(target, input, tgt);
   }
 
-  if (this->ExportedTargets.find(tgt) != this->ExportedTargets.end()) {
+  if (cm::contains(this->ExportedTargets, tgt)) {
     input = this->Namespace + tgt->GetExportName();
   } else {
     std::string namespacedTarget;

@@ -9,6 +9,7 @@
 #include <memory>
 #include <utility>
 
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmsys/RegularExpression.hxx"
@@ -411,7 +412,7 @@ void cmState::SetIsGeneratorMultiConfig(bool b)
 void cmState::AddBuiltinCommand(std::string const& name, Command command)
 {
   assert(name == cmSystemTools::LowerCase(name));
-  assert(this->BuiltinCommands.find(name) == this->BuiltinCommands.end());
+  assert(!cm::contains(this->BuiltinCommands, name));
   this->BuiltinCommands.emplace(
     name,
     CommandDescriptor{ cmStateEnums::CommandType::Function,
@@ -546,7 +547,7 @@ bool cmState::AddScriptedCommand(std::string const& name,
 {
   std::string sName = cmSystemTools::LowerCase(name);
 
-  if (this->FlowControlCommands.count(sName)) {
+  if (cm::contains(this->FlowControlCommands, sName)) {
     mf.GetCMakeInstance()->IssueMessage(
       MessageType::FATAL_ERROR,
       cmStrCat("Built-in flow control command \""_s, sName,

@@ -9,6 +9,7 @@
 #include <utility>
 
 #include <cm/string_view>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include <cmsys/RegularExpression.hxx>
@@ -147,7 +148,7 @@ bool cmBinUtilsLinuxELFLinker::ScanDependencies(std::string const& mainFile)
                        this->LDConfigPaths.end());
 
     for (auto const& dep : needed) {
-      if (resolvedDependencies.count(dep) != 0 ||
+      if (cm::contains(resolvedDependencies, dep) ||
           this->Archive->IsPreExcluded(dep)) {
         continue;
       }

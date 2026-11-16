@@ -17,6 +17,7 @@
 #include <vector>
 
 #include <cm/string_view>
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmBuildArgs.h"
@@ -151,7 +152,7 @@ public:
   {
     bool Test(cm::string_view ext) const
     {
-      return (this->unordered.find(ext) != this->unordered.end());
+      return (cm::contains(this->unordered, ext));
     }
 
     std::vector<std::string> ordered;

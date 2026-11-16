@@ -835,7 +835,7 @@ void cmCTestSubmitHandler::SelectParts(std::set<cmCTest::Part> const& parts)
   // Check whether each part is selected.
   for (cmCTest::Part p = cmCTest::PartStart; p != cmCTest::PartCount;
        p = static_cast<cmCTest::Part>(p + 1)) {
-    this->SubmitPart[p] = parts.find(p) != parts.end();
+    this->SubmitPart[p] = cm::contains(parts, p);
   }
 }
 

@@ -8,6 +8,7 @@
 #include <cstring>
 #include <string>
 
+#include <cmext/algorithm>
 #include <cmext/string_view>
 
 #include "cmsys/FStream.hxx"
@@ -86,13 +87,13 @@ bool cmCacheManager::LoadCache(std::string const& path, bool internal,
     }
     e.SetProperty("HELPSTRING", helpString);
     if (cmState::ParseCacheEntry(realbuffer, entryKey, e.Value, e.Type)) {
-      if (excludes.find(entryKey) == excludes.end()) {
+      if (!cm::contains(excludes, entryKey)) {
         // Load internal values if internal is set.
         // If the entry is not internal to the cache being loaded
         // or if it is in the list of internal entries to be
         // imported, load it.
         if (internal || (e.Type != cmStateEnums::INTERNAL) ||
-            (includes.find(entryKey) != includes.end())) {
+            (cm::contains(includes, entryKey))) {
           // If we are loading the cache from another project,
           // make all loaded entries internal so that it is
           // not visible in the gui
