@@ -255,7 +255,7 @@ if(CMAKE_GENERATOR MATCHES "Ninja")
       list(APPEND Ninja_ARGS -DCMake_TEST_NO_CODEPAGE_9xx=1)
     endif()
   endif()
-  add_RunCMake_test(Ninja)
+  add_RunCMake_test(Ninja -DMSVC=${MSVC})
   set_property(TEST RunCMake.Ninja APPEND PROPERTY LABELS "Fortran")
   set(NinjaMultiConfig_ARGS
     -DCYGWIN=${CYGWIN} -DMSYS=${MSYS}
