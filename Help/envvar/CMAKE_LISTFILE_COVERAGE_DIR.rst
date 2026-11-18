@@ -7,11 +7,11 @@ CMAKE_LISTFILE_COVERAGE_DIR
 
 Record coverage of CMake language code in lcov tracefiles.
 
-When this environment variable is set to a directory, each CMake process
-that runs CMake language code records which lines of each listfile ran, and
-how many times each function and macro was called.  At exit the process
-writes this data into the directory.  This variable alone turns coverage
-on.  There is no command-line option for it.
+When this environment variable is set to a directory, each CMake process that
+runs CMake language code records which lines of each listfile ran, how many
+times each function and macro was called, and which way each decision went.
+At exit the process writes this data into the directory.  This variable alone
+turns coverage on.  There is no command-line option for it.
 
 The value must be an absolute path.  If the directory does not exist,
 CMake creates it.  If the variable is not set, or is set to an empty value,
@@ -131,11 +131,32 @@ Functions and macros:
 * When CMake reads a tracefile back, it removes the ``@<line>`` suffix and
   decodes the name, so every name reads back as written.
 
+Branches:
+
+* Each :command:`if`, :command:`elseif`, :command:`while` and
+  :command:`foreach` line gets one pair of branches.  Branch 0 is true or
+  enter.  Branch 1 is false or leave.
+* An :command:`elseif` that CMake does not evaluate adds nothing.
+  :command:`else` has no record.
+* A :command:`while` counts each evaluation of its condition.  A loop that
+  the condition ends counts leave.  Other exits do not count.
+* A :command:`foreach` counts each iteration as enter.  It counts leave each
+  time the loop ends with no item left, including a loop with zero items.
+* :command:`break` and :command:`return` add nothing to leave.
+* A condition that fails with a fatal error counts as neither branch.  Its
+  line still counts as run, so lcov 2.x reports inconsistent data for it.
+  The option ``--ignore-errors inconsistent`` accepts it.
+* A decision in the body of a function or macro counts in the file that
+  defines it.
+* CMake does not record decisions inside built-in commands and generator
+  expressions.
+
 Output Files
 ^^^^^^^^^^^^
 
 Each process that records coverage writes one lcov tracefile, named
-``<pid>-<token>.info``, where ``<pid>`` is the process ID and ``<token>``
-is a random value.  The file uses the ``SF``, ``FN``, ``FNDA``, ``FNF``,
-``FNH``, ``DA``, ``LF`` and ``LH`` records.  CMake never deletes or merges
-files in the directory.  Clear the directory before a new run.
+``<pid>-<token>.info``, where ``<pid>`` is the process ID and ``<token>`` is a
+random value.  The file uses the ``SF``, ``FN``, ``FNDA``, ``FNF``, ``FNH``,
+``DA``, ``LF``, ``LH``, ``BRDA``, ``BRF`` and ``BRH`` records.  The
+``genhtml --branch-coverage`` command shows the branches.  CMake never deletes
+or merges files in the directory.  Clear the directory before a new run.
