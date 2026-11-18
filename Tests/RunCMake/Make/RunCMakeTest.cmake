@@ -136,4 +136,34 @@ if(MAKE_IS_GNU)
   run_cmake(GNUMakeJobServerAware)
 endif()
 
+
+function(run_CompileBeforeDependencies)
+  set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/CompileBeforeDependencies-build)
+  set(RunCMake_TEST_NO_CLEAN 1)
+  file(REMOVE_RECURSE "${RunCMake_TEST_BINARY_DIR}")
+  file(MAKE_DIRECTORY "${RunCMake_TEST_BINARY_DIR}")
+  run_cmake(CompileBeforeDependencies)
+
+  # A full build must still link both libraries.
+  run_cmake_command(CompileBeforeDependencies-build ${CMAKE_COMMAND} --build .)
+
+  # A non-CODEGEN generated header consumed through a link edge must exist
+  # before the dependent compiles, without waiting for the dependency link.
+  # Building only the dependent exercises the ordering deterministically.
+  run_cmake_command(CompileBeforeDependencies-gen ${CMAKE_COMMAND} --build . --target gen_main --parallel 4)
+endfunction()
+run_CompileBeforeDependencies()
+
+function(run_CompileBeforeDependenciesFortran)
+  set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/CompileBeforeDependenciesFortran-build)
+  set(RunCMake_TEST_NO_CLEAN 1)
+  file(REMOVE_RECURSE "${RunCMake_TEST_BINARY_DIR}")
+  file(MAKE_DIRECTORY "${RunCMake_TEST_BINARY_DIR}")
+  run_cmake(CompileBeforeDependenciesFortran)
+  run_cmake_command(CompileBeforeDependenciesFortran-build ${CMAKE_COMMAND} --build . --parallel 4)
+endfunction()
+if(CMake_TEST_Fortran)
+  run_CompileBeforeDependenciesFortran()
+endif()
+
 run_cmake(InstallNameDir)
