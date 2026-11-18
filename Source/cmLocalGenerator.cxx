@@ -3028,6 +3028,26 @@ void cmLocalGenerator::AddISPCDependencies(cmGeneratorTarget* target)
   }
 }
 
+void cmLocalGenerator::AddInteropHeaderSources(cmGeneratorTarget* target)
+{
+  auto const& interopHeaders = target->Target->GetLanguageCInteropHeaders();
+  if (interopHeaders.empty()) {
+    return;
+  }
+
+  std::vector<std::string> configsList =
+    this->Makefile->GetGeneratorConfigs(cmMakefile::IncludeEmptyConfig);
+  for (auto const& interopHeader : interopHeaders) {
+    for (std::string const& config : configsList) {
+      std::string const path = cmGeneratorExpression::Evaluate(
+        interopHeader.second.path, this, config, target);
+      if (!path.empty()) {
+        this->Makefile->GetOrCreateGeneratedSource(path);
+      }
+    }
+  }
+}
+
 bool cmLocalGenerator::AddPchDependencies(cmGeneratorTarget* target)
 {
   std::vector<std::string> configsList =

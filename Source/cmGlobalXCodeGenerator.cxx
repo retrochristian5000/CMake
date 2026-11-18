@@ -2964,6 +2964,23 @@ void cmGlobalXCodeGenerator::CreateBuildSettings(cmGeneratorTarget* gtgt,
                                     this->CreateString(packageName));
       }
     }
+
+    // Generate interop header
+    if (cm::GeneratedHeader const* interopHeader =
+          gtgt->Target->GetLanguageCInteropHeader("Swift")) {
+      if (this->XcodeVersion >= 13.3) {
+        std::string const path = cmGeneratorExpression::Evaluate(
+          interopHeader->path, this->CurrentLocalGenerator, configName, gtgt);
+        buildSettings->AddAttribute(
+          "SWIFT_OBJC_INTERFACE_HEADER_NAME",
+          this->CreateString(cmSystemTools::GetFilenameName(path)));
+        buildSettings->AddAttribute(
+          "SWIFT_OBJC_INTERFACE_HEADER_DIR",
+          this->CreateString(cmSystemTools::GetFilenamePath(path)));
+      } else {
+        cmSystemTools::Error("Xcode version is too old");
+      }
+    }
   }
 
   std::string extraLinkOptions;

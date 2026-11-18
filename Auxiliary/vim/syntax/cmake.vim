@@ -4758,6 +4758,7 @@ syn keyword cmakeKWtarget_sources contained
             \ FILES
             \ FILE_SET
             \ FRAMEWORK
+            \ GENERATE_INTEROP_HEADER
             \ HEADERS
             \ HEADER_DIRS
             \ HEADER_DIRS_

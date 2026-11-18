@@ -142,6 +142,77 @@ or ``PRIVATE`` and accepts the following arguments:
   are treated as relative to the target's source directory after evaluation
   of generator expressions.
 
+Generated Interoperability Headers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 4.6
+
+.. code-block:: cmake
+
+   target_sources(<target>
+     [{INTERFACE|PUBLIC|PRIVATE}
+      [GENERATE_INTEROP_HEADER <lang> <filename> [BASE_DIR base_dir] [FILE_SET <set>]]...
+     ]...)
+
+Declare and generate a C/C++ interoperability header for the target.
+
+Each ``target_sources(GENERATE_INTEROP_HEADER)`` entry starts with
+``INTERFACE``, ``PUBLIC``, or ``PRIVATE``, depending on whether the generated
+header should be part of the target interface, is internal to building the
+target, or both. In addition to a scope, the signature accepts the following
+arguments:
+
+``<lang>``
+
+  The language exporting the C/C++ interoperability header.
+
+``<filename>``
+
+  The filename of the generated header. The file should be located in the base
+  directory or a subdirectory of the base directory. This argument
+  supports :manual:`generator expressions <cmake-generator-expressions(7)>`.
+
+  If a relative path is specified, the path is considered relative to
+  :variable:`CMAKE_CURRENT_BINARY_DIR` at the time ``target_sources()`` is
+  called, unless the path starts with ``$<``. Paths starting with a generator
+  expression must evaluate to an absolute path.
+
+``BASE_DIR <dir>``
+
+  An optional base directory of the generated header. The directory is added to
+  the target's include directories, and to the base directories of the
+  ``FILE_SET`` if one is specified. The header is included using its path
+  relative to ``BASE_DIR``. If a relative path is specified, the path is
+  considered relative to :variable:`CMAKE_CURRENT_BINARY_DIR` at the time
+  ``target_sources()`` is called, unless the path starts with ``$<``. Such paths
+  must evaluate to an absolute path. If no ``BASE_DIR`` is specified, the value
+  of :variable:`CMAKE_CURRENT_BINARY_DIR` is used. This argument supports
+  :manual:`generator expressions <cmake-generator-expressions(7)>`.
+
+  The base directory is part of the build interface and is not included in the
+  install interface. When added to a ``FILE_SET``, the header is installed
+  relative to the base directory.
+
+  When specifying a ``FILE_SET``, no two base directories of the file set may be
+  sub-directories of each other. This requirement must be made across all base
+  directories added to the file set, not just those within a single call to
+  ``target_sources()``.
+
+``FILE_SET <set>``
+
+  An optional file set name to add the generated header to. If the file set does
+  not exist, a new file set is created with the ``HEADERS`` type. The named file
+  set must have the same visibility scope as the generated header.
+
+.. Note::
+
+   ``GENERATE_INTEROP_HEADER`` is only implemented for the ``Swift`` language.
+
+.. Note::
+
+   ``GENERATE_INTEROP_HEADER`` is implemented for the :ref:`Ninja generators`
+   and the :generator:`Xcode` generator.
+
 See Also
 ^^^^^^^^
 

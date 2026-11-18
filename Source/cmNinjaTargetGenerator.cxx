@@ -1691,6 +1691,35 @@ void cmNinjaTargetGenerator::WriteObjectBuildStatement(
               std::back_inserter(depList));
   }
 
+  if (language == "C" || language == "CXX") {
+    auto addInteropHeaderDep = [&](cmGeneratorTarget const* t, bool self) {
+      cm::GeneratedHeader const* interopHeader =
+        t->Target->GetLanguageCInteropHeader("Swift");
+      if (!interopHeader) {
+        return;
+      }
+
+      bool const addToDeplist = self
+        ? cm::FileSetMetadata::VisibilityIsForSelf(interopHeader->scope)
+        : cm::FileSetMetadata::VisibilityIsForInterface(interopHeader->scope);
+
+      if (addToDeplist) {
+        depList.emplace_back(
+          this->ConvertToNinjaPath(cmGeneratorExpression::Evaluate(
+            interopHeader->path, this->LocalGenerator, config)));
+      }
+    };
+
+    addInteropHeaderDep(this->GeneratorTarget, /*self=*/true);
+    for (cmGeneratorTarget const* dep :
+         this->GeneratorTarget->GetLinkImplementationClosure(
+           config, cmGeneratorTarget::UseTo::Compile)) {
+      if (dep != this->GeneratorTarget) {
+        addInteropHeaderDep(dep, /*self=*/false);
+      }
+    }
+  }
+
   if (!depList.empty()) {
     for (std::string& odi : depList) {
       if (cmSystemTools::FileIsFullPath(odi)) {
@@ -2294,6 +2323,19 @@ void cmNinjaTargetGenerator::WriteSwiftObjectBuildStatement(
         cmStrCat("-emit-module-path "_s, moduleOutputPath));
       this->EnsureParentDirectoryExists(moduleFilePath);
       moduleOutputs.push_back(moduleFilePath);
+
+      if (cm::GeneratedHeader const* interopHeaderPath =
+            target.Target->GetLanguageCInteropHeader(language)) {
+        std::string expandedInteropHeaderPath =
+          cmGeneratorExpression::Evaluate(
+            interopHeaderPath->path, this->LocalGenerator, config, &target);
+
+        this->LocalGenerator->AppendFlags(
+          moduleVariables["FLAGS"],
+          cmStrCat("-emit-clang-header-path ", expandedInteropHeaderPath));
+        moduleOutputs.push_back(
+          this->ConvertToNinjaPath(expandedInteropHeaderPath));
+      }
 
       if (emitModuleSeparately) {
         cmNinjaBuild moduleBuild(

@@ -1,0 +1,2 @@
+-- HEADER_DIR=\[.*/InteropHeaders-FileSet-build/generated\]
+-- HEADER_SET=\[.*/InteropHeaders-FileSet-build/generated/swift/answer\.h\]

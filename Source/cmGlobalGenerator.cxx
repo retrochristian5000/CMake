@@ -1753,6 +1753,13 @@ bool cmGlobalGenerator::Compute()
 
   this->CreateFileGenerateOutputs();
 
+  // Mark generated language interop headers as generated
+  for (auto const& lg : this->LocalGenerators) {
+    for (auto const& gt : lg->GetGeneratorTargets()) {
+      lg->AddInteropHeaderSources(gt.get());
+    }
+  }
+
   // Iterate through all targets and add verification targets for header sets
   if (!this->AddHeaderSetVerification()) {
     return false;

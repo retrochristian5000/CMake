@@ -246,4 +246,33 @@ if(NOT RunCMake_GENERATOR STREQUAL "Xcode" OR
   run_cmake(CMP0216-NEW)
   run_cmake(CMP0226-NEW)
   run_cmake(CMP0226-OLD)
+
+  block()
+    run_cmake(PackageName)
+    run_cmake(CMP0216-OLD)
+    run_cmake(CMP0216-NEW)
+  endblock()
+
+  block()
+    set(RunCMake_TEST_BINARY_DIR "${RunCMake_BINARY_DIR}/InteropHeader-Install-build")
+    set(RunCMake_TEST_OUTPUT_MERGE YES)
+    run_cmake(InteropHeaders-Install)
+    set(RunCMake_TEST_NO_CLEAN YES)
+    run_cmake_command(InteropHeaders-Install-build
+      ${CMAKE_COMMAND} --build . --config Release)
+    run_cmake_command(InteropHeaders-Install-build
+      ${CMAKE_COMMAND} --install . --prefix "${RunCMake_TEST_BINARY_DIR}/install")
+  endblock()
+
+  block()
+    run_cmake(InteropHeaders-FileSet)
+  endblock()
+
+  block()
+    set(RunCMake_TEST_BINARY_DIR "${RunCMake_BINARY_DIR}/InteropHeader-build")
+    set(RunCMake_TEST_OUTPUT_MERGE YES)
+    run_cmake(InteropHeaders)
+    set(RunCMake_TEST_NO_CLEAN YES)
+    run_cmake_command(InteropHeaders-build ${CMAKE_COMMAND} --build .)
+  endblock()
 endif()
