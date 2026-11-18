@@ -5,6 +5,6 @@ find_package(BISON REQUIRED)
 bison_target(Old parser.y parser.c VERBOSE REPORT_FILE report.txt)
 check_var(BISON_Old_INPUT "parser.y")
 check_var(BISON_Old_OUTPUT_SOURCE "parser.c")
-check_var(BISON_Old_OUTPUT_HEADER "parser.h")
+check_var(BISON_Old_OUTPUT_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/parser.h")
 check_var(BISON_Old_OUTPUTS
-  "parser.c;${CMAKE_CURRENT_SOURCE_DIR}/report.txt;parser.h")
+  "parser.c;${CMAKE_CURRENT_SOURCE_DIR}/report.txt;${CMAKE_CURRENT_SOURCE_DIR}/parser.h")

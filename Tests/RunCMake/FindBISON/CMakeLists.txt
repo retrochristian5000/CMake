@@ -1,3 +1,7 @@
 cmake_minimum_required(VERSION 4.4)
-project(${RunCMake_TEST} NONE)
+if(RunCMake_TEST STREQUAL "header-paths-cross-directory")
+  project(${RunCMake_TEST} LANGUAGES CXX)
+else()
+  project(${RunCMake_TEST} NONE)
+endif()
 include(${RunCMake_TEST}.cmake)
